@@ -1,0 +1,16 @@
+{
+  "grp_exposure": "Exposição",
+  "param_hatch_density": "Densidade da hachura (mm)",
+  "param_laser_count": "Número de lasers",
+  "param_hatch_field_size_x": "Tamanho do campo X (mm)",
+  "param_hatch_field_size_y": "Tamanho do campo Y (mm)",
+  "param_hatch_field_overlap_x": "Sobreposição de campo X (mm)",
+  "param_hatch_field_overlap_y": "Sobreposição de campo Y (mm)",
+  "param_hatch_field_min_area": "Área mín. do campo (mm^2)",
+  "grp_laser": "Configurações de laser",
+  "param_hatch_power": "Potência de preenchimento da hachura (W)",
+  "param_hatch_speed": "Velocidade de preenchimento de hachura (mm/s)",
+  "param_openline_power": "Potência do caminho aberto (W)",
+  "param_openline_speed": "Velocidade do caminho aberto (mm/s)",
+  "cli_format": "Arquivo CLI estendido"
+}

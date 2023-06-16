@@ -1,0 +1,16 @@
+{
+  "grp_exposure": "Exposición",
+  "param_hatch_density": "Densidad de sombreado (mm)",
+  "param_laser_count": "Número de láseres",
+  "param_hatch_field_size_x": "Tamaño de campo X (mm)",
+  "param_hatch_field_size_y": "Tamaño de campo Y (mm)",
+  "param_hatch_field_overlap_x": "Solapamiento de campo X (mm)",
+  "param_hatch_field_overlap_y": "Solapamiento de campo Y (mm)",
+  "param_hatch_field_min_area": "Área de campo mín. (mm^2)",
+  "grp_laser": "Configuración de láser",
+  "param_hatch_power": "Potencia de relleno de sombreado (W)",
+  "param_hatch_speed": "Velocidad de relleno de sombreado (mm/s)",
+  "param_openline_power": "Potencia de ruta abierta (W)",
+  "param_openline_speed": "Velocidad de ruta abierta (mm/s)",
+  "cli_format": "Archivo CLI ampliado"
+}

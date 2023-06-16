@@ -1,0 +1,16 @@
+{
+  "grp_exposure": "노출",
+  "param_hatch_density": "해치 밀도(mm)",
+  "param_laser_count": "레이저 수",
+  "param_hatch_field_size_x": "필드 크기 X(mm)",
+  "param_hatch_field_size_y": "필드 크기 Y(mm)",
+  "param_hatch_field_overlap_x": "필드 겹침 X(mm)",
+  "param_hatch_field_overlap_y": "필드 겹침 Y(mm)",
+  "param_hatch_field_min_area": "최소 필드 영역(mm^2)",
+  "grp_laser": "레이저 설정",
+  "param_hatch_power": "해치 채우기 출력(W)",
+  "param_hatch_speed": "해치 채우기 속도(mm/s)",
+  "param_openline_power": "열린 경로 출력(W)",
+  "param_openline_speed": "열린 경로 속도(mm/s)",
+  "cli_format": "확장된 CLI 파일"
+}

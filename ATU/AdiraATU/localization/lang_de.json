@@ -1,0 +1,16 @@
+{
+  "grp_exposure": "Belichtung",
+  "param_hatch_density": "Schraffurdichte (mm)",
+  "param_laser_count": "Anzahl Laser",
+  "param_hatch_field_size_x": "Feldlänge X (mm)",
+  "param_hatch_field_size_y": "Feldlänge Y (mm)",
+  "param_hatch_field_overlap_x": "Feldüberlappung X (mm)",
+  "param_hatch_field_overlap_y": "Feldüberlappung Y (mm)",
+  "param_hatch_field_min_area": "Minimale Feldfläche (mm^2)",  
+  "grp_laser": "Laser Einstellungen",
+  "param_hatch_power": "Schraffur Leistung (W)",
+  "param_hatch_speed": "Schraffur Geschwindigkeit (mm/s)",
+  "param_openline_power": "Kontur Leistung (W)",
+  "param_openline_speed": "Kontur Geschwindigkeit (mm/s)",
+  "cli_format": "Erweiterte CLI Datei"
+}

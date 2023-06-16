@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root>
+  <LastOpened>
+    <File TabGroupIndex="0" TabIndex="1">localization/lang_en.json</File>
+    <File TabGroupIndex="0" TabIndex="2">main/export_cli.js</File>
+    <File TabGroupIndex="0" TabIndex="0">main/main.js</File>
+    <Active>main/main.js</Active>
+  </LastOpened>
+  <LastBreakpoints>
+    <Breakpoint>
+      <Line>1262</Line>
+      <Filepath>C:/Users/sebas/OneDrive/Documents/ATU2/OneHatch_clipping_stripes/main/main.js</Filepath>
+    </Breakpoint>
+    <Breakpoint>
+      <Line>1272</Line>
+      <Filepath>C:/Users/sebas/OneDrive/Documents/ATU2/OneHatch_clipping_stripes/main/main.js</Filepath>
+    </Breakpoint>
+  </LastBreakpoints>
+</Root>

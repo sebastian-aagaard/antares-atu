@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project Version="0.0.1" Plugin="PluginBuildstyle" Type="Multi_Laser_Smoke_Sim_Demo" ProjectUUID="80ca6577-c372-44a7-b563-888de07ad557">
+  <Globals>
+    <ProjectName>adira_first</ProjectName>
+  </Globals>
+  <Filters>
+    <Filter Name="main">
+      <File Path="main/main.js"/>
+      <File Path="main/export_cli.js"/>
+    </Filter>
+    <Filter Name="localization">
+      <File Path="localization/localizer.js"/>
+      <File Path="localization/lang_de.json"/>
+      <File Path="localization/lang_en.json"/>
+      <File Path="localization/lang_es.json"/>
+      <File Path="localization/lang_fr.json"/>
+      <File Path="localization/lang_ja.json"/>
+      <File Path="localization/lang_ko.json"/>
+      <File Path="localization/lang_pt-BR.json"/>
+      <File Path="localization/lang_zh-Hans.json"/>
+      <File Path="localization/lang_zh-Hant.json"/>
+    </Filter>
+  </Filters>
+</Project>

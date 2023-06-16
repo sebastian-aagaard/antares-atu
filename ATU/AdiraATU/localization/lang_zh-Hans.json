@@ -1,0 +1,16 @@
+{
+  "grp_exposure": "曝光",
+  "param_hatch_density": "图案填充密度(mm)",
+  "param_laser_count": "激光数",
+  "param_hatch_field_size_x": "场大小 X (mm)",
+  "param_hatch_field_size_y": "场大小 Y (mm)",
+  "param_hatch_field_overlap_x": "场重叠 X (mm)",
+  "param_hatch_field_overlap_y": "场重叠 Y (mm)",
+  "param_hatch_field_min_area": "最小场面积(mm^2)",
+  "grp_laser": "激光设置",
+  "param_hatch_power": "图案填充功率(W)",
+  "param_hatch_speed": "图案填充速度(mm/s)",
+  "param_openline_power": "开放路径功率(W)",
+  "param_openline_speed": "开放路径速度(mm/s)",
+  "cli_format": "扩展 CLI 文件"
+}

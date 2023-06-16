@@ -1,0 +1,16 @@
+{
+  "grp_exposure": "曝光",
+  "param_hatch_density": "填充線密度 (公釐)",
+  "param_laser_count": "雷射數量",
+  "param_hatch_field_size_x": "場大小 X (公釐)",
+  "param_hatch_field_size_y": "場大小 Y (公釐)",
+  "param_hatch_field_overlap_x": "場重疊 X (公釐)",
+  "param_hatch_field_overlap_y": "場重疊 Y (公釐)",
+  "param_hatch_field_min_area": "最小場面積 (平方公釐)",
+  "grp_laser": "雷射設定",
+  "param_hatch_power": "填充線填滿功率 (W)",
+  "param_hatch_speed": "填充線填滿速度 (mm/s)",
+  "param_openline_power": "開放路徑功率 (W)",
+  "param_openline_speed": "開放路徑速度 (mm/s)",
+  "cli_format": "延伸 CLI 檔案"
+}
