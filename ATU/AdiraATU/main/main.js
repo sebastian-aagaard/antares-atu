@@ -921,42 +921,93 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     }
     
   
+  //        /////////////////////////////////////////////////////////////////////
+      // narrow bridges
+      var narrow_bridge = new HATCH.bsHatch();
+
+      all_islands.createNarrowBridgePolylines(
+          narrow_bridge, -beam_compensation);
+      
+      narrow_bridge.setAttributeReal("power", border_power);
+      narrow_bridge.setAttributeReal("speed", border_speed);      
+      
+      hatchResult.moveDataFrom(narrow_bridge);
+
+      /////////////////////////////////////////////////////////////////////
+      
+      // narrow appendixes
+      var narrow_app = new HATCH.bsHatch();
+
+      all_islands.createNarrowAppendixPolylines(
+          narrow_app, 
+          -beam_compensation, 
+          beam_compensation
+          );  
+
+      narrow_app.setAttributeReal("power", border_power);
+      narrow_app.setAttributeReal("speed", border_speed);      
+
+      hatchResult.moveDataFrom(narrow_app);
+      
+      /////////////////////////////////////////////////////////////////////  
+    
     
       
-  var offsetBorder = generateOffset(all_islands,beam_compensation); // provides the contour line
-  var offsetBorderToHatch =  generateOffset(offsetBorder.offsetIsland,beam_compensation); // provides the hatch offset further
+  var partBorder = generateOffset(all_islands,beam_compensation); // provides the contour line
+
+  partBorder.borderHatch.setAttributeReal("power", border_power);
+  partBorder.borderHatch.setAttributeReal("speed", border_speed);  
+  hatchResult.moveDataFrom(partBorder.borderHatch); // store contour in hatch
+    
+    
+  var offsetBorderToHatch =  generateOffset(partBorder.offsetIsland,beam_compensation); // provides the hatch offset further
 
   var islandsToHatch = new ISLAND.bsIsland();
      
   islandsToHatch = offsetBorderToHatch.offsetIsland;
 
-  // create part hatches   
-  var allHatch = new HATCH.bsHatch(); 
-  var partHatch = new HATCH.bsHatch();
-    
-  islandsToHatch.hatch(partHatch, hatch_density, cur_hatch_angle, 
+  // check for downskin
+   var allHatch = new HATCH.bsHatch(); 
+   var down_skin_island = new ISLAND.bsIsland();
+   var not_down_skin_island = new ISLAND.bsIsland();
+
+   islandsToHatch.splitMultiLayerOverhang(down_skin_surface_angle, down_skin_overlap, down_skin_layer_reference,
+        not_down_skin_island, down_skin_island); 
+        
+   if(!down_skin_island.isEmpty())
+      {
+        // Down skin hatching
+        var fill_hatch = new HATCH.bsHatch();
+          down_skin_island.hatch(fill_hatch, down_skin_hatch_density, cur_hatch_angle, 
           HATCH.nHatchFlagAlternating | 
           HATCH.nHatchFlagBlocksort |
           HATCH.nHatchFlagFlexDensity
         );
-  
-  allHatch.moveDataFrom(partHatch);
-  
-  // create support hatches  
-//   var supportHatch = new HATCH.bsHatch();
-//     
-//   islandsToHatch.hatch(supportHatch, hatch_density, cur_hatch_angle, 
-//           HATCH.nHatchFlagAlternating | 
-//           HATCH.nHatchFlagBlocksort |
-//           HATCH.nHatchFlagFlexDensity
-//         );   
-//   
-//   allHatch.moveDataFrom(supportHatch);
+        
+        fill_hatch.setAttributeReal("power", down_skin_fill_power);
+        fill_hatch.setAttributeReal("speed", down_skin_fill_speed);      
+        allHatch.moveDataFrom(fill_hatch);
+      }
+      
+      if(!not_down_skin_island.isEmpty())
+      {
+        // Hatching remaining area (not down skin)
+        var fill_hatch = new HATCH.bsHatch();
+          not_down_skin_island.hatch(fill_hatch, hatch_density, cur_hatch_angle, 
+          HATCH.nHatchFlagAlternating | 
+          HATCH.nHatchFlagBlocksort |
+          HATCH.nHatchFlagFlexDensity
+        );
+        
+        fill_hatch.setAttributeReal("power", fill_power);
+        fill_hatch.setAttributeReal("speed", fill_speed);      
+        allHatch.moveDataFrom(fill_hatch);
+      }        
+   
 
  //divide into stripes
- 
   var stripeIslands = new ISLAND.bsIsland();  
-  all_islands.createStripes(stripeIslands,10,2,-2,0,cur_hatch_angle); // createStripes
+  all_islands.createStripes(stripeIslands,10,2,-0.03,0,cur_hatch_angle); // createStripes-0.03
   var stripeHatch = new HATCH.bsHatch();
  
   // clip islands into stripes 
@@ -974,154 +1025,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     hatchResult.moveDataFrom(clippedHatch); 
   }
 
-
-
-
- // stripe_islands.splitMultiLayerOverhang(down_skin_surface_angle, down_skin_overlap, down_skin_layer_reference,
- //        not_down_skin_island, down_skin_island);
-
-
-//   // check all islands on the layer
-//   var island_it = modelData.getFirstIsland(nLayerNr);
-//   while(island_it.isValid())
-//   {    
-//     // part or support island
-//     var is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
-//     var is_support = MODEL.nSubtypeSupport == island_it.getModelSubtype();
-//     
-//     var island = island_it.getIsland().clone();
-//     all_islands.addIslands(island_it.getIsland().clone()); //merging all islands into one object (consists of vertices)
-//     
-//     
-//   let all_tiles_islands = new ISLAND.bsIsland(); // generate islands object
-//     
-//     if(is_part)
-//     { 
-//        
-//       //////////////////////////////////////////////////////////////////  
-//       // regular offset
-//       
-//       
-// //       var island_offset = new ISLAND.bsIsland();
-// //       var island_beamComp_offset =new ISLAND.bsIsland();
-// //       var border_hatch = new HATCH.bsHatch();
-// //       
-// //       island.createOffset(island_beamComp_offset, -beam_compensation);
-// // 
-// //       island_beamComp_offset.borderToHatch(border_hatch);  
-// // 
-// //       border_hatch.setAttributeReal("power", border_power);
-// //       border_hatch.setAttributeReal("speed", border_speed);      
-// //     
-// //       hatchResult.moveDataFrom(border_hatch);
-// //       
-// //       
-// //       /////////////////////////////////////////////////////////////////////
-// //       // offset hatch further from boarder (boarder_offset)
-// //       
-// //       island_beamComp_offset.createOffset(island_offset, -boarder_offset);
-// // 
-// //   
-// //        /////////////////////////////////////////////////////////////////////
-//       // narrow bridges
-//       var narrow_bridge = new HATCH.bsHatch();
-// 
-//       island.createNarrowBridgePolylines(
-//           narrow_bridge, -beam_compensation);
-//       
-//       narrow_bridge.setAttributeReal("power", border_power);
-//       narrow_bridge.setAttributeReal("speed", border_speed);      
-//       
-//       hatchResult.moveDataFrom(narrow_bridge);
-// 
-//       /////////////////////////////////////////////////////////////////////
-//       
-//       // narrow appendixes
-//       var narrow_app = new HATCH.bsHatch();
-// 
-//       island.createNarrowAppendixPolylines(
-//           narrow_app, 
-//           -beam_compensation, 
-//           beam_compensation
-//           );  
-// 
-//       narrow_app.setAttributeReal("power", border_power);
-//       narrow_app.setAttributeReal("speed", border_speed);      
-// 
-//       hatchResult.moveDataFrom(narrow_app);
-//       
-//       /////////////////////////////////////////////////////////////////////
-//       
-//       // part
-//       // divide into stripes
-//       let stripe_islands = new ISLAND.bsIsland(); // generate islands object to contain stripes
-//       //island_offset.createStripes(stripe_islands,10,2,-0.03,0,cur_hatch_angle); // createStripes
-//       //stripe_islands.copyFrom(island_offset);
-//       
-//       // Find down skin area
-//       var down_skin_island = new ISLAND.bsIsland();
-//       var not_down_skin_island = new ISLAND.bsIsland();
-//       stripe_islands.splitMultiLayerOverhang(down_skin_surface_angle, down_skin_overlap, down_skin_layer_reference,
-//         not_down_skin_island, down_skin_island);
-//       
-//       if(!down_skin_island.isEmpty())
-//       {
-//         // Down skin hatching
-//         var fill_hatch = new HATCH.bsHatch();
-//           down_skin_island.hatch(fill_hatch, down_skin_hatch_density, cur_hatch_angle, 
-//           HATCH.nHatchFlagAlternating | 
-//           HATCH.nHatchFlagBlocksort |
-//           HATCH.nHatchFlagFlexDensity
-//         );
-//         
-//         fill_hatch.setAttributeReal("power", down_skin_fill_power);
-//         fill_hatch.setAttributeReal("speed", down_skin_fill_speed);      
-//         hatchResult.moveDataFrom(fill_hatch);
-//       }
-//       
-//       if(!not_down_skin_island.isEmpty())
-//       {
-//         // Hatching remaining area (not down skin)
-//         var fill_hatch = new HATCH.bsHatch();
-//           not_down_skin_island.hatch(fill_hatch, hatch_density, cur_hatch_angle, 
-//           HATCH.nHatchFlagAlternating | 
-//           HATCH.nHatchFlagBlocksort |
-//           HATCH.nHatchFlagFlexDensity
-//         );
-//         
-//         fill_hatch.setAttributeReal("power", fill_power);
-//         fill_hatch.setAttributeReal("speed", fill_speed);      
-//         hatchResult.moveDataFrom(fill_hatch);
-//       }
-// 
-//       
-//     }
-//     else
-//     {
-//       all_islands_fixture.addIslands(island_it.getIsland().clone());
-//       // fixtures
-//       var fixture_hatch = new HATCH.bsHatch();
-//       
-//       island.hatch(fixture_hatch, hatch_density, cur_hatch_angle, 
-//         HATCH.nHatchFlagAlternating | 
-//         HATCH.nHatchFlagBlocksort |
-//         HATCH.nHatchFlagFlexDensity
-//       );
-//       
-//       fixture_hatch.setAttributeInt("power", support_fill_power);
-//       fixture_hatch.setAttributeReal("speed", support_fill_speed);
-//       
-//       hatchResult.moveDataFrom(fixture_hatch);
-//     }    
-//     
-//     
-//     
-//     island_it.next();
-//   } // while
-
-/// add stripes and find overhangs assign power and speed
-  
-
+ 
 
   ///////////////////////////////////////////// 
   /// get the required passes in this layer ///
