@@ -368,134 +368,9 @@ function getTilePosition(x_pos,y_pos){
   this.next_y_coord = y_pos + this.tile_height + PARAM.getParamReal('scanhead','tile_overlap_y');
 } 
 
-// function getTileArray(allIlands,MODEL,modelData,layer_nr){
-//   
-//    var boundaries = allIlands.getBounds2D();
-//   ////////////////////////////////
-//   // Define and store Tiles     //
-//   ////////////////////////////////
-//   
-//    let scene_size_x = boundaries.maxX - boundaries.minX;
-//    let scene_size_y = boundaries.maxY - boundaries.minY;     
-//    let scence_center_x = (boundaries.minX + scene_size_x)/2;
-//    let scence_center_y = (boundaries.minY + scene_size_y)/2;
-//    // add some check cannot be larger then required
-//    
-//    let scanhead_global_pass_position = new Array;
-//    let scanhead_x_starting_pos = 0;
-//    let scanhead_y_starting_pos = 0;
-//    
-//   // find the tileOutlineOrigin if scannerarray positioned at 0,0
-//    let tileOutlineOrigin = new getTilePosition(scanhead_x_starting_pos,scanhead_y_starting_pos); // get the tile layout information.
-//    
-//    // calculate the required tiles both in x and y (rounded up to make fit into whole passes)
-//    var required_passes_x = Math.ceil(scene_size_x/tileOutlineOrigin.tile_width);
-//    var required_passes_y = Math.ceil(scene_size_y/tileOutlineOrigin.tile_height);
-//    
-// 
-//    // find the actual starting position of the scanner_head (defined by the scenesize)
-//    
-//    
-//    // check boundaries in y
-//    
-//    if(boundaries.minY < 0 ){ // if the bound are outisde the powderbed force the tiling to start within
-//        scanhead_y_starting_pos = 0;
-//      } else {
-//      scanhead_y_starting_pos = boundaries.minY-PARAM.getParamReal('scanhead','stripe_min_y_mm');
-//      }
-//     
-//      let maxPositionY = scanhead_y_starting_pos+(tileOutlineOrigin.tile_height+PARAM.getParamReal('scanhead','tile_overlap_y'))*(required_passes_y-1);
-//         
-//      if (maxPositionY > PARAM.getParamReal('scanhead','y_global_max_limit'))
-//        {
-//      scanhead_y_starting_pos -= maxPositionY - PARAM.getParamReal('scanhead','y_global_max_limit');
-//        }
-//      
-//    // check boundaries in x    
-//        
-//    if(boundaries.minX < 0 ){
-//        scanhead_x_starting_pos = 0;
-//    } else {
-//    scanhead_x_starting_pos = boundaries.minX;
-//      }
-//    
-//    let maxPositionX = scanhead_x_starting_pos+(tileOutlineOrigin.tile_width+PARAM.getParamReal('scanhead','tile_overlap_x'))*(required_passes_x-1);
-//      
-//    if (maxPositionX > PARAM.getParamReal('scanhead','x_global_max_limit'))
-//      {
-//      scanhead_x_starting_pos -= maxPositionX - PARAM.getParamReal('scanhead','x_global_max_limit');
-//      }
-//    
-//    // add empty model to display the tilepositions 
-//       
-//   
-// //    let modelCount = modelData.getModelCount();
-// //    var drawLayer = modelData.getModel(modelCount-1);
-// //    var layerThickness = modelData.getLayerThickness();
-// //    var minZVal = modelData.getZeroPosZ() + layerThickness;
-// //      
-// //    var currentZVal=minZVal; 
-// //    drawLayer.createModelLayer(currentZVal);
-// //    var currentLayer = drawLayer.getModelLayer(currentZVal);
-//       
-//    var tileTable = [];  // store the tilelayout
-//      
-//     let cur_tile_coord_x =  scanhead_x_starting_pos;
-//     let cur_tile_coord_y =  scanhead_y_starting_pos;
-//        
-//   for (let i=0; i <required_passes_x; i++)
-//   {
-//     
-//     let cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y);
-//     let next_tile_coord_x = cur_tile.next_x_coord;
-//     
-//     
-//     for(let j =0; j<required_passes_y;j++)
-//     {       
-//          
-//       cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y);
-//       
-//       var tile = new PATH_SET.bsPathSet();
-//       
-//        var scanhead_outlines = new Array(4);
-//        scanhead_outlines[0] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
-//        scanhead_outlines[1] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_max); //min,max
-//        scanhead_outlines[2] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_max); //max,max
-//        scanhead_outlines[3] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min); //max,min
-// 
-//        tile.addNewPath(scanhead_outlines);
-//        tile.setClosed(false);
-//        currentLayer.addPathSet(tile,MODEL.nSubtypePart);
-//       
-//       
-//       // get laser zones within each tile
-//             
-//       // dataToPass
-//       var tile_obj = new Object();
-//       tile_obj.passNumber = i; 
-//       tile_obj.tile_number = j; 
-//       tile_obj.scanhead_outline = scanhead_outlines;
-//       tile_obj.scanhead_x_coord = cur_tile_coord_x;
-//       tile_obj.scanhead_y_coord = cur_tile_coord_y;
-//       tileTable.push(tile_obj);
-//       
-//       cur_tile_coord_y = cur_tile.next_y_coord;
-//     }
-//     
-//     cur_tile_coord_y = scanhead_y_starting_pos; // resest y coord
-//     cur_tile_coord_x = next_tile_coord_x; // set next stripe pass
-//   }
-//   
-//   return {
-//     tileTable: tileTable,
-//     requiredPassesX: required_passes_x,
-//     requiredPassesY: required_passes_y
-//   };
-// }
 
 function getTileArrayPre(modelLayer,bDrawTile){
-    
-    
+   
    var boundaries = modelLayer.getAttribEx('boundaries');
    let maxX = boundaries.m_max.m_coord[0];
    let minX = boundaries.m_min.m_coord[0];
@@ -616,12 +491,6 @@ function getTileArrayPre(modelLayer,bDrawTile){
   modelLayer.setAttribEx('tileTable',tileTable);
   modelLayer.setAttrib('requiredPassesX',required_passes_x.toString());
   modelLayer.setAttrib('requiredPassesY',required_passes_y.toString());
-  
-  return {
-    tileTable: tileTable,
-    requiredPassesX: required_passes_x,
-    requiredPassesY: required_passes_y
-  };
 }
 
 
@@ -822,126 +691,6 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
  
    modelDataTarget.setTrayAttribEx('scanhead_zones',scanhead_zones); 
     
-//   ////////////////////////////////
-//   // Define and store Tiles     //
-//   ////////////////////////////////
-//   
-//     
-//    let scene_size_x = overallBounds.maxX - overallBounds.minX;
-//    let scene_size_y = overallBounds.maxY - overallBounds.minY;     
-//    let scence_center_x = overallBounds.minX + scene_size_x/2;
-//    let scence_center_y = overallBounds.minY + scene_size_y/2;
-//    // add some check cannot be larger then required
-//    
-//    let scanhead_global_pass_position = new Array;
-//    let scanhead_x_starting_pos = 0;
-//    let scanhead_y_starting_pos = 0;
-//    
-//    let tileOutlineOrigin = new getTilePosition(scanhead_x_starting_pos,scanhead_y_starting_pos); // get the tile layout information.
-//    
-//    // calculate the required tiles both in x and y (rounded up to make fit into whole passes)
-//    overallBounds.required_passes_x = Math.ceil(scene_size_x/tileOutlineOrigin.tile_width);
-//    overallBounds.required_passes_y = Math.ceil(scene_size_y/tileOutlineOrigin.tile_height);
-// 
-//    // find the actual starting position of the scanner_head (defined by the scenesize)
-//    
-//    
-//    // check boundaries in y
-//    
-//    if(overallBounds.minY < 0 ){ // if the bound are outside the powderbed force the tiling to start within
-//        scanhead_y_starting_pos = 0;
-//      } else {
-//      scanhead_y_starting_pos = overallBounds.minY-PARAM.getParamReal('scanhead','stripe_min_y_mm');
-//      }
-//     
-//      let maxPositionY = scanhead_y_starting_pos+(tileOutlineOrigin.tile_height+PARAM.getParamReal('scanhead','tile_overlap_y'))*(overallBounds.required_passes_y-1);
-//         
-//      if (maxPositionY > PARAM.getParamReal('scanhead','y_global_max_limit'))
-//        {
-//      scanhead_y_starting_pos -= maxPositionY - PARAM.getParamReal('scanhead','y_global_max_limit');
-//        }
-//      
-//    // check boundaries in x    
-//        
-//    if(overallBounds.minX < 0 ){
-//        scanhead_x_starting_pos = 0;
-//    } else {
-//    scanhead_x_starting_pos = scence_center_x-tileOutlineOrigin.tile_width - PARAM.getParamReal('scanhead','x_scanner1_min_mm2');
-//      }
-//    
-//    let maxPositionX = scanhead_x_starting_pos+(tileOutlineOrigin.tile_width+PARAM.getParamReal('scanhead','tile_overlap_x'))*(overallBounds.required_passes_x-1);
-//      
-//    if (maxPositionX > PARAM.getParamReal('scanhead','x_global_max_limit'))
-//      {
-//      scanhead_x_starting_pos -= maxPositionX - PARAM.getParamReal('scanhead','x_global_max_limit');
-//      }
-//    
-//    // add empty model to display the hatching on first layer - development mode 
-//       
-//    modelDataTarget.addEmptyModel();
-//    var drawLayer = modelDataTarget.getModel(modelCount);
-//    var layerThickness = modelDataSrc.getLayerThickness();
-//    var minZVal = modelDataSrc.getZeroPosZ() + layerThickness;
-//      
-//    var currentZVal=minZVal; 
-//   drawLayer.createModelLayer(currentZVal);
-//    var currentLayer = drawLayer.getModelLayer(currentZVal);
-//       
-//    var tileTable = [];  // store the tilelayout
-//      
-//     let cur_tile_coord_x =  scanhead_x_starting_pos;
-//     let cur_tile_coord_y =  scanhead_y_starting_pos;
-//        
-//   for (let i=0; i <overallBounds.required_passes_x; i++)
-//   {
-//     
-//     let cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y);
-//     let next_tile_coord_x = cur_tile.next_x_coord;
-//     
-//     
-//     for(let j =0; j<overallBounds.required_passes_y;j++)
-//     {       
-//          
-//       cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y);
-//       
-//       var tile = new PATH_SET.bsPathSet();
-//       
-//        var scanhead_outlines = new Array(4);
-//        scanhead_outlines[0] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
-//        scanhead_outlines[1] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_max); //min,max
-//        scanhead_outlines[2] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_max); //max,max
-//        scanhead_outlines[3] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min); //max,min
-// 
-//        tile.addNewPath(scanhead_outlines);
-//        tile.setClosed(false);
-//        currentLayer.addPathSet(tile,MODEL.nSubtypePart);
-//       
-//       
-//       // get laser zones within each tile
-//             
-//       // dataToPass
-//       var tile_obj = new Object();
-//       tile_obj.passNumber = i; 
-//       tile_obj.tile_number = j; 
-//       tile_obj.scanhead_outline = scanhead_outlines;
-//       tile_obj.scanhead_x_coord = cur_tile_coord_x;
-//       tile_obj.scanhead_y_coord = cur_tile_coord_y;
-//       tileTable.push(tile_obj);
-//       
-//       cur_tile_coord_y = cur_tile.next_y_coord;
-//     }
-//     
-//     cur_tile_coord_y = scanhead_y_starting_pos; // resest y coord
-//     cur_tile_coord_x = next_tile_coord_x; // set next stripe pass
-//   }
-//    
-//   modelDataTarget.setTrayAttribEx('tile_vertice_array', tileTable);
-//   modelDataTarget.setTrayAttrib('scene_size_x', scene_size_x.toString());
-//   modelDataTarget.setTrayAttrib('scene_size_y', scene_size_y.toString());
-//   modelDataTarget.setTrayAttrib('number_of_passes',overallBounds.required_passes_x.toString());
-//   modelDataTarget.setTrayAttrib('number_of_tiles_pr_pass',overallBounds.required_passes_y.toString());
-//   modelDataTarget.setTrayAttrib('total_stripe_width',(tileOutlineOrigin.tile_width).toString());
-//   
 }
 
 /**
@@ -1245,7 +994,6 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
      allTileHatch.moveDataFrom(tileHatch);     
     }     
     
-    //modelLayer.setAttribEx('tileOutlineArr',vec2_tile_array);
     thisLayer.setAttribEx('tileSegmentArr',tileSegmentArr);
     
   /////////////////////////////////////
