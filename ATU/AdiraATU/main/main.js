@@ -163,7 +163,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('tileing','step_x', LOCALIZER.GetMessage('param_step_x'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,2);
     parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
-    parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,2);
+    parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,0);
     parameter.declareParameterChoice('tileing', 'TilingMode', 
      LOCALIZER.GetMessage('param_TilingMode'),
       [LOCALIZER.GetMessage('param_TilingMode_Static'),
@@ -1155,7 +1155,7 @@ function defineSharedZones(){
 
  if (PARAM.getParamInt('tileing', 'TilingMode') == 0){ // static tiling
    
- allTileHatch = fixedLaserWorkload(allTileHatch,modelData,scanheadArray,tileArray,required_passes_x);  
+ allTileHatch = fixedLaserWorkload(allTileHatch,modelData,scanheadArray,tileArray,required_passes_x,nLayerNr);  
 
  } else { // smarttileing
    
@@ -1499,31 +1499,40 @@ function smartLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
   }  
 
 // function statically distributing the lasing zone <- not smart !
-function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_passes_x){
+function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_passes_x,nLayerNr){
   let curHatch = new HATCH.bsHatch; 
   curHatch.moveDataFrom(hatchObj);
   
   let scanheadZones = new Array;
   scanheadZones = modelData.getTrayAttribEx('scanhead_zones');
   
- // let tile_x_min = tileArray[0].scanhead_outline[0].m_coord[0];
- // let tile_y_min = tileArray[0].scanhead_outline[0].m_coord[1];
-        
-  // get max coordinates for full width tile
-//  let tile_x_max = tileArray[tileArray.length-1].scanhead_outline[2].m_coord[0];
- // let tile_y_max = tileArray[tileArray.length-1].scanhead_outline[2].m_coord[1];
   
   //get divison of scanfields in x!
   let xDiv = new Array;
   
+  // get shifting parameters 
+  function calculateShiftX(layerNr) {
+    let layerCount = PARAM.getParamInt('tileing', 'number_x');
+    let shiftIncrement =  PARAM.getParamReal('tileing', 'step_x');
+    let resetLayer = layerCount - 1;
+
+    let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
+    let layerWithinCycle = cyclePosition % layerCount;
+    let shiftValue = layerWithinCycle * shiftIncrement;
+
+    return shiftValue;
+  }
+  
+  let shiftX =  calculateShiftX(nLayerNr);
+
   for (let i = 0; i<scanheadArray.length+1;i++)
     {
-      if (i==0) { // if first elements
+      if (i==0) { // if first elements 
         xDiv[i] = scanheadArray[i].rel_x_min;
       }else if (i == scanheadArray.length) { // if arraylength is reached
             xDiv[i] = scanheadArray[i-1].rel_x_max + scanheadArray[i-1].x_ref;
       } else {      
-      xDiv[i] = (scanheadArray[i-1].x_ref + scanheadArray[i].x_ref)/2;
+      xDiv[i] = (scanheadArray[i-1].x_ref + scanheadArray[i].x_ref)/2 + shiftX;
         } //if else       
     } // for
     
@@ -1532,7 +1541,7 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
     for(let i = 0; i<required_passes_x;i++)
     {
       
-      let tileOffset =  tileArray[i].scanhead_x_coord;
+      let tileOffset =  tileArray[i].scanhead_x_coord; // the 
       
       for(let j = 0; j<xDiv.length;j++)
       {
@@ -1603,7 +1612,7 @@ var postprocessLayerStack_MT = function(
   layer_start_nr, 
   layer_end_nr)
 {  
-  
+  // calculat ethe porocessign order based on tiles and hatchtype
     progress.initSteps(layer_end_nr-layer_start_nr+1);
   
   for(let layer_nr = layer_start_nr; layer_nr <= layer_end_nr; ++layer_nr)
