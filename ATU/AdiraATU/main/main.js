@@ -22,6 +22,16 @@ var LOCALIZER = require('localization/localizer.js');
 //var TILEING = require('tileing.js');
 var EXPOSURETIME = requireBuiltin('bsExposureTime');
 
+
+// different types of scanning
+const type_openPolyline = 0;
+const type_part_hatch = 1;
+const type_part_contour = 2;
+const type_downskin_hatch = 3;
+const type_downskin_contour = 4;
+const type_support_hatch = 5;
+const type_support_contour = 6;
+
 /** 
 * Specify general information
 * @param  aboutInfo  bsAboutInfo
@@ -43,8 +53,8 @@ exports.declareMachine = function(machineConfig)
   machineConfig.setBuildstyleName('OTF');
   machineConfig.setMachineName('AddCreator');
   machineConfig.addMaterialName('IN718');
-  machineConfig.addMaterialName('Material2');
-  machineConfig.addLayerThickness(100);
+  machineConfig.addMaterialName('DevelopmentMode');
+  machineConfig.addLayerThickness(50);
   machineConfig.addLayerThickness(200);
 
 };
@@ -122,8 +132,8 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', 'y_global_max_limit', 'parm_y_global_max_limit',0,1000,995);
     parameter.declareParameterReal('scanhead', 'x_global_max_limit', 'param_y_global_max_limit',0,1000,660);
     
-    parameter.declareParameterReal('scanhead', 'stripe_min_y_mm', LOCALIZER.GetMessage('param_y_stripe_min_mm'),-100, 0, -60); // -60
-    parameter.declareParameterReal('scanhead', 'stripe_max_y_mm',LOCALIZER.GetMessage('param_y_stripe_max_mm'),0,100,50); // 50
+    parameter.declareParameterReal('scanhead', 'stripe_min_y_mm', LOCALIZER.GetMessage('param_y_stripe_min_mm'),-100, 0, -16.5); // -60
+    parameter.declareParameterReal('scanhead', 'stripe_max_y_mm',LOCALIZER.GetMessage('param_y_stripe_max_mm'),0,100,16.5); // 50
     parameter.declareParameterReal('scanhead', 'stripe_ref_mm',LOCALIZER.GetMessage('param_y_stripe_ref_mm'),-100,100,0);
     
     parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,0);
@@ -180,6 +190,10 @@ exports.declareParameters = function(parameter)
   parameter.declareParameterGroup('scanning_priority', LOCALIZER.GetMessage('grp_scanning_priority'));
     parameter.declareParameterInt('scanning_priority','bulk_hatch', LOCALIZER.GetMessage('param_hatch_bulk'),0,2000,100);
     
+    
+
+    
+    
 };
 
 /** 
@@ -202,6 +216,7 @@ exports.declareBuildAttributes = function(buildAttrib)
   buildAttrib.declareAttributeInt('bsid'); // buildstyle ID
   buildAttrib.declareAttributeReal('power'); // beam laser power
   buildAttrib.declareAttributeReal('speed'); // scanning speed
+  buildAttrib.declareAttributeInt('type'); // scanning type
   buildAttrib.declareAttributeInt('passNumber');//
   buildAttrib.declareAttributeReal('xcoord');
   buildAttrib.declareAttributeReal('ycoord');
@@ -218,6 +233,7 @@ exports.declareBuildAttributes = function(buildAttrib)
   buildAttrib.declareAttributeInt('zoneExposure');
   buildAttrib.declareAttributeInt('zoneIndex');
   buildAttrib.declareAttributeReal('ScanheadMoveSpeed');
+  
   for(let i = 0; i<PARAM.getParamInt('exposure', 'laser_count');i++)
   {
     buildAttrib.declareAttributeInt(`laser_index_${i+1}`);
@@ -270,14 +286,23 @@ exports.prepareModelExposure = function(model)
   
   if(material_name == 'IN718') {
     
-    model.setAttrib('melting-point', '980');
+    model.setAttrib('melting-point', '1260');
     model.setAttrib('density','5.4');
     model.setAttrib('gas','Argon');
+    
+    let openpolyline = {
+    power_watt: 221.92,
+    power_percent: 55.48,
+    markspeed: 600,
+    defocus:0.0
+    };
+    model.setAttribEx('openpolyline',openpolyline);
+    
     let hatch = {
     power_watt: 259.52,
     power_percent: 64.88,
     markspeed: 800,
-    defocus: 0
+    defocus: 0.0
     };
     model.setAttribEx('hatch',hatch);
     
@@ -285,7 +310,7 @@ exports.prepareModelExposure = function(model)
     power_watt: 221.92,
     power_percent: 55.48 ,
     markspeed: 600,
-    defocus: 0
+    defocus: 0.0
     };
     model.setAttribEx('contour',contour);
     
@@ -293,20 +318,36 @@ exports.prepareModelExposure = function(model)
     power_watt: 106.2,
     power_percent: 26.55 ,
     markspeed: 667,
-    defocus: 0
+    defocus: 0.0
     };   
-    model.setAttribEx('overhang_hatch',overhang_hatch);
+    model.setAttribEx('downskin_hatch',overhang_hatch);
     
     let overhang_contour = {
     power_watt: 201.4,
     power_percent: 50.35 ,
     markspeed: 1600,
-    defocus: 0
+    defocus: 0.0
     };   
-    model.setAttribEx('overhang_contour',overhang_contour);
+    model.setAttribEx('downskin_contour',overhang_contour);
+    
+    let support_hatch = {
+    power_watt: 259.52,
+    power_percent: 64.88,
+    markspeed: 800,
+    defocus: 0.0
+    };   
+    model.setAttribEx('support_hatch',support_hatch);
+    
+    let support_contour = {
+    power_watt: 221.92,
+    power_percent: 55.48 ,
+    markspeed: 600,
+    defocus: 0.0
+    };   
+    model.setAttribEx('support_contour',support_contour);
      
 
-  } else if (material_name == 'Material2') {
+  } else if (material_name == 'DevelopmentMode') {
 
     model.setAttrib('melting-point', '1180');
 
@@ -315,11 +356,43 @@ exports.prepareModelExposure = function(model)
     throw new Error('Invalid material');
   }
   
-  let fill_power = PARAM.getParamInt('laser', 'fill_power');
-  let fill_speed = PARAM.getParamReal('laser', 'fill_speed');
+ 
+  let openPolyLine_power = model.getAttrib('openpolyline').power_watt;
+  let openPolyLine_speed = model.getAttrib('openpolyline').markspeed;
+  let openPolyLine_defocus = model.getAttrib('openpolyline').power_defocus;
+  
+  let part_hatch_power = model.getAttrib('hatch').power_watt;
+  let part_hatch_speed = model.getAttrib('hatch').markspeed;
+  let part_hatch_defocus = model.getAttrib('hatch').defocus;
+  
+  let part_contour_power = model.getAttrib('contour').power_watt;
+  let part_contour_speed = model.getAttrib('contour').markspeed;
+  let part_contour_defocus = model.getAttrib('contour').defocus;
+  
+  let downskin_hatch_power =  model.getAttrib('downskin_hatch').power_watt;
+  let downskin_hatch_speed = model.getAttrib('downskin_hatch').markspeed;
+  let downskin_hatch_defocus =model.getAttrib('downskin_hatch').defocus;
+  
+  let downskin_contour_power =  model.getAttrib('downskin_contour').power_watt;
+  let downskin_contour_speed = model.getAttrib('downskin_contour').markspeed;
+  let downskin_contour_defocus = model.getAttrib('downskin_contour').defocus;
+  
+  let support_hatch_power = model.getAttrib('contour').power_watt; 
+  let support_hatch_speed = model.getAttrib('contour').markspeed;
+  let support_hatch_defocus = model.getAttrib('contour').defocus;
+  
+  let support_contour_power = model.getAttrib('contour').power_watt;
+  let support_contour_speed = model.getAttrib('contour').markspeed;
+  let support_contour_defocus = model.getAttrib('contour').defocus;
+  
+
+  
+ 
+ // let part_hatch_power = PARAM.getParamInt('laser', 'fill_power');
+//  let part_hatch_speed = PARAM.getParamReal('laser', 'fill_speed');
     
-  let open_border_power = PARAM.getParamInt('laser', 'open_border_power');
-  let open_border_speed = PARAM.getParamReal('laser', 'open_border_speed');
+ // let open_border_power = PARAM.getParamInt('laser', 'open_border_power');
+  //let open_border_speed = PARAM.getParamReal('laser', 'open_border_speed');
   
   let laser_count = PARAM.getParamInt('exposure', 'laser_count')
 
@@ -328,28 +401,72 @@ exports.prepareModelExposure = function(model)
   var customTable = [];  
   for(let l_laser_nr = 1; l_laser_nr<=laser_count;++l_laser_nr)
   {
-    // Filling
+    // Open Polylines
     var bsid_obj = new Object();
     bsid_obj.bsid = (10 * l_laser_nr); //laser no * 10
     bsid_obj.laserIndex = l_laser_nr;
-    bsid_obj.power = fill_power;
-    bsid_obj.focus = 0.0;
-    bsid_obj.speed = fill_speed;
+    bsid_obj.power = openPolyLine_power;
+    bsid_obj.focus = openPolyLine_defocus;
+    bsid_obj.speed = openPolyLine_speed;
     customTable.push(bsid_obj);
 
-    // Open Polylines
+    // Part Hatch
     var bsid_obj = new Object();
-    bsid_obj.bsid = (10 * l_laser_nr+1); // laser no * 10 +1
+    bsid_obj.bsid = (10 * l_laser_nr+1); // laser no * 10 + 1
     bsid_obj.laserIndex = l_laser_nr;
-    bsid_obj.power = open_border_power;
-    bsid_obj.focus = 0.0;
-    bsid_obj.speed = open_border_speed;
+    bsid_obj.power = part_hatch_power;
+    bsid_obj.focus = part_hatch_defocus;
+    bsid_obj.speed = part_hatch_speed;
     customTable.push(bsid_obj);
+    
+    // part Contour
+    var bsid_obj = new Object();
+    bsid_obj.bsid = (10 * l_laser_nr+2); // laser no * 10 + 2
+    bsid_obj.laserIndex = l_laser_nr;
+    bsid_obj.power = part_contour_power;
+    bsid_obj.focus = part_contour_defocus;
+    bsid_obj.speed = part_contour_speed;
+    customTable.push(bsid_obj);
+    
+    // downskin Hatch
+    var bsid_obj = new Object();
+    bsid_obj.bsid = (10 * l_laser_nr+3); // laser no * 10 + 3
+    bsid_obj.laserIndex = l_laser_nr;
+    bsid_obj.power = downskin_hatch_power;
+    bsid_obj.focus = downskin_hatch_defocus;
+    bsid_obj.speed = downskin_hatch_speed;
+    customTable.push(bsid_obj);
+    
+    // downskin Contour
+    var bsid_obj = new Object();
+    bsid_obj.bsid = (10 * l_laser_nr+4); // laser no * 10 + 3
+    bsid_obj.laserIndex = l_laser_nr;
+    bsid_obj.power = downskin_contour_power;
+    bsid_obj.focus = downskin_contour_defocus;
+    bsid_obj.speed = downskin_contour_speed;
+    customTable.push(bsid_obj);
+    
+    // Support Hatch
+    var bsid_obj = new Object();
+    bsid_obj.bsid = (10 * l_laser_nr+5); // laser no * 10 + 3
+    bsid_obj.laserIndex = l_laser_nr;
+    bsid_obj.power = support_hatch_power;
+    bsid_obj.focus = support_hatch_defocus;
+    bsid_obj.speed = support_hatch_speed;
+    customTable.push(bsid_obj);
+    
+    // Support Contour
+    var bsid_obj = new Object();
+    bsid_obj.bsid = (10 * l_laser_nr+6); // laser no * 10 + 3
+    bsid_obj.laserIndex = l_laser_nr;
+    bsid_obj.power = support_contour_power;
+    bsid_obj.focus = support_contour_defocus;
+    bsid_obj.speed = support_contour_speed;
+    customTable.push(bsid_obj);
+    
   } // for
   model.setAttribEx('customTable', customTable);
-  
 
-  
 };
 
 // get all relevant information for the tiling providing the origin of the scanhead
@@ -403,7 +520,7 @@ function getTileArrayPre(modelLayer,bDrawTile){
 
    // check boundaries in y
    
-   if(minY < 0 ){ // if the bounds are outisde the powderbed force the tiling to start within // should'nt happen
+   if(minY < 0 ){ // if the bounds are outside the powderbed force the tiling to start within // should'nt happen
        scanhead_y_starting_pos = 0;
      } else {
      scanhead_y_starting_pos = minY-PARAM.getParamReal('scanhead','stripe_min_y_mm');
@@ -457,7 +574,6 @@ function getTileArrayPre(modelLayer,bDrawTile){
        scanhead_outlines[1] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_max); //min,max
        scanhead_outlines[2] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_max); //max,max
        scanhead_outlines[3] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min); //max,min
-
        
       
        if (bDrawTile)
@@ -541,27 +657,53 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
   //!!!!! OBS: currently limited to 1 model !!!!!!
   // run through all models
     // find the tile position of each layer
-       // add all islands to shadow islans
+       // add all islands to shadow islands
   
+  
+  //modelDataTarget.addEmptyModel(); // add empty model to modelDataTarget
   
   //first connectOpenPolylines and merge all islands on the platform into modelDataTarget
    for( var modelIndex=0; modelIndex < modelCount && !progress.cancelled(); modelIndex++ )
     {
-      var thisModel = modelDataSrc.getModel(modelIndex);
-      
+      let thisModel = modelDataSrc.getModel(modelIndex);
       var currentModel = modelDataSrc.getModel(modelIndex);
-      var connectedModel = new MODEL.bsModel;
+      var connectedModel = new MODEL.bsModel();
     
-      currentModel.connectOpenPolylines(connectedModel, progress, bCopyOtherData, connectArgs);
-     
-      modelDataTarget.addModelCopy(currentModel);
-      modelDataTarget.addModelCopy(connectedModel);
+     //thisModel.connectOpenPolylines(connectedModel, progress, bCopyOtherData, connectArgs);
+    
+     //jointModel.addModelCopy(currentModel);
+     //jointModel.addModelCopy(connectedModel);
+//        var reducedModel = modelDataTarget.getModel(0);
+//        for (let layerIt = 0; layerIt <modelLayerCount;layerIt++)
+//       {
+//         var modelLayer =  thisModel.getModelLayer((layerIt+1)*modelLayerHeight);
+//         var newPathSet = new PATH_SET.bsPathSet();
+//         
+//         var layerPathSet = modelLayer.getAllIslandsPathSet().clone(); // get and clone pathset from source current layer
+//         
+//        
+//      
+//         let newModelLayer = reducedModel.createModelLayer((layerIt+1)*modelLayerHeight);
+//         
+//         
+//         //reduce point tolerances
+//           
+//           var removedPoints = layerPathSet.reducePointsInTolerance(0.005,0.00100);
+//          
+//           newModelLayer.addPathSet(layerPathSet,0);
+//         
+//       }     
+      
+     //modelDataTarget.addModelCopy(reducedModel);
+      modelDataTarget.addModelCopy(thisModel);
+      
+      
     }
     
   // run through all layers and find the boundaries
   for( var modelIndex=0; modelIndex < modelCount && !progress.cancelled(); modelIndex++ )
     {
-    var thisModel = modelDataTarget.getModel(modelIndex); // look at the joint models
+    let thisModel = modelDataTarget.getModel(modelIndex); // look at the joint models
       
       for (let layerIt = 0; layerIt <modelLayerCount;layerIt++)
       {
@@ -569,8 +711,10 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
         
         if (modelLayer.isValid())
         {
-        var thisLayerBounds = modelLayer.getBounds();
-        layerBoundaries[layerIt] = thisLayerBounds;
+          
+
+          var thisLayerBounds = modelLayer.getBounds();
+          layerBoundaries[layerIt] = thisLayerBounds;
         
           modelLayer.setAttribEx('boundaries',thisLayerBounds);          
         }
@@ -723,11 +867,11 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   let border_speed = contour_param.markspeed;
   let border_defocus = contour_param.defocus;
   
-  let overhang_hatch_param = thisModel.getAttribEx('overhang_hatch');
+  let downskin_hatch_param = thisModel.getAttribEx('downskin_hatch');
   
-  let down_skin_fill_power = overhang_hatch_param.power_watt;
-  let down_skin_fill_speed = overhang_hatch_param.markspeed;
-  let down_skin_defocus = overhang_hatch_param.defocus;
+  let down_skin_fill_power = downskin_hatch_param.power_watt;
+  let down_skin_fill_speed = downskin_hatch_param.markspeed;
+  let down_skin_defocus = downskin_hatch_param.defocus;
   
   
   let open_border_power = PARAM.getParamInt('laser', 'open_border_power');
@@ -785,7 +929,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
      all_islands.addIslands(all_islands_part);
      all_islands.addIslands(all_islands_support);  
         
-    function generateOffset(islandObj,offset){
+    function generateOffset (islandObj,offset){
       
       var offsetIsland = new ISLAND.bsIsland(); 
       var borderHatch = new HATCH.bsHatch();
@@ -798,6 +942,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       };
     }
     
+    
+    // currently Support is treated similar to part !!
   
       ///////////////////////////////////////////////////////////////////////
       // narrow bridges
@@ -807,7 +953,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           narrow_bridge, -beam_compensation);
       
       narrow_bridge.setAttributeReal("power", border_power);
-      narrow_bridge.setAttributeReal("speed", border_speed);      
+      narrow_bridge.setAttributeReal("speed", border_speed);
+      narrow_bridge.setAttributeInt("type", type_openPolyline);
       
       hatchResult.moveDataFrom(narrow_bridge);
 
@@ -823,7 +970,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           );  
 
       narrow_app.setAttributeReal("power", border_power);
-      narrow_app.setAttributeReal("speed", border_speed);      
+      narrow_app.setAttributeReal("speed", border_speed);
+      narrow_app.setAttributeInt("type",type_openPolyline);       
 
       hatchResult.moveDataFrom(narrow_app);
       
@@ -833,8 +981,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       
   var partBorder = generateOffset(all_islands,beam_compensation); // provides the contour line
 
-  partBorder.borderHatch.setAttributeReal("power", border_power);
-  partBorder.borderHatch.setAttributeReal("speed", border_speed);  
+  partBorder.borderHatch.setAttributeReal('power', border_power);
+  partBorder.borderHatch.setAttributeReal('speed', border_speed);
+  partBorder.borderHatch.setAttributeInt('type',type_part_contour);
   hatchResult.moveDataFrom(partBorder.borderHatch); // store contour in hatch
     
     
@@ -862,8 +1011,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           HATCH.nHatchFlagFlexDensity
         );
         
-        fill_hatch.setAttributeReal("power", down_skin_fill_power);
-        fill_hatch.setAttributeReal("speed", down_skin_fill_speed);      
+        fill_hatch.setAttributeReal('power', down_skin_fill_power);
+        fill_hatch.setAttributeReal('speed', down_skin_fill_speed);
+        fill_hatch.setAttributeInt('type',type_downskin_hatch);    
         allHatch.moveDataFrom(fill_hatch);
       }
       
@@ -877,8 +1027,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           HATCH.nHatchFlagFlexDensity
         );
         
-        fill_hatch.setAttributeReal("power", fill_power);
-        fill_hatch.setAttributeReal("speed", fill_speed);      
+        fill_hatch.setAttributeReal('power', fill_power);
+        fill_hatch.setAttributeReal('speed', fill_speed);      
+        fill_hatch.setAttributeInt('type',type_part_hatch);
         allHatch.moveDataFrom(fill_hatch);
       }        
    
@@ -918,11 +1069,12 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   
   var required_passes_x = thisLayer.getAttrib('requiredPassesX');
   var required_passes_y = thisLayer.getAttrib('requiredPassesY');
-  var tileArray = thisLayer.getAttribEx('tileTable');
-  
+  var tileArray = new Array;
+  tileArray = thisLayer.getAttribEx('tileTable');
+  let tileArrayLenght = tileArray.length;
   // get the tile array sorting by tile number
 
-  if(tileArray.length>1){
+  if(tileArrayLenght>1){
   tileArray.sort((a,b) => a.tile_number - b.tile_number);
   }
   
@@ -1109,12 +1261,6 @@ function defineSharedZones(){
     let hatchBlock = new HATCH.bsHatch;
     hatchBlock = hatchblockIt.get();
     
-    //let zone_exposure = new EXPOSURETIME.bsExposureTime();
-    //zone_exposure.configure(modelData.getTrayAttribEx('exposureSettings'));
-   // zone_exposure.addHatchBlock(hatchBlock);  
-    //hatchBlock.setAttributeReal('zoneExposure',zone_exposure.getExposureTimeMicroSeconds());
-        
-      
     hatchBlock.setAttributeInt('zoneIndex',zoneId++);
       
     for(let m = 0; m<laser_count; m++)
@@ -1133,18 +1279,15 @@ function defineSharedZones(){
         
         hatchBlock.setAttributeInt('sharedZone', 0);  
         
-        //assign color to single laser zones
-        for(let j = 0; j<allocatedLasers.length;j++)
-        {
-          if(allocatedLasers[j] == 1){
-            let laserid = j;
-            hatchBlock.setAttributeInt('_disp_color',laser_color[j]);
-            hatchBlock.setAttributeInt('bsid', (10 * j)); // set attributes
-           // hatchBlock.setAttributeReal('power', fill_power);
-            //hatchBlock.setAttributeReal('speed', fill_speed); 
-            //break;
-          }
-        }    
+//         //assign color to single laser zones
+//         for(let j = 0; j<allocatedLasers.length;j++)
+//         {
+//           if(allocatedLasers[j] == 1){
+//             let laserid = j;
+//             //hatchBlock.setAttributeInt('_disp_color',laser_color[j]);
+//             //hatchBlock.setAttributeInt('bsid', (10 * j)); // set attributes
+//           }
+//         }    
       }
     hatchblockIt.next();
     }
@@ -1162,6 +1305,20 @@ function defineSharedZones(){
  allTileHatch = smartLaserWorkload(allTileHatch,modelData,scanheadArray,tileArray,required_passes_x,required_passes_y,nLayerNr,vec2_tile_array,tileSegmentArr);  
    
  }
+ 
+ 
+ // sort the tile to get accurate processing order
+ 
+var allTileArray = allTileHatch.getHatchBlockArray();
+
+// the tile in the first pass, set processing order
+let temm = 0; 
+ 
+for (let i = 0; i<allTileArray.length;i++)
+ {
+   
+ } 
+ 
  
 hatchResult.moveDataFrom(allTileHatch); // move hatches to result 
   
@@ -1462,6 +1619,7 @@ function smartLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
          minWorkloadLaser.lastTask = curZone;  // Update the last task of this laser  
 
          // set 
+
          curZone.bsid = (minWorkloadLaser.id + 1) * 10; // Assign bsid to the task based on the assigned laser's id        
          curZone.hatch.setAttributeInt('bsid', curZone.bsid);
          curZone.hatch.setAttributeInt('_disp_color',laser_color[minWorkloadLaser.id]); 
@@ -1580,12 +1738,23 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
      let tileHatch = new HATCH.bsHatch;
      tileHatch = ClipHatchByRect(curHatch,clipPoints);
      
-     // add some attributes to hatchblocks
-     tileHatch.setAttributeInt('_disp_color',laser_color[laserIndex]);
-     tileHatch.setAttributeInt('bsid', (10 * laserIndex)); // set attributes
+     // add display and bsid attributes to hatchblocks
+     
+     let hatchIterator = tileHatch.getHatchBlockIterator();
+     while(hatchIterator.isValid())
+     {
+       let currHatcBlock = hatchIterator.get();
+       
+       let type = currHatcBlock.getAttributeInt('type');
+       currHatcBlock.setAttributeInt('_disp_color',laser_color[laserIndex]);
+       currHatcBlock.setAttributeInt('bsid', (10 * (laserIndex+1))+type); // set attributes
+       
+       hatchIterator.next();
+     }
+         
      //tileHatch.setAttributeInt('power', fill_power);
      //tileHatch.setAttributeReal('speed', fill_speed);
-     
+    
      laserIndex++;
      if (laserIndex>PARAM.getParamInt('exposure', 'laser_count')-1)
      {
@@ -1594,9 +1763,30 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
      
       hatchObj.moveDataFrom(tileHatch);
    }
-     
+    
+   
    return hatchObj
-  }  
+  } 
+  
+  
+  function mergeBlocks(unmergedHatchBlocks) {
+     let mergeblock = new HATCH.bsHatch();
+     let mergedblock = new HATCH.bsHatch();
+     mergeblock.moveDataFrom(unmergedHatchBlocks);
+         
+     // merge similar hatch blocks to speed up process
+     let bCheckAttributes = true;
+      let mergeArgs = {
+           'bConvertToHatchMode': true,
+           //'nConvertToHatchMaxPointCount': 2,
+           //'nMaxBlockSize': 1024,
+           'bCheckAttributes': true
+      }  
+         
+      mergedblock = mergeblock.mergeHatchBlocks(mergeArgs); 
+         
+      return mergedblock;
+  }
 
 /** 
  * Multithreaded post-processing. This function may be called
@@ -1612,12 +1802,14 @@ var postprocessLayerStack_MT = function(
   layer_start_nr, 
   layer_end_nr)
 {  
-  // calculat ethe porocessign order based on tiles and hatchtype
+  // calculate the porocessign order based on tiles and hatchtype
     progress.initSteps(layer_end_nr-layer_start_nr+1);
   
   for(let layer_nr = layer_start_nr; layer_nr <= layer_end_nr; ++layer_nr)
   {
-        
+    progress.step(1);
+     
+    
     // get model data polylinearray
     var exposure_array = modelData.getLayerPolylineArray(layer_nr, POLY_IT.nLayerExposure, 'rw');
     
