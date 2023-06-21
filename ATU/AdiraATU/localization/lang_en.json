@@ -1,5 +1,6 @@
 {
   "grp_exposure": "Exposure",
+    "param_min_vector_length": "Minimun Vector Lenght Allowed (mm)",
     "param_beam_compensation": "Beam Compensation (mm)",
     "param_boarder_offset": "Offset to Boarder (mm)",
     "param_hatch_density": "Hatch Density (mm)",

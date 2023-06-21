@@ -74,8 +74,12 @@ exports.declareParameters = function(parameter)
   // Parameter groups are always declared like this:
   // 'group-id', 'display string'
   
+ 
+  
   parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
   
+  parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
+
   parameter.declareParameterReal('exposure', 'beam_compensation', LOCALIZER.GetMessage('param_beam_compensation'), 0.0, 10.0, 0.05);
   parameter.declareParameterReal('exposure', 'boarder_offset', LOCALIZER.GetMessage('param_boarder_offset'), 0.0, 10.0, 0.05);
   parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 20.0, 0.1);
@@ -1042,7 +1046,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   // clip islands into stripes 
   let stripeCount = stripeIslands.getIslandCount();
   let stripeArr = stripeIslands.getIslandArray();
-
+  let stripedHatch = new HATCH.bsHatch();
   for(let i = 0; i<stripeCount;i++)
   {
     let clippedHatch = new HATCH.bsHatch();
@@ -1053,7 +1057,18 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     hatchResult.moveDataFrom(clippedHatch); 
   }
 
+  ////////////////////////////
+  /// delete short vectors ///
+  ////////////////////////////
+  
+  let tempHatchResults = new HATCH.bsHatch();
+  tempHatchResults.moveDataFrom(hatchResult);
+  
+  tempHatchResults.deleteShortLines(PARAM.getParamReal("exposure", "min_vector_lenght"));
+  let stripesMergeShortLines = new HATCH.bsHatch();
+  //tempHatchResults.mergeShortLines(stripesMergeShortLines,0.1,beam_compensation*2,HATCH.nMergeShortLinesFlagPreferHatchMode | HATCH.nMergeShortLinesFlagAllowSameHatchBlock);
  
+  hatchResult.moveDataFrom(stripesMergeShortLines);
 
   ///////////////////////////////////////////// 
   /// get the required passes in this layer ///
@@ -1221,10 +1236,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
          mergeblock.moveDataFrom(tempTileHatch);
          
          // merge similar hatch blocks to speed up process
-         let bCheckAttributes = true;
          let mergeArgs = {
            'bConvertToHatchMode': true,
-           //'nConvertToHatchMaxPointCount': 2,
+           'nConvertToHatchMaxPointCount': 2,
            //'nMaxBlockSize': 1024,
            'bCheckAttributes': true
          }  
@@ -1309,21 +1323,37 @@ function defineSharedZones(){
  
  // sort the tile to get accurate processing order
  
-var allTileArray = allTileHatch.getHatchBlockArray();
+var allHatchBlockArray = allTileHatch.getHatchBlockArray();
 
 // the tile in the first pass, set processing order
-let temm = 0; 
+
+
  
-for (let i = 0; i<allTileArray.length;i++)
+for (let i = 0; i<allHatchBlockArray.length;i++)
  {
-   
- } 
+  let thisBlock = allHatchBlockArray[i]; // remove attributed used for calculation to allow merging hatchblocks
+  thisBlock.removeAttributes('laser_index_1');
+  thisBlock.removeAttributes('laser_index_2'); 
+  thisBlock.removeAttributes('laser_index_3');  
+  thisBlock.removeAttributes('laser_index_4');  
+  thisBlock.removeAttributes('laser_index_5'); 
+  thisBlock.removeAttributes('sharedZone');
+  thisBlock.removeAttributes('zoneIndex');
+  thisBlock.removeAttributes('tile_exposure_time');
+   let temm = 0
+ }
+
+let simplifiedDataHatch = new HATCH.bsHatch();
+simplifiedDataHatch = allTileHatch.mergeHatchBlocks(mergeArgs);  
  
+simplifiedDataHatch = mergeBlocks(allTileHatch);  
  
-hatchResult.moveDataFrom(allTileHatch); // move hatches to result 
+
+hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 
   
 }; // makeExposureLayer
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
  /////////////////////////
   /// Custom Functions /// 
@@ -1778,7 +1808,7 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
      let bCheckAttributes = true;
       let mergeArgs = {
            'bConvertToHatchMode': true,
-           //'nConvertToHatchMaxPointCount': 2,
+           'nConvertToHatchMaxPointCount': 2,
            //'nMaxBlockSize': 1024,
            'bCheckAttributes': true
       }  
