@@ -1057,19 +1057,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     hatchResult.moveDataFrom(clippedHatch); 
   }
 
-  ////////////////////////////
-  /// delete short vectors ///
-  ////////////////////////////
-  
-  let tempHatchResults = new HATCH.bsHatch();
-  tempHatchResults.moveDataFrom(hatchResult);
-  
-  tempHatchResults.deleteShortLines(PARAM.getParamReal("exposure", "min_vector_lenght"));
-  let stripesMergeShortLines = new HATCH.bsHatch();
-  //tempHatchResults.mergeShortLines(stripesMergeShortLines,0.1,beam_compensation*2,HATCH.nMergeShortLinesFlagPreferHatchMode | HATCH.nMergeShortLinesFlagAllowSameHatchBlock);
- 
-  hatchResult.moveDataFrom(stripesMergeShortLines);
 
+  
   ///////////////////////////////////////////// 
   /// get the required passes in this layer ///
   /////////////////////////////////////////////
@@ -1320,6 +1309,16 @@ function defineSharedZones(){
    
  }
  
+ // merge short lines
+ 
+ let tempAllHatch = new HATCH.bsHatch();
+ tempAllHatch.moveDataFrom(allTileHatch);
+ 
+ let merges = tempAllHatch.mergeShortLines(allTileHatch,0.1,0.1,HATCH.nMergeShortLinesFlagAllowSameHatchBlock|HATCH.nMergeShortLinesFlagPreferHatchMode);
+ 
+ // deleteShortVectors
+   
+  allTileHatch.deleteShortLines(PARAM.getParamReal("exposure", "min_vector_lenght"));
  
  // sort the tile to get accurate processing order
  
