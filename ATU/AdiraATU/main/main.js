@@ -288,7 +288,6 @@ exports.prepareModelExposure = function(model)
   var layer_thickness = model.getLayerThickness();
   var material_name = model.getMaterialID();
   
-  if(material_name == 'IN718') {
     
     model.setAttrib('melting-point', '1260');
     model.setAttrib('density','5.4');
@@ -351,45 +350,35 @@ exports.prepareModelExposure = function(model)
     model.setAttribEx('support_contour',support_contour);
      
 
-  } else if (material_name == 'DevelopmentMode') {
-
-    model.setAttrib('melting-point', '1180');
-
-  } else {
-    // This script only accepts materials it specifies in 'declareMachine'
-    throw new Error('Invalid material');
-  }
-  
  
-  let openPolyLine_power = model.getAttrib('openpolyline').power_watt;
-  let openPolyLine_speed = model.getAttrib('openpolyline').markspeed;
-  let openPolyLine_defocus = model.getAttrib('openpolyline').power_defocus;
+  let openPolyLine_power = openpolyline.power_watt;
+  let openPolyLine_speed = openpolyline.markspeed;
+  let openPolyLine_defocus = openpolyline.power_defocus;
   
-  let part_hatch_power = model.getAttrib('hatch').power_watt;
-  let part_hatch_speed = model.getAttrib('hatch').markspeed;
-  let part_hatch_defocus = model.getAttrib('hatch').defocus;
+  let part_hatch_power = hatch.power_watt;
+  let part_hatch_speed = hatch.markspeed;
+  let part_hatch_defocus = hatch.defocus;
   
-  let part_contour_power = model.getAttrib('contour').power_watt;
-  let part_contour_speed = model.getAttrib('contour').markspeed;
-  let part_contour_defocus = model.getAttrib('contour').defocus;
+  let part_contour_power = contour.power_watt;
+  let part_contour_speed = contour.markspeed;
+  let part_contour_defocus = contour.defocus;
   
-  let downskin_hatch_power =  model.getAttrib('downskin_hatch').power_watt;
-  let downskin_hatch_speed = model.getAttrib('downskin_hatch').markspeed;
-  let downskin_hatch_defocus =model.getAttrib('downskin_hatch').defocus;
+  let downskin_hatch_power = overhang_hatch.power_watt;
+  let downskin_hatch_speed = overhang_hatch.markspeed;
+  let downskin_hatch_defocus = overhang_hatch.defocus;
   
-  let downskin_contour_power =  model.getAttrib('downskin_contour').power_watt;
-  let downskin_contour_speed = model.getAttrib('downskin_contour').markspeed;
-  let downskin_contour_defocus = model.getAttrib('downskin_contour').defocus;
+  let downskin_contour_power =  overhang_contour.power_watt;
+  let downskin_contour_speed = overhang_contour.markspeed;
+  let downskin_contour_defocus = overhang_contour.defocus;
   
-  let support_hatch_power = model.getAttrib('contour').power_watt; 
-  let support_hatch_speed = model.getAttrib('contour').markspeed;
-  let support_hatch_defocus = model.getAttrib('contour').defocus;
+  let support_hatch_power = support_hatch.power_watt; 
+  let support_hatch_speed = support_hatch.markspeed;
+  let support_hatch_defocus = support_hatch.defocus;
   
-  let support_contour_power = model.getAttrib('contour').power_watt;
-  let support_contour_speed = model.getAttrib('contour').markspeed;
-  let support_contour_defocus = model.getAttrib('contour').defocus;
+  let support_contour_power = support_contour.power_watt;
+  let support_contour_speed = support_contour.markspeed;
+  let support_contour_defocus = support_contour.defocus;
   
-
   
  
  // let part_hatch_power = PARAM.getParamInt('laser', 'fill_power');
@@ -1223,6 +1212,35 @@ let reducePointsArgs = {
     }     
     
     thisLayer.setAttribEx('tileSegmentArr',tileSegmentArr);
+    
+    let exporter_3mf = {
+        "namespace": "http://adira.com/tilinginformation/202305",
+        "prefix": "adira",
+        "content": {
+           "name": "sequence",
+	         "attributes": {
+		          "uuid": "7b85d4a4-bc8b-44eb-b5f4-59fb25cb9d77",
+		          "startx": 0.0,
+		          "starty": 0.0,
+		          "sequencetransferspeed": 120,
+		          "type": "moveandshoot"
+	          },
+	          "children": [
+		          {
+			          "name": "movement",
+			          "attributes": {
+				          "tileid": 1,
+                  "targetx": 0.0,
+                  "targety": 20.0,
+                  "speedy": 100.0
+			          }			
+		          }
+            ]
+        }
+
+    };
+    
+    thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
     
   /////////////////////////////////////
   /// Assign laser options to hatch /// 
