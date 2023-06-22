@@ -1402,7 +1402,19 @@ allTileHatch.moveDataFrom(allContourHatch); // ADD contour hatches to be divided
  
 var allHatchBlockArray = allTileHatch.getHatchBlockArray();
 
+// sort the array based on bsid
+allHatchBlockArray.sort((a, b) => a.getAttributeInt('bsid') - b.getAttributeInt('bsid'));
+
+// sort based on tileIndex
+allHatchBlockArray.sort((a, b) => a.getAttributeInt('tile_index') - b.getAttributeInt('tile_index'));
+
+// sort based on pass number
+allHatchBlockArray.sort((a, b) => a.getAttributeInt('passNumber') - b.getAttributeInt('passNumber'));
+
+
 // the tile in the first pass, set processing order
+
+let sortedHatchArray = new HATCH.bsHatch();
 
 for (let i = 0; i<allHatchBlockArray.length;i++)
  {
@@ -1415,12 +1427,13 @@ for (let i = 0; i<allHatchBlockArray.length;i++)
   thisBlock.removeAttributes('sharedZone');
   thisBlock.removeAttributes('zoneIndex');
   thisBlock.removeAttributes('tile_exposure_time');
-   let temm = 0
+
+ sortedHatchArray.addHatchBlock(thisBlock);
  }
 
-
+ 
 let simplifiedDataHatch = new HATCH.bsHatch();
-simplifiedDataHatch = mergeBlocks(allTileHatch);  
+simplifiedDataHatch = mergeBlocks(sortedHatchArray);  
  
 
 hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 

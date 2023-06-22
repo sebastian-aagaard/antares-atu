@@ -10,7 +10,7 @@ hatch_auto=true
 skip_empty=true
 background_color=@Variant(\0\0\0\x43\x1\xff\xff\xff\xff\xff\xff\xff\xff\0\0)
 last_save_image_path=
-hatch_overlap=false
+hatch_overlap=true
 animate_slider=true
 rulers=false
 hatch_start_points=false
@@ -43,7 +43,7 @@ PlatformParameterProfile=734bc2c9-a2f0-4a40-a27b-1f8a28d712f4
 1\shiftZ=0
 1\thickness=100
 1\modelIndex=0
-size=5
+size=6
 2\path=C:/Users/sebas/OneDrive/Work/ADIRA4/first-rep/ATU/TEST PARTS/BASIC_cube_c5.3mf
 2\support=false
 2\solid=true
@@ -88,6 +88,17 @@ size=5
 5\shiftZ=0
 5\thickness=100
 5\modelIndex=0
+6\path=C:/Program Files/Autodesk/Netfabb Ultimate 2024/PartLibrary/Examples/UFO - Lyall Randell.3mf
+6\support=false
+6\solid=true
+6\objName=UFO - Lyall Randell
+6\fileObjNr=1
+6\scale=1
+6\shiftX=0
+6\shiftY=0
+6\shiftZ=0
+6\thickness=100
+6\modelIndex=0
 
 [defaults]
 slicing_thickness=100
@@ -99,7 +110,7 @@ keyring=32lMUNbpqpf1qR8XPUQKcVAuN+pZvCrMWDa0l24lMUNbpqpJwbRtSuRYZdZCrt/a0l
 licence_json={}
 
 [smokeSimulation]
-enable_smoke_simulation=true
+enable_smoke_simulation=false
 timeline_resolution=50000
 gas_flow_direction=@Variant(\0\0\0\x1a\0\0\0\0\0\0\0\0\xbf\xf0\0\0\0\0\0\0)
 gas_flow_speed=300
@@ -124,7 +135,7 @@ polygon_delay=0
 polygon_delay_mode=0
 
 [3dview]
-enable_3d_view=true
+enable_3d_view=false
 
 [levelset]
 value_min=0
