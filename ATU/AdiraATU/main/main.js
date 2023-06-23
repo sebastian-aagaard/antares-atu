@@ -280,7 +280,6 @@ exports.prepareModelExposure = function(model)
   var layer_thickness = model.getLayerThickness();
   var material_name = model.getMaterialID();
   
-  if(material_name == 'IN718') {
     
     model.setAttrib('melting-point', '1260');
     model.setAttrib('density','5.4');
@@ -343,16 +342,8 @@ exports.prepareModelExposure = function(model)
     model.setAttribEx('support_contour',support_contour);
      
 
-  } else if (material_name == 'DevelopmentMode') {
-
-    model.setAttrib('melting-point', '1180');
-
-  } else {
-    // This script only accepts materials it specifies in 'declareMachine'
-    throw new Error('Invalid material');
-  }
-  
  
+
   var openPolyLine_power = model.getAttribEx('openpolyline').power_watt;
   var openPolyLine_speed = model.getAttribEx('openpolyline').markspeed;
   var openPolyLine_defocus = model.getAttribEx('openpolyline').power_defocus;
@@ -380,9 +371,7 @@ exports.prepareModelExposure = function(model)
   var support_contour_power = model.getAttribEx('support_contour').power_watt;
   var support_contour_speed = model.getAttribEx('support_contour').markspeed;
   var support_contour_defocus = model.getAttribEx('support_contour').defocus;
-  
-
-  
+    
  
  // let part_hatch_power = PARAM.getParamInt('laser', 'fill_power');
 //  let part_hatch_speed = PARAM.getParamReal('laser', 'fill_speed');
@@ -1219,6 +1208,35 @@ let reducePointsArgs = {
     }     
     
     thisLayer.setAttribEx('tileSegmentArr',tileSegmentArr);
+    
+    let exporter_3mf = {
+        "namespace": "http://adira.com/tilinginformation/202305",
+        "prefix": "adira",
+        "content": {
+           "name": "sequence",
+	         "attributes": {
+		          "uuid": "7b85d4a4-bc8b-44eb-b5f4-59fb25cb9d77",
+		          "startx": 0.0,
+		          "starty": 0.0,
+		          "sequencetransferspeed": 120,
+		          "type": "moveandshoot"
+	          },
+	          "children": [
+		          {
+			          "name": "movement",
+			          "attributes": {
+				          "tileid": 1,
+                  "targetx": 0.0,
+                  "targety": 20.0,
+                  "speedy": 100.0
+			          }			
+		          }
+            ]
+        }
+
+    };
+    
+    thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
     
   /////////////////////////////////////
   /// Assign laser options to hatch /// 
