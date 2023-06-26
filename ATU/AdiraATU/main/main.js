@@ -257,6 +257,8 @@ exports.declareBuildAttributes = function(buildAttrib)
   buildAttrib.declareAttributeReal('power'); // beam laser power
   buildAttrib.declareAttributeReal('speed'); // scanning speed
   buildAttrib.declareAttributeInt('type'); // scanning type
+  buildAttrib.declareAttributeInt('3mf_attribute');
+  buildAttrib.declareAttributeInt('atu_attribute');
   buildAttrib.declareAttributeInt('passNumber');//
   buildAttrib.declareAttributeReal('xcoord');
   buildAttrib.declareAttributeReal('ycoord');
@@ -268,7 +270,6 @@ exports.declareBuildAttributes = function(buildAttrib)
   buildAttrib.declareAttributeInt('zoneExposure');
   buildAttrib.declareAttributeInt('zoneIndex');
   buildAttrib.declareAttributeReal('ScanheadMoveSpeed');
-  
   for(let i = 0 ; i<PARAM.getParamInt('exposure', 'laser_count') ; i++){
     buildAttrib.declareAttributeInt('laser_index_'+(i+1));
   }
@@ -321,6 +322,7 @@ exports.prepareModelExposure = function(model)
     model.setAttrib('melting-point', '1260');
     model.setAttrib('density','5.4');
     model.setAttrib('gas','Argon');
+  
     
     let openpolyline = {
     power_watt: 221.92,
@@ -584,6 +586,8 @@ function getTileArray(modelLayer,bDrawTile){
    // add empty model to display the tilepositions 
       
    var tileTable = [];  // store the tilelayout
+   var tileTable3mf = [];  
+     
      
     let cur_tile_coord_x =  scanhead_x_starting_pos;
     let cur_tile_coord_y =  scanhead_y_starting_pos;
@@ -627,6 +631,19 @@ function getTileArray(modelLayer,bDrawTile){
       tile_obj.scanhead_x_coord = cur_tile_coord_x;
       tile_obj.scanhead_y_coord = cur_tile_coord_y;
       tileTable.push(tile_obj);
+       
+       //3mf data:
+       var tile3mf = new Object;
+       let TileEntry3mf = {
+         "name": "movement",
+         "attributes": {
+           "tileID": j,
+            "targetx": cur_tile_coord_x,
+            "targety": cur_tile_coord_y,
+            "speedy": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms')
+         }
+       };
+       tileTable3mf.push(TileEntry3mf);
       
       cur_tile_coord_y = cur_tile.next_y_coord;
     }
@@ -636,6 +653,7 @@ function getTileArray(modelLayer,bDrawTile){
   }
   
   modelLayer.setAttribEx('tileTable',tileTable);
+  modelLayer.setAttribEx('tileTable_3mf',tileTable3mf);
   modelLayer.setAttrib('requiredPassesX',required_passes_x.toString());
   modelLayer.setAttrib('requiredPassesY',required_passes_y.toString());
 }
@@ -653,6 +671,7 @@ function getTileArray(modelLayer,bDrawTile){
 */
 exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
 {  
+  
   
   
   // to be implemented - ATDSK 
@@ -710,10 +729,10 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
         if (modelLayer.isValid())
         {
           
-          var thisLayerBounds = modelLayer.getBounds();
+          let thisLayerBounds = modelLayer.getBounds();
           layerBoundaries[layerIt] = thisLayerBounds;
         
-          modelLayer.setAttribEx('boundaries',thisLayerBounds);          
+          modelLayer.setAttribEx('boundaries',layerBoundaries[layerIt]);          
         }
        
        // calculate the tileArray
@@ -1286,6 +1305,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
      // add some attributes to hatchblocks
      tileHatch.setAttributeInt('passNumber', tileArray[j].passNumber);
      tileHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
+     tileHatch.setAttributeInt('atu_attribute',tileArray[j].tile_number);
+     tileHatch.setAttributeInt('3mf_attribute',tileArray[j].tile_number);
      tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
      tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
      
@@ -1317,8 +1338,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       } else {
       var type = 'onthefly'
     };
-    
-    
+  var required_passes_x = thisLayer.getAttrib('requiredPassesX');
+  var required_passes_y = thisLayer.getAttrib('requiredPassesY');
     var exporter_3mf = {
         "namespace": "http://adira.com/tilinginformation/202305",
         "prefix": "adira",
@@ -1329,21 +1350,29 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 		          "startx": PARAM.getParamReal('movementSettings','head_startpos_x'),
 		          "starty": PARAM.getParamReal('movementSettings','head_startpos_y'),
 		          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
-		          "type": type
+		          "type": type,
+              "gas": thisModel.getAttrib('gas'),
+              "density": thisModel.getAttrib('density'),
+              "requiredPasses": thisLayer.getAttrib('requiredPassesX'),
+              "tilesInPass": thisLayer.getAttrib('requiredPassesY')
 	          },
 	          "children": [
-		          {
-			          "name": "movement",
-			          "attributes": {
-				          "tileid": 1,
-                  "targetx": 0.0,
-                  "targety": 20.0,
-                  "speedy": 100.0
-			          }			
-		          }
+// 		          {
+// 			          "name": "movement",
+// 			          "attributes": {
+// 				          "tileid": 1,
+//                   "targetx": 0.0,
+//                   "targety": 20.0,
+//                   "speedy": 100.0
+// 			          }			
+// 		          }
             ]
         }
     };
+    
+    let thistiletable = thisLayer.getAttribEx('tileTable_3mf');
+    
+    exporter_3mf.content.children.push(thistiletable);
     
     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
     
@@ -1576,8 +1605,6 @@ sortedHatchArray.mergeCollinearLines(mergeColArgs3);
 let simplifiedDataHatch = new HATCH.bsHatch();
 simplifiedDataHatch = mergeBlocks(sortedHatchArray);  
 simplifiedDataHatch.moveDataFrom(sortedHatchArray);
-
- 
  
 // get the maximum laser duration in each tile (per pass)
  
@@ -2165,9 +2192,21 @@ var postprocessLayerStack_MT = function(
     
     
   } //for (iterate through layers)
-
-  var totalPartMass = surfaceAreaTotal*layerThickness*10;
-  var totalPackedPowder = layer_end_nr * PARAM.getParamInt('workarea','x_workarea_max_mm') * PARAM.getParamInt('workarea','y_workarea_max_mm') ;
+  
+      
+  var totalPartMass = surfaceAreaTotal*layerThickness*model.getAttrib('density');
+  var totalPackedPowder = layer_end_nr * PARAM.getParamInt('workarea','x_workarea_max_mm') * PARAM.getParamInt('workarea','y_workarea_max_mm')*layerThickness*model.getAttrib('density');
+  
+//   modelData.setTrayAttrib('totalPartMass',totalPartMass.toString());
+//   modelData.setTrayAttrib('totalPackedPowder',totalPackedPowder.toString());
+  
+  let json = {
+    "totalPartMass":totalPartMass,
+    "totalPackedPowder":totalPackedPowder
+    };
+    
+   modelData.setTrayAttribEx('custom',json);
+  //modelData.setTrayAttrib('custom',totalPackedPowder.toString());   
   let temm = 0;
 };
 
