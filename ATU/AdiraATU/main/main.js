@@ -1301,6 +1301,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
      
      hatchResult.moveDataFrom(tileHatch);
      //allTileHatch.moveDataFrom(tileHatch);     
+
+//INFORMATION ABOUT TILEID AND SCAN HEAD XCOORD and YCOORD available here
+
     }
 
 //     allContourHatch.makeEmpty();
@@ -1309,6 +1312,12 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     thisLayer.setAttribEx('tileSegmentArr',tileSegmentArr);   
     
     // generate data for 3mf exporter
+    if (PARAM.getParamInt('tileing','ScanningMode') == 0){
+      var type = 'moveandshoot'
+      } else {
+      var type = 'onthefly'
+    };
+    
     
     var exporter_3mf = {
         "namespace": "http://adira.com/tilinginformation/202305",
@@ -1320,7 +1329,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 		          "startx": PARAM.getParamReal('movementSettings','head_startpos_x'),
 		          "starty": PARAM.getParamReal('movementSettings','head_startpos_y'),
 		          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
-		          "type": "moveandshoot"
+		          "type": type
 	          },
 	          "children": [
 		          {
@@ -1542,13 +1551,13 @@ let sortedHatchArray = new HATCH.bsHatch();
 for (let i = 0; i<allHatchBlockArray.length;i++)
  {
   let thisBlock = allHatchBlockArray[i]; // remove attributed used for calculation to allow merging hatchblocks
-//   thisBlock.removeAttributes('laser_index_1');
-//   thisBlock.removeAttributes('laser_index_2'); 
-//   thisBlock.removeAttributes('laser_index_3');  
-//   thisBlock.removeAttributes('laser_index_4');  
-//   thisBlock.removeAttributes('laser_index_5'); 
-//   thisBlock.removeAttributes('sharedZone');
-//   thisBlock.removeAttributes('zoneIndex');
+  thisBlock.removeAttributes('laser_index_1');
+  thisBlock.removeAttributes('laser_index_2'); 
+  thisBlock.removeAttributes('laser_index_3');  
+  thisBlock.removeAttributes('laser_index_4');  
+  thisBlock.removeAttributes('laser_index_5'); 
+  thisBlock.removeAttributes('sharedZone');
+  thisBlock.removeAttributes('zoneIndex');
 
  sortedHatchArray.addHatchBlock(thisBlock);
  }
