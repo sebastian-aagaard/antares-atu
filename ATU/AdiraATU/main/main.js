@@ -47,8 +47,9 @@ exports.declareMachine = function(machineConfig)
   machineConfig.setBuildstyleName('OTF');
   machineConfig.setMachineName('AddCreator');
   machineConfig.addMaterialName('IN718');
+  //machineConfig.addLayerThicknessToMaterial('IN718', 50);
   machineConfig.addMaterialName('DevelopmentMode');
-  machineConfig.addLayerThickness(50);
+//   machineConfig.addLayerThickness(50);
   machineConfig.addLayerThickness(200);
 };
 
@@ -184,7 +185,7 @@ exports.declareParameters = function(parameter)
 
   // onthefly
   parameter.declareParameterGroup('otf', LOCALIZER.GetMessage('grp_otf'));
-    parameter.declareParameterReal('otf','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,160.0,30.0);
+    parameter.declareParameterReal('otf','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,160.0,33.0);
     parameter.declareParameterReal('otf','axis_max_speed', LOCALIZER.GetMessage('param_axis_max_speed'),0.0,100.0,80.0);
     parameter.declareParameterReal('otf','tile_rest_period', LOCALIZER.GetMessage('param_tile_rest_period'),0.0,120.0,0);
     
@@ -502,7 +503,13 @@ function getTilePosition(x_pos,y_pos){
   this.x_min = x_pos;// + PARAM.getParamReal('scanhead','x_scanner1_ref_mm') + PARAM.getParamReal('scanhead','x_scanner1_min_mm2');
   this.x_max = x_pos + PARAM.getParamReal('scanhead','x_scanfield_size_mm');//(PARAM.getParamReal('scanhead','x_scanner5_ref_mm') + PARAM.getParamReal('scanhead','x_scanner5_max_mm2');
   this.y_min = y_pos;// + PARAM.getParamReal('scanhead','stripe_ref_mm') + PARAM.getParamReal('scanhead','stripe_min_y_mm');
-  this.y_max = y_pos +PARAM.getParamReal('scanhead','y_scanfield_size_mm'); //PARAM.getParamReal('scanhead','stripe_ref_mm') + PARAM.getParamReal('scanhead','stripe_max_y_mm');
+  
+    if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot     
+      this.y_max = y_pos + PARAM.getParamReal('scanhead','y_scanfield_size_mm'); 
+    } else { //onthefly   
+      this.y_max = y_pos + PARAM.getParamReal('otf','tile_size');
+    }  
+    
   this.x_global_limit = PARAM.getParamReal('scanhead','x_global_max_limit');
   this.y_global_limit = PARAM.getParamReal('scanhead','y_global_max_limit');
   this.tile_height = this.y_max - this.y_min;
@@ -773,8 +780,15 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
     this.rel_x_max = x_max_range;
     this.rel_x_min = x_min_range;
     this.x_ref = x_ref;
-    this.rel_y_max = PARAM.getParamReal('scanhead','stripe_max_y_mm');
-    this.rel_y_min = PARAM.getParamReal('scanhead','stripe_min_y_mm');
+    
+    if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
+      this.rel_y_min = 0;
+      this.rel_y_max = PARAM.getParamReal('scanhead','y_scanfield_size_mm');
+    } else { //onthefly
+      this.rel_y_min = 0;
+      this.rel_y_max = PARAM.getParamReal('otf','tile_size');
+    }
+
     this.y_range = Math.abs(this.rel_y_max)+Math.abs(this.rel_y_min);
     this.y_ref = PARAM.getParamReal('scanhead','stripe_ref_mm');
     this.x_range = Math.abs(x_max_range)+Math.abs(x_min_range);
@@ -883,37 +897,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   /// Merge all islands into one object ///
   /////////////////////////////////////////
  
-  let all_islands = new ISLAND.bsIsland(); // generate island object
-
-  var island_it = modelData.getFirstIsland(nLayerNr); // get island Iterator
-  
-  let all_islands_part = new ISLAND.bsIsland(); // generate island object
-  let all_islands_support = new ISLAND.bsIsland(); // generate island object
-  
-  while(island_it.isValid())
-    { 
-      var is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
-      var is_support = MODEL.nSubtypeSupport == island_it.getModelSubtype();
-      
-      var island = island_it.getIsland().clone();
-      
-      //check if the model is part or support and store them.
-      if(is_part)
-        {          
-          all_islands_part.addIslands(island_it.getIsland().clone()); //merging all islands into one object (consists of vertices)
-          
-        } else { // is support
-          
-           all_islands_support.addIslands(island_it.getIsland().clone()); //merging all islands into one object (consists of vertices)
-        }    
-      island_it.next();
-    } // while
-  
-    // join islands
-     all_islands.addIslands(all_islands_part);
-     all_islands.addIslands(all_islands_support);  
-        
-   function generateOffset (islandObj,offset){
+    function generateOffset (islandObj,offset){
       
       var offsetIsland = new ISLAND.bsIsland(); 
       var borderHatch = new HATCH.bsHatch();
@@ -925,102 +909,226 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
         'borderHatch' : borderHatch
       };
     }
-      
  
+  let all_islands = new ISLAND.bsIsland(); // generate island object
+  var allContourHatch = new HATCH.bsHatch();
+
+  var island_it = modelData.getFirstIsland(nLayerNr); // get island Iterator
   
-   var allIslandOffset = generateOffset(all_islands,beam_compensation).offsetIsland;
-   var allIslandBorderClipper = generateOffset(allIslandOffset,0.0002).offsetIsland;
-   var allIslandBorder = generateOffset(all_islands,beam_compensation).borderHatch;
-   var allIslandsHull = generateOffset(all_islands,beam_compensation*2).offsetIsland;
-   var allIslandBorderHatch = generateOffset(all_islands,beam_compensation).borderHatch;
+  let all_islands_part = new ISLAND.bsIsland(); // generate island object
+  let all_islands_support = new ISLAND.bsIsland(); // generate island object
+   
+  let allDownSkinContourHatch = new HATCH.bsHatch();  
+  
+  var allHatch = new HATCH.bsHatch(); 
+  while(island_it.isValid())
+    { 
+      var is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
+      var is_support = MODEL.nSubtypeSupport == island_it.getModelSubtype();
+      
+      let bulkIsland = new ISLAND.bsIsland();
+      let downSkinbulkIsland = new ISLAND.bsIsland();
+      
+      var island = island_it.getIsland().clone();    
+      var islandOffset = generateOffset(island,beam_compensation).offsetIsland;
+      let islandContourHatch = new HATCH.bsHatch();
+      islandOffset.borderToHatch(islandContourHatch);
+       var islandBorderClipper = generateOffset(islandOffset,0.0002).offsetIsland;
+      //check if the model is part or support and store them.
+      if(is_part)
+        {          
+                    
+          //find down skin area
+          var down_skin_island = new ISLAND.bsIsland();
+          var not_down_skin_island = new ISLAND.bsIsland();
+
+          islandOffset.splitMultiLayerOverhang(down_skin_surface_angle, down_skin_overlap, down_skin_layer_reference,
+          not_down_skin_island, down_skin_island);
+          
+          if(!down_skin_island.isEmpty())
+            {
+              
+              downSkinbulkIsland = generateOffset(down_skin_island,beam_compensation).offsetIsland;
+              
+              let downSkinContourHatch = new HATCH.bsHatch(); 
+              down_skin_island.borderToHatch(downSkinContourHatch);        
+              downSkinContourHatch.setAttributeReal('power', down_skin_contour_power);
+              downSkinContourHatch.setAttributeReal('speed', down_skin_contour_speed);
+              downSkinContourHatch.setAttributeInt('type',type_downskin_contour);    
+              downSkinContourHatch.clip(islandBorderClipper,false);   
+              //hatchResult.moveDataFrom(downSkinContourHatch); // move downskin border to results              
+                            
+              // down skin hatching
+              var downSkin_hatch = new HATCH.bsHatch();
+              downSkinbulkIsland.hatch(downSkin_hatch, down_skin_hatch_density, cur_hatch_angle, 
+                HATCH.nHatchFlagAlternating | 
+                HATCH.nHatchFlagBlocksortEnhanced |
+                HATCH.nHatchFlagFlexDensity
+              );
+        
+              downSkin_hatch.setAttributeReal('power', down_skin_fill_power);
+              downSkin_hatch.setAttributeReal('speed', down_skin_fill_speed);
+              downSkin_hatch.setAttributeInt('type',type_downskin_hatch);    
+              allHatch.moveDataFrom(downSkin_hatch);  // move down skin hatch to results       
+            }
+      
+          // not down skin islands
+          if(!not_down_skin_island.isEmpty())
+          {
+            
+            let contourHatch = new HATCH.bsHatch();
+            islandOffset
+            islandOffset.borderToHatch(contourHatch); // temp solutions
+            //not_down_skin_island.borderToHatch(contourHatch);            
+            contourHatch.setAttributeReal('power', border_power);
+            contourHatch.setAttributeReal('speed', border_speed);
+            contourHatch.setAttributeInt('type',type_part_contour);
+            //contourHatch.clip(down_skin_island,false); WIP this clip splits it between different scanners
+            hatchResult.moveDataFrom(contourHatch);
+                       
+            bulkIsland = generateOffset(not_down_skin_island,beam_compensation).offsetIsland;
+            
+            // Hatching remaining area (not down skin)
+            var fill_hatch = new HATCH.bsHatch();
+            bulkIsland.hatch(fill_hatch, hatch_density, cur_hatch_angle, 
+              HATCH.nHatchFlagAlternating | 
+              HATCH.nHatchFlagBlocksortEnhanced |
+              HATCH.nHatchFlagFlexDensity
+            );
+            
+            fill_hatch.setAttributeReal('power', fill_power);
+            fill_hatch.setAttributeReal('speed', fill_speed);      
+            fill_hatch.setAttributeInt('type',type_part_hatch);
+            allHatch.moveDataFrom(fill_hatch);
+          }
+          
+        } else { // is support
+          
+          let supportBorderHatch = new HATCH.bsHatch();  
+          bulkIsland.borderToHatch(supportBorderHatch);
+          supportBorderHatch.setAttributeReal('power', support_contour_power);
+          supportBorderHatch.setAttributeReal('speed', support_contour_speed);
+          supportBorderHatch.setAttributeInt('type',type_support_contour);
+          allContourHatch.moveDataFrom(supportBorderHatch);
+          
+          
+          
+          var support_hatch = new HATCH.bsHatch();
+          bulkIsland.hatch(support_hatch, hatch_density, cur_hatch_angle, 
+              HATCH.nHatchFlagAlternating | 
+              HATCH.nHatchFlagBlocksortEnhanced |
+              HATCH.nHatchFlagFlexDensity
+            );
+          
+          support_hatch.setAttributeReal('power', support_hatch_power);
+          support_hatch.setAttributeReal('speed', support_hatch_speed);      
+          support_hatch.setAttributeInt('type',type_support_hatch);
+          allHatch.moveDataFrom(support_hatch);       
+        }
+        
+        
+      all_islands.addIslands(islandOffset);    
+      island_it.next();
+    } // while
+  
+//     // join islands
+//      
+//      all_islands.addIslands(all_islands_support);  
+//         
+
+//     
+//   
+//    var allIslandOffset = generateOffset(all_islands,beam_compensation).offsetIsland;
+  
+//    var allIslandBorder = generateOffset(all_islands,beam_compensation).borderHatch;
+//    var allIslandsHull = generateOffset(all_islands,beam_compensation*2).offsetIsland;
+//    var allIslandBorderHatch = generateOffset(all_islands,beam_compensation).borderHatch;
     
   //hatchResult.moveDataFrom(allIslandBorder);
     
   // check for downskin
-   var allHatch = new HATCH.bsHatch(); 
-   var down_skin_island = new ISLAND.bsIsland();
-   var not_down_skin_island = new ISLAND.bsIsland();
-
-   allIslandOffset.splitMultiLayerOverhang(down_skin_surface_angle, down_skin_overlap, down_skin_layer_reference,
-        not_down_skin_island, down_skin_island);
+  
+//    var down_skin_island = new ISLAND.bsIsland();
+//    var not_down_skin_island = new ISLAND.bsIsland();
+// 
+//    allIslandOffset.splitMultiLayerOverhang(down_skin_surface_angle, down_skin_overlap, down_skin_layer_reference,
+//         not_down_skin_island, down_skin_island);
         
-   var downSkinContourHatch = new HATCH.bsHatch();
-   var contourHatch = new HATCH.bsHatch();
-   var bulkIsland = new ISLAND.bsIsland();
-   var downSkinIsland = new ISLAND.bsIsland();
    
-   if(!down_skin_island.isEmpty())
-      {
-        down_skin_island.borderToHatch(downSkinContourHatch);
-        //downSkinContourHatch = generateOffset(down_skin_island,0).borderHatch; // create contour and offset island
-        //let downSkinClip = generateOffset(down_skin_island,beam_compensation).offsetIsland; // create contour and offset island
-        // if there is downskin, clip the overall borderhatch with downskinIslands, and assign downskin contour params  
-        //downSkinContourHatch = allIslandBorder.clone();
-        // remove nonDownSkinIslands from the allIslands, to get the remaining
-        
-        //let downSkinBorderIslands = allIslandOffset.subtract(not_down_skin_island);
-        //downSkinBorderIslands.borderToHatch(downSkinContourHatch);
-        //downSkinContourHatch = downSkinContour;
-        //downSkinContourHatch = allIslandBorder.clip(down_skin_island,true);
-        
-        //downSkinContourHatch.clip(allIslandOffset,false);
-        //set attributes
-        downSkinContourHatch.setAttributeReal('power', down_skin_contour_power);
-        downSkinContourHatch.setAttributeReal('speed', down_skin_contour_speed);
-        downSkinContourHatch.setAttributeInt('type',type_downskin_contour);
-        
-        //hatchResult.moveDataFrom(downSkinContourHatch);
-    
-        downSkinIsland = generateOffset(down_skin_island,beam_compensation).offsetIsland;
-     
-        // Down skin hatching
-        var downSkin_hatch = new HATCH.bsHatch();
-          downSkinIsland.hatch(downSkin_hatch, down_skin_hatch_density, cur_hatch_angle, 
-          HATCH.nHatchFlagAlternating | 
-          HATCH.nHatchFlagBlocksortEnhanced |
-          HATCH.nHatchFlagFlexDensity
-        );
-        
-        downSkin_hatch.setAttributeReal('power', down_skin_fill_power);
-        downSkin_hatch.setAttributeReal('speed', down_skin_fill_speed);
-        downSkin_hatch.setAttributeInt('type',type_downskin_hatch);    
-        allHatch.moveDataFrom(downSkin_hatch);       
-        
-      }
-      
-      if(!not_down_skin_island.isEmpty())
-      {
-        not_down_skin_island.borderToHatch(contourHatch);
-        
-        contourHatch.setAttributeReal('power', border_power);
-        contourHatch.setAttributeReal('speed', border_speed);
-        contourHatch.setAttributeInt('type',type_part_contour);
-        //contourHatch.clip(downSkinIsland,false);
-        
-        //hatchResult.moveDataFrom(contourHatch);
-        bulkIsland = generateOffset(not_down_skin_island,beam_compensation).offsetIsland;
-        
-        // Hatching remaining area (not down skin)
-        var fill_hatch = new HATCH.bsHatch();
-          bulkIsland.hatch(fill_hatch, hatch_density, cur_hatch_angle, 
-          HATCH.nHatchFlagAlternating | 
-          HATCH.nHatchFlagBlocksortEnhanced |
-          HATCH.nHatchFlagFlexDensity
-        );
-        
-        fill_hatch.setAttributeReal('power', fill_power);
-        fill_hatch.setAttributeReal('speed', fill_speed);      
-        fill_hatch.setAttributeInt('type',type_part_hatch);
-        allHatch.moveDataFrom(fill_hatch);
-      }
+   
+   
+//    if(!down_skin_island.isEmpty())
+//       {
+//         down_skin_island.borderToHatch(downSkinContourHatch);
+//         //downSkinContourHatch = generateOffset(down_skin_island,0).borderHatch; // create contour and offset island
+//         //let downSkinClip = generateOffset(down_skin_island,beam_compensation).offsetIsland; // create contour and offset island
+//         // if there is downskin, clip the overall borderhatch with downskinIslands, and assign downskin contour params  
+//         //downSkinContourHatch = allIslandBorder.clone();
+//         // remove nonDownSkinIslands from the allIslands, to get the remaining
+//         
+//         //let downSkinBorderIslands = allIslandOffset.subtract(not_down_skin_island);
+//         //downSkinBorderIslands.borderToHatch(downSkinContourHatch);
+//         //downSkinContourHatch = downSkinContour;
+//         //downSkinContourHatch = allIslandBorder.clip(down_skin_island,true);
+//         
+//         //downSkinContourHatch.clip(allIslandOffset,false);
+//         //set attributes
+//         downSkinContourHatch.setAttributeReal('power', down_skin_contour_power);
+//         downSkinContourHatch.setAttributeReal('speed', down_skin_contour_speed);
+//         downSkinContourHatch.setAttributeInt('type',type_downskin_contour);
+//         
+//         //hatchResult.moveDataFrom(downSkinContourHatch);
+//     
+//         downSkinIsland = generateOffset(down_skin_island,beam_compensation).offsetIsland;
+//      
+//         // Down skin hatching
+//         var downSkin_hatch = new HATCH.bsHatch();
+//           downSkinIsland.hatch(downSkin_hatch, down_skin_hatch_density, cur_hatch_angle, 
+//           HATCH.nHatchFlagAlternating | 
+//           HATCH.nHatchFlagBlocksortEnhanced |
+//           HATCH.nHatchFlagFlexDensity
+//         );
+//         
+//         downSkin_hatch.setAttributeReal('power', down_skin_fill_power);
+//         downSkin_hatch.setAttributeReal('speed', down_skin_fill_speed);
+//         downSkin_hatch.setAttributeInt('type',type_downskin_hatch);    
+//         allHatch.moveDataFrom(downSkin_hatch);       
+//         
+//       }
+//       
+//       if(!not_down_skin_island.isEmpty())
+//       {
+//         not_down_skin_island.borderToHatch(contourHatch);
+//         
+//         contourHatch.setAttributeReal('power', border_power);
+//         contourHatch.setAttributeReal('speed', border_speed);
+//         contourHatch.setAttributeInt('type',type_part_contour);
+//         //contourHatch.clip(downSkinIsland,false);
+//         
+//         //hatchResult.moveDataFrom(contourHatch);
+//         bulkIsland = generateOffset(not_down_skin_island,beam_compensation).offsetIsland;
+//         
+//         // Hatching remaining area (not down skin)
+//         var fill_hatch = new HATCH.bsHatch();
+//           bulkIsland.hatch(fill_hatch, hatch_density, cur_hatch_angle, 
+//           HATCH.nHatchFlagAlternating | 
+//           HATCH.nHatchFlagBlocksortEnhanced |
+//           HATCH.nHatchFlagFlexDensity
+//         );
+//         
+//         fill_hatch.setAttributeReal('power', fill_power);
+//         fill_hatch.setAttributeReal('speed', fill_speed);      
+//         fill_hatch.setAttributeInt('type',type_part_hatch);
+//         allHatch.moveDataFrom(fill_hatch);
+//       }
 
  // clip to fit
- var allContourHatch = new HATCH.bsHatch();
- if(!downSkinContourHatch.isEmpty())
- {
-   contourHatch.clip(down_skin_island,false);
-
-   downSkinContourHatch.clip(allIslandBorderClipper,false);
+ //var allContourHatch = new HATCH.bsHatch();
+ //if(!allDownSkinContourHatch.isEmpty())
+// {
+   
+   //allContourHatch.clip(down_skin_island,false);
+   //allDownSkinContourHatch.clip(allIslandBorderClipper,false);
 //    let downPathset = new PATH_SET.bsPathSet();
 //    downPathset.addHatches(downSkinContourHatch);
 //    let patchCount =downPathset.getPathCount();
@@ -1034,13 +1142,14 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 //     //downSkinContourHatch.clip(partIsland,false);
     //contourHatch.clip(downSkinIsland,false);
     //contourHatch.clip(allIslandClip,false)
-    allContourHatch.moveDataFrom(downSkinContourHatch);
- }
+    
+// }
   
-
- allContourHatch.moveDataFrom(contourHatch);
-
-  //hatchResult.moveDataFrom(contour_hatch_part); // store contour in hatch
+//  allContourHatch.moveDataFrom(downSkinContourHatch);
+//  allContourHatch.moveDataFrom(contourHatch);
+//  allContourHatch.moveDataFrom(supportH)
+  //hatchResult.moveDataFrom(allDownSkinContourHatch);
+  //hatchResult.moveDataFrom(allContourHatch); // store contour in hatch
       
  //divide into stripes
   var stripeIslands = new ISLAND.bsIsland();  
@@ -1180,22 +1289,22 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
      tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
      tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
      
-     // add attributes to contour
-     let contourHatch= new HATCH.bsHatch();  // generate hatching object
-     contourHatch = ClipHatchByRect(allContourHatch,vec2_tile_array[j]);
-     contourHatch.setAttributeInt('passNumber', tileArray[j].passNumber);
-     contourHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
-     contourHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
-     contourHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
-     
-     tempContourHatch.moveDataFrom(contourHatch);
+//      // add attributes to contour
+//      let contourHatch= new HATCH.bsHatch();  // generate hatching object
+//      contourHatch = ClipHatchByRect(allContourHatch,vec2_tile_array[j]);
+//      contourHatch.setAttributeInt('passNumber', tileArray[j].passNumber);
+//      contourHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
+//      contourHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
+//      contourHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
+//      
+//      tempContourHatch.moveDataFrom(contourHatch);
      
      hatchResult.moveDataFrom(tileHatch);
      //allTileHatch.moveDataFrom(tileHatch);     
     }
 
-    allContourHatch.makeEmpty();
-    allContourHatch.moveDataFrom(tempContourHatch);
+//     allContourHatch.makeEmpty();
+//     allContourHatch.moveDataFrom(tempContourHatch);
     
     thisLayer.setAttribEx('tileSegmentArr',tileSegmentArr);   
     
@@ -1380,7 +1489,7 @@ function defineSharedZones(){
 
 // let tempVar = PARAM.getParamInt('tileing', 'TilingMode');
 
- allTileHatch.moveDataFrom(allContourHatch); // ADD contour hatches to be divided bewteen lasers!
+ //allTileHatch.moveDataFrom(allContourHatch); // ADD contour hatches to be divided bewteen lasers!
 
  if (PARAM.getParamInt('tileing', 'TilingMode') == 0){ // static tiling
    
@@ -1433,13 +1542,13 @@ let sortedHatchArray = new HATCH.bsHatch();
 for (let i = 0; i<allHatchBlockArray.length;i++)
  {
   let thisBlock = allHatchBlockArray[i]; // remove attributed used for calculation to allow merging hatchblocks
-  thisBlock.removeAttributes('laser_index_1');
-  thisBlock.removeAttributes('laser_index_2'); 
-  thisBlock.removeAttributes('laser_index_3');  
-  thisBlock.removeAttributes('laser_index_4');  
-  thisBlock.removeAttributes('laser_index_5'); 
-  thisBlock.removeAttributes('sharedZone');
-  thisBlock.removeAttributes('zoneIndex');
+//   thisBlock.removeAttributes('laser_index_1');
+//   thisBlock.removeAttributes('laser_index_2'); 
+//   thisBlock.removeAttributes('laser_index_3');  
+//   thisBlock.removeAttributes('laser_index_4');  
+//   thisBlock.removeAttributes('laser_index_5'); 
+//   thisBlock.removeAttributes('sharedZone');
+//   thisBlock.removeAttributes('zoneIndex');
 
  sortedHatchArray.addHatchBlock(thisBlock);
  }
@@ -1959,7 +2068,7 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
      }
     
      laserIndex++;
-     if (laserIndex>PARAM.getParamInt('exposure', 'laser_count')-1)
+     if (laserIndex>PARAM.getParamInt('exposure', 'laser_count'))
      {
        laserIndex=0;
      }
