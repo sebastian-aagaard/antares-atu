@@ -322,8 +322,7 @@ exports.prepareModelExposure = function(model)
     model.setAttrib('melting-point', '1260');
     model.setAttrib('density','5.4');
     model.setAttrib('gas','Argon');
-  
-    
+     
     let openpolyline = {
     power_watt: 221.92,
     power_percent: 55.48,
@@ -647,7 +646,8 @@ function getTileArray(modelLayer,bDrawTile){
            "tileID": j,
             "targetx": cur_tile_coord_x,
             "targety": cur_tile_coord_y,
-            "speedy": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms')
+            "speedy": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
+            "tileExposureTime" : 0
          }
        };
        tileTable3mf.push(TileEntry3mf);
@@ -1358,10 +1358,12 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 		          "starty": PARAM.getParamReal('movementSettings','head_startpos_y'),
 		          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
 		          "type": type,
-              "gas": thisModel.getAttrib('gas'),
-              "density": thisModel.getAttrib('density'),
+//               "gas": thisModel.getAttrib('gas'),
+//               "density": thisModel.getAttrib('density'),
               "requiredPasses": thisLayer.getAttrib('requiredPassesX'),
-              "tilesInPass": thisLayer.getAttrib('requiredPassesY')
+              "tilesInPass": thisLayer.getAttrib('requiredPassesY'),
+              "layerScanningDuration": 0,
+              
 	          },
 	          "children": [
 // 		          {
@@ -1381,7 +1383,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     
     exporter_3mf.content.children.push(thistiletable);
     
-    thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
+//     exporter_3mf.content.attributes.layerScanningDuration = 
+//     
+//     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
     
   /////////////////////////////////////
   /// Assign laser options to hatch /// 
@@ -1617,88 +1621,107 @@ simplifiedDataHatch.moveDataFrom(sortedHatchArray);
  
 var simplHatchArray = simplifiedDataHatch.getHatchBlockArray();
  
+// assign tiles to pass groups
+var passNumberGroups = {};
 
-// passnumber -> tileID -> processDuration
- // assign tiles to pass groups
- var passNumberGroups = {};
- 
- for (let i = 0; i<simplHatchArray.length;i++)
- {
-  let thisBlock = simplHatchArray[i]; // remove attributed used for calculation to allow merging hatchblocks
-  let passNumber = thisBlock.getAttributeInt('passNumber');
-  
-  if(!passNumberGroups[passNumber]){
-    passNumberGroups[passNumber] = [thisBlock];
-  } else {
-    passNumberGroups[passNumber].push(thisBlock);
+for (let i = 0; i<simplHatchArray.length;i++)
+{
+    let thisBlock = simplHatchArray[i];
+    let passNumber = thisBlock.getAttributeInt('passNumber');
+    
+    if (!passNumberGroups[passNumber]) {
+        passNumberGroups[passNumber] = {
+            'passExposureDuration': 0,
+            'blocks': [thisBlock]
+        };
+    } else {
+        passNumberGroups[passNumber].blocks.push(thisBlock);
     }
- }
+}
 
 // get BSID table:
- var bsidTable = thisModel.getAttribEx('customTable');
+var bsidTable = thisModel.getAttribEx('customTable');
 
 // Process each pass number group and calculate the largest process duration
- 
 for (let passNumber in passNumberGroups){
-  let thisPass = passNumberGroups[passNumber];
-  let zoneMap = {};
-  //let largestLaserDuration = 0;
-  
-  for(let i = 0; i<thisPass.length;i++){
-    let hatchBlock = thisPass[i];
-    let tileID = hatchBlock.getAttributeInt('tile_index');
+    let thisPass = passNumberGroups[passNumber];
+    let zoneMap = {};
     
-    //get process and laser information
-    let bsid = hatchBlock.getAttributeInt('bsid'); // get bsid designation
-    let laserID = Math.floor(bsid/10); // get laser designation
-   
-   if (!zoneMap[tileID]) {
-     zoneMap[tileID] = {};
-   } 
-    //createZoneMap for [tileID][laserID] 
-   if (!zoneMap[tileID][laserID]) {
-      zoneMap[tileID][laserID] = {
-        hatchBlocks: [],
-        maxLaserProcessDuration: 0
-      };
+    for(let i = 0; i<thisPass.blocks.length;i++){
+        let hatchBlock = thisPass.blocks[i];
+        let tileID = hatchBlock.getAttributeInt('tile_index');
+        
+        //get process and laser information
+        let bsid = hatchBlock.getAttributeInt('bsid'); 
+        let laserID = Math.floor(bsid/10); 
+    
+        if (!zoneMap[tileID]) {
+            zoneMap[tileID] = {
+                'tileExposureDuration':0
+            };
+        } 
+    
+        if (!zoneMap[tileID][laserID]) {
+            zoneMap[tileID][laserID] = {
+                hatchBlocks: [],
+                maxLaserProcessDuration: 0
+            };
+        }
+        
+        let thisProcessParameters = bsidTable.find(function (item) {
+            return item.bsid === bsid;
+        });
+        
+        let exposureSettings =  {
+            'fJumpSpeed' : PARAM.getParamReal('exposure', 'JumpSpeed'),
+            'fMeltSpeed' : thisProcessParameters.speed,
+            'fJumpLengthLimit' : PARAM.getParamReal('exposure', 'JumpLengthLimit'),
+            'nJumpDelay' : PARAM.getParamInt('exposure', 'JumpDelay'),
+            'nMinJumpDelay': PARAM.getParamInt('exposure', 'MinJumpDelay'),
+            'nMarkDelay' : PARAM.getParamInt('exposure', 'MarkDelay'),
+            'nPolygonDelay': PARAM.getParamInt('exposure', 'PolygonDelay'),
+            'polygonDelayMode' : PARAM.getParamStr('exposure', 'PolygonDelayMode'),
+        };
+        
+        let thisExposureDuration = new EXPOSURETIME.bsExposureTime();
+        thisExposureDuration.configure(exposureSettings);
+        thisExposureDuration.addHatchBlock(hatchBlock);
+        let exposureTime = thisExposureDuration.getExposureTimeMicroSeconds();
+        
+        zoneMap[tileID][laserID].hatchBlocks.push(hatchBlock); 
+        
+        if (exposureTime > zoneMap[tileID][laserID].maxLaserProcessDuration) {
+            zoneMap[tileID][laserID].maxLaserProcessDuration = exposureTime;
+            if(exposureTime>zoneMap[tileID].tileExposureDuration){
+                zoneMap[tileID].tileExposureDuration = exposureTime;
+                exporter_3mf.content.children[passNumber][tileID].attributes.tileExposureTime = exposureTime;
+            }
+        }
     }
     
-    // get the bsid containing the process parameters relevant for this block
-    let thisProcessParameters = bsidTable.find(function (item) {
-    return item.bsid === bsid;
-      });
-       
-    // set specific exposure settings
-     let exposureSettings =  
-      {
-        'fJumpSpeed' : PARAM.getParamReal('exposure', 'JumpSpeed'),
-        'fMeltSpeed' : thisProcessParameters.speed,
-        'fJumpLengthLimit' : PARAM.getParamReal('exposure', 'JumpLengthLimit'),
-        'nJumpDelay' : PARAM.getParamInt('exposure', 'JumpDelay'),
-        'nMinJumpDelay': PARAM.getParamInt('exposure', 'MinJumpDelay'),
-        'nMarkDelay' : PARAM.getParamInt('exposure', 'MarkDelay'),
-        'nPolygonDelay': PARAM.getParamInt('exposure', 'PolygonDelay'),
-        'polygonDelayMode' : PARAM.getParamStr('exposure', 'PolygonDelayMode'),
-      };
-      
-    let thisExposureDuration = new EXPOSURETIME.bsExposureTime(); // create new exposure object
-    thisExposureDuration.configure(exposureSettings);  // apply current settings
-    thisExposureDuration.addHatchBlock(hatchBlock); //add the current hatchblock
-    let exposureTime = thisExposureDuration.getExposureTimeMicroSeconds();
-      
-    //hatchBlock.setAttributeInt('zoneExposure',exposureTime);  // add exposure time to each hatchBlock
+    var passDuration = 0;
+    for(let tileID in zoneMap){
+        passDuration += zoneMap[tileID].tileExposureDuration;
+    } 
     
-    zoneMap[tileID][laserID].hatchBlocks.push(hatchBlock); 
-      
-    if (exposureTime > zoneMap[tileID][laserID].maxLaserProcessDuration) {
-      zoneMap[tileID][laserID].maxLaserProcessDuration = exposureTime;
-    }
-  }
-  
-  // Replace the original pass group with the zone map
-  passNumberGroups[passNumber] = zoneMap;
+    zoneMap.passExposureDuration = passDuration;
+    passNumberGroups[passNumber] = zoneMap;
 }
- 
+
+let layerExposureDuration = 0;
+
+for (let pass in passNumberGroups){
+    if(passNumberGroups[pass].passExposureDuration){
+        layerExposureDuration += passNumberGroups[pass].passExposureDuration;
+    }
+}
+
+passNumberGroups.layerExposureDuration = layerExposureDuration;
+
+exporter_3mf.content.attributes.layerScanningDuration = layerExposureDuration;
+
+thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
+
 hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 
 
 }; // makeExposureLayer
@@ -2162,6 +2185,7 @@ var postprocessLayerStack_MT = function(
   // calculate the porocessign order based on tiles and hatchtype
     progress.initSteps(layer_end_nr-layer_start_nr+1);
   var surfaceAreaTotal = 0;
+  var buildTimeEstimate = 0;
   let model = modelData.getModel(0);
 
   var layerThickness = model.getLayerThickness();
@@ -2170,6 +2194,51 @@ var postprocessLayerStack_MT = function(
     progress.step(1);
      
     let modelLayer = model.getModelLayerByNr(layer_nr);
+    
+    let exporter_3mf = modelLayer.getAttribEx('exporter_3mf');
+   
+    let thisLayerDuration = exporter_3mf.content.attributes.layerScanningDuration;
+    
+    let requiredPasses = exporter_3mf.content.attributes.requiredPasses;
+    let tilesInPass = exporter_3mf.content.attributes.tilesInPass;
+    let startx = exporter_3mf.content.attributes.startx;
+    let starty = exporter_3mf.content.attributes.starty;
+    let transferSpeed = exporter_3mf.content.attributes.sequencetransferspeed;
+    let totalMoveDuration=0;
+    
+    // calculate distance travelled single
+    for (let i = 0; i < requiredPasses;i++){
+      let movementSpeed = transferSpeed;
+      
+      for (let j = 0; j< tilesInPass;j++){
+        
+        let targetx = exporter_3mf.content.children[i][j].attributes.targetx;
+        let targety = exporter_3mf.content.children[i][j].attributes.targety;
+
+        let a = startx-targetx;
+        let b = starty-targety;
+        let c = Math.sqrt(a*a+b*b);
+        
+        startx = targetx;
+        starty = targety;
+        
+        var moveDuration = c/transferSpeed;
+        totalMoveDuration += moveDuration;   
+      
+        movementSpeed = exporter_3mf.content.children[i][j].attributes.speedy;
+    
+        }
+      }
+    
+   // let movementDuration = 
+    
+    let recoatingDuration = PARAM.getParamInt('movementSettings','recoating_time_ms');
+      
+// 	process.printInfo(thisLayerDuration);
+//   process.printInfo(recoatingDuration);
+// 	process.printInfo(totalMoveDuration);
+    
+    buildTimeEstimate += thisLayerDuration+recoatingDuration+totalMoveDuration;
     
     let ilandIT = modelLayer.getFirstIsland();
     
@@ -2201,20 +2270,28 @@ var postprocessLayerStack_MT = function(
   } //for (iterate through layers)
   
       
-  var totalPartMass = surfaceAreaTotal*layerThickness*model.getAttrib('density');
-  var totalPackedPowder = layer_end_nr * PARAM.getParamInt('workarea','x_workarea_max_mm') * PARAM.getParamInt('workarea','y_workarea_max_mm')*layerThickness*model.getAttrib('density');
+  var totalPartMass = surfaceAreaTotal*layerThickness*model.getAttrib('density')/(1000*1000);
+  var totalPackedPowder = layer_end_nr * layerThickness * PARAM.getParamInt('workarea','x_workarea_max_mm') * PARAM.getParamInt('workarea','y_workarea_max_mm')*model.getAttrib('density') / (1000*1000);
   
 //   modelData.setTrayAttrib('totalPartMass',totalPartMass.toString());
 //   modelData.setTrayAttrib('totalPackedPowder',totalPackedPowder.toString());
-  
+
+     // generate data for 3mf exporter
+    if (PARAM.getParamInt('tileing','ScanningMode') == 0){
+      var type = 'moveandshoot'
+      } else {
+      var type = 'onthefly'
+    };
+
   let json = {
     "totalPartMass":totalPartMass,
-    "totalPackedPowder":totalPackedPowder
-    };
-    
+    "totalPackedPowder":totalPackedPowder,
+    "gas": model.getAttrib('gas'),
+    "density": parseFloat(model.getAttrib('density')),
+    "type": type,
+    "buildTimeEstimate":buildTimeEstimate
+    };    
    modelData.setTrayAttribEx('custom',json);
-  //modelData.setTrayAttrib('custom',totalPackedPowder.toString());   
-  let temm = 0;
 };
 
 /**
