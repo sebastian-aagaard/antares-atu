@@ -165,7 +165,8 @@ exports.declareParameters = function(parameter)
       
       parameter.declareParameterChoice('skywriting','skywritingMode',
           LOCALIZER.GetMessage('param_skywritingMode'),
-          [LOCALIZER.GetMessage('param_skywritingMode_1'),
+          [LOCALIZER.GetMessage('param_skywritingMode_0'),
+          LOCALIZER.GetMessage('param_skywritingMode_1'),
           LOCALIZER.GetMessage('param_skywritingMode_2'),
           LOCALIZER.GetMessage('param_skywritingMode_3')],
           LOCALIZER.GetMessage('param_skywritingMode_3')
@@ -433,6 +434,17 @@ exports.prepareModelExposure = function(model)
 
   // Create custom table
   //generates a custom  table containing different parameters depending on laser number
+  
+  let skywritingAttributes = {      
+    "schema": "http://schemas.scanlab.com/skywriting/2023/01",          
+    "mode": PARAM.getParamInt('skywriting','skywritingMode'),
+    "timelag": PARAM.getParamInt('skywriting','timelag'),
+    "laseronshift": PARAM.getParamInt('skywriting','laserOnShift'),
+    "limit": PARAM.getParamReal('skywriting','mode3limit'),
+    "nprev": PARAM.getParamInt('skywriting','nprev'),
+    "npost": PARAM.getParamInt('skywriting','npost')
+  };
+  
   var customTable = [];  
   for(let l_laser_nr = 1; l_laser_nr<=laser_count;++l_laser_nr)
   {
@@ -445,6 +457,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = openPolyLine_defocus;
     bsid_obj.speed = openPolyLine_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'openPolyline_priority');
+    bsid_obj.attributes = [ skywritingAttributes ];
     customTable.push(bsid_obj);
 
     // Part Hatch
@@ -456,6 +469,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = part_hatch_defocus;
     bsid_obj.speed = part_hatch_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'part_hatch_priority');    
+    bsid_obj.attributes = [ skywritingAttributes ];
     customTable.push(bsid_obj);
     
     // part Contour
@@ -467,6 +481,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = part_contour_defocus;
     bsid_obj.speed = part_contour_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'part_contour_priority');    
+    bsid_obj.attributes = [ skywritingAttributes ];
     customTable.push(bsid_obj);
     
     // downskin Hatch
@@ -478,6 +493,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = downskin_hatch_defocus;
     bsid_obj.speed = downskin_hatch_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'downskin_hatch_priority');    
+    bsid_obj.attributes = [ skywritingAttributes ];
     customTable.push(bsid_obj);
     
     // downskin Contour
@@ -489,6 +505,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = downskin_contour_defocus;
     bsid_obj.speed = downskin_contour_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'downskin_contour_priority');    
+    bsid_obj.attributes = [ skywritingAttributes ];
     customTable.push(bsid_obj);
     
     // Support Hatch
@@ -500,6 +517,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = support_hatch_defocus;
     bsid_obj.speed = support_hatch_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'support_hatch_priority');    
+    bsid_obj.attributes = [ skywritingAttributes ];
     customTable.push(bsid_obj);
     
     // Support Contour
@@ -511,6 +529,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = support_contour_defocus;
     bsid_obj.speed = support_contour_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'support_contour_priority');    
+    bsid_obj.attributes = [ skywritingAttributes ];
     customTable.push(bsid_obj);
     
   } // for
@@ -871,25 +890,7 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
     }); // sort the zones in consequtive order
  
    modelDataTarget.setTrayAttribEx('scanhead_zones',scanhead_zones);
-        
-   let exporter_3mf = {
-      "namespace": "http://adira.com/tilinginformation/202305",
-      "prefix": "adira",
-      "attributes": [
-         {
-           "type": "skywriting",
-           "mode": PARAM.getParamStr('skywriting','skywritingMode'),
-           "timelag": PARAM.getParamInt('skywriting','timelag'),
-           "laserOnShift": PARAM.getParamInt('skywriting','laserOnShift'),
-           "nprev": PARAM.getParamInt('skywriting','nprev'),
-           "npost": PARAM.getParamInt('skywriting','npost'),
-           "mode3limit": PARAM.getParamReal('skywriting','mode3limit')
-          } 
-       ]
-     };
-
-   modelDataTarget.setTrayAttribEx('skywriting',exporter_3mf);
-    
+            
 };
 
 /**
@@ -1379,7 +1380,6 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   var required_passes_y = thisLayer.getAttrib('requiredPassesY');
     var exporter_3mf = {
         "namespace": "http://adira.com/tilinginformation/202305",
-        "prefix": "adira",
         "content": {
            "name": "sequence",
 	         "attributes": {
@@ -2315,18 +2315,74 @@ var postprocessLayerStack_MT = function(
 //       var type = 'onthefly'
 //     };
 
-  let json = {
-    "totalPartMass":totalPartMass,
-    "totalPackedPowder":totalPackedPowder,
-    "gas": model.getAttrib('gas'),
-    "density": parseFloat(model.getAttrib('density')),
-    "type": PARAM.getParamStr('tileing','ScanningMode'),
-    "buildTimeEstimate":buildTimeEstimate,
-     "attributes":[
-      modeldataSkywriting.attributes[0],
-      ]
-    };    
-   modelData.setTrayAttribEx('custom',json);
+  let customJSON = {
+    
+    "namespaces": [
+      {
+        "schema": "http://schemas.scanlab.com/skywriting/2023/01",
+        "prefix": "skywriting"
+      },      
+      {
+        "schema": "http://adira.com/addcreator/202305",
+        "prefix": "adira"
+      },
+      {
+        "schema": "http://adira.com/tilinginformation/202305",
+        "prefix": "tiling"
+      }    
+    ],
+      
+    toolpathdata: [
+      {
+        "name": "statistics",
+        "schema": "http://adira.com/addcreator/202305",
+        attributes: {
+          "build_time": buildTimeEstimate,
+          "total_mass": totalPartMass,
+          "total_packed_powder": totalPackedPowder                
+        }        
+      },
+      
+      {
+        "name": "generation",
+        "schema": "http://adira.com/addcreator/202305",
+        attributes: {
+          "created_at": "2023-06-07T14:33:49.200Z",
+          "created_by": "engineer"
+        }        
+      },
+
+      {
+        "name": "material",
+        "schema": "http://adira.com/addcreator/202305",
+        attributes: {
+          "layerthickness": layerThickness,
+          "identifier": "Material name",
+          "density": parseFloat(model.getAttrib('density')),
+          "gas": model.getAttrib('gas')          
+        }        
+      },
+      
+      {
+        "name": "process",
+        "schema": "http://adira.com/addcreator/202305",
+        "children": [
+          {
+            "name": "recoating",
+            attributes: {
+              "speed": 120
+            }        
+          
+          }
+        ]
+                
+      }
+
+    ]};
+    
+    //"type": PARAM.getParamStr('tileing','ScanningMode'),
+      
+   modelData.setTrayAttribEx('custom', customJSON);
 };
 
 /**

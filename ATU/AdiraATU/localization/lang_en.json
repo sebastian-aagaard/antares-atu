@@ -75,6 +75,7 @@
     "param_x_scanner5_min_mm": "Scanner 5 X-range min (mm)",
   "grp_skywriting": "Sky Writing",
    "param_skywritingMode": "Mode",
+   "param_skywritingMode_0": "No Sky Writing",
    "param_skywritingMode_1": "Mode 1",
    "param_skywritingMode_2": "Mode 2",
    "param_skywritingMode_3": "Mode 3",
