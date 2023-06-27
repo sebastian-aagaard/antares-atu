@@ -161,7 +161,21 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', 'x_scanner5_min_mm2',LOCALIZER.GetMessage('param_x_scanner5_min_mm'),-100,0,-80);
     parameter.declareParameterReal('scanhead', 'x_scanner5_ref_mm',LOCALIZER.GetMessage('param_x_scanner5_ref_mm'),0,390,380);    
     
-    
+    parameter.declareParameterGroup('skywriting', LOCALIZER.GetMessage('grp_skywriting'));
+      
+      parameter.declareParameterChoice('skywriting','skywritingMode',
+          LOCALIZER.GetMessage('param_skywritingMode'),
+          [LOCALIZER.GetMessage('param_skywritingMode_1'),
+          LOCALIZER.GetMessage('param_skywritingMode_2'),
+          LOCALIZER.GetMessage('param_skywritingMode_3')],
+          LOCALIZER.GetMessage('param_skywritingMode_3')
+          );
+          
+      parameter.declareParameterInt('skywriting','timelag', LOCALIZER.GetMessage('param_timelag'),0,1000,174);
+      parameter.declareParameterInt('skywriting','laserOnShift', LOCALIZER.GetMessage('param_laserOnShift'),-1000,1000,-40);
+      parameter.declareParameterInt('skywriting','nprev', LOCALIZER.GetMessage('param_nprev'),0,1000,110);
+      parameter.declareParameterInt('skywriting','npost', LOCALIZER.GetMessage('param_npost'),0,1000,90);
+      parameter.declareParameterReal('skywriting','mode3limit', LOCALIZER.GetMessage('param_mode3limit'),0.0,100.0,0.9);
     
 //     parameter.declareParameterReal('scanhead', 'x_scanner1_max_mm2',LOCALIZER.GetMessage('param_x_scanner1_max_mm'),0,100,80);
 //     parameter.declareParameterReal('scanhead', 'x_scanner1_min_mm2',LOCALIZER.GetMessage('param_x_scanner1_min_mm'),-100,0,-40);
@@ -856,7 +870,25 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
       return a - b;
     }); // sort the zones in consequtive order
  
-   modelDataTarget.setTrayAttribEx('scanhead_zones',scanhead_zones); 
+   modelDataTarget.setTrayAttribEx('scanhead_zones',scanhead_zones);
+        
+   let exporter_3mf = {
+      "namespace": "http://adira.com/tilinginformation/202305",
+      "prefix": "adira",
+      "attributes": [
+         {
+           "type": "skywriting",
+           "mode": PARAM.getParamStr('skywriting','skywritingMode'),
+           "timelag": PARAM.getParamInt('skywriting','timelag'),
+           "laserOnShift": PARAM.getParamInt('skywriting','laserOnShift'),
+           "nprev": PARAM.getParamInt('skywriting','nprev'),
+           "npost": PARAM.getParamInt('skywriting','npost'),
+           "mode3limit": PARAM.getParamReal('skywriting','mode3limit')
+          } 
+       ]
+     };
+
+   modelDataTarget.setTrayAttribEx('skywriting',exporter_3mf);
     
 };
 
@@ -1329,8 +1361,6 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
      
      hatchResult.moveDataFrom(tileHatch);
      //allTileHatch.moveDataFrom(tileHatch);     
-
-//INFORMATION ABOUT TILEID AND SCAN HEAD XCOORD and YCOORD available here
 
     }
 
@@ -2270,26 +2300,31 @@ var postprocessLayerStack_MT = function(
   } //for (iterate through layers)
   
       
-  var totalPartMass = surfaceAreaTotal*layerThickness*model.getAttrib('density')/(1000*1000);
-  var totalPackedPowder = layer_end_nr * layerThickness * PARAM.getParamInt('workarea','x_workarea_max_mm') * PARAM.getParamInt('workarea','y_workarea_max_mm')*model.getAttrib('density') / (1000*1000);
+  var totalPartMass = surfaceAreaTotal*layerThickness*model.getAttrib('density')/(1000*1000*1000);
+  var totalPackedPowder = layer_end_nr * layerThickness * PARAM.getParamInt('workarea','x_workarea_max_mm') * PARAM.getParamInt('workarea','y_workarea_max_mm')*model.getAttrib('density') / (1000*1000*1000);
+  
+  let modeldataSkywriting = modelData.getTrayAttribEx('skywriting');
   
 //   modelData.setTrayAttrib('totalPartMass',totalPartMass.toString());
 //   modelData.setTrayAttrib('totalPackedPowder',totalPackedPowder.toString());
 
-     // generate data for 3mf exporter
-    if (PARAM.getParamInt('tileing','ScanningMode') == 0){
-      var type = 'moveandshoot'
-      } else {
-      var type = 'onthefly'
-    };
+//      // generate data for 3mf exporter
+//     if (PARAM.getParamInt('tileing','ScanningMode') == 0){
+//       var type = 'moveandshoot'
+//       } else {
+//       var type = 'onthefly'
+//     };
 
   let json = {
     "totalPartMass":totalPartMass,
     "totalPackedPowder":totalPackedPowder,
     "gas": model.getAttrib('gas'),
     "density": parseFloat(model.getAttrib('density')),
-    "type": type,
-    "buildTimeEstimate":buildTimeEstimate
+    "type": PARAM.getParamStr('tileing','ScanningMode'),
+    "buildTimeEstimate":buildTimeEstimate,
+     "attributes":[
+      modeldataSkywriting.attributes[0],
+      ]
     };    
    modelData.setTrayAttribEx('custom',json);
 };
