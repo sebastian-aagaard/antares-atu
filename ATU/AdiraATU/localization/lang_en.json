@@ -73,6 +73,16 @@
     "param_x_scanner5_ref_mm": "Scanner 5 X-ref (mm)",
     "param_x_scanner5_max_mm": "Scanner 5 X-range max (mm)",
     "param_x_scanner5_min_mm": "Scanner 5 X-range min (mm)",
+  "grp_skywriting": "Sky Writing",
+   "param_skywritingMode": "Mode",
+   "param_skywritingMode_1": "Mode 1",
+   "param_skywritingMode_2": "Mode 2",
+   "param_skywritingMode_3": "Mode 3",
+   "param_timelag": "Timelag (us)",
+   "param_laserOnShift":"LaserOnShift (us)",
+   "param_nprev": "Nprev (us)",
+   "param_npost": "Npost (us)",
+   "param_mode3limit": "Mode3 Limit",
   "grp_otf": "OnThefly",
      "param_tile_size": "Tile Size (mm)",
      "param_axis_max_speed" : "Axis Max. Speed (mm/s)",
@@ -101,4 +111,3 @@
      "param_support_contour_priority" : "Support Contour",
      "param_openPolyline_priority" : "Open Polylines"
 }
-
