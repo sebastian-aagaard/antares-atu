@@ -74,7 +74,7 @@ exports.declareParameters = function(parameter)
 
     parameter.declareParameterReal('exposure', 'beam_compensation', LOCALIZER.GetMessage('param_beam_compensation'), 0.0, 10.0, 0.05);
     parameter.declareParameterReal('exposure', 'boarder_offset', LOCALIZER.GetMessage('param_boarder_offset'), 0.0, 10.0, 0.05);
-    parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 20.0, 0.1);
+    parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 50.0, 0.1);//0.1
     
     parameter.declareParameterReal('exposure', 'hatch_angle_init', LOCALIZER.GetMessage('param_hatch_angle_init'), 0, 360, 45);
     parameter.declareParameterReal('exposure', 'hatch_angle_increment', LOCALIZER.GetMessage('param_hatch_angle_increment'), -360, 360, 90.0);
@@ -128,8 +128,8 @@ exports.declareParameters = function(parameter)
 
   // scanner head
   parameter.declareParameterGroup('scanhead',LOCALIZER.GetMessage('grp_scanhead'));
-    parameter.declareParameterReal('scanhead', 'y_global_max_limit', 'parm_y_global_max_limit',0,1000,995);
-    parameter.declareParameterReal('scanhead', 'x_global_max_limit', 'param_y_global_max_limit',0,1000,660);
+    parameter.declareParameterReal('scanhead', 'y_global_max_limit', 'param_y_global_max_limit',0,1000,995);
+    parameter.declareParameterReal('scanhead', 'x_global_max_limit', 'param_x_global_max_limit',0,1000,660);
     
     parameter.declareParameterReal('scanhead', 'stripe_min_y_mm', LOCALIZER.GetMessage('param_y_stripe_min_mm'),-100, 0, -16.5); // -60
     parameter.declareParameterReal('scanhead', 'stripe_max_y_mm',LOCALIZER.GetMessage('param_y_stripe_max_mm'),0,100,16.5); // 50
@@ -141,24 +141,24 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430);
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);
 
-    parameter.declareParameterReal('scanhead', 'x_scanner1_max_mm2',LOCALIZER.GetMessage('param_x_scanner1_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner1_min_mm2',LOCALIZER.GetMessage('param_x_scanner1_min_mm'),-100,0,-40);
+    parameter.declareParameterReal('scanhead', 'x_scanner1_max_mm',LOCALIZER.GetMessage('param_x_scanner1_max_mm'),0,100,80);
+    parameter.declareParameterReal('scanhead', 'x_scanner1_min_mm',LOCALIZER.GetMessage('param_x_scanner1_min_mm'),-100,0,-40);
     parameter.declareParameterReal('scanhead', 'x_scanner1_ref_mm',LOCALIZER.GetMessage('param_x_scanner1_ref_mm'),0,390,40);
 
-    parameter.declareParameterReal('scanhead', 'x_scanner2_max_mm2',LOCALIZER.GetMessage('param_x_scanner2_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner2_min_mm2',LOCALIZER.GetMessage('param_x_scanner2_min_mm'),-100,0,-80);
+    parameter.declareParameterReal('scanhead', 'x_scanner2_max_mm',LOCALIZER.GetMessage('param_x_scanner2_max_mm'),0,100,80);
+    parameter.declareParameterReal('scanhead', 'x_scanner2_min_mm',LOCALIZER.GetMessage('param_x_scanner2_min_mm'),-100,0,-80);
     parameter.declareParameterReal('scanhead', 'x_scanner2_ref_mm',LOCALIZER.GetMessage('param_x_scanner2_ref_mm'),0,390,125);
 
-    parameter.declareParameterReal('scanhead', 'x_scanner3_max_mm2',LOCALIZER.GetMessage('param_x_scanner3_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner3_min_mm2',LOCALIZER.GetMessage('param_x_scanner3_min_mm'),-100,0,-80);
+    parameter.declareParameterReal('scanhead', 'x_scanner3_max_mm',LOCALIZER.GetMessage('param_x_scanner3_max_mm'),0,100,80);
+    parameter.declareParameterReal('scanhead', 'x_scanner3_min_mm',LOCALIZER.GetMessage('param_x_scanner3_min_mm'),-100,0,-80);
     parameter.declareParameterReal('scanhead', 'x_scanner3_ref_mm',LOCALIZER.GetMessage('param_x_scanner3_ref_mm'),0,390,210);
 
-    parameter.declareParameterReal('scanhead', 'x_scanner4_max_mm2',LOCALIZER.GetMessage('param_x_scanner4_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner4_min_mm2',LOCALIZER.GetMessage('param_x_scanner4_min_mm'),-100,0,-80);
+    parameter.declareParameterReal('scanhead', 'x_scanner4_max_mm',LOCALIZER.GetMessage('param_x_scanner4_max_mm'),0,100,80);
+    parameter.declareParameterReal('scanhead', 'x_scanner4_min_mm',LOCALIZER.GetMessage('param_x_scanner4_min_mm'),-100,0,-80);
     parameter.declareParameterReal('scanhead', 'x_scanner4_ref_mm',LOCALIZER.GetMessage('param_x_scanner4_ref_mm'),0,390,265);
 
-    parameter.declareParameterReal('scanhead', 'x_scanner5_max_mm2',LOCALIZER.GetMessage('param_x_scanner5_max_mm'),0,100,50);
-    parameter.declareParameterReal('scanhead', 'x_scanner5_min_mm2',LOCALIZER.GetMessage('param_x_scanner5_min_mm'),-100,0,-80);
+    parameter.declareParameterReal('scanhead', 'x_scanner5_max_mm',LOCALIZER.GetMessage('param_x_scanner5_max_mm'),0,100,50);
+    parameter.declareParameterReal('scanhead', 'x_scanner5_min_mm',LOCALIZER.GetMessage('param_x_scanner5_min_mm'),-100,0,-80);
     parameter.declareParameterReal('scanhead', 'x_scanner5_ref_mm',LOCALIZER.GetMessage('param_x_scanner5_ref_mm'),0,390,380);    
     
     parameter.declareParameterGroup('skywriting', LOCALIZER.GetMessage('grp_skywriting'));
@@ -287,8 +287,7 @@ exports.declareBuildAttributes = function(buildAttrib)
   for(let i = 0 ; i<PARAM.getParamInt('exposure', 'laser_count') ; i++){
     buildAttrib.declareAttributeInt('laser_index_'+(i+1));
   }
-  
-  
+ 
 };
 
 
@@ -519,7 +518,8 @@ exports.prepareModelExposure = function(model)
 };
 
 // get all relevant information for the tiling providing the origin of the scanhead
-function getTilePosition(x_pos,y_pos){
+function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
+  
   this.xpos = x_pos;
   this.ypos = y_pos;
   this.x_min = x_pos;// + PARAM.getParamReal('scanhead','x_scanner1_ref_mm') + PARAM.getParamReal('scanhead','x_scanner1_min_mm2');
@@ -536,8 +536,12 @@ function getTilePosition(x_pos,y_pos){
   this.y_global_limit = PARAM.getParamReal('scanhead','y_global_max_limit');
   this.tile_height = this.y_max - this.y_min;
   this.tile_width =  this.x_max - this.x_min;
-  this.next_x_coord = x_pos + this.tile_width + PARAM.getParamReal('scanhead','tile_overlap_x');
-  this.next_y_coord = y_pos + this.tile_height + PARAM.getParamReal('scanhead','tile_overlap_y');
+    
+    if(typeof overlap_x === "undefined") overlap_x = PARAM.getParamReal('scanhead','tile_overlap_x');
+    if(typeof overlap_y === "undefined") overlap_y = PARAM.getParamReal('scanhead','tile_overlap_y');
+    
+  this.next_x_coord = x_pos + this.tile_width + overlap_x;
+  this.next_y_coord = y_pos + this.tile_height + overlap_y;
 } 
 
 
@@ -555,6 +559,7 @@ function getTileArray(modelLayer,bDrawTile){
   
    let scene_size_x = maxX - minX;
    let scene_size_y = maxY - minY;     
+  
    //let scence_center_x = minX + scene_size_x/2;
   // let scence_center_y = minY + scene_size_y/2;
    // add some check cannot be larger then required
@@ -570,43 +575,82 @@ function getTileArray(modelLayer,bDrawTile){
    var required_passes_x = Math.ceil(scene_size_x/tileOutlineOrigin.tile_width);
    var required_passes_y = Math.ceil(scene_size_y/tileOutlineOrigin.tile_height);
    
-
-   ///// find the actual starting position of the scanner_head (defined by the scenesize)
-
-   // check boundaries in y
+   //get overlap
+   let overlap_y = PARAM.getParamReal('scanhead','tile_overlap_y');
+   let overlap_x = PARAM.getParamReal('scanhead','tile_overlap_x');
    
-   if((scene_size_y-PARAM.getParamReal('scanhead','y_scanfield_size_mm'))/2+minY < 0 ){ // if the bounds are outside the powderbed force the tiling to start within // shouldn't happen
-       scanhead_y_starting_pos = 0;
+   // readjust required passes based on overlapping tiles
+   if (required_passes_x > 1 && overlap_x!=0) {
+    required_passes_x = Math.ceil(scene_size_x/(tileOutlineOrigin.tile_width+overlap_x));
+     }
+     
+   if (required_passes_y > 1 && overlap_y!=0) {
+    required_passes_y = Math.ceil(scene_size_y/(tileOutlineOrigin.tile_height+overlap_y));
+     }  
+     
+   ///// find the actual starting position of the scanner_head (defined by the scenesize)
+     
+   var workarea_min_x = PARAM.getParamInt('workarea','x_workarea_min_mm');
+   var workarea_min_y = PARAM.getParamInt('workarea','y_workarea_min_mm');
+   var workarea_max_x = PARAM.getParamInt('workarea','x_workarea_max_mm');
+   var workarea_max_y = PARAM.getParamInt('workarea','y_workarea_max_mm');  
+
+   // check boundaries in y   
+   let tile_reach_y = tileOutlineOrigin.tile_height*required_passes_y-overlap_y*(required_passes_y-1);  
+           
+   if((scene_size_y-PARAM.getParamReal('scanhead','y_scanfield_size_mm'))/2+minY < workarea_min_y ){ // if the bounds are outside the powderbed force the tiling to start within // shouldn't happen
+       scanhead_y_starting_pos = workarea_min_y;
      } else {
-     scanhead_y_starting_pos = (scene_size_y-PARAM.getParamReal('scanhead','y_scanfield_size_mm'))/2+minY;
+     scanhead_y_starting_pos = (scene_size_y-tile_reach_y)/2+minY;
      }
     
-     let maxPositionY = scanhead_y_starting_pos+(tileOutlineOrigin.tile_height+PARAM.getParamReal('scanhead','tile_overlap_y'))*(required_passes_y-1);
+     let maxPositionY = scanhead_y_starting_pos+tile_reach_y;
         
-     if (maxPositionY > PARAM.getParamReal('scanhead','y_global_max_limit'))
-       {
-     scanhead_y_starting_pos -= maxPositionY - PARAM.getParamReal('scanhead','y_global_max_limit');
+     if (maxPositionY > workarea_max_y)
+       { // pull back the position with overshoot
+         let yOverShoot = maxPositionY - workarea_max_y;
+         scanhead_y_starting_pos -= yOverShoot;
        }
      
-   // check boundaries in x    
+   // check boundaries in x   
+   let tile_reach_x = tileOutlineOrigin.tile_width*required_passes_x-overlap_x*(required_passes_x-1); 
        
-   if((scene_size_x-PARAM.getParamReal('scanhead','x_scanfield_size_mm'))/2+minX < 0 ){
-       scanhead_x_starting_pos = 0;
+   if((scene_size_x-PARAM.getParamReal('scanhead','x_scanfield_size_mm'))/2+minX < workarea_min_x  ){
+       scanhead_x_starting_pos = workarea_min_x ; // cannot scan outside 
    } else {
-      scanhead_x_starting_pos = (scene_size_x-PARAM.getParamReal('scanhead','x_scanfield_size_mm'))/2+minX;
+      scanhead_x_starting_pos = (scene_size_x-tile_reach_x)/2+minX;
      }
    
-   let maxPositionX = scanhead_x_starting_pos+(tileOutlineOrigin.tile_width+PARAM.getParamReal('scanhead','tile_overlap_x'))*(required_passes_x-1);
+   let maxPositionX = scanhead_x_starting_pos+tile_reach_x;
      
-   if (maxPositionX > PARAM.getParamReal('scanhead','x_global_max_limit'))
-     {
-     scanhead_x_starting_pos -= maxPositionX - PARAM.getParamReal('scanhead','x_global_max_limit');
+   if (maxPositionX > workarea_max_x)
+     { // pull back the position with overshoot
+       let xOverShoot = maxPositionX - workarea_max_x;
+       scanhead_x_starting_pos -= xOverShoot;
      }
-   
+  
+   // if the required passes STILL does not fit within the working area update the overlap bewteen tiles
+
+  //x first
+  if(scanhead_x_starting_pos<workarea_min_x){
+    let outsideby = scanhead_x_starting_pos-workarea_min_x; // calculate how much outside
+    overlap_x = outsideby/(required_passes_x-1); //calculate overlap needed per pass
+    scanhead_x_starting_pos = workarea_min_x; // set start to min x
+  }
+  
+    //y
+  if(scanhead_y_starting_pos<workarea_min_y){
+    let outsideby = scanhead_y_starting_pos-workarea_min_y; // calculate how much outside
+    overlap_y = outsideby/(required_passes_y-1); //calculate overlap needed per pass
+    scanhead_y_starting_pos = workarea_min_y; // set start to min x
+  }
+     
    // add empty model to display the tilepositions 
-      
+   
+  
+     
    var tileTable = [];  // store the tilelayout
-   var tileTable3mf = [];  
+   var tileTable3mf = {};  
      
      
     let cur_tile_coord_x =  scanhead_x_starting_pos;
@@ -615,14 +659,14 @@ function getTileArray(modelLayer,bDrawTile){
   for (let i=0; i <required_passes_x; i++)
   {
     
-    let cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y);
+    let cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
     let next_tile_coord_x = cur_tile.next_x_coord;
     
     
     for(let j =0; j<required_passes_y;j++)
     {       
          
-      cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y);
+      cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
       
       var tile = new PATH_SET.bsPathSet();
       
@@ -664,7 +708,8 @@ function getTileArray(modelLayer,bDrawTile){
             "tileExposureTime" : 0
          }
        };
-       tileTable3mf.push(TileEntry3mf);
+       tileTable3mf[i]=tileTable3mf[i] || []; // Initializes tileTable3mf[i] if not already initialized
+       tileTable3mf[i].push(TileEntry3mf);
       
       cur_tile_coord_y = cur_tile.next_y_coord;
     }
@@ -692,8 +737,6 @@ function getTileArray(modelLayer,bDrawTile){
 */
 exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
 {  
-  
-  
   
   // to be implemented - ATDSK 
   var connectArgs = {
@@ -730,7 +773,7 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
     // find the tile position of each layer
        // add all islands to shadow islands
   
-  // merge all islands on the platform into modelDataTarget
+  // merge all models on the platform into modelDataTarget
    for( let modelIndex=0; modelIndex < modelCount && !progress.cancelled(); modelIndex++ )
     {
       let thisModel = modelDataSrc.getModel(modelIndex);
@@ -815,11 +858,15 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
  // generate scannerhead data obejcts //
  ///////////////////////////////////////
     
-  function scanner(x_max_range,x_min_range,x_ref,laserIndex){
+  function scanner(laserIndex){
+    
     this.laserIndex = laserIndex;
-    this.rel_x_max = x_max_range;
-    this.rel_x_min = x_min_range;
-    this.x_ref = x_ref;
+    this.x_ref = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) + '_ref_mm');  
+    this.rel_x_max = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) +'_max_mm'); // max
+    this.rel_x_min =  PARAM.getParamReal('scanhead','x_scanner'+ (laserIndex) + '_min_mm'); // min
+    
+    
+   
     
     if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
       this.rel_y_min = 0;
@@ -829,23 +876,18 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
       this.rel_y_max = PARAM.getParamReal('otf','tile_size');
     }
 
-    this.y_range = Math.abs(this.rel_y_max)+Math.abs(this.rel_y_min);
-    this.y_ref = PARAM.getParamReal('scanhead','stripe_ref_mm');
-    this.x_range = Math.abs(x_max_range)+Math.abs(x_min_range);
-    this.abs_x_min = x_ref+x_min_range+Math.abs(PARAM.getParamReal('scanhead','x_scanner1_min_mm2'));
-    this.abs_x_max = x_ref+x_max_range+Math.abs(PARAM.getParamReal('scanhead','x_scanner1_min_mm2'));
+    //this.y_range = Math.abs(this.rel_y_max)+Math.abs(this.rel_y_min);
+    //this.y_ref = PARAM.getParamReal('scanhead','stripe_ref_mm');
+    //this.x_range = Math.abs(x_max_range)+Math.abs(x_min_range);
+    this.abs_x_min = this.x_ref+this.rel_x_min;//+Math.abs(PARAM.getParamReal('scanhead','x_scanner1_min_mm2'));
+    this.abs_x_max = this.x_ref+this.rel_x_max;//+Math.abs(PARAM.getParamReal('scanhead','x_scanner1_min_mm2'));
     this.displayColor = l_col[laserIndex];
   }
   
   let scanhead_array = [];
   
   for (let i = 0; i < laser_count; i++) {
-    scanhead_array[i] = new scanner(
-      PARAM.getParamReal('scanhead','x_scanner' + (i+1) +'_max_mm2'), // max
-      PARAM.getParamReal('scanhead','x_scanner'+ (i+1) + '_min_mm2'), // min
-      PARAM.getParamReal('scanhead','x_scanner' + (i+1) + '_ref_mm'), // ref post
-      i+1 // scanner index
-      );
+    scanhead_array[i] = new scanner(i+1);
    }
   modelDataTarget.setTrayAttribEx('scanhead_array',scanhead_array);  
    
@@ -859,18 +901,18 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
     this.xMax = boarder_max
     }
  
-    let m = 0;
-  for (let scanner_iterator = 0; scanner_iterator<laser_count;scanner_iterator++){
-    scanhead_zones_array[scanner_iterator] = new setZoneProperties (scanhead_array[scanner_iterator].abs_x_min,scanhead_array[scanner_iterator].abs_x_max, scanhead_array[scanner_iterator].laserIndex);
-    scanhead_zones[m++] = scanhead_array[scanner_iterator].abs_x_min;
-    scanhead_zones[m++] = scanhead_array[scanner_iterator].abs_x_max;
-  }
-  
-   scanhead_zones.sort(function(a, b) {
-      return a - b;
-    }); // sort the zones in consequtive order
- 
-   modelDataTarget.setTrayAttribEx('scanhead_zones',scanhead_zones);
+//     let m = 0;
+//   for (let scanner_iterator = 0; scanner_iterator<laser_count;scanner_iterator++){
+//     scanhead_zones_array[scanner_iterator] = new setZoneProperties (scanhead_array[scanner_iterator].abs_x_min,scanhead_array[scanner_iterator].abs_x_max, scanhead_array[scanner_iterator].laserIndex);
+//     scanhead_zones[m++] = scanhead_array[scanner_iterator].abs_x_min;
+//     scanhead_zones[m++] = scanhead_array[scanner_iterator].abs_x_max;
+//   }
+//   
+//    scanhead_zones.sort(function(a, b) {
+//       return a - b;
+//     }); // sort the zones in consequtive order
+//  
+//    modelDataTarget.setTrayAttribEx('scanhead_zones',scanhead_zones);
         
    let exporter_3mf = {
       "namespace": "http://adira.com/tilinginformation/202305",
@@ -1014,7 +1056,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
               downSkinContourHatch.setAttributeReal('speed', down_skin_contour_speed);
               downSkinContourHatch.setAttributeInt('type',type_downskin_contour);    
               downSkinContourHatch.clip(islandBorderClipper,false);   
-              //hatchResult.moveDataFrom(downSkinContourHatch); // move downskin border to results              
+              hatchResult.moveDataFrom(downSkinContourHatch); // move downskin border to results              
                             
               // down skin hatching
               var downSkin_hatch = new HATCH.bsHatch();
@@ -1035,13 +1077,13 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           {
             
             let contourHatch = new HATCH.bsHatch();
-            islandOffset
+            let downskinContourClipper = generateOffset(down_skin_island,-0.0005).offsetIsland;
             islandOffset.borderToHatch(contourHatch); // temp solutions
             //not_down_skin_island.borderToHatch(contourHatch);            
             contourHatch.setAttributeReal('power', border_power);
             contourHatch.setAttributeReal('speed', border_speed);
             contourHatch.setAttributeInt('type',type_part_contour);
-            //contourHatch.clip(down_skin_island,false); WIP this clip splits it between different scanners
+            contourHatch.clip(downskinContourClipper,false);// WIP this clip splits it between different scanners
             hatchResult.moveDataFrom(contourHatch);
                        
             bulkIsland = generateOffset(not_down_skin_island,beam_compensation).offsetIsland;
@@ -1228,7 +1270,6 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     hatchResult.moveDataFrom(clippedHatch); 
   }
   
-// currently Support is treated similar to part !!
   
       ///////////////////////////////////////////////////////////////////////
       // narrow bridges
@@ -1340,12 +1381,16 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       
       let tileHatch= new HATCH.bsHatch();  // generate hatching object
       tileHatch = ClipHatchByRect(hatch,vec2_tile_array[j]);
+      
+      let hatchOutside = ClipHatchByRect(hatch,vec2_tile_array[j],false);
+      hatch.makeEmpty();
+      hatch.moveDataFrom(hatchOutside);
 
      // add some attributes to hatchblocks
      tileHatch.setAttributeInt('passNumber', tileArray[j].passNumber);
      tileHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
-     tileHatch.setAttributeInt('atu_attribute',tileArray[j].tile_number);
-     tileHatch.setAttributeInt('3mf_attribute',tileArray[j].tile_number);
+     //tileHatch.setAttributeInt('atu_attribute',tileArray[j].tile_number);
+     //tileHatch.setAttributeInt('3mf_attribute',tileArray[j].tile_number);
      tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
      tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
      
@@ -1415,7 +1460,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     
 //     exporter_3mf.content.attributes.layerScanningDuration = 
 //     
-//     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
+     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
     
   /////////////////////////////////////
   /// Assign laser options to hatch /// 
@@ -1466,33 +1511,39 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
          let laserZoneHatch = new HATCH.bsHatch();
          let laserZoneHatchOutside = new HATCH.bsHatch();
          
-         let laserZone_pathset = new PATH_SET.bsPathSet(); // generate pathset object
-         laserZone_pathset.addNewPath(laserZonePoints); // add tiles zones to pathset  
-         laserZone_pathset.setClosed(true); // set the zones to closed polygons
-         let laserZone_clipping_island = new ISLAND.bsIsland(); // generate island object
-         laserZone_clipping_island.addPathSet(laserZone_pathset); // add pathset as new island
-         laserZoneHatch = tempTileHatch.clone(); // clone overall hatching
-         laserZoneHatchOutside = tempTileHatch.clone(); // clone overall hatching
-         tempTileHatch.makeEmpty(); // empty the container to refill it later
+//          let laserZone_pathset = new PATH_SET.bsPathSet(); // generate pathset object
+//          laserZone_pathset.addNewPath(laserZonePoints); // add tiles zones to pathset  
+//          laserZone_pathset.setClosed(true); // set the zones to closed polygons
+//          let laserZone_clipping_island = new ISLAND.bsIsland(); // generate island object
+//          laserZone_clipping_island.addPathSet(laserZone_pathset); // add pathset as new island
+//          laserZoneHatch = tempTileHatch.clone(); // clone overall hatching
+//          laserZoneHatchOutside = tempTileHatch.clone(); // clone overall hatching
+//          tempTileHatch.makeEmpty(); // empty the container to refill it later
+//           
+//          laserZoneHatch.clip(laserZone_clipping_island,true); // clip the hatching with the tile_islands
+//          laserZoneHatchOutside.clip(laserZone_clipping_island,false); // get ouside of currentzone
           
-         laserZoneHatch.clip(laserZone_clipping_island,true); // clip the hatching with the tile_islands
-         laserZoneHatchOutside.clip(laserZone_clipping_island,false); // get ouside of currentzone
-           
+          let clippingHatch = tempTileHatch.clone();                    
+          laserZoneHatch = ClipHatchByRect(clippingHatch,laserZonePoints);
+          laserZoneHatchOutside = ClipHatchByRect(clippingHatch,laserZonePoints,false);
+          //tempTileHatch.clear();
+                
+          //laserZoneHatchOutside=ClipHatchByRect(clippingHatch,laserZonePoints,false);
          // assign laser index
          laserZoneHatch.setAttributeInt('laser_index_' + (curLaserId), 1);
+         
 
-         tempTileHatch.moveDataFrom(laserZoneHatch);
-         tempTileHatch.moveDataFrom(laserZoneHatchOutside);      
+//           tempTileHatch = laserZoneHatch.clone();
+//           tempTileHatch.moveDataFrom(laserZoneHatchOutside);      
         } // for laser count       
       }   // all tiles
  
-      
+     
       
       let mergeblock = new HATCH.bsHatch();
          mergeblock.moveDataFrom(tempTileHatch);
       
-       
-         
+
          // merge similar hatch blocks to speed up process
          let mergeArgs = {
            'bConvertToHatchMode': true,
@@ -1501,7 +1552,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
            'bCheckAttributes': true
          };
          
-         //tempTileHatch = mergeblock.mergeHatchBlocks(mergeArgs);  
+         tempTileHatch = mergeblock.mergeHatchBlocks(mergeArgs);  
          
          tempTileHatch.moveDataFrom(mergeblock);   
          
@@ -1639,8 +1690,8 @@ for (let i = 0; i<allHatchBlockArray.length;i++)
   "bFlipLines": false
 }; 
   
-let allHatchMergLines = new HATCH.bsHatch();
-sortedHatchArray.mergeCollinearLines(mergeColArgs3);
+//let allHatchMergLines = new HATCH.bsHatch();
+//sortedHatchArray.mergeCollinearLines(mergeColArgs3);
 
 //mergehatchBlocks 
 let simplifiedDataHatch = new HATCH.bsHatch();
@@ -1724,7 +1775,7 @@ for (let passNumber in passNumberGroups){
             zoneMap[tileID][laserID].maxLaserProcessDuration = exposureTime;
             if(exposureTime>zoneMap[tileID].tileExposureDuration){
                 zoneMap[tileID].tileExposureDuration = exposureTime;
-                exporter_3mf.content.children[passNumber][tileID].attributes.tileExposureTime = exposureTime;
+                //exporter_3mf.content.children[passNumber][tileID].attributes.tileExposureTime = exposureTime;
             }
         }
     }
@@ -1784,17 +1835,19 @@ function getValueAtIndex(array, index) {
 }
 
 // clip hatch by rectangle
-function ClipHatchByRect(hatchObj, arr_2dVec) {
+function ClipHatchByRect(hatchObj, arr_2dVec, bKeepInside) {
+  if (typeof bKeepInside === 'undefined') bKeepInside = true;
 	let clippedHatch = new HATCH.bsHatch();
 	let tiles_pathset = new PATH_SET.bsPathSet(); // generate pathset object
 	tiles_pathset.addNewPath(arr_2dVec); // add tiles zones to pathset  
 	tiles_pathset.setClosed(true); // set the zones to closed polygons
 	let tile_clipping_island = new ISLAND.bsIsland(); // generate island object
 	tile_clipping_island.addPathSet(tiles_pathset); // add pathset as new island
+	//clippedHatch.moveDataFrom(hatchObj);
 	clippedHatch = hatchObj.clone(); // clone overall hatching
 
-	clippedHatch.clip(tile_clipping_island, true); // clip the hatching with the tile_islands
-
+	clippedHatch.clip(tile_clipping_island, bKeepInside); // clip the hatching with the tile_islands
+	
 	return clippedHatch;
 }
 
@@ -2075,7 +2128,6 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
   let scanheadZones = new Array();
   scanheadZones = modelData.getTrayAttribEx('scanhead_zones');
   
-  
   //get divison of scanfields in x!
   let xDiv = new Array();
   
@@ -2097,9 +2149,9 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
   for (let i = 0; i<scanheadArray.length+1;i++)
     {
       if (i==0) { // if first elements 
-        xDiv[i] = scanheadArray[i].rel_x_min;
+        xDiv[i] = scanheadArray[i].abs_x_min;
       }else if (i == scanheadArray.length) { // if arraylength is reached
-            xDiv[i] = scanheadArray[i-1].rel_x_max + scanheadArray[i-1].x_ref;
+            xDiv[i] = scanheadArray[i-1].abs_x_max;
       } else {      
       xDiv[i] = (scanheadArray[i-1].x_ref + scanheadArray[i].x_ref)/2 + shiftX;
         } //if else       
@@ -2148,7 +2200,9 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
      
      let tileHatch = new HATCH.bsHatch();
      tileHatch = ClipHatchByRect(curHatch,clipPoints);
-     
+     let outsideHatch = ClipHatchByRect(curHatch,clipPoints,false);
+     curHatch.makeEmpty();
+     curHatch.moveDataFrom(outsideHatch);
      // add display and bsid attributes to hatchblocks
      
      let hatchIterator = tileHatch.getHatchBlockIterator();
@@ -2164,7 +2218,7 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
      }
     
      laserIndex++;
-     if (laserIndex>PARAM.getParamInt('exposure', 'laser_count'))
+     if (laserIndex>PARAM.getParamInt('exposure', 'laser_count')-1)
      {
        laserIndex=0;
      }
@@ -2242,8 +2296,8 @@ var postprocessLayerStack_MT = function(
       
       for (let j = 0; j< tilesInPass;j++){
         
-        let targetx = exporter_3mf.content.children[i][j].attributes.targetx;
-        let targety = exporter_3mf.content.children[i][j].attributes.targety;
+        let targetx = exporter_3mf.content.children[0][i][j].attributes.targetx;
+        let targety = exporter_3mf.content.children[0][i][j].attributes.targety;
 
         let a = startx-targetx;
         let b = starty-targety;
@@ -2255,7 +2309,7 @@ var postprocessLayerStack_MT = function(
         var moveDuration = c/transferSpeed;
         totalMoveDuration += moveDuration;   
       
-        movementSpeed = exporter_3mf.content.children[i][j].attributes.speedy;
+        movementSpeed = exporter_3mf.content.children[0][i][j].attributes.speedy;
     
         }
       }
@@ -2270,13 +2324,13 @@ var postprocessLayerStack_MT = function(
     
     buildTimeEstimate += thisLayerDuration+recoatingDuration+totalMoveDuration;
     
-    let ilandIT = modelLayer.getFirstIsland();
+    let islandIT = modelLayer.getFirstIsland();
     
-    while(ilandIT.isValid())
+    while(islandIT.isValid())
     {
-      let thisIland = ilandIT.getIsland();
+      let thisIland = islandIT.getIsland();
       surfaceAreaTotal += thisIland.getSurfaceArea();
-      ilandIT.next();
+      islandIT.next();
     }
     
     // get model data polylinearray
