@@ -452,7 +452,7 @@ exports.prepareModelExposure = function(model)
     // Open Polylines
     var bsid_obj = new Object();
     bsid_obj.bsid = (10 * l_laser_nr); //laser no * 10
-    bsid_obj.laserindex = l_laser_nr;
+    bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_openpolyline";
     bsid_obj.power = openPolyLine_power;
     bsid_obj.focus = openPolyLine_defocus;
@@ -464,7 +464,7 @@ exports.prepareModelExposure = function(model)
     // Part Hatch
     var bsid_obj = new Object();
     bsid_obj.bsid = (10 * l_laser_nr+1); // laser no * 10 + 1
-    bsid_obj.laserindex = l_laser_nr;
+    bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_parthatch";
     bsid_obj.power = part_hatch_power;
     bsid_obj.focus = part_hatch_defocus;
@@ -476,7 +476,7 @@ exports.prepareModelExposure = function(model)
     // part Contour
     var bsid_obj = new Object();
     bsid_obj.bsid = (10 * l_laser_nr+2); // laser no * 10 + 2
-    bsid_obj.laserindex = l_laser_nr;
+    bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_partcontour";
     bsid_obj.power = part_contour_power;
     bsid_obj.focus = part_contour_defocus;
@@ -488,7 +488,7 @@ exports.prepareModelExposure = function(model)
     // downskin Hatch
     var bsid_obj = new Object();
     bsid_obj.bsid = (10 * l_laser_nr+3); // laser no * 10 + 3
-    bsid_obj.laserindex = l_laser_nr;
+    bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_downskinhatch";
     bsid_obj.power = downskin_hatch_power;
     bsid_obj.focus = downskin_hatch_defocus;
@@ -500,7 +500,7 @@ exports.prepareModelExposure = function(model)
     // downskin Contour
     var bsid_obj = new Object();
     bsid_obj.bsid = (10 * l_laser_nr+4); // laser no * 10 + 3
-    bsid_obj.laserindex = l_laser_nr;
+    bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_downkskincontour";
     bsid_obj.power = downskin_contour_power;
     bsid_obj.focus = downskin_contour_defocus;
@@ -512,7 +512,7 @@ exports.prepareModelExposure = function(model)
     // Support Hatch
     var bsid_obj = new Object();
     bsid_obj.bsid = (10 * l_laser_nr+5); // laser no * 10 + 3
-    bsid_obj.laserindex = l_laser_nr;
+    bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_supporthatch";
     bsid_obj.power = support_hatch_power;
     bsid_obj.focus = support_hatch_defocus;
@@ -524,7 +524,7 @@ exports.prepareModelExposure = function(model)
     // Support Contour
     var bsid_obj = new Object();
     bsid_obj.bsid = (10 * l_laser_nr+6); // laser no * 10 + 3
-    bsid_obj.laserindex = l_laser_nr;
+    bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_supportcontour";
     bsid_obj.power = support_contour_power;
     bsid_obj.focus = support_contour_defocus;
