@@ -274,6 +274,7 @@ exports.declareBuildAttributes = function(buildAttrib)
   buildAttrib.declareAttributeInt('type'); // scanning type
   buildAttrib.declareAttributeInt('3mf_attribute');
   buildAttrib.declareAttributeInt('atu_attribute');
+  buildAttrib.declareAttributeInt('priority');
   buildAttrib.declareAttributeInt('passNumber');//
   buildAttrib.declareAttributeReal('xcoord');
   buildAttrib.declareAttributeReal('ycoord');
@@ -284,6 +285,7 @@ exports.declareBuildAttributes = function(buildAttrib)
   buildAttrib.declareAttributeInt('sharedZone');
   buildAttrib.declareAttributeInt('zoneExposure');
   buildAttrib.declareAttributeInt('zoneIndex');
+  buildAttrib.declareAttributeInt('islandId');
   buildAttrib.declareAttributeReal('ScanheadMoveSpeed');
   for(let i = 0 ; i<PARAM.getParamInt('exposure', 'laser_count') ; i++){
     buildAttrib.declareAttributeInt('laser_index_'+(i+1));
@@ -757,27 +759,6 @@ function getTileArray(modelLayer,bDrawTile){
 exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
 {  
   
-  // to be implemented - ATDSK 
-  var connectArgs = {
-   bConnectPartOpenPolylines : true,
-   bConnectSupportOpenPolylines : true,
-   fPartOpenPolylinesMaxConnectionDist : 0.2,
-   fSupportOpenPolylinesMaxConnectionDist : 0.2,
-   fPartOpenPolylinesPointReductionTol : 0.005,
-   fSupportOpenPolylinesPointReductionTol : 0.005,
-   fPartOpenPolylinesPointReductionEdgeLen : 0.001,
-   fSupportOpenPolylinesPointReductionEdgeLen : 0.001,
-   bEnablePartOpenPolylinesSelfConnection : true,
-   fPartOpenPolylinesMaxSelfConnectionDist : 0.001,
-   bEnableSupportOpenPolylinesSelfConnection : true,
-   fSupportOpenPolylinesMaxSelfConnectionDist : 0.001
-  }; 
-  
-  let bCopyOtherData = true;
-
-  //modelDataSrc.connectOpenPolylines(modelDataTarget, progress, bCopyOtherData, connectArgs);
-  
-  
   var overallBounds = new Object();
   var modelCount = modelDataSrc.getModelCount(); 
   var modelLayerCount = modelDataSrc.getLayerCount();
@@ -787,7 +768,7 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
   // Caclulate Scene Boundaries pr Layer //
   /////////////////////////////////////////
   
-  //!!!!! OBS: currently limited to 1 model, therefore if there is more models they are merge !!!!!!
+  //!!!!! OBS: currently limited to 1 model, therefore if there is more models they are merged !!!!!!
   // run through all models
     // find the tile position of each layer
        // add all islands to shadow islands
@@ -883,10 +864,7 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
     this.x_ref = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) + '_ref_mm');  
     this.rel_x_max = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) +'_max_mm'); // max
     this.rel_x_min =  PARAM.getParamReal('scanhead','x_scanner'+ (laserIndex) + '_min_mm'); // min
-    
-    
-   
-    
+
     if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
       this.rel_y_min = 0;
       this.rel_y_max = PARAM.getParamReal('scanhead','y_scanfield_size_mm');
@@ -1040,7 +1018,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
    
   let allDownSkinContourHatch = new HATCH.bsHatch();  
   
-  var allHatch = new HATCH.bsHatch(); 
+  var allHatch = new HATCH.bsHatch();
+    
+  var islandId = 0;  
   while(island_it.isValid())
     { 
       var is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
@@ -1049,7 +1029,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       let bulkIsland = new ISLAND.bsIsland();
       let downSkinbulkIsland = new ISLAND.bsIsland();
       
-      var island = island_it.getIsland().clone();    
+      var island = island_it.getIsland().clone();
+  
+      addBlockedPath(island,islandId);
+      
       var islandOffset = generateOffset(island,beam_compensation).offsetIsland;
       let islandContourHatch = new HATCH.bsHatch();
       islandOffset.borderToHatch(islandContourHatch);
@@ -1074,7 +1057,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
               down_skin_island.borderToHatch(downSkinContourHatch);        
               downSkinContourHatch.setAttributeReal('power', down_skin_contour_power);
               downSkinContourHatch.setAttributeReal('speed', down_skin_contour_speed);
-              downSkinContourHatch.setAttributeInt('type',type_downskin_contour);    
+              downSkinContourHatch.setAttributeInt('type',type_downskin_contour);
+              downSkinContourHatch.setAttributeInt('islandId',islandId);
               downSkinContourHatch.clip(islandBorderClipper,false);   
               hatchResult.moveDataFrom(downSkinContourHatch); // move downskin border to results              
                             
@@ -1088,8 +1072,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
         
               downSkin_hatch.setAttributeReal('power', down_skin_fill_power);
               downSkin_hatch.setAttributeReal('speed', down_skin_fill_speed);
-              downSkin_hatch.setAttributeInt('type',type_downskin_hatch);    
-              allHatch.moveDataFrom(downSkin_hatch);  // move down skin hatch to results       
+              downSkin_hatch.setAttributeInt('type',type_downskin_hatch);
+              downSkin_hatch.setAttributeInt('islandId',islandId);    
+              allHatch.moveDataFrom(downSkin_hatch);  // move down skin hatch to results  
+              
             }
       
           // not down skin islands
@@ -1103,6 +1089,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
             contourHatch.setAttributeReal('power', border_power);
             contourHatch.setAttributeReal('speed', border_speed);
             contourHatch.setAttributeInt('type',type_part_contour);
+            contourHatch.setAttributeInt('islandId',islandId);
             contourHatch.clip(downskinContourClipper,false);// WIP this clip splits it between different scanners
             hatchResult.moveDataFrom(contourHatch);
                        
@@ -1119,22 +1106,23 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
             fill_hatch.setAttributeReal('power', fill_power);
             fill_hatch.setAttributeReal('speed', fill_speed);      
             fill_hatch.setAttributeInt('type',type_part_hatch);
+            fill_hatch.setAttributeInt('islandId',islandId);
             allHatch.moveDataFrom(fill_hatch);
           }
           
         } else { // is support
           
           let supportBorderHatch = new HATCH.bsHatch();  
-          bulkIsland.borderToHatch(supportBorderHatch);
+          islandOffset.borderToHatch(supportBorderHatch);
           supportBorderHatch.setAttributeReal('power', support_contour_power);
           supportBorderHatch.setAttributeReal('speed', support_contour_speed);
           supportBorderHatch.setAttributeInt('type',type_support_contour);
+          supportBorderHatch.setAttributeInt('islandId',islandId);
           allContourHatch.moveDataFrom(supportBorderHatch);
           
-          
-          
+          let supportBulk = generateOffset(islandOffset,beam_compensation).offsetIsland;
           var support_hatch = new HATCH.bsHatch();
-          bulkIsland.hatch(support_hatch, hatch_density, cur_hatch_angle, 
+          supportBulk.hatch(support_hatch, hatch_density, cur_hatch_angle, 
               HATCH.nHatchFlagAlternating | 
               HATCH.nHatchFlagBlocksortEnhanced |
               HATCH.nHatchFlagFlexDensity
@@ -1143,133 +1131,17 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           support_hatch.setAttributeReal('power', support_hatch_power);
           support_hatch.setAttributeReal('speed', support_hatch_speed);      
           support_hatch.setAttributeInt('type',type_support_hatch);
+          support_hatch.setAttributeInt('islandId',islandId);
           allHatch.moveDataFrom(support_hatch);       
         }
         
         
       all_islands.addIslands(islandOffset);    
       island_it.next();
+      islandId++;
     } // while
   
-//     // join islands
-//      
-//      all_islands.addIslands(all_islands_support);  
-//         
 
-//     
-//   
-//    var allIslandOffset = generateOffset(all_islands,beam_compensation).offsetIsland;
-  
-//    var allIslandBorder = generateOffset(all_islands,beam_compensation).borderHatch;
-//    var allIslandsHull = generateOffset(all_islands,beam_compensation*2).offsetIsland;
-//    var allIslandBorderHatch = generateOffset(all_islands,beam_compensation).borderHatch;
-    
-  //hatchResult.moveDataFrom(allIslandBorder);
-    
-  // check for downskin
-  
-//    var down_skin_island = new ISLAND.bsIsland();
-//    var not_down_skin_island = new ISLAND.bsIsland();
-// 
-//    allIslandOffset.splitMultiLayerOverhang(down_skin_surface_angle, down_skin_overlap, down_skin_layer_reference,
-//         not_down_skin_island, down_skin_island);
-        
-   
-   
-   
-//    if(!down_skin_island.isEmpty())
-//       {
-//         down_skin_island.borderToHatch(downSkinContourHatch);
-//         //downSkinContourHatch = generateOffset(down_skin_island,0).borderHatch; // create contour and offset island
-//         //let downSkinClip = generateOffset(down_skin_island,beam_compensation).offsetIsland; // create contour and offset island
-//         // if there is downskin, clip the overall borderhatch with downskinIslands, and assign downskin contour params  
-//         //downSkinContourHatch = allIslandBorder.clone();
-//         // remove nonDownSkinIslands from the allIslands, to get the remaining
-//         
-//         //let downSkinBorderIslands = allIslandOffset.subtract(not_down_skin_island);
-//         //downSkinBorderIslands.borderToHatch(downSkinContourHatch);
-//         //downSkinContourHatch = downSkinContour;
-//         //downSkinContourHatch = allIslandBorder.clip(down_skin_island,true);
-//         
-//         //downSkinContourHatch.clip(allIslandOffset,false);
-//         //set attributes
-//         downSkinContourHatch.setAttributeReal('power', down_skin_contour_power);
-//         downSkinContourHatch.setAttributeReal('speed', down_skin_contour_speed);
-//         downSkinContourHatch.setAttributeInt('type',type_downskin_contour);
-//         
-//         //hatchResult.moveDataFrom(downSkinContourHatch);
-//     
-//         downSkinIsland = generateOffset(down_skin_island,beam_compensation).offsetIsland;
-//      
-//         // Down skin hatching
-//         var downSkin_hatch = new HATCH.bsHatch();
-//           downSkinIsland.hatch(downSkin_hatch, down_skin_hatch_density, cur_hatch_angle, 
-//           HATCH.nHatchFlagAlternating | 
-//           HATCH.nHatchFlagBlocksortEnhanced |
-//           HATCH.nHatchFlagFlexDensity
-//         );
-//         
-//         downSkin_hatch.setAttributeReal('power', down_skin_fill_power);
-//         downSkin_hatch.setAttributeReal('speed', down_skin_fill_speed);
-//         downSkin_hatch.setAttributeInt('type',type_downskin_hatch);    
-//         allHatch.moveDataFrom(downSkin_hatch);       
-//         
-//       }
-//       
-//       if(!not_down_skin_island.isEmpty())
-//       {
-//         not_down_skin_island.borderToHatch(contourHatch);
-//         
-//         contourHatch.setAttributeReal('power', border_power);
-//         contourHatch.setAttributeReal('speed', border_speed);
-//         contourHatch.setAttributeInt('type',type_part_contour);
-//         //contourHatch.clip(downSkinIsland,false);
-//         
-//         //hatchResult.moveDataFrom(contourHatch);
-//         bulkIsland = generateOffset(not_down_skin_island,beam_compensation).offsetIsland;
-//         
-//         // Hatching remaining area (not down skin)
-//         var fill_hatch = new HATCH.bsHatch();
-//           bulkIsland.hatch(fill_hatch, hatch_density, cur_hatch_angle, 
-//           HATCH.nHatchFlagAlternating | 
-//           HATCH.nHatchFlagBlocksortEnhanced |
-//           HATCH.nHatchFlagFlexDensity
-//         );
-//         
-//         fill_hatch.setAttributeReal('power', fill_power);
-//         fill_hatch.setAttributeReal('speed', fill_speed);      
-//         fill_hatch.setAttributeInt('type',type_part_hatch);
-//         allHatch.moveDataFrom(fill_hatch);
-//       }
-
- // clip to fit
- //var allContourHatch = new HATCH.bsHatch();
- //if(!allDownSkinContourHatch.isEmpty())
-// {
-   
-   //allContourHatch.clip(down_skin_island,false);
-   //allDownSkinContourHatch.clip(allIslandBorderClipper,false);
-//    let downPathset = new PATH_SET.bsPathSet();
-//    downPathset.addHatches(downSkinContourHatch);
-//    let patchCount =downPathset.getPathCount();
-//    downSkinContourHatch.makeEmpty();
-//    
-//    let allIslandsBorderPathSet = new PATH_SET.bsPathSet();
-//    allIslandsBorderPathSet.addHatches(allIslandBorder);
-//    downPathset.clipOpenPolylines(true,allIslandsBorderPathSet);
-//    downSkinContourHatch.addPaths(downPathset);
-//    
-//     //downSkinContourHatch.clip(partIsland,false);
-    //contourHatch.clip(downSkinIsland,false);
-    //contourHatch.clip(allIslandClip,false)
-    
-// }
-  
-//  allContourHatch.moveDataFrom(downSkinContourHatch);
-//  allContourHatch.moveDataFrom(contourHatch);
-//  allContourHatch.moveDataFrom(supportH)
-  //hatchResult.moveDataFrom(allDownSkinContourHatch);
-  //hatchResult.moveDataFrom(allContourHatch); // store contour in hatch
       
  //divide into stripes
   var stripeIslands = new ISLAND.bsIsland();  
@@ -1290,17 +1162,18 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     hatchResult.moveDataFrom(clippedHatch); 
   }
   
-  
+  function addBlockedPath(island,ilandId) {
       ///////////////////////////////////////////////////////////////////////
       // narrow bridges
       var narrow_bridge = new HATCH.bsHatch();
 
-      all_islands.createNarrowBridgePolylines(
+      island.createNarrowBridgePolylines(
           narrow_bridge, -beam_compensation);
       
       narrow_bridge.setAttributeReal("power", border_power);
       narrow_bridge.setAttributeReal("speed", border_speed);
       narrow_bridge.setAttributeInt("type", type_openPolyline);
+      narrow_bridge.setAttributeInt("islandId", ilandId);
       
       hatchResult.moveDataFrom(narrow_bridge);
 
@@ -1309,7 +1182,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       // narrow appendixes
       var narrow_app = new HATCH.bsHatch();
 
-      all_islands.createNarrowAppendixPolylines(
+      island.createNarrowAppendixPolylines(
           narrow_app, 
           -beam_compensation, 
           beam_compensation
@@ -1318,10 +1191,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       narrow_app.setAttributeReal("power", border_power);
       narrow_app.setAttributeReal("speed", border_speed);
       narrow_app.setAttributeInt("type",type_openPolyline);       
-
+      narrow_app.setAttributeInt("islandId", ilandId);
       
       hatchResult.moveDataFrom(narrow_app);
-      
+    }  
       /////////////////////////////////////////////////////////////////////     
   
   ///////////////////////////////////////////// 
@@ -1493,7 +1366,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 //     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
     
   /////////////////////////////////////
-  /// Assign laser options to hatch /// 
+  /// Assign laser options to hatch /// currently not used - only relevant for smart tileing !
   /////////////////////////////////////
      
   /* currently limited to keeping the x pos static during one pass */
@@ -1504,42 +1377,42 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
  
   tempTileHatch.moveDataFrom(hatchResult); // move all tiles to temp hatch object
              
-  for (let i = 0; i< required_passes_x*required_passes_y;i++) // run through the different passes
-    {
-       
-      let scanheadXCoord = tileArray[i].scanhead_x_coord;
-      let scanheadYCoord = tileArray[i].scanhead_y_coord;
-
-      //var sceneMinY = currentLayerBoundaries.minY;
-      //var sceneMaxY = currentLayerBoundaries.maxY;
-        
-      for (let j=0;j<laser_count;j++)
-        {
-        // get information about the lasing zone in X
-          let curLaserId = scanheadArray[j].laserIndex; // get laser ID
-          let curXref = scanheadArray[j].x_ref;
-          let curRelXmin = scanheadArray[j].rel_x_min;
-          let curRelXmax = scanheadArray[j].rel_x_max;
-          
-          let curLaserXmin = curXref + curRelXmin + scanheadXCoord;
-          let curLaserXmax = curXref + curRelXmax + scanheadXCoord;
-          
-          let curYref = scanheadArray[j].y_ref;
-          let curRelYmin = scanheadArray[j].rel_y_min;
-          let curRelYmax = scanheadArray[j].rel_y_max;
-          
-          let curLaserYmin = curYref + curRelYmin + scanheadYCoord;
-          let curLaserYmax = curYref + curRelYmax + scanheadYCoord;
-           
-         // add the corrdinates to vector pointset
-         let laserZonePoints = new Array(4);
-         laserZonePoints[0] = new VEC2.Vec2(curLaserXmin, curLaserYmin); //min,min
-         laserZonePoints[1] = new VEC2.Vec2(curLaserXmin, curLaserYmax); //min,max
-         laserZonePoints[2] = new VEC2.Vec2(curLaserXmax, curLaserYmax); // max,max
-         laserZonePoints[3] = new VEC2.Vec2(curLaserXmax, curLaserYmin); // max,min
-         
-         let laserZoneHatch = new HATCH.bsHatch();
-         let laserZoneHatchOutside = new HATCH.bsHatch();
+//   for (let i = 0; i< required_passes_x*required_passes_y;i++) // run through the different passes
+//     {
+//        
+//       let scanheadXCoord = tileArray[i].scanhead_x_coord;
+//       let scanheadYCoord = tileArray[i].scanhead_y_coord;
+// 
+//       //var sceneMinY = currentLayerBoundaries.minY;
+//       //var sceneMaxY = currentLayerBoundaries.maxY;
+//         
+//       for (let j=0;j<laser_count;j++)
+//         {
+//         // get information about the lasing zone in X
+//           let curLaserId = scanheadArray[j].laserIndex; // get laser ID
+//           let curXref = scanheadArray[j].x_ref;
+//           let curRelXmin = scanheadArray[j].rel_x_min;
+//           let curRelXmax = scanheadArray[j].rel_x_max;
+//           
+//           let curLaserXmin = curXref + curRelXmin + scanheadXCoord;
+//           let curLaserXmax = curXref + curRelXmax + scanheadXCoord;
+//           
+//           let curYref = scanheadArray[j].y_ref;
+//           let curRelYmin = scanheadArray[j].rel_y_min;
+//           let curRelYmax = scanheadArray[j].rel_y_max;
+//           
+//           let curLaserYmin = curYref + curRelYmin + scanheadYCoord;
+//           let curLaserYmax = curYref + curRelYmax + scanheadYCoord;
+//            
+//          // add the corrdinates to vector pointset
+//          let laserZonePoints = new Array(4);
+//          laserZonePoints[0] = new VEC2.Vec2(curLaserXmin, curLaserYmin); //min,min
+//          laserZonePoints[1] = new VEC2.Vec2(curLaserXmin, curLaserYmax); //min,max
+//          laserZonePoints[2] = new VEC2.Vec2(curLaserXmax, curLaserYmax); // max,max
+//          laserZonePoints[3] = new VEC2.Vec2(curLaserXmax, curLaserYmin); // max,min
+//          
+//          let laserZoneHatch = new HATCH.bsHatch();
+//          let laserZoneHatchOutside = new HATCH.bsHatch();
          
 //          let laserZone_pathset = new PATH_SET.bsPathSet(); // generate pathset object
 //          laserZone_pathset.addNewPath(laserZonePoints); // add tiles zones to pathset  
@@ -1560,13 +1433,13 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
                 
           //laserZoneHatchOutside=ClipHatchByRect(clippingHatch,laserZonePoints,false);
          // assign laser index
-         laserZoneHatch.setAttributeInt('laser_index_' + (curLaserId), 1);
+//         laserZoneHatch.setAttributeInt('laser_index_' + (curLaserId), 1);
          
 
 //           tempTileHatch = laserZoneHatch.clone();
 //           tempTileHatch.moveDataFrom(laserZoneHatchOutside);      
-        } // for laser count       
-      }   // all tiles
+//         } // for laser count       
+//       }   // all tiles
  
      
       
@@ -1582,7 +1455,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
            'bCheckAttributes': true
          };
          
-         tempTileHatch = mergeblock.mergeHatchBlocks(mergeArgs);  
+         //tempTileHatch = mergeblock.mergeHatchBlocks(mergeArgs);  
          
          tempTileHatch.moveDataFrom(mergeblock);   
          
@@ -1631,15 +1504,6 @@ function defineSharedZones(){
         
         hatchBlock.setAttributeInt('sharedZone', 0);  
         
-//         //assign color to single laser zones
-//         for(let j = 0; j<allocatedLasers.length;j++)
-//         {
-//           if(allocatedLasers[j] == 1){
-//             let laserid = j;
-//             //hatchBlock.setAttributeInt('_disp_color',laser_color[j]);
-//             //hatchBlock.setAttributeInt('bsid', (10 * j)); // set attributes
-//           }
-//         }    
       }
     hatchblockIt.next();
     }
@@ -1725,7 +1589,7 @@ for (let i = 0; i<allHatchBlockArray.length;i++)
 
 //mergehatchBlocks 
 let simplifiedDataHatch = new HATCH.bsHatch();
-simplifiedDataHatch = mergeBlocks(sortedHatchArray);  
+//simplifiedDataHatch = mergeBlocks(sortedHatchArray);  
 simplifiedDataHatch.moveDataFrom(sortedHatchArray);
  
 // get the maximum laser duration in each tile (per pass)
@@ -1752,8 +1616,8 @@ for (let i = 0; i<simplHatchArray.length;i++)
 
 // get BSID table:
 var bsidTable = thisModel.getAttribEx('customTable');
-
-// Process each pass number group and calculate the largest process duration
+var tileMap = {};
+// fill the passgroup object with all passes -> tiles -> lasers -> hatchblocks
 for (let passNumber in passNumberGroups){
     let thisPass = passNumberGroups[passNumber];
     let zoneMap = {};
@@ -1783,52 +1647,114 @@ for (let passNumber in passNumberGroups){
             return item.bsid === bsid;
         });
         
-        let exposureSettings =  {
-            'fJumpSpeed' : PARAM.getParamReal('exposure', 'JumpSpeed'),
-            'fMeltSpeed' : thisProcessParameters.speed,
-            'fJumpLengthLimit' : PARAM.getParamReal('exposure', 'JumpLengthLimit'),
-            'nJumpDelay' : PARAM.getParamInt('exposure', 'JumpDelay'),
-            'nMinJumpDelay': PARAM.getParamInt('exposure', 'MinJumpDelay'),
-            'nMarkDelay' : PARAM.getParamInt('exposure', 'MarkDelay'),
-            'nPolygonDelay': PARAM.getParamInt('exposure', 'PolygonDelay'),
-            'polygonDelayMode' : PARAM.getParamStr('exposure', 'PolygonDelayMode'),
-        };
+        hatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
         
-        let thisExposureDuration = new EXPOSURETIME.bsExposureTime();
-        thisExposureDuration.configure(exposureSettings);
-        thisExposureDuration.addHatchBlock(hatchBlock);
-        let exposureTime = thisExposureDuration.getExposureTimeMicroSeconds();
-        
-        zoneMap[tileID][laserID].hatchBlocks.push(hatchBlock); 
-        
-        if (exposureTime > zoneMap[tileID][laserID].maxLaserProcessDuration) {
-            zoneMap[tileID][laserID].maxLaserProcessDuration = exposureTime;
-            if(exposureTime>zoneMap[tileID].tileExposureDuration){
-                zoneMap[tileID].tileExposureDuration = exposureTime;
-                exporter_3mf.content.children[0][passNumber][tileID].attributes.tileExposureTime = exposureTime;
-            }
-        }
-        
-        
-        // write exporter_3mf JSON here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        
-        
-        
-        
+        zoneMap[tileID][laserID].hatchBlocks.push(hatchBlock);
+      }
+      
+      passNumberGroups[passNumber] = zoneMap;
+      
     }
     
-    var passDuration = 0;
-    for(let tileID in zoneMap){
-        passDuration += zoneMap[tileID].tileExposureDuration;
-    } 
+    ///////////////////////////////////////////
+    // Prioritize and find the scan duration //
+    ///////////////////////////////////////////
     
-    zoneMap.passExposureDuration = passDuration;
-    passNumberGroups[passNumber] = zoneMap;
-}
+    // run through the passNumberGroups to prioritize scanning seqence and calculate scanning duration
+    var processing_order = 0; // global processing order
+    for (let passNumber in passNumberGroups){
+      let pass = passNumberGroups[passNumber]; // access the individual passes
+      
+      for(let tileNumber in pass){
+        let tile = pass[tileNumber]; // access the individual tiles
+        
+        for(let laserId in tile){
+          let nlaserId = parseInt(laserId);
+          
+          if(Number.isInteger(nlaserId)){ // only perfom task if the laserId is an integer
+            process.printInfo("laserid: " + nlaserId);
+            let processLaser = tile[nlaserId]; // access whats is designated to each laser
+
+            let thisHatch = processLaser.hatchBlocks; // get the hatchs blocks designated to each laser
+            // prioritise hatchblocks 
+            
+            // group islands by ilands id (finalize islands before progressing = avoid a state of jumping madness!)
+            var groups = thisHatch.reduce(function(groups, item) {
+              var group = (groups[item.getAttributeInt('islandId')] = groups[item.getAttributeInt('islandId')] || []);
+              group.push(item);
+              return groups;
+            }, {});
+            
+            var groupsArray = Object.keys(groups).map(function(key) {
+              return groups[key];
+            });
+                        
+            // Sort each group array by 'y', then 'priority'
+            groupsArray.forEach(function(group) {
+              group.sort(function(a, b) {
+                var priorityDifference  = a.getAttributeInt('priority') - b.getAttributeInt('priority'); 
+                if (priorityDifference  !== 0) {
+                  return priorityDifference ;
+                } else {
+                  return a.getBounds().minY - b.getBounds().minY;
+                }
+              });
+            });
+            
+            // Flatten groupsArray into a single sorted array
+            thisHatch = [].concat.apply([], groupsArray);
+            
+         
+              for (let i=0; i<thisHatch.length;i++){
+                let hatchblock = thisHatch[i]; // individual hatchblocks
+                hatchblock.setAttributeInt('_processing_order', processing_order++);
+                //calculate exposure duration of each hatch block
+                
+                  
+                  
+                let exposureSettings =  {
+                  'fJumpSpeed' : PARAM.getParamReal('exposure', 'JumpSpeed'),
+                  'fMeltSpeed' : hatchblock.getAttributeReal('speed'),
+                  'fJumpLengthLimit' : PARAM.getParamReal('exposure', 'JumpLengthLimit'),
+                  'nJumpDelay' : PARAM.getParamInt('exposure', 'JumpDelay'),
+                  'nMinJumpDelay': PARAM.getParamInt('exposure', 'MinJumpDelay'),
+                  'nMarkDelay' : PARAM.getParamInt('exposure', 'MarkDelay'),
+                  'nPolygonDelay': PARAM.getParamInt('exposure', 'PolygonDelay'),
+                  'polygonDelayMode' : PARAM.getParamStr('exposure', 'PolygonDelayMode'),
+                };
+          
+                let thisExposureDuration = new EXPOSURETIME.bsExposureTime();
+                thisExposureDuration.configure(exposureSettings);
+                thisExposureDuration.addHatchBlock(hatchblock);
+                let exposureTime = thisExposureDuration.getExposureTimeMicroSeconds();
+                
+                if (exposureTime > passNumberGroups[passNumber][tileNumber][laserId].maxLaserProcessDuration) {
+                  passNumberGroups[passNumber][tileNumber][laserId].maxLaserProcessDuration = exposureTime;
+                  
+                  if(exposureTime>passNumberGroups[passNumber][tileNumber].tileExposureDuration){
+                      passNumberGroups[passNumber][tileNumber].tileExposureDuration = exposureTime;
+                      exporter_3mf.content.children[0][passNumber][tileNumber].attributes.tileExposureTime = exposureTime;
+                  }//if
+                }//if              
+              }//for hatch
+            }//if integer         
+        }//for laser
+      }//for tile
+      
+      var passDuration = 0;
+      for(let tileID in passNumberGroups[passNumber]){ // calculate scanning duration of each pass
+            passDuration += passNumberGroups[passNumber][tileID].tileExposureDuration;
+      }      
+      passNumberGroups[passNumber].passExposureDuration = passDuration; // add the passDuration to the passNumberGroups
+        
+    }//for passgroups
+        
+    // write exporter_3mf JSON based on passNumberGroups !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 let layerExposureDuration = 0;
 
-for (let pass in passNumberGroups){
+for (let pass in passNumberGroups){ // the the sum of pass durations and store as layer duration
     if(passNumberGroups[pass].passExposureDuration){
         layerExposureDuration += passNumberGroups[pass].passExposureDuration;
     }
@@ -2371,21 +2297,21 @@ var postprocessLayerStack_MT = function(
     }
     
     // get model data polylinearray
-    var exposure_array = modelData.getLayerPolylineArray(layer_nr, POLY_IT.nLayerExposure, 'rw');
-    
-    
-     // Sort array by bounding box in Y direction 
-      // and assign processing order
-      exposure_array.sort(function(a,b){   
-        return a.getBounds().minY - b.getBounds().minY
-      });   
-   
-      
-      //sort into different scan
-      
-      for(var i=0; i < exposure_array.length; ++i){         
-        exposure_array[i].setAttributeInt('_processing_order', i);
-      }   
+//     var exposure_array = modelData.getLayerPolylineArray(layer_nr, POLY_IT.nLayerExposure, 'rw');
+//     
+//     
+//      // Sort array by bounding box in Y direction 
+//       // and assign processing order
+//       exposure_array.sort(function(a,b){   
+//         return a.getBounds().minY - b.getBounds().minY
+//       });   
+//    
+//       
+//       //sort into different scan
+//       
+//       for(var i=0; i < exposure_array.length; ++i){         
+//         exposure_array[i].setAttributeInt('_processing_order', i);
+//       }   
     
     
   } //for (iterate through layers)
