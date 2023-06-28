@@ -139,7 +139,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,0);
     
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430);
-    parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);
+    parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,100);//110;
 
     parameter.declareParameterReal('scanhead', 'x_scanner1_max_mm',LOCALIZER.GetMessage('param_x_scanner1_max_mm'),0,100,80);
     parameter.declareParameterReal('scanhead', 'x_scanner1_min_mm',LOCALIZER.GetMessage('param_x_scanner1_min_mm'),-100,0,-40);
@@ -1443,6 +1443,17 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   var required_passes_x = thisLayer.getAttrib('requiredPassesX');
   var required_passes_y = thisLayer.getAttrib('requiredPassesY');
     var exporter_3mf = {
+      
+    "segment_attributes": [
+          {
+           "segmenttype": "hatch",
+           "datatype": "uint32",
+           "attribute_name": 1,
+           "attribute_value": 1,
+           "namespace": "http://adira.com/tilinginformation/202305"
+           }
+    ],
+     
         "namespace": "http://adira.com/tilinginformation/202305",
         "content": {
            "name": "sequence",
@@ -1479,7 +1490,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     
 //     exporter_3mf.content.attributes.layerScanningDuration = 
 //     
-     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
+//     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
     
   /////////////////////////////////////
   /// Assign laser options to hatch /// 
@@ -1542,9 +1553,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 //          laserZoneHatch.clip(laserZone_clipping_island,true); // clip the hatching with the tile_islands
 //          laserZoneHatchOutside.clip(laserZone_clipping_island,false); // get ouside of currentzone
           
-          let clippingHatch = tempTileHatch.clone();                    
-          laserZoneHatch = ClipHatchByRect(clippingHatch,laserZonePoints);
-          laserZoneHatchOutside = ClipHatchByRect(clippingHatch,laserZonePoints,false);
+//           let clippingHatch = tempTileHatch.clone();                    
+//           laserZoneHatch = ClipHatchByRect(clippingHatch,laserZonePoints);
+//           laserZoneHatchOutside = ClipHatchByRect(clippingHatch,laserZonePoints,false);
           //tempTileHatch.clear();
                 
           //laserZoneHatchOutside=ClipHatchByRect(clippingHatch,laserZonePoints,false);
@@ -1794,9 +1805,16 @@ for (let passNumber in passNumberGroups){
             zoneMap[tileID][laserID].maxLaserProcessDuration = exposureTime;
             if(exposureTime>zoneMap[tileID].tileExposureDuration){
                 zoneMap[tileID].tileExposureDuration = exposureTime;
-                //exporter_3mf.content.children[passNumber][tileID].attributes.tileExposureTime = exposureTime;
+                exporter_3mf.content.children[0][passNumber][tileID].attributes.tileExposureTime = exposureTime;
             }
         }
+        
+        
+        // write exporter_3mf JSON here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        
+        
+        
+        
     }
     
     var passDuration = 0;
