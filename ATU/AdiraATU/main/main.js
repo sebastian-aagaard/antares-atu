@@ -136,7 +136,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-5);
     
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
-    parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,33);//110;
+    parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);//110;
     
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_limit','param_x_scanfield_size_mm',0,430,430); //fixed values
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_limit','param_y_scanfield_size_mm',0,110,110); //fixed values
