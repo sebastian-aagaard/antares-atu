@@ -1046,7 +1046,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       var islandOffset = generateOffset(island,beam_compensation).offsetIsland;
       let islandContourHatch = new HATCH.bsHatch();
       islandOffset.borderToHatch(islandContourHatch);
-       var islandBorderClipper = generateOffset(islandOffset,0.0002).offsetIsland;
+       var islandBorderClipper = generateOffset(islandOffset,0.0004).offsetIsland;
       //check if the model is part or support and store them.
       if(is_part)
         {          
