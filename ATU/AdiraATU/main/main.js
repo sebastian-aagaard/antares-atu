@@ -1696,7 +1696,24 @@ for (let passNumber in passNumberGroups){
                 if (priorityDifference  !== 0) {
                   return priorityDifference ;
                 } else {
-                  return a.getBounds().minY - b.getBounds().minY;
+                  var yDifference = a.getBounds().minY - b.getBounds().minY;
+                  if(yDifference !== 0){
+                    return yDifference;
+                    } else {
+                    
+                    let aheight = a.getBounds().maxY-a.getBounds().minY;                      
+                    let bheight = b.getBounds().maxY-b.getBounds().minY;
+                    
+                    let awidth = a.getBounds().maxX-a.getBounds().minX;
+                    let bwidth = b.getBounds().maxX-b.getBounds().minX;
+                    
+                    let aarea =  aheight * awidth;
+                    let barea =  bheight * bwidth;
+                      
+                    return aarea - barea; // smallest first
+                      }
+                  
+                  return 
                 }
               });
             });
