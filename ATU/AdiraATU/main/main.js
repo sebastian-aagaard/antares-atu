@@ -85,6 +85,8 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal("exposure", "down_skin_hangle", LOCALIZER.GetMessage('param_hatch_down_skin_angle'), 0, 360, 45);
     parameter.declareParameterReal('exposure', 'down_skin_hangle_increment', LOCALIZER.GetMessage('param_hatch_down_skin_angle_increment'), -360.0, 360.0, 90.0);
     parameter.declareParameterReal('exposure', 'down_skin_overlap', LOCALIZER.GetMessage('param_down_skin_overlap'), 0.0, 100.0, 0.7);
+    
+    parameter.declareParameterReal('exposure','support_hdens', LOCALIZER.GetMessage('param_hatch_support_density'), 0.001, 2.0, 0.1);
 
     parameter.declareParameterReal('exposure', 'JumpSpeed', LOCALIZER.GetMessage('param_JumpSpeed'), 0.001, 2000, 1000);
     parameter.declareParameterReal('exposure', 'MeltSpeed', LOCALIZER.GetMessage('param_MeltSpeed'), 0.001, 2000, 200);
@@ -991,6 +993,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   var down_skin_cur_hatch_angle = (PARAM.getParamReal("exposure", "down_skin_hangle") + (nLayerNr * down_skin_hatch_angle_increment)) % 360;
   var down_skin_overlap = PARAM.getParamReal("exposure", "down_skin_overlap");
   
+  var support_hatch_density = PARAM.getParamReal("exposure","support_hdens");
+  
   var laser_color = new Array();
   laser_color = modelData.getTrayAttribEx('laser_color'); // retrive laser_color 
 
@@ -1022,6 +1026,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   let allDownSkinContourHatch = new HATCH.bsHatch();  
   
   var allHatch = new HATCH.bsHatch();
+  
+
+  
     
   var islandId = 0;  
   while(island_it.isValid())
@@ -1063,15 +1070,24 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
               downSkinContourHatch.setAttributeInt('type',type_downskin_contour);
               downSkinContourHatch.setAttributeInt('islandId',islandId);
               downSkinContourHatch.clip(islandBorderClipper,false);   
-              hatchResult.moveDataFrom(downSkinContourHatch); // move downskin border to results              
-                            
-              // down skin hatching
-              var downSkin_hatch = new HATCH.bsHatch();
-              downSkinbulkIsland.hatch(downSkin_hatch, down_skin_hatch_density, cur_hatch_angle, 
-                HATCH.nHatchFlagAlternating | 
+              hatchResult.moveDataFrom(downSkinContourHatch); // move downskin border to results                          
+
+                let hatchingArgs = {
+               "fHatchDensity" : down_skin_hatch_density,
+               "fHatchAngle" : cur_hatch_angle,
+               "nCycles" : 1,
+               "fCollinearBorderSnapTol" : 0.0,
+               "fBlocksortRunAheadLimit": 2.0,
+               "hatchOrigin" : {x: 0.0, y: 0.0},
+               "blocksortVec" : {x: 0.0, y: 1.0},
+               "nFlags" : HATCH.nHatchFlagAlternating | 
                 HATCH.nHatchFlagBlocksortEnhanced |
                 HATCH.nHatchFlagFlexDensity
-              );
+              }; 
+             
+              // down skin hatching
+              var downSkin_hatch = new HATCH.bsHatch();
+              downSkinbulkIsland.hatchExt2(downSkin_hatch,hatchingArgs);
         
               downSkin_hatch.setAttributeReal('power', down_skin_fill_power);
               downSkin_hatch.setAttributeReal('speed', down_skin_fill_speed);
@@ -1098,13 +1114,24 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
                        
             bulkIsland = generateOffset(not_down_skin_island,beam_compensation).offsetIsland;
             
+            
+            let hatchingArgs = {
+               "fHatchDensity" : hatch_density,
+               "fHatchAngle" : cur_hatch_angle,
+               "nCycles" : 1,
+               "fCollinearBorderSnapTol" : 0.0,
+               "fBlocksortRunAheadLimit": 2.0,
+               "hatchOrigin" : {x: 0.0, y: 0.0},
+               "blocksortVec" : {x: 0.0, y: 1.0},
+               "nFlags" : HATCH.nHatchFlagAlternating | 
+                HATCH.nHatchFlagBlocksortEnhanced |
+                HATCH.nHatchFlagFlexDensity
+              };             
+            
+            
             // Hatching remaining area (not down skin)
             var fill_hatch = new HATCH.bsHatch();
-            bulkIsland.hatch(fill_hatch, hatch_density, cur_hatch_angle, 
-              HATCH.nHatchFlagAlternating | 
-              HATCH.nHatchFlagBlocksortEnhanced |
-              HATCH.nHatchFlagFlexDensity
-            );
+            bulkIsland.hatchExt2(fill_hatch,hatchingArgs);
             
             fill_hatch.setAttributeReal('power', fill_power);
             fill_hatch.setAttributeReal('speed', fill_speed);      
@@ -1123,13 +1150,24 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           supportBorderHatch.setAttributeInt('islandId',islandId);
           allContourHatch.moveDataFrom(supportBorderHatch);
           
+          
+          let hatchingArgs = {
+               "fHatchDensity" : support_hatch_density,
+               "fHatchAngle" : cur_hatch_angle,
+               "nCycles" : 1,
+               "fCollinearBorderSnapTol" : 0.0,
+               "fBlocksortRunAheadLimit": 2.0,
+               "hatchOrigin" : {x: 0.0, y: 0.0},
+               "blocksortVec" : {x: 0.0, y: 1.0},
+               "nFlags" : HATCH.nHatchFlagAlternating | 
+                HATCH.nHatchFlagBlocksortEnhanced |
+                HATCH.nHatchFlagFlexDensity
+              };              
+          
           let supportBulk = generateOffset(islandOffset,beam_compensation).offsetIsland;
           var support_hatch = new HATCH.bsHatch();
-          supportBulk.hatch(support_hatch, hatch_density, cur_hatch_angle, 
-              HATCH.nHatchFlagAlternating | 
-              HATCH.nHatchFlagBlocksortEnhanced |
-              HATCH.nHatchFlagFlexDensity
-            );
+          supportBulk.hatchExt2(support_hatch,hatchingArgs);
+
           
           support_hatch.setAttributeReal('power', support_hatch_power);
           support_hatch.setAttributeReal('speed', support_hatch_speed);      
