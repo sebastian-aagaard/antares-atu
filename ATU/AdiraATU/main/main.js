@@ -1578,10 +1578,13 @@ function defineSharedZones(){
  
  var hatchIterator = tempAllHatch.getHatchBlockIterator();
  
+ tempAllHatch.deleteShortLines(minVectorLenght/10); // remove really small segments
+ 
  let mergesNo = tempAllHatch.mergeShortLines(allTileHatch,minVectorLenght,maxMergeDistance,
     HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode);
    hatchIterator.next();
  
+ allTileHatch.deleteShortLines(minVectorLenght); // remove remaing segments smaller than min vector
  
  // delete remaining short vectors that could not be merged
  allTileHatch.deleteShortLines(minVectorLenght);
