@@ -20,8 +20,10 @@ var EXPOSURETIME = requireBuiltin('bsExposureTime');
 
 //
 
-//const date = new Date();
-//let date = dateObject.yoUTCString():
+
+//let date = dateObject.UTCString():
+//isoDateString.split('Z');
+//process.printInfo(isoDateString);
 // different types of scanning
 const type_openPolyline = 0;
 const type_part_hatch = 1;
@@ -75,7 +77,7 @@ exports.declareParameters = function(parameter)
   
   
    
-//   process.printInfo(date);
+   
   
   parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
@@ -2432,6 +2434,8 @@ var postprocessLayerStack_MT = function(
 //       var type = 'onthefly'
 //     };
 
+  var isoDateString = new Date().toISOString();
+
   let customJSON = {
     
     "namespaces": [
@@ -2464,7 +2468,7 @@ var postprocessLayerStack_MT = function(
         "name": "generation",
         "schema": "http://adira.com/addcreator/202305",
         attributes: {
-          "created_at": "2023-06-07T14:33:49.200Z",
+          "created_at": isoDateString,
           "created_by": "engineer"
         }        
       },
