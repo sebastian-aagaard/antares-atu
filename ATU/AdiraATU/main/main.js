@@ -17,6 +17,11 @@ var LOCALIZER = require('localization/localizer.js');
 //var TILEING = require('tileing.js');
 var EXPOSURETIME = requireBuiltin('bsExposureTime');
 
+
+//
+
+//const date = new Date();
+//let date = dateObject.yoUTCString():
 // different types of scanning
 const type_openPolyline = 0;
 const type_part_hatch = 1;
@@ -68,13 +73,17 @@ exports.declareParameters = function(parameter)
   // Parameter groups are always declared like this:
   // 'group-id', 'display string'
   
+  
+   
+//   process.printInfo(date);
+  
   parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
     parameter.declareParameterReal('exposure', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.05);
 
     parameter.declareParameterReal('exposure', 'beam_compensation', LOCALIZER.GetMessage('param_beam_compensation'), 0.0, 10.0, 0.05);
     parameter.declareParameterReal('exposure', 'boarder_offset', LOCALIZER.GetMessage('param_boarder_offset'), 0.0, 10.0, 0.05);
-    parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 50.0, 0.1);//0.1
+    parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 50.0, 0.1);//0.1 50.0
     
     parameter.declareParameterReal('exposure', 'hatch_angle_init', LOCALIZER.GetMessage('param_hatch_angle_init'), 0, 360, 45);
     parameter.declareParameterReal('exposure', 'hatch_angle_increment', LOCALIZER.GetMessage('param_hatch_angle_increment'), -360, 360, 90.0);
@@ -106,8 +115,8 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('exposure', 'laser_count', LOCALIZER.GetMessage('param_laser_count'), 2, 16, 5);
     parameter.declareParameterReal('exposure', 'field_size_x', LOCALIZER.GetMessage('param_hatch_field_size_x'), 0.1, 200.0, 10);
     parameter.declareParameterReal('exposure', 'field_size_y', LOCALIZER.GetMessage('param_hatch_field_size_y'), 0.1, 100.0, 33.3);
-    parameter.declareParameterReal('exposure', 'field_overlap_x', LOCALIZER.GetMessage('param_hatch_field_overlap_x'), -100.0, 100.0, 0.1);
-    parameter.declareParameterReal('exposure', 'field_overlap_y', LOCALIZER.GetMessage('param_hatch_field_overlap_y'), -100, 100.0, 0.1);
+    //parameter.declareParameterReal('exposure', 'field_overlap_x', LOCALIZER.GetMessage('param_hatch_field_overlap_x'), -100.0, 100.0, 0);//0.1
+    //parameter.declareParameterReal('exposure', 'field_overlap_y', LOCALIZER.GetMessage('param_hatch_field_overlap_y'), -100, 100.0, 0); //0.1
     parameter.declareParameterReal('exposure', 'field_min_area', LOCALIZER.GetMessage('param_hatch_field_min_area'), 0.05, 100.0, 0.05);
   
   parameter.declareParameterGroup('workarea',LOCALIZER.GetMessage('grp_workarea'));
@@ -134,8 +143,8 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', 'x_global_max_limit', 'param_x_global_max_limit',0,1000,660);
     
     
-    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-5);
-    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-5);
+    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-5); //-5
+    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-5); //-5
     
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);//110;
@@ -622,7 +631,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    var workarea_max_y = PARAM.getParamInt('workarea','y_workarea_max_mm');  
 
    // check boundaries in y   
-   let tile_reach_y = tileOutlineOrigin.tile_height*required_passes_y-overlap_y*(required_passes_y-1);  
+   let tile_reach_y = tileOutlineOrigin.tile_height*required_passes_y+overlap_y*(required_passes_y-1);  
            
    if((scene_size_y-PARAM.getParamReal('scanhead','y_scanfield_size_mm'))/2+minY < workarea_min_y ){ // if the bounds are outside the powderbed force the tiling to start within // shouldn't happen
        scanhead_y_starting_pos = workarea_min_y;
@@ -639,7 +648,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
        }
      
    // check boundaries in x   
-   let tile_reach_x = tileOutlineOrigin.tile_width*required_passes_x-overlap_x*(required_passes_x-1); 
+   let tile_reach_x = tileOutlineOrigin.tile_width*required_passes_x+overlap_x*(required_passes_x-1); 
        
    if((scene_size_x-PARAM.getParamReal('scanhead','x_scanfield_size_mm'))/2+minX < workarea_min_x  ){
        scanhead_x_starting_pos = workarea_min_x ; // cannot scan outside 
@@ -676,7 +685,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   
      
    var tileTable = [];  // store the tilelayout
-   var tileTable3mf = {};  
+   var tileTable3mf = [];  
      
      
     let cur_tile_coord_x =  scanhead_x_starting_pos;
@@ -727,14 +736,16 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
        let TileEntry3mf = {
          "name": "movement",
          "attributes": {
-           "tileID": j,
+            "tileID": j+1,
             "targetx": cur_tile_coord_x,
             "targety": cur_tile_coord_y,
-            "speedy": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
+            "speedx" : 0,
+            "speedy": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'), // this should be written based on tile duration
             "tileExposureTime" : 0
          }
        };
-       tileTable3mf[i]=tileTable3mf[i] || []; // Initializes tileTable3mf[i] if not already initialized
+       if (!tileTable3mf[i]) tileTable3mf[i] = [];
+       
        tileTable3mf[i].push(TileEntry3mf);
       
       cur_tile_coord_y = cur_tile.next_y_coord;
@@ -1026,9 +1037,6 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   let allDownSkinContourHatch = new HATCH.bsHatch();  
   
   var allHatch = new HATCH.bsHatch();
-  
-
-  
     
   var islandId = 0;  
   while(island_it.isValid())
@@ -1070,7 +1078,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
               downSkinContourHatch.setAttributeInt('type',type_downskin_contour);
               downSkinContourHatch.setAttributeInt('islandId',islandId);
               downSkinContourHatch.clip(islandBorderClipper,false);   
-              hatchResult.moveDataFrom(downSkinContourHatch); // move downskin border to results                          
+              allContourHatch.moveDataFrom(downSkinContourHatch); // move downskin border to results                          
 
                 let hatchingArgs = {
                "fHatchDensity" : down_skin_hatch_density,
@@ -1110,7 +1118,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
             contourHatch.setAttributeInt('type',type_part_contour);
             contourHatch.setAttributeInt('islandId',islandId);
             contourHatch.clip(downskinContourClipper,false);// WIP this clip splits it between different scanners
-            hatchResult.moveDataFrom(contourHatch);
+            allContourHatch.moveDataFrom(contourHatch);
                        
             bulkIsland = generateOffset(not_down_skin_island,beam_compensation).offsetIsland;
             
@@ -1203,6 +1211,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     hatchResult.moveDataFrom(clippedHatch); 
   }
   
+  hatchResult.moveDataFrom(allContourHatch);
+  
   function addBlockedPath(island,ilandId) {
       ///////////////////////////////////////////////////////////////////////
       // narrow bridges
@@ -1270,33 +1280,34 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
    ///////////////////////////////////////////////////
   /// generate containers for hatching and islands ///
   ////////////////////////////////////////////////////
-  var vec2_tile_array = new Array();
-  var allTileHatch = new HATCH.bsHatch();
- 
-  var tile_island = new ISLAND.bsIsland(); // generate islands object to clip my
-  var tileSegmentArr = new Array();
-  var tile_exposure_time_array = new Array();
   
-  var tempContourHatch = new HATCH.bsHatch();
+  var vec2_tile_array = new Array();
+  //var allTileHatch = new HATCH.bsHatch();
+ 
+  //var tile_island = new ISLAND.bsIsland(); // generate islands object to clip my
+  var tileSegmentArr = new Array();
+  //var tile_exposure_time_array = new Array();
+  
+  //var tempContourHatch = new HATCH.bsHatch();
   let hatch = new HATCH.bsHatch();
   hatch.moveDataFrom(hatchResult);
-  //hatch = hatchResult.clone();
+ process.printInfo('hatch lenght before: ' + hatch.getExposureLength());
   
   /////////////////////////////////////////////////////////////////////////////
   /// Index the tiles (passnumber, tile_index, scanhead xcoord and ycoord) ///
   /////////////////////////////////////////////////////////////////////////////
  
   //let model = modelData.getModel(0);
-  //let modelLayer = model.getModelLayerByNr(nLayerNr);
+  //let modelLayer = model.getModelLayerByNr(nLayerNr);tileArray.length
  
   for(let j = 0; j<tileArray.length;j++)
     {
      // get the coordinates of the current tile 
-     let tile_x_min = tileArray[j].scanhead_outline[0].m_coord[0];
-     let tile_x_max = tileArray[j].scanhead_outline[2].m_coord[0];
+     let tile_x_min = tileArray[j].scanhead_outline[0].m_coord[0]+0.02;
+     let tile_x_max = tileArray[j].scanhead_outline[2].m_coord[0]-0.02;
      let tile_x_cen = (tile_x_min+tile_x_max)/2;
-     let tile_y_min = tileArray[j].scanhead_outline[1].m_coord[1];
-     let tile_y_max = tileArray[j].scanhead_outline[0].m_coord[1];
+     let tile_y_min = tileArray[j].scanhead_outline[0].m_coord[1]+0.000000001;
+     let tile_y_max = tileArray[j].scanhead_outline[2].m_coord[1]-0.000000001;
      let tile_y_cen = (tile_y_min+tile_y_max)/2;
       
      // add the corrdinates to vector pointset
@@ -1308,46 +1319,46 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
         
      vec2_tile_array[j] =  tile_points;
      // generate Segment obejct containing the tiles to 
-      
+      process.printInfo(tile_points);
      let startVec2 = new VEC2.Vec2(tile_x_min,tile_y_cen);
      let endVec2 = new VEC2.Vec2(tile_x_max,tile_y_cen);
       
      tileSegmentArr[j] = new SEG2D.Seg2d(startVec2,endVec2);  
+      //var hatchClone = hatch.clone();
       
-      let tileHatch= new HATCH.bsHatch();  // generate hatching object
-      tileHatch = ClipHatchByRect(hatch,vec2_tile_array[j]);
       
-      let hatchOutside = ClipHatchByRect(hatch,vec2_tile_array[j],false);
-      hatch.makeEmpty();
-      hatch.moveDataFrom(hatchOutside);
+      let tileHatch = new HATCH.bsHatch();  // generate hatching object
+      let hatchOutside = new HATCH.bsHatch();
+      tileHatch = ClipHatchByRect(hatch.clone(),vec2_tile_array[j],true);
+      hatchOutside = ClipHatchByRect(hatch.clone(),vec2_tile_array[j],false);
+      process.printInfo('tilehatch: ' + tileHatch.getHatchBlockCount());
+      process.printInfo('tilehatch length: ' + tileHatch.getExposureLength() );
+      process.printInfo('hatchOutside: ' + tileHatch.getHatchBlockCount());
+      process.printInfo('hatchOutside length: ' + tileHatch.getExposureLength() );
 
      // add some attributes to hatchblocks
      tileHatch.setAttributeInt('passNumber', tileArray[j].passNumber);
      tileHatch.setAttributeInt('passNumber_3mf', tileArray[j].passNumber+1);
      tileHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
      tileHatch.setAttributeInt('tileID_3mf',tileArray[j].tile_number+1);
-     //tileHatch.setAttributeInt('atu_attribute',tileArray[j].tile_number);
-     //tileHatch.setAttributeInt('3mf_attribute',tileArray[j].tile_number);
      tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
      tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
      
-//      // add attributes to contour
-//      let contourHatch= new HATCH.bsHatch();  // generate hatching object
-//      contourHatch = ClipHatchByRect(allContourHatch,vec2_tile_array[j]);
-//      contourHatch.setAttributeInt('passNumber', tileArray[j].passNumber);
-//      contourHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
-//      contourHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
-//      contourHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
-//      
-//      tempContourHatch.moveDataFrom(contourHatch);
+     process.printInfo('hatch before merge: ' + hatch.getHatchBlockCount());
+     process.printInfo('hatch before merge len: ' + hatch.getExposureLength() );
+     hatch.makeEmpty();
+     hatch.moveDataFrom(hatchOutside);
+     hatch.moveDataFrom(tileHatch);
+    
+     process.printInfo('hatch after merge: ' + hatch.getHatchBlockCount());
+     process.printInfo('hatch after merge len: ' + hatch.getExposureLength());
+     let temm =0;
      
-     hatchResult.moveDataFrom(tileHatch);
-     //allTileHatch.moveDataFrom(tileHatch);     
 
     }
-
-//     allContourHatch.makeEmpty();
-//     allContourHatch.moveDataFrom(tempContourHatch);
+    hatchResult.moveDataFrom(hatch);
+    //hatchResult.makeEmpty();
+    
     
     thisLayer.setAttribEx('tileSegmentArr',tileSegmentArr);   
     
@@ -1380,14 +1391,13 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 		          "starty": PARAM.getParamReal('movementSettings','head_startpos_y'),
 		          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
 		          "type": type,
-//               "gas": thisModel.getAttrib('gas'),
-//               "density": thisModel.getAttrib('density'),
               "requiredPasses": thisLayer.getAttrib('requiredPassesX'),
               "tilesInPass": thisLayer.getAttrib('requiredPassesY'),
               "layerScanningDuration": 0,
               
 	          },
 	          "children": [
+            // make a forloop to run through the movement and add it as an array
 // 		          {
 // 			          "name": "movement",
 // 			          "attributes": {
@@ -1403,7 +1413,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     
     let thistiletable = thisLayer.getAttribEx('tileTable_3mf');
     
-    exporter_3mf.content.children.push(thistiletable);
+    exporter_3mf.content.children = thistiletable;
     
 //     exporter_3mf.content.attributes.layerScanningDuration = 
 //     
@@ -1500,7 +1510,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
          };
          
          //tempTileHatch = mergeblock.mergeHatchBlocks(mergeArgs);  
-         
+         var allTileHatch = new HATCH.bsHatch();
          tempTileHatch.moveDataFrom(mergeblock);   
          
          var args = {
@@ -1576,13 +1586,15 @@ function defineSharedZones(){
  let minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
  let maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
  
- var hatchIterator = tempAllHatch.getHatchBlockIterator();
+ //var hatchIterator = tempAllHatch.getHatchBlockIterator();
  
  tempAllHatch.deleteShortLines(minVectorLenght/10); // remove really small segments
  
  let mergesNo = tempAllHatch.mergeShortLines(allTileHatch,minVectorLenght,maxMergeDistance,
     HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode);
-   hatchIterator.next();
+  //hatchIterator.next();
+ 
+// allTileHatch.moveDataFrom(tempAllHatch);
  
  allTileHatch.deleteShortLines(minVectorLenght); // remove remaing segments smaller than min vector
  
@@ -1627,16 +1639,6 @@ for (let i = 0; i<allHatchBlockArray.length;i++)
  sortedHatchArray.addHatchBlock(thisBlock);
  }
  
- //merge collinear lines
-   let mergeColArgs3 =  {
-  "fCollinearTol": 0.01,
-  "fMaxSkipDist": 1.1,
-  "bFlipLines": false
-}; 
-  
-//let allHatchMergLines = new HATCH.bsHatch();
-//sortedHatchArray.mergeCollinearLines(mergeColArgs3);
-
 //mergehatchBlocks 
 let simplifiedDataHatch = new HATCH.bsHatch();
 //simplifiedDataHatch = mergeBlocks(sortedHatchArray);  
@@ -1800,7 +1802,26 @@ for (let passNumber in passNumberGroups){
                   
                   if(exposureTime>passNumberGroups[passNumber][tileNumber].tileExposureDuration){
                       passNumberGroups[passNumber][tileNumber].tileExposureDuration = exposureTime;
-                      exporter_3mf.content.children[0][passNumber][tileNumber].attributes.tileExposureTime = exposureTime;
+                      exporter_3mf.content.children[passNumber][tileNumber].attributes.tileExposureTime = exposureTime;
+                    
+                       if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
+//                           exporter_3mf.content.children[passNumber][tileNumber].attributes.speedx = exposureTime;
+                           exporter_3mf.content.children[passNumber][tileNumber].attributes.speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
+                        } else { //onthefly
+                          let tileSize = PARAM.getParamReal('otf','tile_size');
+                           process.printInfo(exposureTime);
+                          process.printInfo(exposureTime/(1000*1000));
+                          process.printInfo(tileSize);
+                          process.printInfo(tileSize / (exposureTime/(1000*1000)));
+                          let oftMovementSpeed = tileSize / (exposureTime/(1000*1000));
+                          let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
+                          if (oftMovementSpeed>speedLimit) oftMovementSpeed = speedLimit;
+                          exporter_3mf.content.children[passNumber][tileNumber].attributes.speedy = oftMovementSpeed;
+    }
+                    //TODO add calulation of movementspeed when otf is activated tile lenght / exposuretime !
+                    
+                    
+                    
                   }//if
                 }//if              
               }//for hatch
@@ -1873,9 +1894,8 @@ function ClipHatchByRect(hatchObj, arr_2dVec, bKeepInside) {
 	tiles_pathset.setClosed(true); // set the zones to closed polygons
 	let tile_clipping_island = new ISLAND.bsIsland(); // generate island object
 	tile_clipping_island.addPathSet(tiles_pathset); // add pathset as new island
-	//clippedHatch.moveDataFrom(hatchObj);
+	
 	clippedHatch = hatchObj.clone(); // clone overall hatching
-
 	clippedHatch.clip(tile_clipping_island, bKeepInside); // clip the hatching with the tile_islands
 	
 	return clippedHatch;
@@ -2339,8 +2359,8 @@ var postprocessLayerStack_MT = function(
       
       for (let j = 0; j< tilesInPass;j++){
         
-        let targetx = exporter_3mf.content.children[0][i][j].attributes.targetx;
-        let targety = exporter_3mf.content.children[0][i][j].attributes.targety;
+        let targetx = exporter_3mf.content.children[i][j].attributes.targetx;
+        let targety = exporter_3mf.content.children[i][j].attributes.targety;
 
         let a = startx-targetx;
         let b = starty-targety;
@@ -2352,7 +2372,7 @@ var postprocessLayerStack_MT = function(
         var moveDuration = c/transferSpeed;
         totalMoveDuration += moveDuration;   
       
-        movementSpeed = exporter_3mf.content.children[0][i][j].attributes.speedy;
+        movementSpeed = exporter_3mf.content.children[i][j].attributes.speedy;
     
         }
       }
@@ -2362,7 +2382,7 @@ var postprocessLayerStack_MT = function(
     let recoatingDuration = PARAM.getParamInt('movementSettings','recoating_time_ms');
       
 // 	process.printInfo(thisLayerDuration);
-//   process.printInfo(recoatingDuration);
+//  process.printInfo(recoatingDuration);
 // 	process.printInfo(totalMoveDuration);
     
     buildTimeEstimate += thisLayerDuration+recoatingDuration+totalMoveDuration;
