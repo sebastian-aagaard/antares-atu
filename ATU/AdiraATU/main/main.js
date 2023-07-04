@@ -17,14 +17,6 @@ var LOCALIZER = require('localization/localizer.js');
 //var TILEING = require('tileing.js');
 var EXPOSURETIME = requireBuiltin('bsExposureTime');
 
-
-//
-
-
-//let date = dateObject.UTCString():
-//isoDateString.split('Z');
-//process.printInfo(isoDateString);
-// different types of scanning
 const type_openPolyline = 0;
 const type_part_hatch = 1;
 const type_part_contour = 2;
@@ -1415,8 +1407,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     
     let thistiletable = thisLayer.getAttribEx('tileTable_3mf');
     
-    exporter_3mf.content.children = thistiletable;
-    
+   // exporter_3mf.content.children = thistiletable;
+    exporter_3mf.content.children.push(thistiletable);
 //     exporter_3mf.content.attributes.layerScanningDuration = 
 //     
 //     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
@@ -1804,11 +1796,11 @@ for (let passNumber in passNumberGroups){
                   
                   if(exposureTime>passNumberGroups[passNumber][tileNumber].tileExposureDuration){
                       passNumberGroups[passNumber][tileNumber].tileExposureDuration = exposureTime;
-                      exporter_3mf.content.children[passNumber][tileNumber].attributes.tileExposureTime = exposureTime;
+                      exporter_3mf.content.children[0][passNumber][tileNumber].attributes.tileExposureTime = exposureTime;
                     
                        if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
 //                           exporter_3mf.content.children[passNumber][tileNumber].attributes.speedx = exposureTime;
-                           exporter_3mf.content.children[passNumber][tileNumber].attributes.speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
+                           exporter_3mf.content.children[0][passNumber][tileNumber].attributes.speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
                         } else { //onthefly
                           let tileSize = PARAM.getParamReal('otf','tile_size');
                            process.printInfo(exposureTime);
@@ -2361,8 +2353,8 @@ var postprocessLayerStack_MT = function(
       
       for (let j = 0; j< tilesInPass;j++){
         
-        let targetx = exporter_3mf.content.children[i][j].attributes.targetx;
-        let targety = exporter_3mf.content.children[i][j].attributes.targety;
+        let targetx = exporter_3mf.content.children[0][i][j].attributes.targetx;
+        let targety = exporter_3mf.content.children[0][i][j].attributes.targety;
 
         let a = startx-targetx;
         let b = starty-targety;
@@ -2374,7 +2366,7 @@ var postprocessLayerStack_MT = function(
         var moveDuration = c/transferSpeed;
         totalMoveDuration += moveDuration;   
       
-        movementSpeed = exporter_3mf.content.children[i][j].attributes.speedy;
+        movementSpeed = exporter_3mf.content.children[0][i][j].attributes.speedy;
     
         }
       }
