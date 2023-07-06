@@ -1497,10 +1497,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
            "namespace": "http://adira.com/tilinginformation/202305"
            }
     ],
-     
-        "namespace": "http://adira.com/tilinginformation/202305",
-        "content": {
+             
+        "content": [{
            "name": "sequence",
+           "namespace": "http://adira.com/tilinginformation/202305",
 	         "attributes": {
 		          "uuid": "7b85d4a4-bc8b-44eb-b5f4-59fb25cb9d77",
 		          "startx": PARAM.getParamReal('movementSettings','head_startpos_x'),
@@ -1524,13 +1524,13 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 // 			          }			
 // 		          }
             ]
-        }
+        }]
     };
     
-    let thistiletable = thisLayer.getAttribEx('tileTable_3mf');
+    let thistiletable = thisLayer.getAttribEx('tileTable_3mf')[0];
     
-   // exporter_3mf.content.children = thistiletable;
-    exporter_3mf.content.children.push(thistiletable);
+   exporter_3mf.content[0].children = thistiletable;
+    //exporter_3mf.content.children.push(thistiletable);
 //     exporter_3mf.content.attributes.layerScanningDuration = 
 //     
 //     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
@@ -1964,11 +1964,11 @@ for (let passNumber in passNumberGroups){
                   
                   if(exposureTime>passNumberGroups[passNumber][tileNumber].tileExposureDuration){
                       passNumberGroups[passNumber][tileNumber].tileExposureDuration = exposureTime;
-                      exporter_3mf.content.children[0][passNumber][tileNumber].attributes.tileExposureTime = exposureTime;
+                      exporter_3mf.content[passNumber].children[tileNumber].attributes.tileExposureTime = exposureTime;
                     
                        if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
 //                           exporter_3mf.content.children[passNumber][tileNumber].attributes.speedx = exposureTime;
-                           exporter_3mf.content.children[0][passNumber][tileNumber].attributes.speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
+                           exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
                         } else { //onthefly
                           let tileSize = PARAM.getParamReal('otf','tile_size');
 //                           process.printInfo(exposureTime);
@@ -1978,7 +1978,7 @@ for (let passNumber in passNumberGroups){
                           let oftMovementSpeed = tileSize / (exposureTime/(1000*1000));
                           let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
                           if (oftMovementSpeed>speedLimit) oftMovementSpeed = speedLimit;
-                          exporter_3mf.content.children[0][passNumber][tileNumber].attributes.speedy = oftMovementSpeed;
+                          exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = oftMovementSpeed;
     }
                     
                     
@@ -2012,7 +2012,7 @@ for (let pass in passNumberGroups){ // the the sum of pass durations and store a
 
 passNumberGroups.layerExposureDuration = layerExposureDuration;
 
-exporter_3mf.content.attributes.layerScanningDuration = layerExposureDuration;
+exporter_3mf.content[0].attributes.layerScanningDuration = layerExposureDuration;
 
 thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
 
@@ -2506,13 +2506,13 @@ var postprocessLayerStack_MT = function(
     
     let exporter_3mf = modelLayer.getAttribEx('exporter_3mf');
    
-    let thisLayerDuration = exporter_3mf.content.attributes.layerScanningDuration;
+    let thisLayerDuration = exporter_3mf.content[0].attributes.layerScanningDuration;
     
-    let requiredPasses = exporter_3mf.content.attributes.requiredPasses;
-    let tilesInPass = exporter_3mf.content.attributes.tilesInPass;
-    let startx = exporter_3mf.content.attributes.startx;
-    let starty = exporter_3mf.content.attributes.starty;
-    let transferSpeed = exporter_3mf.content.attributes.sequencetransferspeed;
+    let requiredPasses = exporter_3mf.content[0].attributes.requiredPasses;
+    let tilesInPass = exporter_3mf.content[0].attributes.tilesInPass;
+    let startx = exporter_3mf.content[0].attributes.startx;
+    let starty = exporter_3mf.content[0].attributes.starty;
+    let transferSpeed = exporter_3mf.content[0].attributes.sequencetransferspeed;
     let totalMoveDuration=0;
     
     // calculate distance travelled single
@@ -2521,8 +2521,8 @@ var postprocessLayerStack_MT = function(
       
       for (let j = 0; j< tilesInPass;j++){
         
-        let targetx = exporter_3mf.content.children[0][i][j].attributes.targetx;
-        let targety = exporter_3mf.content.children[0][i][j].attributes.targety;
+        let targetx = exporter_3mf.content[i].children[j].attributes.targetx;
+        let targety = exporter_3mf.content[i].children[j].attributes.targety;
 
         let a = startx-targetx;
         let b = starty-targety;
@@ -2534,7 +2534,7 @@ var postprocessLayerStack_MT = function(
         var moveDuration = c/transferSpeed;
         totalMoveDuration += moveDuration;   
       
-        movementSpeed = exporter_3mf.content.children[0][i][j].attributes.speedy;
+        movementSpeed = exporter_3mf.content[i].children[j].attributes.speedy;
     
         }
       }
