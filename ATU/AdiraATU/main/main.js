@@ -915,6 +915,13 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
       tile_obj.scanhead_y_coord = cur_tile_coord_y;
       tileTable.push(tile_obj);
        
+       let defaultSpeedY;
+       if(PARAM.getParamInt('tileing','ScanningMode') == 0) { // moveandshoot
+          defaultSpeedY = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
+       } else { //onthefly
+          defaultSpeedY = PARAM.getParamReal('otf','axis_max_speed');
+       }
+       
        //3mf data:
        var tile3mf = new Object;
        let TileEntry3mf = {
@@ -924,7 +931,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
             "targetx": cur_tile_coord_x,
             "targety": cur_tile_coord_y,
             "speedx" : 0,
-            "speedy": 0,
+            "speedy": defaultSpeedY,
             "tileExposureTime" : 0
          }
        };
@@ -1983,10 +1990,15 @@ for (let passNumber in passNumberGroups){
                           process.printInfo(exposureTime);
                           process.printInfo('exposuretime: '+exposureTime/(1000*1000));
                           process.printInfo(tileSize);
-                          process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
-                          let oftMovementSpeed = tileSize / (exposureTime/(1000*1000));
                           let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
-                          if (oftMovementSpeed>speedLimit) oftMovementSpeed = speedLimit;
+                          let oftMovementSpeed = speedLimit;
+                          
+                          if (exposureTime > 0) {
+                            process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
+                            oftMovementSpeed = tileSize / (exposureTime/(1000*1000));
+                            if (oftMovementSpeed > speedLimit) 
+                                oftMovementSpeed = speedLimit;
+                          }
                           exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = oftMovementSpeed;
     }
                     
