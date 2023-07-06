@@ -30,7 +30,7 @@ const laser_count = 5;
 
 //if openpolyline support is required set to false
 //when not in development mode set to false
-const bDrawTile = false; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
+const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
 
 
 /** 
@@ -203,6 +203,7 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
   parameter.declareParameterGroup('movementSettings',LOCALIZER.GetMessage('grp_movementSettings'),'Movement Settings',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterInt('movementSettings', 'recoating_time_ms',LOCALIZER.GetMessage('param_recoating_time'),0,100000,26000);
     parameter.declareParameterInt('movementSettings', 'sequencetransfer_speed_mms',LOCALIZER.GetMessage('param_sequencetransfer_speed_mms'),0,1000,120);
+    parameter.declareParameterInt('movementSettings', 'recoating_speed_mms',LOCALIZER.GetMessage('param_recoating_speed_mms'),0,1000,120);
     parameter.declareParameterReal('movementSettings', 'head_startpos_x',LOCALIZER.GetMessage('param_head_startpos_x'),0.0,1000.0,0.0);
     parameter.declareParameterReal('movementSettings', 'head_startpos_y',LOCALIZER.GetMessage('param_head_startpos_y'),-500.0,1000.0,0.0);
 
@@ -923,7 +924,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
             "targetx": cur_tile_coord_x,
             "targety": cur_tile_coord_y,
             "speedx" : 0,
-            "speedy": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'), // this should be written based on tile duration
+            "speedy": 0,
             "tileExposureTime" : 0
          }
        };
@@ -942,7 +943,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   modelLayer.setAttribEx('tileTable_3mf',tileTable3mf);
   modelLayer.setAttrib('requiredPassesX',required_passes_x.toString());
   modelLayer.setAttrib('requiredPassesY',required_passes_y.toString());
-}
+} // gettileArray
 
 
 /**
@@ -1472,9 +1473,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     
     
       
-    hatchResult.moveDataFrom(hatch);
-    //hatchResult.makeEmpty();
-    
+    hatchResult.moveDataFrom(hatch);    
     
     thisLayer.setAttribEx('tileSegmentArr',tileSegmentArr);   
     
@@ -1497,7 +1496,6 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
            "namespace": "http://adira.com/tilinginformation/202305"
            }
     ],
-             
         "content": [{
            "name": "sequence",
            "namespace": "http://adira.com/tilinginformation/202305",
@@ -1527,9 +1525,20 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
         }]
     };
     
-    let thistiletable = thisLayer.getAttribEx('tileTable_3mf')[0];
+    let thistiletable = thisLayer.getAttribEx('tileTable_3mf')[0];    
+    
+    
+//    for (let i = 0; i< thistiletable.length;i++){
+//      if (!exporter_3mf.content[i]) exporter_3mf.content[i] = [];
+//        
+//      exporter_3mf
+//      
+//      
+//      exporter_3mf.content[i].children = thistiletable[i];
+//      } 
     
    exporter_3mf.content[0].children = thistiletable;
+    
     //exporter_3mf.content.children.push(thistiletable);
 //     exporter_3mf.content.attributes.layerScanningDuration = 
 //     
@@ -1971,10 +1980,10 @@ for (let passNumber in passNumberGroups){
                            exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
                         } else { //onthefly
                           let tileSize = PARAM.getParamReal('otf','tile_size');
-//                           process.printInfo(exposureTime);
-//                           process.printInfo(exposureTime/(1000*1000));
-//                           process.printInfo(tileSize);
-//                           process.printInfo(tileSize / (exposureTime/(1000*1000)));
+                          process.printInfo(exposureTime);
+                          process.printInfo('exposuretime: '+exposureTime/(1000*1000));
+                          process.printInfo(tileSize);
+                          process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
                           let oftMovementSpeed = tileSize / (exposureTime/(1000*1000));
                           let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
                           if (oftMovementSpeed>speedLimit) oftMovementSpeed = speedLimit;
@@ -2651,7 +2660,7 @@ var postprocessLayerStack_MT = function(
           {
             "name": "recoating",
             attributes: {
-              "speed": 120
+              "speed": PARAM.getParamInt('movementSettings','recoating_speed_mms')
             }        
           
           }

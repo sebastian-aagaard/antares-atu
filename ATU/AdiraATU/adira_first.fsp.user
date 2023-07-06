@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Root>
   <LastOpened>
-    <File TabIndex="1" TabGroupIndex="0">localization/lang_en.json</File>
-    <File TabIndex="2" TabGroupIndex="0">main/export_cli.js</File>
-    <File TabIndex="0" TabGroupIndex="0">main/main.js</File>
+    <File TabGroupIndex="0" TabIndex="0">main/main.js</File>
     <Active>main/main.js</Active>
   </LastOpened>
-  <LastBreakpoints>
-    <Breakpoint>
-      <Line>1535</Line>
-      <Filepath>C:/Users/sebas/OneDrive/Work/ADIRA4/first-rep/ATU/AdiraATU/main/main.js</Filepath>
-    </Breakpoint>
-  </LastBreakpoints>
 </Root>
