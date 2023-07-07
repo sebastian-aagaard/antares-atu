@@ -1492,59 +1492,41 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     };
   var required_passes_x = thisLayer.getAttrib('requiredPassesX');
   var required_passes_y = thisLayer.getAttrib('requiredPassesY');
-    var exporter_3mf = {
-      
-    "segment_attributes": [
-          {
-           "segmenttype": "hatch",
-           "datatype": "uint32",
-           "attribute_name": 1,
-           "attribute_value": 1,
-           "namespace": "http://adira.com/tilinginformation/202305"
-           }
-    ],
-        "content": [{
-           "name": "sequence",
-           "namespace": "http://adira.com/tilinginformation/202305",
-	         "attributes": {
-		          "uuid": "7b85d4a4-bc8b-44eb-b5f4-59fb25cb9d77",
-		          "startx": PARAM.getParamReal('movementSettings','head_startpos_x'),
-		          "starty": PARAM.getParamReal('movementSettings','head_startpos_y'),
-		          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
-		          "type": type,
-              "requiredPasses": thisLayer.getAttrib('requiredPassesX'),
-              "tilesInPass": thisLayer.getAttrib('requiredPassesY'),
-              "layerScanningDuration": 0,
-              
-	          },
-	          "children": [
-            // make a forloop to run through the movement and add it as an array
-// 		          {
-// 			          "name": "movement",
-// 			          "attributes": {
-// 				          "tileid": 1,
-//                   "targetx": 0.0,
-//                   "targety": 20.0,
-//                   "speedy": 100.0
-// 			          }			
-// 		          }
-            ]
-        }]
-    };
+//   var exporter_3mf = {
+//       
+//     "segment_attributes": [
+//           {
+//            "segmenttype": "hatch",
+//            "datatype": "uint32",
+//            "attribute_name": 1,
+//            "attribute_value": 1,
+//            "namespace": "http://adira.com/tilinginformation/202305"
+//            }
+//     ],
+//         "content": [{
+//            "name": "sequence",
+//            "namespace": "http://adira.com/tilinginformation/202305",
+// 	         "attributes": {
+// 		          "uuid": "7b85d4a4-bc8b-44eb-b5f4-59fb25cb9d77",
+// 		          "startx": PARAM.getParamReal('movementSettings','head_startpos_x'),
+// 		          "starty": PARAM.getParamReal('movementSettings','head_startpos_y'),
+// 		          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
+// 		          "type": type,
+//               "requiredPasses": thisLayer.getAttrib('requiredPassesX'),
+//               "tilesInPass": thisLayer.getAttrib('requiredPassesY'),
+//               "layerScanningDuration": 0,
+//               
+// 	          },
+// 	          "children": [
+//             ]
+//         }]
+//     };
     
-    let thistiletable = thisLayer.getAttribEx('tileTable_3mf')[0];    
+    let thistiletable = thisLayer.getAttribEx('tileTable_3mf');    
     
     
-//    for (let i = 0; i< thistiletable.length;i++){
-//      if (!exporter_3mf.content[i]) exporter_3mf.content[i] = [];
-//        
-//      exporter_3mf
-//      
-//      
-//      exporter_3mf.content[i].children = thistiletable[i];
-//      } 
     
-   exporter_3mf.content[0].children = thistiletable;
+   //exporter_3mf.content[0].children = thistiletable;
     
     //exporter_3mf.content.children.push(thistiletable);
 //     exporter_3mf.content.attributes.layerScanningDuration = 
@@ -1844,13 +1826,39 @@ for (let passNumber in passNumberGroups){
  simplifiedDataHatch.moveDataFrom(mergedHatch)
 }
 
+function generateUUID() { // Public Domain/MIT
+    var d = new Date().getTime();//Timestamp
+    var d2 = ((typeof performance !== 'undefined') && performance.now && (performance.now()*1000)) || 0;//Time in microseconds since page-load or 0 if unsupported
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16;//random number between 0 and 16
+        if(d > 0){//Use timestamp until depleted
+            r = (d + r)%16 | 0;
+            d = Math.floor(d/16);
+        } else {//Use microseconds since page-load if supported
+            r = (d2 + r)%16 | 0;
+            d2 = Math.floor(d2/16);
+        }
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+}
+
 // get BSID table:
 var bsidTable = thisModel.getAttribEx('customTable');
+let tileTable =  thisLayer.getAttribEx('tileTable');  
 var tileMap = {};
 // fill the passgroup object with all passes -> tiles -> lasers -> hatchblocks
 for (let passNumber in passNumberGroups){
     let thisPass = passNumberGroups[passNumber];
-    let zoneMap = {};
+    let zoneMap = {
+          "uuid": generateUUID(),
+          "startx": 0,
+          "starty": 0,
+          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
+          "type": "onthefly",
+          "requiredPasses": required_passes_x,
+          "tilesInPass": required_passes_y,
+          "tiles" : []
+      }; 
     
     for(let i = 0; i<thisPass.blocks.length;i++){
         let hatchBlock = thisPass.blocks[i];
@@ -1860,16 +1868,26 @@ for (let passNumber in passNumberGroups){
         let bsid = hatchBlock.getAttributeInt('bsid'); 
         let laserID = Math.floor(bsid/10); 
     
-        if (!zoneMap[tileID]) {
-            zoneMap[tileID] = {
-                'tileExposureDuration':0
-            };
-        } 
+        if (!zoneMap.tiles[tileID]) {
+            zoneMap.tiles[tileID] = {};  
+        }
+         
+        zoneMap.tiles[tileID] = {
+                'tileExposureDuration': 0,
+                'tileID': tileID,
+                'xcoord': hatchBlock.getAttributeReal('xcoord'),
+                'ycoord': hatchBlock.getAttributeReal('ycoord'),
+                'speedx':0,
+                'speedy':0,
+                'laser': []
+        };
+         
+         
     
-        if (!zoneMap[tileID][laserID]) {
-            zoneMap[tileID][laserID] = {
-                hatchBlocks: [],
-                maxLaserProcessDuration: 0
+        if (!zoneMap.tiles[tileID].laser[laserID]) {
+            zoneMap.tiles[tileID].laser[laserID] = {
+                'hatchBlocks': [],
+                'maxLaserProcessDuration': 0
             };
         }
         
@@ -1879,11 +1897,33 @@ for (let passNumber in passNumberGroups){
         
         hatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
         
-        zoneMap[tileID][laserID].hatchBlocks.push(hatchBlock);
-      }
+        zoneMap.tiles[tileID].laser[laserID].hatchBlocks.push(hatchBlock);
+      } // for
       
       passNumberGroups[passNumber] = zoneMap;
       
+    }
+    
+    // define where the scanner starts
+    
+    for (let pass in passNumberGroups){
+      
+      let thisPass = passNumberGroups[pass];
+      let indices = Object.keys(thisPass.tiles);
+      
+        if(pass % 2 === 0) {
+    
+          let startingTile = Math.min(...indices); // from front to back
+          thisPass.startx = thisPass.tiles[startingTile].xcoord;
+          thisPass.starty = thisPass.tiles[startingTile].ycoord;
+          
+        } else {
+          
+          let startingTile = Math.max(...indices); // from backtoFront
+          thisPass.startx = thisPass.tiles[startingTile].xcoord;
+          thisPass.starty = thisPass.tiles[startingTile].ycoord;
+          
+        }
     }
     
     ///////////////////////////////////////////
@@ -1893,10 +1933,10 @@ for (let passNumber in passNumberGroups){
     // run through the passNumberGroups to prioritize scanning seqence and calculate scanning duration
     var processing_order = 0; // global processing order
     for (let passNumber in passNumberGroups){
-      let pass = passNumberGroups[passNumber]; // access the individual passes
+      let pass = passNumberGroups[passNumber].tiles; // access the individual passes
       
       for(let tileNumber in pass){
-        let tile = pass[tileNumber]; // access the individual tiles
+        let tile = pass[tileNumber].laser; // access the individual tiles
         
         for(let laserId in tile){
           let nlaserId = parseInt(laserId);
@@ -1956,9 +1996,7 @@ for (let passNumber in passNumberGroups){
                 let hatchblock = thisHatch[i]; // individual hatchblocks
                 hatchblock.setAttributeInt('_processing_order', processing_order++);
                 //calculate exposure duration of each hatch block
-                
-                  
-                  
+                                
                 let exposureSettings =  {
                   'fJumpSpeed' : PARAM.getParamReal('durationSim', 'JumpSpeed'),
                   'fMeltSpeed' : hatchblock.getAttributeReal('speed'),
@@ -1975,36 +2013,32 @@ for (let passNumber in passNumberGroups){
                 thisExposureDuration.addHatchBlock(hatchblock);
                 let exposureTime = thisExposureDuration.getExposureTimeMicroSeconds();
                 
-                if (exposureTime > passNumberGroups[passNumber][tileNumber][laserId].maxLaserProcessDuration) {
-                  passNumberGroups[passNumber][tileNumber][laserId].maxLaserProcessDuration = exposureTime;
+                if (exposureTime > passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].maxLaserProcessDuration) {
+                  passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].maxLaserProcessDuration = exposureTime;
                   
-                  if(exposureTime>passNumberGroups[passNumber][tileNumber].tileExposureDuration){
-                      passNumberGroups[passNumber][tileNumber].tileExposureDuration = exposureTime;
-                      exporter_3mf.content[passNumber].children[tileNumber].attributes.tileExposureTime = exposureTime;
-                    
+                  if(exposureTime>passNumberGroups[passNumber].tiles[tileNumber].tileExposureDuration){
+                      passNumberGroups[passNumber].tiles[tileNumber].tileExposureDuration = exposureTime;
+                      //exporter_3mf.content[passNumber].children[tileNumber].attributes.tileExposureTime = exposureTime;
+                      let speedy = 0;
                        if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
 //                           exporter_3mf.content.children[passNumber][tileNumber].attributes.speedx = exposureTime;
-                           exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
+                             speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
                         } else { //onthefly
                           let tileSize = PARAM.getParamReal('otf','tile_size');
-                          process.printInfo(exposureTime);
-                          process.printInfo('exposuretime: '+exposureTime/(1000*1000));
-                          process.printInfo(tileSize);
+//                           process.printInfo(exposureTime);
+//                           process.printInfo('exposuretime: '+exposureTime/(1000*1000));
+//                           process.printInfo(tileSize);
                           let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
-                          let oftMovementSpeed = speedLimit;
                           
                           if (exposureTime > 0) {
                             process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
-                            oftMovementSpeed = tileSize / (exposureTime/(1000*1000));
-                            if (oftMovementSpeed > speedLimit) 
-                                oftMovementSpeed = speedLimit;
+                             speedy = tileSize / (exposureTime/(1000*1000));
+                            if (speedy > speedLimit) 
+                                speedy = speedLimit;
                           }
-                          exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = oftMovementSpeed;
-    }
-                    
-                    
-                    
-                    
+                        }
+                      passNumberGroups[passNumber].tiles[tileNumber].speedy = speedy;  
+                      //exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = speedy;  
                   }//if
                 }//if              
               }//for hatch
@@ -2013,15 +2047,12 @@ for (let passNumber in passNumberGroups){
       }//for tile
       
       var passDuration = 0;
-      for(let tileID in passNumberGroups[passNumber]){ // calculate scanning duration of each pass
-            passDuration += passNumberGroups[passNumber][tileID].tileExposureDuration;
+      for(let tileID in passNumberGroups[passNumber].tiles){ // calculate scanning duration of each pass
+            passDuration += passNumberGroups[passNumber].tiles[tileID].tileExposureDuration;
       }      
       passNumberGroups[passNumber].passExposureDuration = passDuration; // add the passDuration to the passNumberGroups
         
-    }//for passgroups
-        
-    // write exporter_3mf JSON based on passNumberGroups !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+    }//for passgroups        
 
 let layerExposureDuration = 0;
 
@@ -2033,7 +2064,60 @@ for (let pass in passNumberGroups){ // the the sum of pass durations and store a
 
 passNumberGroups.layerExposureDuration = layerExposureDuration;
 
-exporter_3mf.content[0].attributes.layerScanningDuration = layerExposureDuration;
+//exporter_3mf.content[0].attributes.layerScanningDuration = layerExposureDuration;
+
+
+var exporter_3mf = {
+      
+    "segment_attributes": [
+          {
+           "segmenttype": "hatch",
+           "datatype": "uint32",
+           "attribute_name": 1,
+           "attribute_value": 1,
+           "namespace": "http://adira.com/tilinginformation/202305"
+           }
+    ],
+        "content": []
+    };
+
+let emm =0;
+for (let passNr in passNumberGroups){
+    let thispass = passNumberGroups[passNr];
+    process.printInfo('pass: ' + passNr);
+    exporter_3mf.content[passNr] = {
+           "name": "sequence",
+           "namespace": "http://adira.com/tilinginformation/202305",
+	         "attributes": {
+		          "uuid": thispass.uuid,
+		          "startx": thispass.startx,
+		          "starty": thispass.starty,
+		          "sequencetransferspeed": thispass.sequencetransferspeed,
+		          "type": thispass.type,
+              "requiredPasses": thispass.requiredPasses,
+              "tilesInPass": thispass.tilesInPass,
+              "layerScanningDuration":passNumberGroups.layerExposureDuration            
+	          },
+	          "children": thistiletable[passNr]
+        };
+  
+    for (let tileNr in thispass.tiles){
+      process.printInfo(tileNr);
+       let tile =  thispass.tiles[tileNr];
+       exporter_3mf.content[passNr].children[tileNr] = {
+         "name": "movement",
+                    "attributes": {
+                      "tileID":  tile.tileID+1,
+                      "targetx": tile.xcoord,
+                      "targety": tile.ycoord,
+                      "speedx":  tile.speedx,
+                      "speedy":  tile.speedy,
+                      "tileExposureTime": tile.tileExposureDuration
+                    }			
+         };   
+    } 
+} 
+
 
 thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
 
@@ -2527,17 +2611,20 @@ var postprocessLayerStack_MT = function(
     
     let exporter_3mf = modelLayer.getAttribEx('exporter_3mf');
    
-    let thisLayerDuration = exporter_3mf.content[0].attributes.layerScanningDuration;
-    
-    let requiredPasses = exporter_3mf.content[0].attributes.requiredPasses;
-    let tilesInPass = exporter_3mf.content[0].attributes.tilesInPass;
-    let startx = exporter_3mf.content[0].attributes.startx;
-    let starty = exporter_3mf.content[0].attributes.starty;
-    let transferSpeed = exporter_3mf.content[0].attributes.sequencetransferspeed;
+   
     let totalMoveDuration=0;
-    
     // calculate distance travelled single
-    for (let i = 0; i < requiredPasses;i++){
+    for (let i = 0; i < exporter_3mf.content.length;i++){
+      
+    
+    let requiredPasses = exporter_3mf.content[i].attributes.requiredPasses;
+    let tilesInPass = exporter_3mf.content[i].attributes.tilesInPass;
+    let startx = exporter_3mf.content[i].attributes.startx;
+    let starty = exporter_3mf.content[i].attributes.starty;
+    let transferSpeed = exporter_3mf.content[i].attributes.sequencetransferspeed;
+    
+      
+      
       let movementSpeed = transferSpeed;
       
       for (let j = 0; j< tilesInPass;j++){
@@ -2560,13 +2647,9 @@ var postprocessLayerStack_MT = function(
         }
       }
     
-   // let movementDuration = 
     
     let recoatingDuration = PARAM.getParamInt('movementSettings','recoating_time_ms');
-      
-// 	process.printInfo(thisLayerDuration);
-//  process.printInfo(recoatingDuration);
-// 	process.printInfo(totalMoveDuration);
+    let thisLayerDuration = exporter_3mf.content[0].attributes.layerScanningDuration; 
     
     buildTimeEstimate += thisLayerDuration+recoatingDuration+totalMoveDuration;
     
