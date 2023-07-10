@@ -1508,8 +1508,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
            "namespace": "http://adira.com/tilinginformation/202305",
 	         "attributes": {
 		          "uuid": "7b85d4a4-bc8b-44eb-b5f4-59fb25cb9d77",
-		          "startx": PARAM.getParamReal('movementSettings','head_startpos_x'),
-		          "starty": PARAM.getParamReal('movementSettings','head_startpos_y'),
+		          "startx": tileArray[0].scanhead_x_coord,//PARAM.getParamReal('movementSettings','head_startpos_x'),
+		          "starty": tileArray[0].scanhead_y_coord, //PARAM.getParamReal('movementSettings','head_startpos_y'),
 		          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
 		          "type": type,
               "requiredPasses": thisLayer.getAttrib('requiredPassesX'),
@@ -1973,10 +1973,10 @@ for (let passNumber in passNumberGroups){
                 let thisExposureDuration = new EXPOSURETIME.bsExposureTime();
                 thisExposureDuration.configure(exposureSettings);
                 thisExposureDuration.addHatchBlock(hatchblock);
-                let exposureTime = thisExposureDuration.getExposureTimeMicroSeconds();
+                let exposureTime = passNumberGroups[passNumber][tileNumber][laserId].maxLaserProcessDuration + thisExposureDuration.getExposureTimeMicroSeconds();
+                passNumberGroups[passNumber][tileNumber][laserId].maxLaserProcessDuration = exposureTime;
                 
-                if (exposureTime > passNumberGroups[passNumber][tileNumber][laserId].maxLaserProcessDuration) {
-                  passNumberGroups[passNumber][tileNumber][laserId].maxLaserProcessDuration = exposureTime;
+                //if (exposureTime > passNumberGroups[passNumber][tileNumber][laserId].maxLaserProcessDuration) {
                   
                   if(exposureTime>passNumberGroups[passNumber][tileNumber].tileExposureDuration){
                       passNumberGroups[passNumber][tileNumber].tileExposureDuration = exposureTime;
@@ -2000,12 +2000,12 @@ for (let passNumber in passNumberGroups){
                                 oftMovementSpeed = speedLimit;
                           }
                           exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = oftMovementSpeed;
-    }
+                        }
                     
                     
                     
                     
-                  }//if
+                  //}//if
                 }//if              
               }//for hatch
             }//if integer         
