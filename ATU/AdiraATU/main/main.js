@@ -394,7 +394,7 @@ exports.prepareModelExposure = function(model)
   let layer_thickness = model.getLayerThickness();
   let material_name = model.getMaterialID(); 
   
- /*if(material_name == 'IN718'){
+ if(material_name == 'IN718'){
     model.setAttrib('melting-point', '1260');
     model.setAttrib('density','5.4');
     model.setAttrib('gas','Argon');
@@ -455,7 +455,7 @@ exports.prepareModelExposure = function(model)
     };   
     model.setAttribEx('support_contour',support_contour);
     
-  } else if (material_name == 'unspecified') { */
+  } else if (material_name == 'unspecified') { 
   
     model.setAttrib('melting-point', '0');
     model.setAttrib('density','0');
@@ -518,7 +518,7 @@ exports.prepareModelExposure = function(model)
     };   
     model.setAttribEx('support_contour',support_contour);  
     
-//  } // if
+  } // if
   
   
   
