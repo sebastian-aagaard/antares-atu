@@ -1817,7 +1817,7 @@ for (let passNumber in passNumberGroups){
  let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,maxMergeDistance,
  HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode,blocking_pathset);
    
- process.printInfo(mergecount);
+ //process.printInfo(mergecount);
    
  mergedHatch.deleteShortLines(minVectorLenght); // remove small vectors
     
@@ -2031,7 +2031,7 @@ for (let passNumber in passNumberGroups){
                           let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
                           
                           if (exposureTime > 0) {
-                            process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
+                      //      process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
                              speedy = tileSize / (exposureTime/(1000*1000));
                             if (speedy > speedLimit) 
                                 speedy = speedLimit;
@@ -2084,7 +2084,7 @@ var exporter_3mf = {
 let emm =0;
 for (let passNr in passNumberGroups){
     let thispass = passNumberGroups[passNr];
-    process.printInfo('pass: ' + passNr);
+ //   process.printInfo('pass: ' + passNr);
     exporter_3mf.content[passNr] = {
            "name": "sequence",
            "namespace": "http://adira.com/tilinginformation/202305",
@@ -2102,7 +2102,7 @@ for (let passNr in passNumberGroups){
         };
   
     for (let tileNr in thispass.tiles){
-      process.printInfo(tileNr);
+    //  process.printInfo(tileNr);
        let tile =  thispass.tiles[tileNr];
        exporter_3mf.content[passNr].children[tileNr] = {
          "name": "movement",
@@ -2577,7 +2577,7 @@ function mergeBlocks(unmergedHatchBlocks) {
 	mergedblock = mergeblock.mergeHatchBlocks(mergeArgs);
 
 	let blockcount = mergedblock.getHatchBlockCount();
-	process.printInfo(blockcount);
+	//process.printInfo(blockcount);
 	return mergedblock;
 }
 
@@ -2599,7 +2599,7 @@ var postprocessLayerStack_MT = function(
     progress.initSteps(layer_end_nr-layer_start_nr+1);
   var surfaceAreaTotal = 0;
   var buildTimeEstimate = 0;
-  process.printInfo("postprocess model count: " + modelData.getModelCount());
+ // process.printInfo("postprocess model count: " + modelData.getModelCount());
   let model = modelData.getModel(0);
 
   var layerThickness = model.getLayerThickness();
