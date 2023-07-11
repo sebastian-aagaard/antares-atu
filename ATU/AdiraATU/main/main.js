@@ -1749,9 +1749,7 @@ for (let i = 0; i<allHatchBlockArray.length;i++)
 let simplifiedDataHatch = new HATCH.bsHatch();
 //simplifiedDataHatch = mergeBlocks(sortedHatchArray);  
 simplifiedDataHatch.moveDataFrom(sortedHatchArray);
- 
-// get the maximum laser duration in each tile (per pass)
- 
+
 var simplHatchArray = simplifiedDataHatch.getHatchBlockArray();
  
 // assign tiles to pass groups
@@ -1775,8 +1773,7 @@ for (let i = 0; i<simplHatchArray.length;i++)
 
 ///// merge and delete short lines based on the pass groups
 
-let minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
-let maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
+
 
 simplifiedDataHatch.makeEmpty();
 
@@ -1794,36 +1791,38 @@ for (let passNumber in passNumberGroups){
   }
   
   //calculate merge blocking geometry
- let blocking_min_x = passXCoord;
- let blocking_max_x = passXCoord+scanheadArray[4].abs_x_max;
- let blocking_min_y = Math.min(passYCoord);
- let blocking_max_y = Math.max(passYCoord)+scanheadArray[0].rel_y_max;
- 
- let firstBlock2Dvec = new Array();
- firstBlock2Dvec[0] = new VEC2.Vec2(blocking_min_x, blocking_min_y); //min,min
- firstBlock2Dvec[1] = new VEC2.Vec2(blocking_min_x, blocking_max_y); //min,max
- firstBlock2Dvec[2] = new VEC2.Vec2(blocking_max_x, blocking_min_y); // max,min
- firstBlock2Dvec[3] = new VEC2.Vec2(blocking_max_x, blocking_max_y); // max,max
-  
-//  let secondBlock2Dvec = new Array(2);
-//  secondBlock2Dvec[0] = new VEC2.Vec2(blocking_max_x, blocking_min_y); // max,min
-//  secondBlock2Dvec[1] =  new VEC2.Vec2(blocking_max_x, blocking_max_y); // max,max 
+  let blocking_min_x = passXCoord;
+  let blocking_max_x = passXCoord+scanheadArray[4].abs_x_max;
+  let blocking_min_y = Math.min(passYCoord);
+  let blocking_max_y = Math.max(passYCoord)+scanheadArray[0].rel_y_max;
+
+  let firstBlock2Dvec = new Array();
+  firstBlock2Dvec[0] = new VEC2.Vec2(blocking_min_x, blocking_min_y); //min,min
+  firstBlock2Dvec[1] = new VEC2.Vec2(blocking_min_x, blocking_max_y); //min,max
+  firstBlock2Dvec[2] = new VEC2.Vec2(blocking_max_x, blocking_min_y); // max,min
+  firstBlock2Dvec[3] = new VEC2.Vec2(blocking_max_x, blocking_max_y); // max,max
+
+  //  let secondBlock2Dvec = new Array(2);
+  //  secondBlock2Dvec[0] = new VEC2.Vec2(blocking_max_x, blocking_min_y); // max,min
+  //  secondBlock2Dvec[1] =  new VEC2.Vec2(blocking_max_x, blocking_max_y); // max,max 
     
- let blocking_pathset = new PATH_SET.bsPathSet();
- blocking_pathset.addNewPath(firstBlock2Dvec);
- //blocking_pathset.addNewPath(secondBlock2Dvec);
-  
- let mergedHatch = new HATCH.bsHatch();
- let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,maxMergeDistance,
- HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode,blocking_pathset);
+  let blocking_pathset = new PATH_SET.bsPathSet();
+  blocking_pathset.addNewPath(firstBlock2Dvec);
+  //blocking_pathset.addNewPath(secondBlock2Dvec);
+
+  let mergedHatch = new HATCH.bsHatch();
+
+  let minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
+  let maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
+
+  let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,maxMergeDistance,
+  HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode,blocking_pathset);
    
- //process.printInfo(mergecount);
-   
- mergedHatch.deleteShortLines(minVectorLenght); // remove small vectors
+  mergedHatch.deleteShortLines(minVectorLenght); // remove small vectors
     
- passNumberGroups[passNumber].blocks = mergedHatch.getHatchBlockArray();;
- 
- simplifiedDataHatch.moveDataFrom(mergedHatch)
+  passNumberGroups[passNumber].blocks = mergedHatch.getHatchBlockArray();
+
+  simplifiedDataHatch.moveDataFrom(mergedHatch)
 }
 
 function generateUUID() { // Public Domain/MIT
@@ -1860,199 +1859,196 @@ for (let passNumber in passNumberGroups){
           "tiles" : []
       }; 
     
-    for(let i = 0; i<thisPass.blocks.length;i++){
-        let hatchBlock = thisPass.blocks[i];
-        let tileID = hatchBlock.getAttributeInt('tile_index');
-        
-        //get process and laser information
-        let bsid = hatchBlock.getAttributeInt('bsid'); 
-        let laserID = Math.floor(bsid/10); 
+  for(let i = 0; i<thisPass.blocks.length;i++){
+    let hatchBlock = thisPass.blocks[i];
+    let tileID = hatchBlock.getAttributeInt('tile_index');
     
-        if (!zoneMap.tiles[tileID]) {
-            zoneMap.tiles[tileID] = {};  
-        }
-         
+    //get process and laser information
+    let bsid = hatchBlock.getAttributeInt('bsid'); 
+    let laserID = Math.floor(bsid/10); 
+
+    // If the tile with the current tileID doesn't exist in zoneMap, create a new tile
+    if (!zoneMap.tiles[tileID]) {
         zoneMap.tiles[tileID] = {
-                'tileExposureDuration': 0,
-                'tileID': tileID,
-                'xcoord': hatchBlock.getAttributeReal('xcoord'),
-                'ycoord': hatchBlock.getAttributeReal('ycoord'),
-                'speedx':0,
-                'speedy':0,
-                'laser': []
+            'tileExposureDuration': 0,
+            'tileID': tileID,
+            'xcoord': hatchBlock.getAttributeReal('xcoord'),
+            'ycoord': hatchBlock.getAttributeReal('ycoord'),
+            'speedx':0,
+            'speedy':0,
+            'laser': []
         };
-         
-         
+    }
+    // If the laser with the current laserID doesn't exist in the current tile, create a new laser
+    if (!zoneMap.tiles[tileID].laser[laserID]) {
+        zoneMap.tiles[tileID].laser[laserID] = {
+            'hatchBlocks': [],
+            'laserProcessDuration': 0
+        };
+    }
     
-        if (!zoneMap.tiles[tileID].laser[laserID]) {
-            zoneMap.tiles[tileID].laser[laserID] = {
-                'hatchBlocks': [],
-                'maxLaserProcessDuration': 0
-            };
-        }
+    let thisProcessParameters = bsidTable.find(function (item) {
+        return item.bsid === bsid;
+    });
+    
+    hatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
+    
+    zoneMap.tiles[tileID].laser[laserID].hatchBlocks.push(hatchBlock);
+    
+  } // for hatchblock iterator
+
+  passNumberGroups[passNumber] = zoneMap;
+      
+}//for passnumber
+    
+// define where the scanner starts
+    
+for (let pass in passNumberGroups){
+      
+  let thisPass = passNumberGroups[pass];
+  let indices = Object.keys(thisPass.tiles);
+  
+    if(pass % 2 === 0) {
+
+      let startingTile = Math.min(...indices); // from front to back
+      thisPass.startx = thisPass.tiles[startingTile].xcoord;
+      thisPass.starty = thisPass.tiles[startingTile].ycoord;
+      
+    } else {
+      
+      let startingTile = Math.min(...indices); // from front to back // update to get backtofront
+      thisPass.startx = thisPass.tiles[startingTile].xcoord;
+      thisPass.starty = thisPass.tiles[startingTile].ycoord;
+      
+    }
+}
+    
+///////////////////////////////////////////
+// Prioritize and find the scan duration //
+///////////////////////////////////////////
+    
+// run through the passNumberGroups to prioritize scanning seqence and calculate scanning duration
+var processing_order = 0; // global processing order
+for (let passNumber in passNumberGroups){
+  let pass = passNumberGroups[passNumber].tiles; // access the individual passes
+  
+  for(let tileNumber in pass){
+    
+    let tile = pass[tileNumber].laser; // access the individual tiles
+    let tileExposureArray = [];
+    
+    for(let laserId in tile){
+      let nlaserId = parseInt(laserId);
+      
+      if(Number.isInteger(nlaserId)){ // only perfom task if the laserId is an integer
+        //process.printInfo("laserid: " + nlaserId);
+        let processLaser = tile[nlaserId]; // access whats is designated to each laser
+
+        let thisHatch = processLaser.hatchBlocks; // get the hatchs blocks designated to each laser
+        // prioritise hatchblocks 
         
-        let thisProcessParameters = bsidTable.find(function (item) {
-            return item.bsid === bsid;
+        // group islands by ilands id (finalize islands before progressing = avoid a state of jumping madness!)
+        var groups = thisHatch.reduce(function(groups, item) {
+          var group = (groups[item.getAttributeInt('islandId')] = groups[item.getAttributeInt('islandId')] || []);
+          group.push(item);
+          return groups;
+        }, {});
+        
+        var groupsArray = Object.keys(groups).map(function(key) {
+          return groups[key];
+        });
+                    
+        // Sort each group array by 'y', then 'priority'
+        groupsArray.forEach(function(group) {
+          group.sort(function(a, b) {
+            var priorityDifference  = a.getAttributeInt('priority') - b.getAttributeInt('priority'); 
+            if (priorityDifference  !== 0) {
+              return priorityDifference ;
+            } else {
+              var yDifference = a.getBounds().minY - b.getBounds().minY;
+              if(yDifference !== 0){
+                return yDifference;
+                } else {
+                
+                let aheight = a.getBounds().maxY-a.getBounds().minY;                      
+                let bheight = b.getBounds().maxY-b.getBounds().minY;
+                
+                let awidth = a.getBounds().maxX-a.getBounds().minX;
+                let bwidth = b.getBounds().maxX-b.getBounds().minX;
+                
+                let aarea =  aheight * awidth;
+                let barea =  bheight * bwidth;
+                  
+                return aarea - barea; // smallest first
+                  }
+              
+              return 
+            }
+          });
         });
         
-        hatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
+        // Flatten groupsArray into a single sorted array one pass - one tile - one laser
+        thisHatch = [].concat.apply([], groupsArray);
         
-        zoneMap.tiles[tileID].laser[laserID].hatchBlocks.push(hatchBlock);
-      } // for
-      
-      passNumberGroups[passNumber] = zoneMap;
-      
-    }
-    
-    // define where the scanner starts
-    
-    for (let pass in passNumberGroups){
-      
-      let thisPass = passNumberGroups[pass];
-      let indices = Object.keys(thisPass.tiles);
-      
-        if(pass % 2 === 0) {
-    
-          let startingTile = Math.min(...indices); // from front to back
-          thisPass.startx = thisPass.tiles[startingTile].xcoord;
-          thisPass.starty = thisPass.tiles[startingTile].ycoord;
-          
-        } else {
-          
-          let startingTile = Math.min(...indices); // from front to back // update to get backtofront
-          thisPass.startx = thisPass.tiles[startingTile].xcoord;
-          thisPass.starty = thisPass.tiles[startingTile].ycoord;
-          
-        }
-    }
-    
-    ///////////////////////////////////////////
-    // Prioritize and find the scan duration //
-    ///////////////////////////////////////////
-    
-    // run through the passNumberGroups to prioritize scanning seqence and calculate scanning duration
-    var processing_order = 0; // global processing order
-    for (let passNumber in passNumberGroups){
-      let pass = passNumberGroups[passNumber].tiles; // access the individual passes
-      
-      for(let tileNumber in pass){
-        let tile = pass[tileNumber].laser; // access the individual tiles
-        
-        for(let laserId in tile){
-          let nlaserId = parseInt(laserId);
-          
-          if(Number.isInteger(nlaserId)){ // only perfom task if the laserId is an integer
-            //process.printInfo("laserid: " + nlaserId);
-            let processLaser = tile[nlaserId]; // access whats is designated to each laser
-
-            let thisHatch = processLaser.hatchBlocks; // get the hatchs blocks designated to each laser
-            // prioritise hatchblocks 
+        let thisLaserInTileExposureDuration = new EXPOSURETIME.bsExposureTime(); // duration for this laser scanning in this tile
             
-            // group islands by ilands id (finalize islands before progressing = avoid a state of jumping madness!)
-            var groups = thisHatch.reduce(function(groups, item) {
-              var group = (groups[item.getAttributeInt('islandId')] = groups[item.getAttributeInt('islandId')] || []);
-              group.push(item);
-              return groups;
-            }, {});
-            
-            var groupsArray = Object.keys(groups).map(function(key) {
-              return groups[key];
-            });
-                        
-            // Sort each group array by 'y', then 'priority'
-            groupsArray.forEach(function(group) {
-              group.sort(function(a, b) {
-                var priorityDifference  = a.getAttributeInt('priority') - b.getAttributeInt('priority'); 
-                if (priorityDifference  !== 0) {
-                  return priorityDifference ;
-                } else {
-                  var yDifference = a.getBounds().minY - b.getBounds().minY;
-                  if(yDifference !== 0){
-                    return yDifference;
-                    } else {
-                    
-                    let aheight = a.getBounds().maxY-a.getBounds().minY;                      
-                    let bheight = b.getBounds().maxY-b.getBounds().minY;
-                    
-                    let awidth = a.getBounds().maxX-a.getBounds().minX;
-                    let bwidth = b.getBounds().maxX-b.getBounds().minX;
-                    
-                    let aarea =  aheight * awidth;
-                    let barea =  bheight * bwidth;
-                      
-                    return aarea - barea; // smallest first
-                      }
-                  
-                  return 
-                }
-              });
-            });
-            
-            // Flatten groupsArray into a single sorted array
-            thisHatch = [].concat.apply([], groupsArray);
-            
-         
-              for (let i=0; i<thisHatch.length;i++){
-                let hatchblock = thisHatch[i]; // individual hatchblocks
-                hatchblock.setAttributeInt('_processing_order', processing_order++);
-                //calculate exposure duration of each hatch block
-                                
-                let exposureSettings =  {
-                  'fJumpSpeed' : PARAM.getParamReal('durationSim', 'JumpSpeed'),
-                  'fMeltSpeed' : hatchblock.getAttributeReal('speed'),
-                  'fJumpLengthLimit' : PARAM.getParamReal('durationSim', 'JumpLengthLimit'),
-                  'nJumpDelay' : PARAM.getParamInt('durationSim', 'JumpDelay'),
-                  'nMinJumpDelay': PARAM.getParamInt('durationSim', 'MinJumpDelay'),
-                  'nMarkDelay' : PARAM.getParamInt('durationSim', 'MarkDelay'),
-                  'nPolygonDelay': PARAM.getParamInt('durationSim', 'PolygonDelay'),
-                  'polygonDelayMode' : PARAM.getParamStr('durationSim', 'PolygonDelayMode'),
-                };
-          
-                let thisExposureDuration = new EXPOSURETIME.bsExposureTime();
-                thisExposureDuration.configure(exposureSettings);
-                thisExposureDuration.addHatchBlock(hatchblock);
-                let exposureTime = thisExposureDuration.getExposureTimeMicroSeconds();
-                
-                if (exposureTime > passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].maxLaserProcessDuration) {
-                  passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].maxLaserProcessDuration = exposureTime;
-                  
-                  if(exposureTime>passNumberGroups[passNumber].tiles[tileNumber].tileExposureDuration){
-                      passNumberGroups[passNumber].tiles[tileNumber].tileExposureDuration = exposureTime;
-                      //exporter_3mf.content[passNumber].children[tileNumber].attributes.tileExposureTime = exposureTime;
-                      let speedy = 0;
-                       if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
-//                           exporter_3mf.content.children[passNumber][tileNumber].attributes.speedx = exposureTime;
-                             speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
-                        } else { //onthefly
-                          let tileSize = PARAM.getParamReal('otf','tile_size');
-//                           process.printInfo(exposureTime);
-//                           process.printInfo('exposuretime: '+exposureTime/(1000*1000));
-//                           process.printInfo(tileSize);
-                          let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
+        for (let i=0; i<thisHatch.length;i++){
+          let hatchblock = thisHatch[i]; // individual hatchblocks
+          hatchblock.setAttributeInt('_processing_order', processing_order++);
+          //calculate exposure duration of each hatch block
                           
-                          if (exposureTime > 0) {
-                      //      process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
-                             speedy = tileSize / (exposureTime/(1000*1000));
-                            if (speedy > speedLimit) 
-                                speedy = speedLimit;
-                          }
-                        }
-                      passNumberGroups[passNumber].tiles[tileNumber].speedy = speedy;  
-                      //exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = speedy;  
-                  }//if
-                }//if              
-              }//for hatch
-            }//if integer         
-        }//for laser
-      }//for tile
+          let exposureSettings =  {
+            'fJumpSpeed' : PARAM.getParamReal('durationSim', 'JumpSpeed'),
+            'fMeltSpeed' : hatchblock.getAttributeReal('speed'),
+            'fJumpLengthLimit' : PARAM.getParamReal('durationSim', 'JumpLengthLimit'),
+            'nJumpDelay' : PARAM.getParamInt('durationSim', 'JumpDelay'),
+            'nMinJumpDelay': PARAM.getParamInt('durationSim', 'MinJumpDelay'),
+            'nMarkDelay' : PARAM.getParamInt('durationSim', 'MarkDelay'),
+            'nPolygonDelay': PARAM.getParamInt('durationSim', 'PolygonDelay'),
+            'polygonDelayMode' : PARAM.getParamStr('durationSim', 'PolygonDelayMode'),
+          };    
+          
+          thisLaserInTileExposureDuration.addHatchBlock(hatchblock,exposureSettings);            
+
+        }//for hatch
+          
+        //store the processing duration for this laser in this tile
+        let exposureTimeMicroSeconds = thisLaserInTileExposureDuration.getExposureTimeMicroSeconds();
+        passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].laserProcessDuration = exposureTimeMicroSeconds;
+        tileExposureArray.push(exposureTimeMicroSeconds);
+            
+      }//if integer         
+  }//for laser
+     
+  // get exposure duration for laser with the largest workload
+  let maxLaserScanningDuration = Math.max(...tileExposureArray);
+  let speedy = 0;
+   if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
+         speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
+    } else { //onthefly
+      let tileSize = PARAM.getParamReal('otf','tile_size');
+
+      let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
       
-      var passDuration = 0;
-      for(let tileID in passNumberGroups[passNumber].tiles){ // calculate scanning duration of each pass
-            passDuration += passNumberGroups[passNumber].tiles[tileID].tileExposureDuration;
-      }      
-      passNumberGroups[passNumber].passExposureDuration = passDuration; // add the passDuration to the passNumberGroups
-        
-    }//for passgroups        
+      if (maxLaserScanningDuration > 0) {
+  //      process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
+         speedy = tileSize / (maxLaserScanningDuration/(1000*1000));
+      }else{
+        speedy = speedLimit;
+        }           
+    }
+  passNumberGroups[passNumber].tiles[tileNumber].speedy = speedy;  
+    
+}//for tile
+  
+  var passDuration = 0;
+  for(let tileID in passNumberGroups[passNumber].tiles){ // calculate scanning duration of each pass
+        passDuration += passNumberGroups[passNumber].tiles[tileID].tileExposureDuration;
+  } // for  
+  
+  passNumberGroups[passNumber].passExposureDuration = passDuration; // add the passDuration to the passNumberGroups
+    
+}//for passgroups        
 
 let layerExposureDuration = 0;
 
