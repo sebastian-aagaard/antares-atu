@@ -1919,7 +1919,7 @@ for (let passNumber in passNumberGroups){
           
         } else {
           
-          let startingTile = Math.max(...indices); // from backtoFront
+          let startingTile = Math.min(...indices); // from front to back // update to get backtofront
           thisPass.startx = thisPass.tiles[startingTile].xcoord;
           thisPass.starty = thisPass.tiles[startingTile].ycoord;
           
