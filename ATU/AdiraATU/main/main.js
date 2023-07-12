@@ -1835,7 +1835,7 @@ for (let passNumber in passNumberGroups){
  let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,maxMergeDistance,
  HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode,blocking_pathset);
    
- process.printInfo(mergecount);
+ //process.printInfo(mergecount);
    
  mergedHatch.deleteShortLines(minVectorLenght); // remove small vectors
     
@@ -1869,7 +1869,8 @@ for (let passNumber in passNumberGroups){
         if (!zoneMap[tileID][laserID]) {
             zoneMap[tileID][laserID] = {
                 hatchBlocks: [],
-                maxLaserProcessDuration: 0
+                maxLaserProcessDuration: 0,
+                hatchBlockDurationSum: 0
             };
         }
         
@@ -1955,9 +1956,7 @@ for (let passNumber in passNumberGroups){
               for (let i=0; i<thisHatch.length;i++){
                 let hatchblock = thisHatch[i]; // individual hatchblocks
                 hatchblock.setAttributeInt('_processing_order', processing_order++);
-                //calculate exposure duration of each hatch block
-                
-                  
+                //calculate exposure duration of each hatch block                                
                   
                 let exposureSettings =  {
                   'fJumpSpeed' : PARAM.getParamReal('durationSim', 'JumpSpeed'),
@@ -1987,14 +1986,14 @@ for (let passNumber in passNumberGroups){
                            exporter_3mf.content[passNumber].children[tileNumber].attributes.speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
                         } else { //onthefly
                           let tileSize = PARAM.getParamReal('otf','tile_size');
-                          process.printInfo(exposureTime);
-                          process.printInfo('exposuretime: '+exposureTime/(1000*1000));
-                          process.printInfo(tileSize);
+                          //process.printInfo(exposureTime);
+                          //process.printInfo('exposuretime: '+exposureTime/(1000*1000));
+                          //process.printInfo(tileSize);
                           let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
                           let oftMovementSpeed = speedLimit;
                           
                           if (exposureTime > 0) {
-                            process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
+                            //process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
                             oftMovementSpeed = tileSize / (exposureTime/(1000*1000));
                             if (oftMovementSpeed > speedLimit) 
                                 oftMovementSpeed = speedLimit;
@@ -2006,7 +2005,9 @@ for (let passNumber in passNumberGroups){
                     
                     
                   //}//if
-                }//if              
+                }//if           
+             
+                
               }//for hatch
             }//if integer         
         }//for laser
@@ -2493,7 +2494,7 @@ function mergeBlocks(unmergedHatchBlocks) {
 	mergedblock = mergeblock.mergeHatchBlocks(mergeArgs);
 
 	let blockcount = mergedblock.getHatchBlockCount();
-	process.printInfo(blockcount);
+	//process.printInfo(blockcount);
 	return mergedblock;
 }
 
@@ -2515,7 +2516,7 @@ var postprocessLayerStack_MT = function(
     progress.initSteps(layer_end_nr-layer_start_nr+1);
   var surfaceAreaTotal = 0;
   var buildTimeEstimate = 0;
-  process.printInfo("postprocess model count: " + modelData.getModelCount());
+  //process.printInfo("postprocess model count: " + modelData.getModelCount());
   let model = modelData.getModel(0);
 
   var layerThickness = model.getLayerThickness();
