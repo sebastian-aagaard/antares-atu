@@ -984,11 +984,11 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
    for( let modelIndex=0; modelIndex < modelCount && !progress.cancelled(); modelIndex++ )
     {
       let thisModel = modelDataSrc.getModel(modelIndex);
-      let targetModel = new MODEL.bsModel();
-      thisModel.unifyPartWithSolidSupports(targetModel, progress, true) ;
+      //let targetModel = new MODEL.bsModel();
+      //thisModel.unifyPartWithSolidSupports(targetModel, progress, true) ;
       
       modelDataTarget.addModelCopy(thisModel);  
-      modelDataTarget.addModelCopy(targetModel);  
+      //modelDataTarget.addModelCopy(targetModel);  
     }
     
     
@@ -1005,16 +1005,19 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
         if (modelLayer.isValid())
         {
           
-          let thisLayerBounds = modelLayer.getBounds();
-          layerBoundaries[layerIt] = thisLayerBounds;
+          let thisLayerBounds = modelLayer.tryGetBounds2D();
+          if (thisLayerBounds !== undefined) {
+            layerBoundaries[layerIt] = thisLayerBounds;
         
-          modelLayer.setAttribEx('boundaries',layerBoundaries[layerIt]);          
+            modelLayer.setAttribEx('boundaries',layerBoundaries[layerIt]);          
+            // calculate the tileArray
+            getTileArray(modelLayer,bDrawTile,layerIt);  
+          }
         }
        
-       // calculate the tileArray
        
             
-          getTileArray(modelLayer,bDrawTile,layerIt);  
+          
       }
     }
          
@@ -1031,6 +1034,15 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 {  
      
   var thisModel = modelData.getModel(0);
+  
+  let l_cur_layer = thisModel.getModelLayerByNr(nLayerNr);
+  if(!l_cur_layer.isValid()) 
+    throw new Error("Invalid Layer "+nLayerNr);
+    
+    
+  let thisLayerBounds = l_cur_layer.tryGetBounds2D();
+  if(thisLayerBounds == undefined) 
+    return;
   
   let hatch_density = PARAM.getParamReal('exposure', '_hdens');
   //let laser_count = PARAM.getParamInt('exposure', 'laser_count');
