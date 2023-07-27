@@ -1180,7 +1180,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
                "fCollinearBorderSnapTol" : 0.0,
                "fBlocksortRunAheadLimit": 2.0,
                "hatchOrigin" : {x: 0.0, y: 0.0},
-               "blocksortVec" : {x: 0.0, y: 1.0},
+               "blocksortVec" : {x: 0.0, y: -1.0},
                "nFlags" : HATCH.nHatchFlagAlternating | 
                 HATCH.nHatchFlagBlocksortEnhanced |
                 HATCH.nHatchFlagFlexDensity
@@ -1223,7 +1223,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
                "fCollinearBorderSnapTol" : 0.0,
                "fBlocksortRunAheadLimit": 2.0,
                "hatchOrigin" : {x: 0.0, y: 0.0},
-               "blocksortVec" : {x: 0.0, y: 1.0},
+               "blocksortVec" : {x: 0.0, y: -1.0},
                "nFlags" : HATCH.nHatchFlagAlternating | 
                 HATCH.nHatchFlagBlocksortEnhanced |
                 HATCH.nHatchFlagFlexDensity
@@ -1260,7 +1260,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
                "fCollinearBorderSnapTol" : 0.0,
                "fBlocksortRunAheadLimit": 2.0,
                "hatchOrigin" : {x: 0.0, y: 0.0},
-               "blocksortVec" : {x: 0.0, y: 1.0},
+               "blocksortVec" : {x: 0.0, y: -1.0},
                "nFlags" : HATCH.nHatchFlagAlternating | 
                 HATCH.nHatchFlagBlocksortEnhanced |
                 HATCH.nHatchFlagFlexDensity
@@ -1793,7 +1793,7 @@ for (let passNumber in passNumberGroups){
   for(let i = 0; i<thisPassHatchArray.length;i++){ // store blocks into hatch container
   passXCoord = thisPassHatchArray[i].getAttributeReal('xcoord');
   passYCoord[i] = thisPassHatchArray[i].getAttributeReal('ycoord');
-  thisPassHatch.addHatchBlock(thisPassHatchArray[i]);
+  thisPassHatch.addHatchBlock(thisPassHatchArray[i].flip());
   }
   
   //calculate merge blocking geometry
@@ -1949,8 +1949,9 @@ for (let passNumber in passNumberGroups){
       if(Number.isInteger(nlaserId)){ // only perfom task if the laserId is an integer
         //process.printInfo("laserid: " + nlaserId);
         let processLaser = tile[nlaserId]; // access whats is designated to each laser
-
-        let thisHatch = processLaser.hatchBlocks; // get the hatchs blocks designated to each laser
+        
+        let thisHatch = new HATCH.bsHatch();
+        thisHatch = processLaser.hatchBlocks; // get the hatchs blocks designated to each laser
         // prioritise hatchblocks 
         
         // group islands by ilands id (finalize islands before progressing = avoid a state of jumping madness!)
@@ -1971,7 +1972,7 @@ for (let passNumber in passNumberGroups){
             if (priorityDifference  !== 0) {
               return priorityDifference ;
             } else {
-              var yDifference = a.getBounds().minY - b.getBounds().minY;
+              var yDifference = b.getBounds().minY - a.getBounds().minY;
               if(yDifference !== 0){
                 return yDifference;
                 } else {
