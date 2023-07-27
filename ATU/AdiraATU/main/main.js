@@ -215,8 +215,8 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
     //parameter.declareParameterReal('scanhead', 'x_global_max_limit', LOCALIZER.GetMessage('param_x_global_max_limit'),0,1000,660);
     
     
-    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-5); //-5
-    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-5); //-5
+    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,0); //-5
+    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,0); //-5
     
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);//110;
@@ -279,7 +279,7 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
      LOCALIZER.GetMessage('param_ScanningMode'),
       [LOCALIZER.GetMessage('param_ScanningMode_MoveAndShoot'),
       LOCALIZER.GetMessage('param_ScanningMode_OnTheFly')],
-      LOCALIZER.GetMessage('param_ScanningMode_MoveAndShoot')
+      LOCALIZER.GetMessage('param_ScanningMode_OnTheFly')
       );
  
 
@@ -866,8 +866,6 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
      
    // calulate the free distance (play) from the tile start to the part top and bottom
    
-  
-     
    var tileTable = [];  // store the tilelayout
    var tileTable3mf = [];  
      
@@ -1013,11 +1011,7 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
             // calculate the tileArray
             getTileArray(modelLayer,bDrawTile,layerIt);  
           }
-        }
-       
-       
-            
-          
+        } 
       }
     }
          
@@ -1431,16 +1425,16 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       let Margs = {
         "bConvertToHatchMode": true,
         "nConvertToHatchMaxPointCount": 2,
-        "nMaxBlockSize": 512,
+        //"nMaxBlockSize": 512,
         "bCheckAttributes": true
       };  
-     //hatch.mergeHatchBlocks(Margs);
+     hatch.mergeHatchBlocks(Margs);
  
   for(let j = 0; j<tileArray.length;j++)
     {
      // get the coordinates of the current tile 
-     let tile_x_min = tileArray[j].scanhead_outline[0].m_coord[0]+0.002;
-     let tile_x_max = tileArray[j].scanhead_outline[2].m_coord[0]-0.002;
+     let tile_x_min = tileArray[j].scanhead_outline[0].m_coord[0]//+0.002;
+     let tile_x_max = tileArray[j].scanhead_outline[2].m_coord[0]//-0.002;
      let tile_x_cen = (tile_x_min+tile_x_max)/2;
      let tile_y_min = tileArray[j].scanhead_outline[0].m_coord[1];//+0.000000001;
      let tile_y_max = tileArray[j].scanhead_outline[2].m_coord[1];//-0.000000001;
