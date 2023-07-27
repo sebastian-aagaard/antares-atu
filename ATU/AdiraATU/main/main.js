@@ -1174,7 +1174,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
                "fCollinearBorderSnapTol" : 0.0,
                "fBlocksortRunAheadLimit": 2.0,
                "hatchOrigin" : {x: 0.0, y: 0.0},
-               "blocksortVec" : {x: 0.0, y: 1.0},
+               "blocksortVec" : {x: 0.0, y: -1.0},
                "nFlags" : HATCH.nHatchFlagAlternating | 
                 HATCH.nHatchFlagBlocksortEnhanced |
                 HATCH.nHatchFlagFlexDensity
@@ -1217,7 +1217,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
                "fCollinearBorderSnapTol" : 0.0,
                "fBlocksortRunAheadLimit": 2.0,
                "hatchOrigin" : {x: 0.0, y: 0.0},
-               "blocksortVec" : {x: 0.0, y: 1.0},
+               "blocksortVec" : {x: 0.0, y: -1.0},
                "nFlags" : HATCH.nHatchFlagAlternating | 
                 HATCH.nHatchFlagBlocksortEnhanced |
                 HATCH.nHatchFlagFlexDensity
@@ -1254,7 +1254,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
                "fCollinearBorderSnapTol" : 0.0,
                "fBlocksortRunAheadLimit": 2.0,
                "hatchOrigin" : {x: 0.0, y: 0.0},
-               "blocksortVec" : {x: 0.0, y: 1.0},
+               "blocksortVec" : {x: 0.0, y: -1.0},
                "nFlags" : HATCH.nHatchFlagAlternating | 
                 HATCH.nHatchFlagBlocksortEnhanced |
                 HATCH.nHatchFlagFlexDensity
@@ -1419,10 +1419,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       let Margs = {
         "bConvertToHatchMode": true,
         "nConvertToHatchMaxPointCount": 2,
-        "nMaxBlockSize": 512,
+        //"nMaxBlockSize": 512,
         "bCheckAttributes": true
       };  
-     //hatch.mergeHatchBlocks(Margs);
+     hatch.mergeHatchBlocks(Margs);
  
   for(let j = 0; j<tileArray.length;j++)
     {
@@ -1820,10 +1820,20 @@ for (let passNumber in passNumberGroups){
    
   mergedHatch.deleteShortLines(minVectorLenght); // remove small vectors
     
+    
+    
+//   let tempmergeHatch = mergeBlocks(mergedHatch);  
+//   mergedHatch.makeEmpty();
+//   mergedHatch.moveDataFrom(tempmergeHatch);
+  
   passNumberGroups[passNumber].blocks = mergedHatch.getHatchBlockArray();
-
+  
+  
+  
   simplifiedDataHatch.moveDataFrom(mergedHatch)
 }
+
+
 
 function generateUUID() { // Public Domain/MIT
     var d = new Date().getTime();//Timestamp
