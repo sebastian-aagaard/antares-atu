@@ -1354,7 +1354,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     clippedHatch = allHatch.clone();
     
     clippedHatch.clip(stripeArr[i],true);
-    clippedHatch.setAttributeInt('stripeID',i+1);
+    //clippedHatch.setAttributeInt('stripeID',i+1);
     
     hatchResult.moveDataFrom(clippedHatch); 
   }
