@@ -344,6 +344,7 @@ exports.declareBuildAttributes = function(buildAttrib)
   buildAttrib.declareAttributeInt('zoneExposure');
   buildAttrib.declareAttributeInt('zoneIndex');
   buildAttrib.declareAttributeInt('islandId');
+  buildAttrib.declareAttributeInt('stripeID');
   buildAttrib.declareAttributeReal('ScanheadMoveSpeed');
   for(let i = 0 ; i<laser_count ; i++){
     buildAttrib.declareAttributeInt('laser_index_'+(i+1));
@@ -1075,16 +1076,30 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   let openpolyline_speed = openpolyline_param.markspeed;
   let openpolyline_defocus = openpolyline_param.defocus;
   
-
-  
+ 
   var hatch_angle_increment =  PARAM.getParamReal("exposure", "hatch_angle_increment");
   var cur_hatch_angle = (PARAM.getParamReal("exposure", "hatch_angle_init") + (nLayerNr * hatch_angle_increment)) % 360;
-
+  
+    // if the angle falls in the 1st or 2nd quadrant, move it to the 3rd or 4th
+    //this ensures that the hatching is always against the gas flow
+      
+  if (cur_hatch_angle >= 0.0 && cur_hatch_angle <= 180.0){     
+    cur_hatch_angle += 180.0; 
+    }
+  
   var down_skin_surface_angle = PARAM.getParamReal("downskin", "down_skin_surface_angle");
   var down_skin_layer_reference = PARAM.getParamInt("downskin", "down_skin_layer_reference");
   var down_skin_hatch_density = PARAM.getParamReal("downskin", "down_skin_hdens");
   var down_skin_hatch_angle_increment =  PARAM.getParamReal("downskin", "down_skin_hangle_increment");
   var down_skin_cur_hatch_angle = (PARAM.getParamReal("downskin", "down_skin_hangle") + (nLayerNr * down_skin_hatch_angle_increment)) % 360;
+  
+    // if the angle falls in the 1st or 2nd quadrant, move it to the 3rd or 4th
+    //this ensures that the hatching is always against the gas flow
+      
+  if (down_skin_cur_hatch_angle >= 0.0 && down_skin_cur_hatch_angle <= 180.0){     
+    down_skin_cur_hatch_angle += 180.0; 
+    }
+    
   var down_skin_overlap = PARAM.getParamReal("downskin", "down_skin_overlap");
   
   let support_hatch_density = PARAM.getParamReal("support","support_hdens");
@@ -1339,6 +1354,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     clippedHatch = allHatch.clone();
     
     clippedHatch.clip(stripeArr[i],true);
+    clippedHatch.setAttributeInt('stripeID',i+1);
     
     hatchResult.moveDataFrom(clippedHatch); 
   }
@@ -1529,9 +1545,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 //     };
     
     let thistiletable = thisLayer.getAttribEx('tileTable_3mf');    
-    
-    
-    
+
    //exporter_3mf.content[0].children = thistiletable;
     
     //exporter_3mf.content.children.push(thistiletable);
@@ -1866,7 +1880,7 @@ for (let passNumber in passNumberGroups){
       }; 
     
   for(let i = 0; i<thisPass.blocks.length;i++){
-    let hatchBlock = thisPass.blocks[i].flip();
+    let hatchBlock = thisPass.blocks[i];
     let tileID = hatchBlock.getAttributeInt('tile_index');
     
     //get process and laser information
@@ -1965,8 +1979,7 @@ for (let passNumber in passNumberGroups){
           return groups[key];
         });
         
-        groupsArray.sort(function(a,b){ // sort each islands for y position
-        
+        groupsArray.sort(function(a,b){ // sort each islands for y position        
           let aMaxY = Math.max.apply(Math, a.map(function(item) { return item.getBounds().maxY; }));
           let bMaxY = Math.max.apply(Math, b.map(function(item) { return item.getBounds().maxY; }));
    
@@ -1974,26 +1987,31 @@ for (let passNumber in passNumberGroups){
           
          });
                     
-        // Sort each group array by 'size', then 'priority'
-        groupsArray.forEach(function(group) {
-          group.sort(function(a, b) {
-            var priorityDifference  = a.getAttributeInt('priority') - b.getAttributeInt('priority'); 
-            if (priorityDifference !== 0) {
-              return priorityDifference;
-            } else {
-              let aheight = a.getBounds().maxY - a.getBounds().minY;                      
-              let bheight = b.getBounds().maxY - b.getBounds().minY;
-                        
-              let awidth = a.getBounds().maxX - a.getBounds().minX;
-              let bwidth = b.getBounds().maxX - b.getBounds().minX;
-                        
-              let aarea =  aheight * awidth;
-              let barea =  bheight * bwidth;
-                          
-              return aarea - barea; // smallest first
-            }
-          });
-        });
+// Sort each group array by 'priority', then 'maxY', then 'size'
+groupsArray.forEach(function(group) {
+  group.sort(function(a, b) {
+    var priorityDifference = a.getAttributeInt('priority') - b.getAttributeInt('priority'); 
+    if (priorityDifference !== 0) {
+      return priorityDifference;
+    } else {
+      var yDifference = b.getBounds().maxY - a.getBounds().maxY; 
+      if (yDifference !== 0) {
+        return yDifference;
+      } else {
+        let aheight = a.getBounds().maxY - a.getBounds().minY;                      
+        let bheight = b.getBounds().maxY - b.getBounds().minY;
+                
+        let awidth = a.getBounds().maxX - a.getBounds().minX;
+        let bwidth = b.getBounds().maxX - b.getBounds().minX;
+                
+        let aarea =  aheight * awidth;
+        let barea =  bheight * bwidth;
+                  
+        return aarea - barea; // smallest size first when priority and maxY are the same
+      }
+    }
+  });
+});
         
         // Flatten groupsArray into a single sorted array one pass - one tile - one laser
         thisHatch = [].concat.apply([], groupsArray);
