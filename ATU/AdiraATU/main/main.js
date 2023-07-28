@@ -1979,13 +1979,20 @@ for (let passNumber in passNumberGroups){
           return groups[key];
         });
         
-        groupsArray.sort(function(a,b){ // sort each islands for y position        
-          let aMaxY = Math.max.apply(Math, a.map(function(item) { return item.getBounds().maxY; }));
-          let bMaxY = Math.max.apply(Math, b.map(function(item) { return item.getBounds().maxY; }));
-   
-          return bMaxY - aMaxY;
-          
-         });
+// Sort 'groupsArray' by largest 'maxY' value and size of the items within each group
+// Sort 'groupsArray' by largest 'maxY' value of the items within each group, and then by smallest 'minY' when 'maxY' values are the same
+groupsArray.sort(function(a, b) {
+  var aMaxY = Math.max.apply(Math, a.map(function(item) { return item.getBounds().maxY; }));
+  var bMaxY = Math.max.apply(Math, b.map(function(item) { return item.getBounds().maxY; }));
+
+  if (aMaxY === bMaxY) {
+    var aMinY = Math.min.apply(Math, a.map(function(item) { return item.getBounds().minY; }));
+    var bMinY = Math.min.apply(Math, b.map(function(item) { return item.getBounds().minY; }));
+    return bMinY - aMinY; // largest minY comes first if maxY is same
+  }
+  
+  return bMaxY - aMaxY; // highest maxY comes first
+});
                     
 // Sort each group array by 'priority', then 'maxY', then 'size'
 groupsArray.forEach(function(group) {
