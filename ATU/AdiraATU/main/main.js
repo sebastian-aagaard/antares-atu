@@ -1304,7 +1304,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       if(is_part)
       {      
         // part
-        polyline_hatch_paths.setAttributeInt('islandId',islandId);
+        polyline_hatch_paths.setAttributeInt("islandId",islandId);
         polyline_hatch_paths.setAttributeReal("power", openpolyline_power);
         polyline_hatch_paths.setAttributeReal("speed", openpolyline_speed);
         polyline_hatch_paths.setAttributeInt("type", type_openPolyline);
@@ -1312,7 +1312,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       else
       {
         // support/fixtures
-        polyline_hatch_paths.setAttributeInt('islandId',islandId);
+        polyline_hatch_paths.setAttributeInt("islandId",islandId);
         polyline_hatch_paths.setAttributeReal("power", openpolyline_power);
         polyline_hatch_paths.setAttributeReal("speed", openpolyline_speed);
         polyline_hatch_paths.setAttributeInt("type", type_openPolyline);
@@ -1793,7 +1793,7 @@ for (let passNumber in passNumberGroups){
   for(let i = 0; i<thisPassHatchArray.length;i++){ // store blocks into hatch container
   passXCoord = thisPassHatchArray[i].getAttributeReal('xcoord');
   passYCoord[i] = thisPassHatchArray[i].getAttributeReal('ycoord');
-  thisPassHatch.addHatchBlock(thisPassHatchArray[i].flip());
+  thisPassHatch.addHatchBlock(thisPassHatchArray[i]);
   }
   
   //calculate merge blocking geometry
@@ -1866,7 +1866,7 @@ for (let passNumber in passNumberGroups){
       }; 
     
   for(let i = 0; i<thisPass.blocks.length;i++){
-    let hatchBlock = thisPass.blocks[i];
+    let hatchBlock = thisPass.blocks[i].flip();
     let tileID = hatchBlock.getAttributeInt('tile_index');
     
     //get process and laser information
@@ -1964,32 +1964,33 @@ for (let passNumber in passNumberGroups){
         var groupsArray = Object.keys(groups).map(function(key) {
           return groups[key];
         });
+        
+        groupsArray.sort(function(a,b){ // sort each islands for y position
+        
+          let aMaxY = Math.max.apply(Math, a.map(function(item) { return item.getBounds().maxY; }));
+          let bMaxY = Math.max.apply(Math, b.map(function(item) { return item.getBounds().maxY; }));
+   
+          return bMaxY - aMaxY;
+          
+         });
                     
-        // Sort each group array by 'y', then 'priority'
+        // Sort each group array by 'size', then 'priority'
         groupsArray.forEach(function(group) {
           group.sort(function(a, b) {
             var priorityDifference  = a.getAttributeInt('priority') - b.getAttributeInt('priority'); 
-            if (priorityDifference  !== 0) {
-              return priorityDifference ;
+            if (priorityDifference !== 0) {
+              return priorityDifference;
             } else {
-              var yDifference = b.getBounds().minY - a.getBounds().minY;
-              if(yDifference !== 0){
-                return yDifference;
-                } else {
-                
-                let aheight = a.getBounds().maxY-a.getBounds().minY;                      
-                let bheight = b.getBounds().maxY-b.getBounds().minY;
-                
-                let awidth = a.getBounds().maxX-a.getBounds().minX;
-                let bwidth = b.getBounds().maxX-b.getBounds().minX;
-                
-                let aarea =  aheight * awidth;
-                let barea =  bheight * bwidth;
-                  
-                return aarea - barea; // smallest first
-                  }
-              
-              return 
+              let aheight = a.getBounds().maxY - a.getBounds().minY;                      
+              let bheight = b.getBounds().maxY - b.getBounds().minY;
+                        
+              let awidth = a.getBounds().maxX - a.getBounds().minX;
+              let bwidth = b.getBounds().maxX - b.getBounds().minX;
+                        
+              let aarea =  aheight * awidth;
+              let barea =  bheight * bwidth;
+                          
+              return aarea - barea; // smallest first
             }
           });
         });
