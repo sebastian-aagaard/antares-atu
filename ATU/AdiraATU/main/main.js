@@ -15,7 +15,6 @@ var EXPORT_FILTER = requireBuiltin('bsExportFilter');
 var POLY_IT = requireBuiltin('bsPolylineIterator');
 var CLI = require('main/export_cli.js');
 var LOCALIZER = require('localization/localizer.js');
-//var TILEING = require('tileing.js');
 var EXPOSURETIME = requireBuiltin('bsExposureTime');
 
 const type_openPolyline = 0;
@@ -1511,14 +1510,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
      tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
      tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
      
-//      process.printInfo('hatch before merge: ' + hatch.getHatchBlockCount());
-//      process.printInfo('hatch before merge len: ' + hatch.getExposureLength() );
      hatch.makeEmpty();
      hatch.moveDataFrom(hatchOutside);
      hatch.moveDataFrom(tileHatch);
 
-//      process.printInfo('hatch after merge: ' + hatch.getHatchBlockCount());
-//      process.printInfo('hatch after merge len: ' + hatch.getExposureLength());     
     } //for
     
     
@@ -1535,44 +1530,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     };
   var required_passes_x = thisLayer.getAttrib('requiredPassesX');
   var required_passes_y = thisLayer.getAttrib('requiredPassesY');
-//   var exporter_3mf = {
-//       
-//     "segment_attributes": [
-//           {
-//            "segmenttype": "hatch",
-//            "datatype": "uint32",
-//            "attribute_name": 1,
-//            "attribute_value": 1,
-//            "namespace": "http://adira.com/tilinginformation/202305"
-//            }
-//     ],
-//         "content": [{
-//            "name": "sequence",
-//            "namespace": "http://adira.com/tilinginformation/202305",
-// 	         "attributes": {
-// 		          "uuid": "7b85d4a4-bc8b-44eb-b5f4-59fb25cb9d77",
-// 		          "startx": PARAM.getParamReal('movementSettings','head_startpos_x'),
-// 		          "starty": PARAM.getParamReal('movementSettings','head_startpos_y'),
-// 		          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
-// 		          "type": type,
-//               "requiredPasses": thisLayer.getAttrib('requiredPassesX'),
-//               "tilesInPass": thisLayer.getAttrib('requiredPassesY'),
-//               "layerScanningDuration": 0,
-//               
-// 	          },
-// 	          "children": [
-//             ]
-//         }]
-//     };
-    
-    let thistiletable = thisLayer.getAttribEx('tileTable_3mf');    
 
-   //exporter_3mf.content[0].children = thistiletable;
     
-    //exporter_3mf.content.children.push(thistiletable);
-//     exporter_3mf.content.attributes.layerScanningDuration = 
-//     
-//     thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
+  let thistiletable = thisLayer.getAttribEx('tileTable_3mf');    
+
     
   /////////////////////////////////////
   /// Assign laser options to hatch /// currently not used - only relevant for smart tileing !
@@ -1813,8 +1774,6 @@ for (let i = 0; i<simplHatchArray.length;i++)
 
 
 ///// merge and delete short lines based on the pass groups
-
-
 
 simplifiedDataHatch.makeEmpty();
 
