@@ -48,6 +48,8 @@
      "param_openpolyline_markspeed" : "Marking Speed [mm/s]",
      "param_openpolyline_defocus" : "Defocus [mm]",
   "grp_durationSim" : "Settings Used for Calculating Exposure Duration",
+    "param_laserOnDelay": "Laser On Delay [us]",
+    "param_laserOffDelay": "Laser Off Delay [us]",
     "param_JumpSpeed": "Jump Speed [mm/s]",
     "param_JumpLengthLimit": "Jump Length Limit [mm]",
     "param_JumpDelay": "Jump Delay [us]",

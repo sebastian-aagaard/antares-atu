@@ -27,7 +27,7 @@ const type_support_hatch = 5;
 const type_support_contour = 6;
 
 const laser_count = 5;
-
+const bIncludeScanningAttributes = false;
 //if openpolyline support is required set to false
 //when not in development mode set to false
 const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
@@ -155,6 +155,8 @@ exports.declareParameters = function(parameter)
     
 parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_durationSim'));
     parameter.declareParameterReal('durationSim', 'JumpSpeed', LOCALIZER.GetMessage('param_JumpSpeed'), 0.001, 2000, 1000);
+    parameter.declareParameterInt('durationSim', 'laserOnDelay', LOCALIZER.GetMessage('param_laserOnDelay'), 0, 2000, 2);
+    parameter.declareParameterInt('durationSim', 'laserOffDelay', LOCALIZER.GetMessage('param_laserOffDelay'), 0, 2000, 10);
     //parameter.declareParameterReal('durationSim', 'MeltSpeed', LOCALIZER.GetMessage('param_MeltSpeed'), 0.001, 2000, 200);
     parameter.declareParameterReal('durationSim', 'JumpLengthLimit', LOCALIZER.GetMessage('param_JumpLengthLimit'), 0.001, 1000, 1000);
     parameter.declareParameterInt('durationSim', 'JumpDelay', LOCALIZER.GetMessage('param_JumpDelay'), 0.0, 100.0, 50.0);
@@ -574,6 +576,24 @@ exports.prepareModelExposure = function(model)
     "npost": PARAM.getParamInt('skywriting','npost')
   };
   
+    let scanningAttributes = {      
+    "schema": "http://schemas.scanlab.com/scanning/2023/01",
+    "laserondelay": PARAM.getParamInt('durationSim','laserOnDelay'),
+    "laseroffdelay": PARAM.getParamInt('durationSim','laserOffDelay'),      
+    "jumpspeed": PARAM.getParamReal('durationSim','JumpSpeed'),
+    "jumplengthlimit": PARAM.getParamReal('durationSim','JumpLengthLimit'),
+    "jumpdelay": PARAM.getParamInt('durationSim','JumpDelay'),
+    "minjumpdelay": PARAM.getParamInt('durationSim','MinJumpDelay'),
+    "markdelay": PARAM.getParamInt('durationSim','MarkDelay'),
+    "polygondelay": PARAM.getParamInt('durationSim','PolygonDelay'),
+    "polygondelaymode" : PARAM.getParamStr('durationSim','PolygonDelayMode')
+  };
+  
+  if(bIncludeScanningAttributes){
+    var additionalAttributes = [ skywritingAttributes, scanningAttributes];
+  } else {
+    var additionalAttributes = [ skywritingAttributes];
+  }
   var customTable = [];  
   for(let l_laser_nr = 1; l_laser_nr<=laser_count;++l_laser_nr)
   {
@@ -585,8 +605,9 @@ exports.prepareModelExposure = function(model)
     bsid_obj.power = openPolyLine_power;
     bsid_obj.focus = openPolyLine_defocus;
     bsid_obj.speed = openPolyLine_speed;
-    bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'openPolyline_priority');
-    bsid_obj.attributes = [ skywritingAttributes ];
+    bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'openPolyline_priority');   
+    bsid_obj.attributes = additionalAttributes;
+        
     customTable.push(bsid_obj);
 
     // Part Hatch
@@ -598,7 +619,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = part_hatch_defocus;
     bsid_obj.speed = part_hatch_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'part_hatch_priority');    
-    bsid_obj.attributes = [ skywritingAttributes ];
+    bsid_obj.attributes = additionalAttributes;
     customTable.push(bsid_obj);
     
     // part Contour
@@ -610,7 +631,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = part_contour_defocus;
     bsid_obj.speed = part_contour_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'part_contour_priority');    
-    bsid_obj.attributes = [ skywritingAttributes ];
+    bsid_obj.attributes = additionalAttributes;
     customTable.push(bsid_obj);
     
     // downskin Hatch
@@ -622,7 +643,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = downskin_hatch_defocus;
     bsid_obj.speed = downskin_hatch_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'downskin_hatch_priority');    
-    bsid_obj.attributes = [ skywritingAttributes ];
+    bsid_obj.attributes = additionalAttributes;
     customTable.push(bsid_obj);
     
     // downskin Contour
@@ -634,7 +655,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = downskin_contour_defocus;
     bsid_obj.speed = downskin_contour_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'downskin_contour_priority');    
-    bsid_obj.attributes = [ skywritingAttributes ];
+    bsid_obj.attributes = additionalAttributes;
     customTable.push(bsid_obj);
     
     // Support Hatch
@@ -646,7 +667,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = support_hatch_defocus;
     bsid_obj.speed = support_hatch_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'support_hatch_priority');    
-    bsid_obj.attributes = [ skywritingAttributes ];
+    bsid_obj.attributes = additionalAttributes;
     customTable.push(bsid_obj);
     
     // Support Contour
@@ -658,7 +679,7 @@ exports.prepareModelExposure = function(model)
     bsid_obj.focus = support_contour_defocus;
     bsid_obj.speed = support_contour_speed;
     bsid_obj.priority = PARAM.getParamInt('scanning_priority', 'support_contour_priority');    
-    bsid_obj.attributes = [ skywritingAttributes ];
+    bsid_obj.attributes = additionalAttributes;
     customTable.push(bsid_obj);
     
   } // for
