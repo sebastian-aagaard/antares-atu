@@ -2012,9 +2012,14 @@ groupsArray.forEach(function(group) {
           };    
           
           thisLaserInTileExposureDuration.addHatchBlock(hatchblock,exposureSettings);            
-
+        
+        let tempHatch = new HATCH.bsHatch();
+        tempHatch.addHatchBlock(hatchblock);  
+        hatchResult.moveDataFrom(tempHatch); // move hatches to result   
         }//for hatch
-          
+        
+
+        
         //store the processing duration for this laser in this tile
         let exposureTimeMicroSeconds = thisLaserInTileExposureDuration.getExposureTimeMicroSeconds();
         passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].laserProcessDuration = exposureTimeMicroSeconds;
@@ -2083,45 +2088,49 @@ var exporter_3mf = {
 
 let emm =0;
 for (let passNr in passNumberGroups){
-    let thispass = passNumberGroups[passNr];
- //   process.printInfo('pass: ' + passNr);
-    exporter_3mf.content[passNr] = {
-           "name": "sequence",
-           "namespace": "http://adira.com/tilinginformation/202305",
-	         "attributes": {
-		          "uuid": thispass.uuid,
-		          "startx": thispass.startx,
-		          "starty": thispass.starty,
-		          "sequencetransferspeed": thispass.sequencetransferspeed,
-		          "type": thispass.type,
-              "requiredPasses": thispass.requiredPasses,
-              "tilesInPass": thispass.tilesInPass,
-              "layerScanningDuration":passNumberGroups.layerExposureDuration            
-	          },
-	          "children": thistiletable[passNr]
-        };
-  
-    for (let tileNr in thispass.tiles){
-    //  process.printInfo(tileNr);
-       let tile =  thispass.tiles[tileNr];
-       exporter_3mf.content[passNr].children[tileNr] = {
-         "name": "movement",
-                    "attributes": {
-                      "tileID":  tile.tileID+1,
-                      "targetx": tile.xcoord,
-                      "targety": tile.ycoord,
-                      "speedx":  tile.speedx,
-                      "speedy":  tile.speedy,
-                      "tileExposureTime": tile.tileExposureDuration
-                    }			
-         };   
-    } 
-} 
+    
+   if(Number.isInteger(Number(passNr))){ // only perfom task if the passNr is an integer*/
+      let thispass = passNumberGroups[passNr];
+
+      exporter_3mf.content[passNr] = {
+             "name": "sequence",
+             "namespace": "http://adira.com/tilinginformation/202305",
+             "attributes": {
+                "uuid": thispass.uuid,
+                "startx": thispass.startx,
+                "starty": thispass.starty,
+                "sequencetransferspeed": thispass.sequencetransferspeed,
+                "type": thispass.type,
+                "requiredPasses": thispass.requiredPasses,
+                "tilesInPass": thispass.tilesInPass,
+                "layerScanningDuration":passNumberGroups.layerExposureDuration            
+              },
+              "children": thistiletable[passNr]
+          };
+    
+      for (let tileNr in thispass.tiles){
+      //  process.printInfo(tileNr);
+         let tile =  thispass.tiles[tileNr];
+         exporter_3mf.content[passNr].children[tileNr] = {
+           "name": "movement",
+                      "attributes": {
+                        "tileID":  tile.tileID+1,
+                        "targetx": tile.xcoord,
+                        "targety": tile.ycoord,
+                        "speedx":  tile.speedx,
+                        "speedy":  tile.speedy,
+                        "tileExposureTime": tile.tileExposureDuration
+                      }			
+           };   
+      }
+  }
+}
+
 
 
 thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
 
-hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 
+//hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 
 
 }; // makeExposureLayer
 
@@ -2410,8 +2419,6 @@ function smartLaserWorkload(hatchObj, modelData, scanheadArray, tileArray, requi
 				curZone.bsid = (minWorkloadLaser.id + 1) * 10; // Assign bsid to the task based on the assigned laser's id        
 				curZone.hatch.setAttributeInt('bsid', curZone.bsid);
 				curZone.hatch.setAttributeInt('_disp_color', laser_color[minWorkloadLaser.id]);
-
- 			
 
 			// get the tile duration, by finding the longest required for most worked laser 
 			// After assigning all tasks, find the laser with max duration
