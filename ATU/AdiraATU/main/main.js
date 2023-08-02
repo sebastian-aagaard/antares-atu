@@ -216,8 +216,8 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
     //parameter.declareParameterReal('scanhead', 'x_global_max_limit', LOCALIZER.GetMessage('param_x_global_max_limit'),0,1000,660);
     
     
-    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-0.1); //-5
-    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-0.1); //-5
+    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,0); //-5
+    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,0); //-5
     
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);//110;
@@ -749,16 +749,19 @@ exports.prepareModelExposure = function(model)
 // get all relevant information for the tiling providing the origin of the scanhead
 function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
   
-  this.xpos = x_pos;
-  this.ypos = y_pos;
-  this.x_min = x_pos;// + PARAM.getParamReal('scanhead','x_scanner1_ref_mm') + PARAM.getParamReal('scanhead','x_scanner1_min_mm2');
-  this.x_max = x_pos + PARAM.getParamReal('scanhead','x_scanfield_size_mm');//(PARAM.getParamReal('scanhead','x_scanner5_ref_mm') + PARAM.getParamReal('scanhead','x_scanner5_max_mm2');
-  this.y_min = y_pos;// + PARAM.getParamReal('scanhead','stripe_ref_mm') + PARAM.getParamReal('scanhead','stripe_min_y_mm');
+  if(typeof overlap_x === "undefined") overlap_x = PARAM.getParamReal('scanhead','tile_overlap_x');
+  if(typeof overlap_y === "undefined") overlap_y = PARAM.getParamReal('scanhead','tile_overlap_y');
+  
+  this.xpos = x_pos;//-overlap_x/2;
+  this.ypos = y_pos;//-overlap_y/2;
+  this.x_min = this.xpos;// + PARAM.getParamReal('scanhead','x_scanner1_ref_mm') + PARAM.getParamReal('scanhead','x_scanner1_min_mm2');
+  this.x_max = this.xpos + PARAM.getParamReal('scanhead','x_scanfield_size_mm');//(PARAM.getParamReal('scanhead','x_scanner5_ref_mm') + PARAM.getParamReal('scanhead','x_scanner5_max_mm2');
+  this.y_min = this.ypos;// + PARAM.getParamReal('scanhead','stripe_ref_mm') + PARAM.getParamReal('scanhead','stripe_min_y_mm');
   
     if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot     
-      this.y_max = y_pos + PARAM.getParamReal('scanhead','y_scanfield_size_mm'); 
+      this.y_max = this.ypos + PARAM.getParamReal('scanhead','y_scanfield_size_mm')+overlap_y; 
     } else { //onthefly   
-      this.y_max = y_pos + PARAM.getParamReal('otf','tile_size');
+      this.y_max = this.ypos + PARAM.getParamReal('otf','tile_size')+overlap_y;
     }  
     
   //this.x_global_limit = PARAM.getParamReal('scanhead','x_global_max_limit');
@@ -766,11 +769,10 @@ function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
   this.tile_height = this.y_max - this.y_min;
   this.tile_width =  this.x_max - this.x_min;
     
-    if(typeof overlap_x === "undefined") overlap_x = PARAM.getParamReal('scanhead','tile_overlap_x');
-    if(typeof overlap_y === "undefined") overlap_y = PARAM.getParamReal('scanhead','tile_overlap_y');
     
-  this.next_x_coord = x_pos + this.tile_width + overlap_x;
-  this.next_y_coord = y_pos + this.tile_height + overlap_y;
+    
+  this.next_x_coord = this.xpos + this.tile_width + overlap_x;
+  this.next_y_coord = this.ypos + this.tile_height + overlap_y;
 } 
 
 
@@ -887,13 +889,20 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   for (let i=0; i <required_passes_x; i++)
   {
     
+    if (i>0 && i<required_passes_x){
+    cur_tile_coord_x+overlap_x;
+      
+      }
+      
     let cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
     let next_tile_coord_x = cur_tile.next_x_coord;
     
     
     for(let j =0; j<required_passes_y;j++)
     {       
-         
+//        if (j>0 && j<required_passes_y){
+//        cur_tile_coord_y-=overlap_y;
+//         }   
       cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
       
       var tile = new PATH_SET.bsPathSet();
@@ -1454,7 +1463,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
         //"nMaxBlockSize": 512,
         "bCheckAttributes": true
       };  
-     hatch.mergeHatchBlocks(Margs);
+     //hatch.mergeHatchBlocks(Margs);
  
   for(let j = 0; j<tileArray.length;j++)
     {
@@ -1608,12 +1617,12 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       
 
          // merge similar hatch blocks to speed up process
-         let mergeArgs = {
-           'bConvertToHatchMode': true,
-           'nConvertToHatchMaxPointCount': 2,
-           //'nMaxBlockSize': 1024,
-           'bCheckAttributes': true
-         };
+//          let mergeArgs = {
+//            'bConvertToHatchMode': true,
+//            'nConvertToHatchMaxPointCount': 2,
+//            //'nMaxBlockSize': 1024,
+//            'bCheckAttributes': true
+//          };
          
          //tempTileHatch = mergeblock.mergeHatchBlocks(mergeArgs);  
          var allTileHatch = new HATCH.bsHatch();
@@ -1949,46 +1958,46 @@ for (let passNumber in passNumberGroups){
           return groups[key];
         });
         
-// Sort 'groupsArray' by largest 'maxY' value and size of the items within each group
-// Sort 'groupsArray' by largest 'maxY' value of the items within each group, and then by smallest 'minY' when 'maxY' values are the same
-groupsArray.sort(function(a, b) {
-  var aMaxY = Math.max.apply(Math, a.map(function(item) { return item.getBounds().maxY; }));
-  var bMaxY = Math.max.apply(Math, b.map(function(item) { return item.getBounds().maxY; }));
+        // Sort 'groupsArray' by largest 'maxY' value and size of the items within each group
+        // Sort 'groupsArray' by largest 'maxY' value of the items within each group, and then by smallest 'minY' when 'maxY' values are the same
+        groupsArray.sort(function(a, b) {
+          var aMaxY = Math.max.apply(Math, a.map(function(item) { return item.getBounds().maxY; }));
+          var bMaxY = Math.max.apply(Math, b.map(function(item) { return item.getBounds().maxY; }));
 
-  if (aMaxY === bMaxY) {
-    var aMinY = Math.min.apply(Math, a.map(function(item) { return item.getBounds().minY; }));
-    var bMinY = Math.min.apply(Math, b.map(function(item) { return item.getBounds().minY; }));
-    return bMinY - aMinY; // largest minY comes first if maxY is same
-  }
-  
-  return bMaxY - aMaxY; // highest maxY comes first
-});
-                    
-// Sort each group array by 'priority', then 'maxY', then 'size'
-groupsArray.forEach(function(group) {
-  group.sort(function(a, b) {
-    var priorityDifference = a.getAttributeInt('priority') - b.getAttributeInt('priority'); 
-    if (priorityDifference !== 0) {
-      return priorityDifference;
-    } else {
-      var yDifference = b.getBounds().maxY - a.getBounds().maxY; 
-      if (yDifference !== 0) {
-        return yDifference;
-      } else {
-        let aheight = a.getBounds().maxY - a.getBounds().minY;                      
-        let bheight = b.getBounds().maxY - b.getBounds().minY;
-                
-        let awidth = a.getBounds().maxX - a.getBounds().minX;
-        let bwidth = b.getBounds().maxX - b.getBounds().minX;
-                
-        let aarea =  aheight * awidth;
-        let barea =  bheight * bwidth;
-                  
-        return aarea - barea; // smallest size first when priority and maxY are the same
-      }
-    }
-  });
-});
+          if (aMaxY === bMaxY) {
+            var aMinY = Math.min.apply(Math, a.map(function(item) { return item.getBounds().minY; }));
+            var bMinY = Math.min.apply(Math, b.map(function(item) { return item.getBounds().minY; }));
+            return bMinY - aMinY; // largest minY comes first if maxY is same
+          }
+          
+          return bMaxY - aMaxY; // highest maxY comes first
+        });
+                            
+        // Sort each group array by 'priority', then 'maxY', then 'size'
+        groupsArray.forEach(function(group) {
+          group.sort(function(a, b) {
+            var priorityDifference = a.getAttributeInt('priority') - b.getAttributeInt('priority'); 
+            if (priorityDifference !== 0) {
+              return priorityDifference;
+            } else {
+              var yDifference = b.getBounds().maxY - a.getBounds().maxY; 
+              if (yDifference !== 0) {
+                return yDifference;
+              } else {
+                let aheight = a.getBounds().maxY - a.getBounds().minY;                      
+                let bheight = b.getBounds().maxY - b.getBounds().minY;
+                        
+                let awidth = a.getBounds().maxX - a.getBounds().minX;
+                let bwidth = b.getBounds().maxX - b.getBounds().minX;
+                        
+                let aarea =  aheight * awidth;
+                let barea =  bheight * bwidth;
+                          
+                return aarea - barea; // smallest size first when priority and maxY are the same
+              }
+            }
+          });
+        });
         
         // Flatten groupsArray into a single sorted array one pass - one tile - one laser
         thisHatch = [].concat.apply([], groupsArray);
@@ -2015,11 +2024,13 @@ groupsArray.forEach(function(group) {
         
         let tempHatch = new HATCH.bsHatch();
         tempHatch.addHatchBlock(hatchblock);  
-        hatchResult.moveDataFrom(tempHatch); // move hatches to result   
+//        hatchResult.moveDataFrom(tempHatch); // move hatches to result   
         }//for hatch
         
-
-        
+//         let skipHatchBlock = new HATCH.bsHatch();
+//         skipHatchBlock.addHatchBlock(hatchResult);
+//         process.printInfo(skipHatchBlock.getSkipLength());
+//         
         //store the processing duration for this laser in this tile
         let exposureTimeMicroSeconds = thisLaserInTileExposureDuration.getExposureTimeMicroSeconds();
         passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].laserProcessDuration = exposureTimeMicroSeconds;
@@ -2130,7 +2141,7 @@ for (let passNr in passNumberGroups){
 
 thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
 
-//hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 
+hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 
 
 }; // makeExposureLayer
 
@@ -2179,269 +2190,269 @@ function ClipHatchByRect(hatchObj, arr_2dVec, bKeepInside) {
 
 // // smart tileing
 function smartLaserWorkload(hatchObj, modelData, scanheadArray, tileArray, required_passes_x, required_passes_y, nLayerNr, vec2_tile_array, tileSegmentArr) {
-
- 	let curHatch = new HATCH.bsHatch();
- 	curHatch.moveDataFrom(hatchObj);
- 
- 	let hatchIt = curHatch.getHatchBlockIterator();
- 	let activeLasers = new Array();
-	let zoneWorkload = new Array();
- 	var clipArray = new Array();
- 	let clipIt = 0;
-	while (hatchIt.isValid()) {
-		let thisHatch = new HATCH.bsHatch();
-		thisHatch = hatchIt.get();
-
-		let zoneIndex = thisHatch.getAttributeInt('zoneIndex');
-		//let thisWorkload = thisHatch.getAttributeReal('zoneExposure');
-		let thisSharedZone = thisHatch.getAttributeInt('sharedZone');
-		//var laserCount = PARAM.getParamInt('exposure', 'laser_count');
-
-		if (thisSharedZone > 0) {
-			for (let curLaserId = 0; curLaserId < laser_count; curLaserId++) {
-				activeLasers[curLaserId] = thisHatch.getAttributeInt('laser_index_' + (curLaserId + 1));
-
-			}
-
-			// subdivide each sharedzone into smaller zones to allow smart sorting
-			let zoneBounds = new BOUNDS.bsBounds2D();
-			zoneBounds = thisHatch.getBounds2D();
-
-			let zoneMinY = zoneBounds.m_min.y;
-			let zoneMaxY = zoneBounds.m_max.y;
-
-			let zoneLengthX = zoneBounds.m_max.x - zoneBounds.m_min.x;
-			let subdivsizeX = 50;
-			let subdivcount = Math.ceil(zoneLengthX / subdivsizeX);
-			let subdivHatch = new HATCH.bsHatch();
-
-
-
-			for (let subdivIt = 0; subdivIt < subdivcount; subdivIt++) {
-				if (subdivIt == subdivcount - 1) {
-					let subdivMinX = zoneBounds.m_min.x + subdivIt * subdivsizeX;
-					let subdivMaxX = zoneBounds.m_max.x;
-
-				} else {
-					let subdivMinX = zoneBounds.m_min.x + subdivIt * subdivsizeX;
-					let subdivMaxX = subdivMinX + subdivsizeX;
-
-				}
-
-				//          let subdivMinX = zoneBounds.m_min.x + subdivIt*subdivsizeX;
-				//          let subdivMaxX = subdivMinX + subdivsizeX;          
-
-				let subdivPoints = new Array();
-				subdivPoints[0] = new VEC2.Vec2(subdivMinX, zoneMinY); //min,min
-				subdivPoints[1] = new VEC2.Vec2(subdivMinX, zoneMaxY); //min,max
-				subdivPoints[2] = new VEC2.Vec2(subdivMaxX, zoneMaxY); //max,max
-				subdivPoints[3] = new VEC2.Vec2(subdivMaxX, zoneMinY); //max,min
-
-				clipArray[clipIt++] = subdivPoints;
-			}
-		}
-		hatchIt.next();
- 	}
-
- 	// Clip hatches by clipArray subdivide to subhatch
- 	for (let i = 0; i < clipArray.length; i++) {
-
-		let clipHatch = new HATCH.bsHatch();
-		let clipHatchOutside = new HATCH.bsHatch();
-
-		let clipZonePathset = new PATH_SET.bsPathSet(); // generate pathset object
-		clipZonePathset.addNewPath(clipArray[i]); // add tiles zones to pathset  
-		clipZonePathset.setClosed(true); // set the zones to closed polygons
-		let clippingiIsland = new ISLAND.bsIsland(); // generate island object
-		clippingiIsland.addPathSet(clipZonePathset); // add pathset as new island
-		clipHatch = curHatch.clone(); // clone overall hatching
-		clipHatchOutside = curHatch.clone(); // clone overall hatching
-		curHatch.makeEmpty(); // empty the container to refill it later
-
-		clipHatch.clip(clippingiIsland, true); // clip the hatching with the tile_islands
-		clipHatchOutside.clip(clippingiIsland, false); // get ouside of currentzone
-
-		curHatch.moveDataFrom(clipHatch);
-		curHatch.moveDataFrom(clipHatchOutside);
- 	}
- 
- 	// add exposure for all zones
- 	let hatchIt2 = curHatch.getHatchBlockIterator();
- 	while (hatchIt2.isValid()) {
-		let thisHatch = new HATCH.bsHatch();
-		thisHatch = hatchIt2.get();
-
-		let thisExposureDuration = new EXPOSURETIME.bsExposureTime();
-		thisExposureDuration.configure(modelData.getTrayAttribEx('exposureSettings'));
-		thisExposureDuration.addHatchBlock(thisHatch);
-		thisHatch.setAttributeInt('zoneExposure', thisExposureDuration.getExposureTimeMicroSeconds());
-
-		hatchIt2.next();
-	}
-
- 	// createZoneObjects  
-	function setLaserObjects(laserId) {
-		this.id = laserId;
-		this.workload = 0;
-	}
- 
-	var lasers = new Array();
-	for (let i = 0; i < laserCount; i++) {
-		lasers[i] = new setLaserObjects(i);
-	}
-
- 	function setZoneProperties(hatchBlock, iterator) {
-		this.hatch = hatchBlock;
-		this.zoneDuration = hatchBlock.getAttributeInt('zoneExposure');
-		this.passNumber = hatchBlock.getAttributeInt('passNumber');
-		this.zoneID = iterator;
-		hatchBlock.setAttributeInt('zoneIndex', iterator);
-		let lasersInReach = new Array;
-
-		for (let i = 0; i < laserCount; i++) {
-
-			let laserID = hatchBlock.getAttributeInt('laser_index_' + (i + 1));
-
-			if (laserID > 0) {
-				lasersInReach.push(i);
-			}
-		}
-
-		this.reachableBy = lasersInReach;
-		this.bsid = null;
- 	}
- 
- //	var laser_color = new Array();
- //	laser_color = modelData.getTrayAttribEx('laser_color'); // retrive laser_color 
-  var laser_color = thisModel.getTrayAttribEx('laser_color'); // retrive laser_color 
- 	//run trough each scanzone looking at the entire width
- 
- 	let smartHatch = new HATCH.bsHatch();
- 
- 	for (let tileIt = 0; tileIt < required_passes_y; tileIt++) // clip into fullwidth tiles
- 	{
- 
-		let tile_x_min = tileArray[tileIt * required_passes_x].scanhead_outline[0].m_coord[0];
-		let tile_y_min = tileArray[tileIt * required_passes_x].scanhead_outline[0].m_coord[1];
-
-		// get max coordinates for full width tile
-		let tile_x_max = tileArray[(tileIt + 1) * required_passes_x - 1].scanhead_outline[2].m_coord[0];
-		let tile_y_max = tileArray[(tileIt + 1) * required_passes_x - 1].scanhead_outline[2].m_coord[1];
-
-		let fullWidthClip = new Array();
-		fullWidthClip[0] = new VEC2.Vec2(tile_x_min, tile_y_min); //min,min
-		fullWidthClip[1] = new VEC2.Vec2(tile_x_min, tile_y_max); //min,max
-		fullWidthClip[2] = new VEC2.Vec2(tile_x_max, tile_y_max); //max,max
-		fullWidthClip[3] = new VEC2.Vec2(tile_x_max, tile_y_min); //max,min
-
-		let hatchBlockArr = new HATCH.bsHatch();
-		let clippedHatch = ClipHatchByRect(curHatch, fullWidthClip);
 // 
-		// sort hatchblocks
-		var args = {
-			sSegRegionFillingMode: "PositiveX",
-			bInvertFillingSequence: false,
-			fSegRegionFillingGridSize: 0.0,
-			sSetAssignedRegionIndexMemberName: "regionIndex"
-		};
-
-		clippedHatch.sortHatchBlocksForMinDistToSegments(tileSegmentArr, 0, args);
-		hatchBlockArr = clippedHatch.getHatchBlockArray();
-
-		var smartZones = new Array();
-		for (let i = 0; i < hatchBlockArr.length; i++) {
-			smartZones[i] = new setZoneProperties(hatchBlockArr[i], i);
-		}
-
- 		// Sort zones by zoneDuration in descending order within each fulltile
- 		smartZones.sort(function(a, b) {
-      return b.zoneDuration - a.zoneDuration;
-    });
-  }
-
-		// Group smartZones by passNumber
-		let passGroups = {};
-		let passMaxDurations = {};
-		for (let x = 0; x < smartZones.length; x++) {
-			let curZone = smartZones[x];
-			if (!passGroups[curZone.passNumber]) {
-				passGroups[curZone.passNumber] = [];
-			}
-			passGroups[curZone.passNumber].push(curZone);
-			passMaxDurations[curZone.passNumber] = Math.max(passMaxDurations[curZone.passNumber], curZone.zoneDuration);
-		}
-
-		let passZones = new Array();
-		// iterate through and divdie workload within each pass
-		for (let passNumber = 0; passNumber < required_passes_x; passNumber++) {
-			passZones = passGroups[passNumber];
-			if (!passZones) {continue}; // if no zones for this passNumber, skip to the next passNumber
-			let temp = 1;
-    
-       
- 			for (let x = 0; x < passZones.length; x++) {
-				let curZone = passZones[x];
-
-				// If a laser has already been assigned to this zone, skip to the next zone
-				if (curZone.bsid) continue;
-
-				// what lasers are capable of reaching the current zone  
-				var capableLasers = curZone.reachableBy.map(function(id) {
-          return lasers.find(function(laser) {
-            return laser.id === id;
-          });
-        });
-
-
-				let minWorkloadLaser;
-				let minWorkload = Infinity;
-				let lastTaskZone = null;
-
-				for (let j = 0; j < capableLasers.length; j++) { // rund through capabale lasers
-					let laser = capableLasers[j];
-
-					// if the workload of the laser is less than current minWorkload
-					// or if the laser's last task was the immediate neighbour of the current zone (i.e., curZone),
-					// update the minWorkload and minWorkloadLaser
-					if (laser.workload < minWorkload || (laser.lastTask && laser.lastTask.id === curZone.id - 1)) {
-						minWorkload = laser.workload;
-						minWorkloadLaser = laser;
-						lastTaskZone = laser.lastTask;
-					} //if
-				} //for
-
-
-				minWorkloadLaser.workload += curZone.zoneDuration;
-				minWorkloadLaser.lastTask = curZone; // Update the last task of this laser  
-
-				// set 
-
-				curZone.bsid = (minWorkloadLaser.id + 1) * 10; // Assign bsid to the task based on the assigned laser's id        
-				curZone.hatch.setAttributeInt('bsid', curZone.bsid);
-				curZone.hatch.setAttributeInt('_disp_color', laser_color[minWorkloadLaser.id]);
-
-			// get the tile duration, by finding the longest required for most worked laser 
-			// After assigning all tasks, find the laser with max duration
-			let laserWithMaxDuration = lasers[0];
-			for (let i = 1; i < lasers.length; i++) {
-				if (lasers[i].workload > laserWithMaxDuration.workload) {
-					laserWithMaxDuration = lasers[i];
-				}
-			}
-
-			let maxLaserDuration = laserWithMaxDuration.workload;
-
-
-			for (let i = 0; i < passZones.length; i++) {
-				let curZone = passZones[i];
-				curZone.hatch.setAttributeInt('tileDuration', maxLaserDuration);
-				smartHatch.addHatchBlock(curZone.hatch);
-			}
-    } //for
-  }
-       
-	hatchObj.moveDataFrom(smartHatch);
-	return hatchObj;
+//  	let curHatch = new HATCH.bsHatch();
+//  	curHatch.moveDataFrom(hatchObj);
+//  
+//  	let hatchIt = curHatch.getHatchBlockIterator();
+//  	let activeLasers = new Array();
+// 	let zoneWorkload = new Array();
+//  	var clipArray = new Array();
+//  	let clipIt = 0;
+// 	while (hatchIt.isValid()) {
+// 		let thisHatch = new HATCH.bsHatch();
+// 		thisHatch = hatchIt.get();
+// 
+// 		let zoneIndex = thisHatch.getAttributeInt('zoneIndex');
+// 		//let thisWorkload = thisHatch.getAttributeReal('zoneExposure');
+// 		let thisSharedZone = thisHatch.getAttributeInt('sharedZone');
+// 		//var laserCount = PARAM.getParamInt('exposure', 'laser_count');
+// 
+// 		if (thisSharedZone > 0) {
+// 			for (let curLaserId = 0; curLaserId < laser_count; curLaserId++) {
+// 				activeLasers[curLaserId] = thisHatch.getAttributeInt('laser_index_' + (curLaserId + 1));
+// 
+// 			}
+// 
+// 			// subdivide each sharedzone into smaller zones to allow smart sorting
+// 			let zoneBounds = new BOUNDS.bsBounds2D();
+// 			zoneBounds = thisHatch.getBounds2D();
+// 
+// 			let zoneMinY = zoneBounds.m_min.y;
+// 			let zoneMaxY = zoneBounds.m_max.y;
+// 
+// 			let zoneLengthX = zoneBounds.m_max.x - zoneBounds.m_min.x;
+// 			let subdivsizeX = 50;
+// 			let subdivcount = Math.ceil(zoneLengthX / subdivsizeX);
+// 			let subdivHatch = new HATCH.bsHatch();
+// 
+// 
+// 
+// 			for (let subdivIt = 0; subdivIt < subdivcount; subdivIt++) {
+// 				if (subdivIt == subdivcount - 1) {
+// 					let subdivMinX = zoneBounds.m_min.x + subdivIt * subdivsizeX;
+// 					let subdivMaxX = zoneBounds.m_max.x;
+// 
+// 				} else {
+// 					let subdivMinX = zoneBounds.m_min.x + subdivIt * subdivsizeX;
+// 					let subdivMaxX = subdivMinX + subdivsizeX;
+// 
+// 				}
+// 
+// 				//          let subdivMinX = zoneBounds.m_min.x + subdivIt*subdivsizeX;
+// 				//          let subdivMaxX = subdivMinX + subdivsizeX;          
+// 
+// 				let subdivPoints = new Array();
+// 				subdivPoints[0] = new VEC2.Vec2(subdivMinX, zoneMinY); //min,min
+// 				subdivPoints[1] = new VEC2.Vec2(subdivMinX, zoneMaxY); //min,max
+// 				subdivPoints[2] = new VEC2.Vec2(subdivMaxX, zoneMaxY); //max,max
+// 				subdivPoints[3] = new VEC2.Vec2(subdivMaxX, zoneMinY); //max,min
+// 
+// 				clipArray[clipIt++] = subdivPoints;
+// 			}
+// 		}
+// 		hatchIt.next();
+//  	}
+// 
+//  	// Clip hatches by clipArray subdivide to subhatch
+//  	for (let i = 0; i < clipArray.length; i++) {
+// 
+// 		let clipHatch = new HATCH.bsHatch();
+// 		let clipHatchOutside = new HATCH.bsHatch();
+// 
+// 		let clipZonePathset = new PATH_SET.bsPathSet(); // generate pathset object
+// 		clipZonePathset.addNewPath(clipArray[i]); // add tiles zones to pathset  
+// 		clipZonePathset.setClosed(true); // set the zones to closed polygons
+// 		let clippingiIsland = new ISLAND.bsIsland(); // generate island object
+// 		clippingiIsland.addPathSet(clipZonePathset); // add pathset as new island
+// 		clipHatch = curHatch.clone(); // clone overall hatching
+// 		clipHatchOutside = curHatch.clone(); // clone overall hatching
+// 		curHatch.makeEmpty(); // empty the container to refill it later
+// 
+// 		clipHatch.clip(clippingiIsland, true); // clip the hatching with the tile_islands
+// 		clipHatchOutside.clip(clippingiIsland, false); // get ouside of currentzone
+// 
+// 		curHatch.moveDataFrom(clipHatch);
+// 		curHatch.moveDataFrom(clipHatchOutside);
+//  	}
+//  
+//  	// add exposure for all zones
+//  	let hatchIt2 = curHatch.getHatchBlockIterator();
+//  	while (hatchIt2.isValid()) {
+// 		let thisHatch = new HATCH.bsHatch();
+// 		thisHatch = hatchIt2.get();
+// 
+// 		let thisExposureDuration = new EXPOSURETIME.bsExposureTime();
+// 		thisExposureDuration.configure(modelData.getTrayAttribEx('exposureSettings'));
+// 		thisExposureDuration.addHatchBlock(thisHatch);
+// 		thisHatch.setAttributeInt('zoneExposure', thisExposureDuration.getExposureTimeMicroSeconds());
+// 
+// 		hatchIt2.next();
+// 	}
+// 
+//  	// createZoneObjects  
+// 	function setLaserObjects(laserId) {
+// 		this.id = laserId;
+// 		this.workload = 0;
+// 	}
+//  
+// 	var lasers = new Array();
+// 	for (let i = 0; i < laserCount; i++) {
+// 		lasers[i] = new setLaserObjects(i);
+// 	}
+// 
+//  	function setZoneProperties(hatchBlock, iterator) {
+// 		this.hatch = hatchBlock;
+// 		this.zoneDuration = hatchBlock.getAttributeInt('zoneExposure');
+// 		this.passNumber = hatchBlock.getAttributeInt('passNumber');
+// 		this.zoneID = iterator;
+// 		hatchBlock.setAttributeInt('zoneIndex', iterator);
+// 		let lasersInReach = new Array;
+// 
+// 		for (let i = 0; i < laserCount; i++) {
+// 
+// 			let laserID = hatchBlock.getAttributeInt('laser_index_' + (i + 1));
+// 
+// 			if (laserID > 0) {
+// 				lasersInReach.push(i);
+// 			}
+// 		}
+// 
+// 		this.reachableBy = lasersInReach;
+// 		this.bsid = null;
+//  	}
+//  
+//  //	var laser_color = new Array();
+//  //	laser_color = modelData.getTrayAttribEx('laser_color'); // retrive laser_color 
+//   var laser_color = thisModel.getTrayAttribEx('laser_color'); // retrive laser_color 
+//  	//run trough each scanzone looking at the entire width
+//  
+//  	let smartHatch = new HATCH.bsHatch();
+//  
+//  	for (let tileIt = 0; tileIt < required_passes_y; tileIt++) // clip into fullwidth tiles
+//  	{
+//  
+// 		let tile_x_min = tileArray[tileIt * required_passes_x].scanhead_outline[0].m_coord[0];
+// 		let tile_y_min = tileArray[tileIt * required_passes_x].scanhead_outline[0].m_coord[1];
+// 
+// 		// get max coordinates for full width tile
+// 		let tile_x_max = tileArray[(tileIt + 1) * required_passes_x - 1].scanhead_outline[2].m_coord[0];
+// 		let tile_y_max = tileArray[(tileIt + 1) * required_passes_x - 1].scanhead_outline[2].m_coord[1];
+// 
+// 		let fullWidthClip = new Array();
+// 		fullWidthClip[0] = new VEC2.Vec2(tile_x_min, tile_y_min); //min,min
+// 		fullWidthClip[1] = new VEC2.Vec2(tile_x_min, tile_y_max); //min,max
+// 		fullWidthClip[2] = new VEC2.Vec2(tile_x_max, tile_y_max); //max,max
+// 		fullWidthClip[3] = new VEC2.Vec2(tile_x_max, tile_y_min); //max,min
+// 
+// 		let hatchBlockArr = new HATCH.bsHatch();
+// 		let clippedHatch = ClipHatchByRect(curHatch, fullWidthClip);
+// // 
+// 		// sort hatchblocks
+// 		var args = {
+// 			sSegRegionFillingMode: "PositiveX",
+// 			bInvertFillingSequence: false,
+// 			fSegRegionFillingGridSize: 0.0,
+// 			sSetAssignedRegionIndexMemberName: "regionIndex"
+// 		};
+// 
+// 		clippedHatch.sortHatchBlocksForMinDistToSegments(tileSegmentArr, 0, args);
+// 		hatchBlockArr = clippedHatch.getHatchBlockArray();
+// 
+// 		var smartZones = new Array();
+// 		for (let i = 0; i < hatchBlockArr.length; i++) {
+// 			smartZones[i] = new setZoneProperties(hatchBlockArr[i], i);
+// 		}
+// 
+//  		// Sort zones by zoneDuration in descending order within each fulltile
+//  		smartZones.sort(function(a, b) {
+//       return b.zoneDuration - a.zoneDuration;
+//     });
+//   }
+// 
+// 		// Group smartZones by passNumber
+// 		let passGroups = {};
+// 		let passMaxDurations = {};
+// 		for (let x = 0; x < smartZones.length; x++) {
+// 			let curZone = smartZones[x];
+// 			if (!passGroups[curZone.passNumber]) {
+// 				passGroups[curZone.passNumber] = [];
+// 			}
+// 			passGroups[curZone.passNumber].push(curZone);
+// 			passMaxDurations[curZone.passNumber] = Math.max(passMaxDurations[curZone.passNumber], curZone.zoneDuration);
+// 		}
+// 
+// 		let passZones = new Array();
+// 		// iterate through and divdie workload within each pass
+// 		for (let passNumber = 0; passNumber < required_passes_x; passNumber++) {
+// 			passZones = passGroups[passNumber];
+// 			if (!passZones) {continue}; // if no zones for this passNumber, skip to the next passNumber
+// 			let temp = 1;
+//     
+//        
+//  			for (let x = 0; x < passZones.length; x++) {
+// 				let curZone = passZones[x];
+// 
+// 				// If a laser has already been assigned to this zone, skip to the next zone
+// 				if (curZone.bsid) continue;
+// 
+// 				// what lasers are capable of reaching the current zone  
+// 				var capableLasers = curZone.reachableBy.map(function(id) {
+//           return lasers.find(function(laser) {
+//             return laser.id === id;
+//           });
+//         });
+// 
+// 
+// 				let minWorkloadLaser;
+// 				let minWorkload = Infinity;
+// 				let lastTaskZone = null;
+// 
+// 				for (let j = 0; j < capableLasers.length; j++) { // rund through capabale lasers
+// 					let laser = capableLasers[j];
+// 
+// 					// if the workload of the laser is less than current minWorkload
+// 					// or if the laser's last task was the immediate neighbour of the current zone (i.e., curZone),
+// 					// update the minWorkload and minWorkloadLaser
+// 					if (laser.workload < minWorkload || (laser.lastTask && laser.lastTask.id === curZone.id - 1)) {
+// 						minWorkload = laser.workload;
+// 						minWorkloadLaser = laser;
+// 						lastTaskZone = laser.lastTask;
+// 					} //if
+// 				} //for
+// 
+// 
+// 				minWorkloadLaser.workload += curZone.zoneDuration;
+// 				minWorkloadLaser.lastTask = curZone; // Update the last task of this laser  
+// 
+// 				// set 
+// 
+// 				curZone.bsid = (minWorkloadLaser.id + 1) * 10; // Assign bsid to the task based on the assigned laser's id        
+// 				curZone.hatch.setAttributeInt('bsid', curZone.bsid);
+// 				curZone.hatch.setAttributeInt('_disp_color', laser_color[minWorkloadLaser.id]);
+// 
+// 			// get the tile duration, by finding the longest required for most worked laser 
+// 			// After assigning all tasks, find the laser with max duration
+// 			let laserWithMaxDuration = lasers[0];
+// 			for (let i = 1; i < lasers.length; i++) {
+// 				if (lasers[i].workload > laserWithMaxDuration.workload) {
+// 					laserWithMaxDuration = lasers[i];
+// 				}
+// 			}
+// 
+// 			let maxLaserDuration = laserWithMaxDuration.workload;
+// 
+// 
+// 			for (let i = 0; i < passZones.length; i++) {
+// 				let curZone = passZones[i];
+// 				curZone.hatch.setAttributeInt('tileDuration', maxLaserDuration);
+// 				smartHatch.addHatchBlock(curZone.hatch);
+// 			}
+//     } //for
+//   }
+//        
+// 	hatchObj.moveDataFrom(smartHatch);
+ 	return hatchObj;
  } // smartTileing
 
 // function statically distributing the lasing zone <- not smart !
@@ -2502,12 +2513,12 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
     let clip_min_y = tileArray[i].scanhead_outline[0].m_coord[1];
     let clip_max_y = tileArray[i].scanhead_outline[2].m_coord[1];
     
-    if (tileArray[i].tile_number != 0 || tileArray[i].tile_number != required_passes_y-1){
-      
-      clip_min_y += shiftY;// - 0.05;
-      clip_max_y += shiftY;// + 0.05;
-      
-      }
+//     if (tileArray[i].tile_number != 0 || tileArray[i].tile_number != required_passes_y-1){
+//       
+//       clip_min_y += shiftY;// - 0.05;
+//       clip_max_y += shiftY;// + 0.05;
+//       
+//       }
    
     let laserIndex = 0;
     let laser_color = thisModel.getAttribEx('laser_color'); // retrive laser_color 
@@ -2515,8 +2526,8 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
     for(let j = 0; j<xDiv.length-1; j++){
       
       let xTileOffset = tileArray[i].scanhead_x_coord;
-      let clip_min_x = xTileOffset+xDiv[j]-0.05;
-      let clip_max_x = xTileOffset+xDiv[j+1]+0.05;
+      let clip_min_x = xTileOffset+xDiv[j]-0.05; // laserZoneOverLap
+      let clip_max_x = xTileOffset+xDiv[j+1]+0.05; //laserZoneOverLap
       
        // add the corrdinates to vector pointset
        let clipPoints = new Array(4);
@@ -2528,7 +2539,7 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
        
        //let tileHatch = new HATCH.bsHatch();
        let tileHatch = ClipHatchByRect(curHatch,clipPoints);
-       let outsideHatch = ClipHatchByRect(curHatch,clipPoints,false);
+  //    let outsideHatch = ClipHatchByRect(curHatch,clipPoints,false);
   //      curHatch.makeEmpty();
   //      curHatch.moveDataFrom(outsideHatch);
        
