@@ -157,11 +157,11 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
     parameter.declareParameterInt('durationSim', 'laserOnDelay', LOCALIZER.GetMessage('param_laserOnDelay'), 0, 2000, 2);
     parameter.declareParameterInt('durationSim', 'laserOffDelay', LOCALIZER.GetMessage('param_laserOffDelay'), 0, 2000, 10);
     //parameter.declareParameterReal('durationSim', 'MeltSpeed', LOCALIZER.GetMessage('param_MeltSpeed'), 0.001, 2000, 200);
-    parameter.declareParameterReal('durationSim', 'JumpLengthLimit', LOCALIZER.GetMessage('param_JumpLengthLimit'), 0.001, 1000, 1000);
-    parameter.declareParameterInt('durationSim', 'JumpDelay', LOCALIZER.GetMessage('param_JumpDelay'), 0.0, 100.0, 50.0);
-    parameter.declareParameterInt('durationSim', 'MinJumpDelay', LOCALIZER.GetMessage('param_MinJumpDelay'), 0.0, 20.0, 10.0);
-    parameter.declareParameterInt('durationSim', 'MarkDelay', LOCALIZER.GetMessage('param_MarkDelay'), 0.0, 100.0, 60.0);
-    parameter.declareParameterInt('durationSim', 'PolygonDelay', LOCALIZER.GetMessage('param_PolygonDelay'), 0.0, 100.0, 65.0);
+    parameter.declareParameterReal('durationSim', 'JumpLengthLimit', LOCALIZER.GetMessage('param_JumpLengthLimit'), 0.000, 1000, 0.1);
+    parameter.declareParameterInt('durationSim', 'JumpDelay', LOCALIZER.GetMessage('param_JumpDelay'), 0, 100, 50);
+    parameter.declareParameterInt('durationSim', 'MinJumpDelay', LOCALIZER.GetMessage('param_MinJumpDelay'), 0, 30, 30);
+    parameter.declareParameterInt('durationSim', 'MarkDelay', LOCALIZER.GetMessage('param_MarkDelay'), 0, 100, 60);
+    parameter.declareParameterInt('durationSim', 'PolygonDelay', LOCALIZER.GetMessage('param_PolygonDelay'), 0, 100, 65);
     parameter.declareParameterChoice('durationSim', 'PolygonDelayMode', 
        LOCALIZER.GetMessage('param_PolygonDelayMode'),
         [LOCALIZER.GetMessage('param_PolygonDelayMode_Variable'),
@@ -598,7 +598,7 @@ exports.prepareModelExposure = function(model)
   {
     // Open Polylines
     var bsid_obj = new Object();
-    bsid_obj.bsid = (10 * l_laser_nr); //laser no * 10
+    bsid_obj.bsid = (10 * l_laser_nr+type_openPolyline); //laser no * 10
     bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_openpolyline";
     bsid_obj.power = openPolyLine_power;
@@ -611,7 +611,7 @@ exports.prepareModelExposure = function(model)
 
     // Part Hatch
     var bsid_obj = new Object();
-    bsid_obj.bsid = (10 * l_laser_nr+1); // laser no * 10 + 1
+    bsid_obj.bsid = (10 * l_laser_nr+type_part_hatch); // laser no * 10 + 1
     bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_parthatch";
     bsid_obj.power = part_hatch_power;
@@ -623,7 +623,7 @@ exports.prepareModelExposure = function(model)
     
     // part Contour
     var bsid_obj = new Object();
-    bsid_obj.bsid = (10 * l_laser_nr+2); // laser no * 10 + 2
+    bsid_obj.bsid = (10 * l_laser_nr+type_part_contour); // laser no * 10 + 2
     bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_partcontour";
     bsid_obj.power = part_contour_power;
@@ -635,7 +635,7 @@ exports.prepareModelExposure = function(model)
     
     // downskin Hatch
     var bsid_obj = new Object();
-    bsid_obj.bsid = (10 * l_laser_nr+3); // laser no * 10 + 3
+    bsid_obj.bsid = (10 * l_laser_nr+type_downskin_hatch); // laser no * 10 + 3
     bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_downskinhatch";
     bsid_obj.power = downskin_hatch_power;
@@ -647,7 +647,7 @@ exports.prepareModelExposure = function(model)
     
     // downskin Contour
     var bsid_obj = new Object();
-    bsid_obj.bsid = (10 * l_laser_nr+4); // laser no * 10 + 3
+    bsid_obj.bsid = (10 * l_laser_nr+type_downskin_contour); // laser no * 10 + 3
     bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_downkskincontour";
     bsid_obj.power = downskin_contour_power;
@@ -659,7 +659,7 @@ exports.prepareModelExposure = function(model)
     
     // Support Hatch
     var bsid_obj = new Object();
-    bsid_obj.bsid = (10 * l_laser_nr+5); // laser no * 10 + 3
+    bsid_obj.bsid = (10 * l_laser_nr+type_support_hatch); // laser no * 10 + 3
     bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_supporthatch";
     bsid_obj.power = support_hatch_power;
@@ -671,7 +671,7 @@ exports.prepareModelExposure = function(model)
     
     // Support Contour
     var bsid_obj = new Object();
-    bsid_obj.bsid = (10 * l_laser_nr+6); // laser no * 10 + 3
+    bsid_obj.bsid = (10 * l_laser_nr+type_support_contour); // laser no * 10 + 3
     bsid_obj.laserIndex = l_laser_nr;
     bsid_obj.name = "laser" + l_laser_nr + "_supportcontour";
     bsid_obj.power = support_contour_power;
@@ -1328,10 +1328,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   if (!bDrawTile){
     while(polyline_it.isValid()) // check if exists
     {         
-      var is_part = MODEL.nSubtypePart == polyline_it.getModelSubtype(); // is it a part
-      var is_support = MODEL.nSubtypeSupport == polyline_it.getModelSubtype(); // is it support
+      let is_part = MODEL.nSubtypePart == polyline_it.getModelSubtype(); // is it a part
+      let is_support = MODEL.nSubtypeSupport == polyline_it.getModelSubtype(); // is it support
       
-      var polyline_hatch_paths = new HATCH.bsHatch(); // new container for exposure data
+      let polyline_hatch_paths = new HATCH.bsHatch(); // new container for exposure data
       
       polyline_it.polylineToHatch(polyline_hatch_paths);
       
@@ -1383,7 +1383,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   function addBlockedPath(island,ilandId) {
       ///////////////////////////////////////////////////////////////////////
       // narrow bridges
-      var narrow_bridge = new HATCH.bsHatch();
+      let narrow_bridge = new HATCH.bsHatch();
 
       island.createNarrowBridgePolylines(
           narrow_bridge, -beam_compensation);
@@ -1398,7 +1398,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       /////////////////////////////////////////////////////////////////////
       
       // narrow appendixes
-      var narrow_app = new HATCH.bsHatch();
+      let narrow_app = new HATCH.bsHatch();
 
       island.createNarrowAppendixPolylines(
           narrow_app, 
@@ -1463,7 +1463,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
         //"nMaxBlockSize": 512,
         "bCheckAttributes": true
       };  
-     //hatch.mergeHatchBlocks(Margs);
+     hatch.mergeHatchBlocks(Margs);
  
   for(let j = 0; j<tileArray.length;j++)
     {
@@ -1505,7 +1505,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
      tileHatch.setAttributeInt('passNumber', tileArray[j].passNumber);
      tileHatch.setAttributeInt('passNumber_3mf', tileArray[j].passNumber+1);
      tileHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
-     tileHatch.setAttributeInt('tileID_3mf',tileArray[j].tile_number+1);
+     tileHatch.setAttributeInt('tileID_3mf',tileArray[j].tile_number+1+tileArray[j].passNumber*1000);
      tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
      tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
      
@@ -2003,7 +2003,7 @@ for (let passNumber in passNumberGroups){
         thisHatch = [].concat.apply([], groupsArray);
         
         let thisLaserInTileExposureDuration = new EXPOSURETIME.bsExposureTime(); // duration for this laser scanning in this tile
-            
+        let allLaserHatch = new HATCH.bsHatch();    
         for (let i=0; i<thisHatch.length;i++){
           let hatchblock = thisHatch[i]; // individual hatchblocks
           hatchblock.setAttributeInt('_processing_order', processing_order++);
@@ -2023,18 +2023,31 @@ for (let passNumber in passNumberGroups){
           thisLaserInTileExposureDuration.addHatchBlock(hatchblock,exposureSettings);            
         
         let tempHatch = new HATCH.bsHatch();
-        tempHatch.addHatchBlock(hatchblock);  
+        tempHatch.addHatchBlock(hatchblock);
+        allLaserHatch.addHatchBlock(hatchblock);  
 //        hatchResult.moveDataFrom(tempHatch); // move hatches to result   
         }//for hatch
         
-//         let skipHatchBlock = new HATCH.bsHatch();
-//         skipHatchBlock.addHatchBlock(hatchResult);
-//         process.printInfo(skipHatchBlock.getSkipLength());
+        let skipLengthHatch = allLaserHatch.getSkipLength(true);
+        let skipLengthInBlock = allLaserHatch.getSkipLength(false);
+        let skipLengthBetwBlocks = skipLengthHatch - skipLengthInBlock;
+        let skipDuration = (skipLengthBetwBlocks / PARAM.getParamReal('durationSim', 'JumpSpeed'))*(1000*1000);
+//         process.printInfo('length: ' + skipLengthHatch);
+//         process.printInfo('inblock: ' + skipLengthInBlock);
+//         process.printInfo('betw: ' + skipLengthBetwBlocks);
+//         process.printInfo('skidru: ' + skipDuration);
 //         
         //store the processing duration for this laser in this tile
         let exposureTimeMicroSeconds = thisLaserInTileExposureDuration.getExposureTimeMicroSeconds();
+        exposureTimeMicroSeconds += Math.ceil(skipDuration);
+        
+        exposureTimeMicroSeconds += Math.ceil(skipDuration);
+
+//       process.printInfo('exposuredur: ' + exposureTimeMicroSeconds);
         passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].laserProcessDuration = exposureTimeMicroSeconds;
         tileExposureArray.push(exposureTimeMicroSeconds);
+        
+        
             
       }//if integer         
   }//for laser
@@ -2046,7 +2059,6 @@ for (let passNumber in passNumberGroups){
          speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
     } else { //onthefly
       let tileSize = PARAM.getParamReal('otf','tile_size');
-
       let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
       
       if (maxLaserScanningDuration > 0) {
@@ -2097,7 +2109,6 @@ var exporter_3mf = {
         "content": []
     };
 
-let emm =0;
 for (let passNr in passNumberGroups){
     
    if(Number.isInteger(Number(passNr))){ // only perfom task if the passNr is an integer*/
@@ -2125,7 +2136,7 @@ for (let passNr in passNumberGroups){
          exporter_3mf.content[passNr].children[tileNr] = {
            "name": "movement",
                       "attributes": {
-                        "tileID":  tile.tileID+1,
+                        "tileID":  tile.tileID+1+passNr*1000,
                         "targetx": tile.xcoord,
                         "targety": tile.ycoord,
                         "speedx":  tile.speedx,
