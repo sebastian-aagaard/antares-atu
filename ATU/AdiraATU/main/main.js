@@ -27,7 +27,7 @@ const type_support_contour = 6;
 
 const laser_count = 5;
 const bIncludeScanningAttributes = false;
-const nBufferduration = 0; //us
+const nBufferduration = 2000000; //us
 //if openpolyline support is required set to false
 //when not in development mode set to false
 const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
@@ -890,11 +890,11 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   for (let i=0; i <required_passes_x; i++)
   {
     
-    if (i>0 && i<required_passes_x){
-    cur_tile_coord_x+overlap_x;
-      
-      }
-      
+//     if (i>0 && i<required_passes_x){
+//     cur_tile_coord_x+overlap_x;
+//       
+//       }
+//       
     let cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
     let next_tile_coord_x = cur_tile.next_x_coord;
     
@@ -1495,8 +1495,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       
       let tileHatch = new HATCH.bsHatch();  // generate hatching object
       let hatchOutside = new HATCH.bsHatch();
-      tileHatch = ClipHatchByRect(hatch.clone(),vec2_tile_array[j],true);
-      hatchOutside = ClipHatchByRect(hatch.clone(),vec2_tile_array[j],false);
+      tileHatch = ClipHatchByRect(hatch,vec2_tile_array[j],true);
+      hatchOutside = ClipHatchByRect(hatch,vec2_tile_array[j],false);
 //       process.printInfo('tilehatch: ' + tileHatch.getHatchBlockCount());
 //       process.printInfo('tilehatch length: ' + tileHatch.getExposureLength() );
 //       process.printInfo('hatchOutside: ' + tileHatch.getHatchBlockCount());
@@ -2132,14 +2132,14 @@ for (let passNr in passNumberGroups){
           };
     
       for (let tileNr in thispass.tiles){
-      //  process.printInfo(tileNr);
+        //process.printInfo(tileNr);
          let tile =  thispass.tiles[tileNr];
          exporter_3mf.content[passNr].children[tileNr] = {
            "name": "movement",
                       "attributes": {
                         "tileID":  tile.tileID+1+passNr*1000,
                         "targetx": tile.xcoord,
-                        "targety": tile.ycoord,
+                        "targety": tileArray[tileNr].scanhead_outline[2].m_coord[1],
                         "speedx":  tile.speedx,
                         "speedy":  tile.speedy,
                         "tileExposureTime": tile.tileExposureDuration
