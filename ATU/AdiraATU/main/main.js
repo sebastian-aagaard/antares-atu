@@ -27,6 +27,7 @@ const type_support_contour = 6;
 
 const laser_count = 5;
 const bIncludeScanningAttributes = false;
+const nBufferduration = 0; //us
 //if openpolyline support is required set to false
 //when not in development mode set to false
 const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
@@ -2042,7 +2043,7 @@ for (let passNumber in passNumberGroups){
         exposureTimeMicroSeconds += Math.ceil(skipDuration);
         
         exposureTimeMicroSeconds += Math.ceil(skipDuration);
-
+        exposureTimeMicroSeconds += nBufferduration;
 //       process.printInfo('exposuredur: ' + exposureTimeMicroSeconds);
         passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].laserProcessDuration = exposureTimeMicroSeconds;
         tileExposureArray.push(exposureTimeMicroSeconds);
