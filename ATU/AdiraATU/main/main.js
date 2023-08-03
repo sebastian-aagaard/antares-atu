@@ -27,7 +27,7 @@ const type_support_contour = 6;
 
 const laser_count = 5;
 const bIncludeScanningAttributes = false;
-const nBufferduration = 2000000; //us
+const nBufferduration = 1000000; //us
 //if openpolyline support is required set to false
 //when not in development mode set to false
 const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
@@ -760,9 +760,9 @@ function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
   this.y_min = this.ypos;// + PARAM.getParamReal('scanhead','stripe_ref_mm') + PARAM.getParamReal('scanhead','stripe_min_y_mm');
   
     if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot     
-      this.y_max = this.ypos + PARAM.getParamReal('scanhead','y_scanfield_size_mm')+overlap_y; 
+      this.y_max = this.ypos + PARAM.getParamReal('scanhead','y_scanfield_size_mm'); 
     } else { //onthefly   
-      this.y_max = this.ypos + PARAM.getParamReal('otf','tile_size')+overlap_y;
+      this.y_max = this.ypos + PARAM.getParamReal('otf','tile_size');
     }  
     
   //this.x_global_limit = PARAM.getParamReal('scanhead','x_global_max_limit');
@@ -913,7 +913,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
        scanhead_outlines[1] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_max); //min,max
        scanhead_outlines[2] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_max); //max,max
        scanhead_outlines[3] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min); //max,min
-       
+       scanhead_outlines[4] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
       
        if (bDrawTile)
        {
@@ -946,9 +946,10 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
        let TileEntry3mf = {
          "name": "movement",
          "attributes": {
-            "tileID": j+1,
+            "tileID": j+1+(i+1)*1000,
             "targetx": cur_tile_coord_x,
-            "targety": cur_tile_coord_y,
+            "targety": cur_tile.y_max,
+            "positiony": cur_tile_coord_y,
             "speedx" : 0,
             "speedy": defaultSpeedY,
             "tileExposureTime" : 0
@@ -1455,7 +1456,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   //process.printInfo('hatch lenght before: ' + hatch.getExposureLength());
   
   /////////////////////////////////////////////////////////////////////////////
-  /// Index the tiles (passnumber, tile_index, scanhead xcoord and ycoord) ///
+  /// Index the tiles (passnumber, tile_index, scanhead xcoord and ycoord)  ///
   /////////////////////////////////////////////////////////////////////////////
  
       let Margs = {
@@ -1463,7 +1464,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
         "nConvertToHatchMaxPointCount": 2,
         //"nMaxBlockSize": 512,
         "bCheckAttributes": true
-      };  
+      };
+      
      hatch.mergeHatchBlocks(Margs);
  
   for(let j = 0; j<tileArray.length;j++)
@@ -1496,29 +1498,32 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       let tileHatch = new HATCH.bsHatch();  // generate hatching object
       let hatchOutside = new HATCH.bsHatch();
       tileHatch = ClipHatchByRect(hatch,vec2_tile_array[j],true);
-      hatchOutside = ClipHatchByRect(hatch,vec2_tile_array[j],false);
+      //hatchOutside = ClipHatchByRect(hatch,vec2_tile_array[j],false);
 //       process.printInfo('tilehatch: ' + tileHatch.getHatchBlockCount());
 //       process.printInfo('tilehatch length: ' + tileHatch.getExposureLength() );
 //       process.printInfo('hatchOutside: ' + tileHatch.getHatchBlockCount());
 //       process.printInfo('hatchOutside length: ' + tileHatch.getExposureLength() );
 
      // add some attributes to hatchblocks
+  
      tileHatch.setAttributeInt('passNumber', tileArray[j].passNumber);
-     tileHatch.setAttributeInt('passNumber_3mf', tileArray[j].passNumber+1);
+     tileHatch.setAttributeInt('passNumber_3mf', (tileArray[j].passNumber+1)*1000);
      tileHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
-     tileHatch.setAttributeInt('tileID_3mf',tileArray[j].tile_number+1+tileArray[j].passNumber*1000);
+     tileHatch.setAttributeInt('tileID_3mf',tileArray[j].tile_number+1+(tileArray[j].passNumber+1)*1000);
      tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
      tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
      
-     hatch.makeEmpty();
-     hatch.moveDataFrom(hatchOutside);
-     hatch.moveDataFrom(tileHatch);
+//      hatch.makeEmpty();
+//      hatch.moveDataFrom(hatchOutside);
+//      hatch.moveDataFrom(tileHatch);
+
+    hatchResult.moveDataFrom(tileHatch);
 
     } //for
     
     
       
-    hatchResult.moveDataFrom(hatch);    
+    //hatchResult.moveDataFrom(hatch);    
     
     thisLayer.setAttribEx('tileSegmentArr',tileSegmentArr);   
     
@@ -1871,7 +1876,8 @@ for (let passNumber in passNumberGroups){
     if (!zoneMap.tiles[tileID]) {
         zoneMap.tiles[tileID] = {
             'tileExposureDuration': 0,
-            'tileID': tileID,
+            'tileID':  hatchBlock.tileID_3mf, // add
+            'tileID_3mf': hatchBlock.tileID_3mf,
             'xcoord': hatchBlock.getAttributeReal('xcoord'),
             'ycoord': hatchBlock.getAttributeReal('ycoord'),
             'speedx':0,
@@ -2133,13 +2139,18 @@ for (let passNr in passNumberGroups){
     
       for (let tileNr in thispass.tiles){
         //process.printInfo(tileNr);
+        //process.printInfo(passNr);
+        let tileIDint =  (parseInt(tileNr)+1) + (parseInt(passNr)+1)*1000;
+        //process.printInfo('tileID' + tileIDint);
          let tile =  thispass.tiles[tileNr];
+       
          exporter_3mf.content[passNr].children[tileNr] = {
            "name": "movement",
                       "attributes": {
-                        "tileID":  tile.tileID+1+passNr*1000,
+                        "tileID":  thistiletable[passNr][tileNr].attributes.tileID,
                         "targetx": tile.xcoord,
-                        "targety": tileArray[tileNr].scanhead_outline[2].m_coord[1],
+                        "targety": thistiletable[passNr][tileNr].attributes.targety,
+                        "positiony": thistiletable[passNr][tileNr].attributes.positiony,
                         "speedx":  tile.speedx,
                         "speedy":  tile.speedy,
                         "tileExposureTime": tile.tileExposureDuration
