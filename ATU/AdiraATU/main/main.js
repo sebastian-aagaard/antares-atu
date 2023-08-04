@@ -217,8 +217,8 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
     //parameter.declareParameterReal('scanhead', 'x_global_max_limit', LOCALIZER.GetMessage('param_x_global_max_limit'),0,1000,660);
     
     
-    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,0); //-5
-    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,0); //-5
+    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-0.1); //-5
+    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-0.1); //-5
     
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);//110;
@@ -347,6 +347,8 @@ exports.declareBuildAttributes = function(buildAttrib)
   buildAttrib.declareAttributeInt('zoneIndex');
   buildAttrib.declareAttributeInt('islandId');
   buildAttrib.declareAttributeInt('stripeID');
+  buildAttrib.declareAttributeInt('assigned');
+
   buildAttrib.declareAttributeReal('ScanheadMoveSpeed');
   for(let i = 0 ; i<laser_count ; i++){
     buildAttrib.declareAttributeInt('laser_index_'+(i+1));
@@ -2061,6 +2063,7 @@ for (let passNumber in passNumberGroups){
      
   // get exposure duration for laser with the largest workload
   let maxLaserScanningDuration = Math.max(...tileExposureArray);
+  //process.printInfo('laynr: '+ nLayerNr +' tile: '+ tileNumber + ' dur[ms]: ' + maxLaserScanningDuration/1000);
   let speedy = 0;
    if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
          speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
@@ -2071,6 +2074,7 @@ for (let passNumber in passNumberGroups){
       if (maxLaserScanningDuration > 0) {
   //      process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
          speedy = tileSize / (maxLaserScanningDuration/(1000*1000));
+        //process.printInfo('SpeedY: ' +speedy );
       }else{
         speedy = speedLimit;
         }           
@@ -2138,10 +2142,6 @@ for (let passNr in passNumberGroups){
           };
     
       for (let tileNr in thispass.tiles){
-        //process.printInfo(tileNr);
-        //process.printInfo(passNr);
-        let tileIDint =  (parseInt(tileNr)+1) + (parseInt(passNr)+1)*1000;
-        //process.printInfo('tileID' + tileIDint);
          let tile =  thispass.tiles[tileNr];
        
          exporter_3mf.content[passNr].children[tileNr] = {
@@ -2536,6 +2536,9 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
     let clip_min_y = tileArray[i].scanhead_outline[0].m_coord[1];
     let clip_max_y = tileArray[i].scanhead_outline[2].m_coord[1];
     
+    let currentTileNr = tileArray[i].tile_number;
+    let currentPassNr = tileArray[i].passNumber;
+   
 //     if (tileArray[i].tile_number != 0 || tileArray[i].tile_number != required_passes_y-1){
 //       
 //       clip_min_y += shiftY;// - 0.05;
@@ -2566,16 +2569,21 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
   //      curHatch.makeEmpty();
   //      curHatch.moveDataFrom(outsideHatch);
        
-       // add display and bsid attributes to hatchblocks    
+       // add display and bsid attributes to hatchblocks
        let hatchIterator = tileHatch.getHatchBlockIterator();
        while(hatchIterator.isValid())
        {
          let currHatcBlock = hatchIterator.get();
-         
-         let type = currHatcBlock.getAttributeInt('type');
-         currHatcBlock.setAttributeInt('_disp_color',laser_color[laserIndex]);
-         currHatcBlock.setAttributeInt('bsid', (10 * (laserIndex+1))+type); // set attributes
-         
+          
+         if(currHatcBlock.getAttributeInt('passNumber') == currentPassNr && currHatcBlock.getAttributeInt('tile_index') == currentTileNr){      
+           
+           let type = currHatcBlock.getAttributeInt('type');
+           currHatcBlock.setAttributeInt('_disp_color',laser_color[laserIndex]);
+           currHatcBlock.setAttributeInt('bsid', (10 * (laserIndex+1))+type); // set attributes
+           
+           } else {
+           currHatcBlock.makeEmpty();
+             }
          hatchIterator.next();
        }
       
@@ -2584,73 +2592,14 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
        {
          laserIndex=0;
        }
-       
+        
+        
         hatchObj.moveDataFrom(tileHatch);
      }
    
   
    
    }
-  
-    
-//     // get X clipping coordinates for entire scene
-//     let XClipPos = new Array(); 
-//     for(let i = 0; i<required_passes_x;i++) // takes the first 
-//     {
-//       
-//       let tileOffset =  tileArray[i].scanhead_x_coord; 
-//       
-//       for(let j = 0; j<xDiv.length;j++)
-//       {
-//         if(j == xDiv.length-1 && i < required_passes_x-1)
-//         {
-//           
-//         } else 
-//         {
-//           XClipPos.push(xDiv[j]+tileOffset);
-//         }
-//       }
-//     }
-//     
-//     // get y clipping
-//      
-//     for (let i = 0; i<tileArray.length+1;i++)
-//     {
-//       if (i==0) { // if first elements 
-//         yDiv[i] = tileArray[i].scanhead_y_coord;
-//       }else if (i == tileArray.length) { // if arraylength is reached
-//             yDiv[i] = tileArray[i-1].scanhead_outline[2].m_coord[2];
-//       } else {      
-//             yDiv[i] = tileArray[i].scanhead_y_coord + shiftY;
-//         } //if else       
-//     } // for
-    
-//     let YClipPos = new Array();
-//      for(let i = 0; i<tileArray.length;i++)
-//     {
-//       
-//       let tileYPos =  tileArray[i].scanhead_y_coord;
-//       
-//       for(let j = 0; j<xDiv.length;j++)
-//       {
-//         if(j == xDiv.length-1 && i < required_passes_x-1)
-//         {
-//           
-//         } else 
-//         {
-//           XClipPos.push(xDiv[j]+tileOffset);
-//         }
-//       }
-//     }
-    
-    
-  
-    
-    //let blockingGeometry = 
-    
-  
-    
-   
    return hatchObj;
   } //fixedLaserWorkload
   
