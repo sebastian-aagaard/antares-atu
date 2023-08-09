@@ -2034,7 +2034,7 @@ for (let passNumber in passNumberGroups){
         let tempHatch = new HATCH.bsHatch();
         tempHatch.addHatchBlock(hatchblock);
         allLaserHatch.addHatchBlock(hatchblock);  
-//        hatchResult.moveDataFrom(tempHatch); // move hatches to result   
+        hatchResult.moveDataFrom(tempHatch); // move hatches to result   
         }//for hatch
         
         let skipLengthHatch = allLaserHatch.getSkipLength(true);
@@ -2140,10 +2140,11 @@ for (let passNr in passNumberGroups){
               },
               "children": thistiletable[passNr]
           };
-    
+      
+      let activeTile = [];     
       for (let tileNr in thispass.tiles){
          let tile =  thispass.tiles[tileNr];
-       
+         activeTile.push(tileNr);
          exporter_3mf.content[passNr].children[tileNr] = {
            "name": "movement",
                       "attributes": {
@@ -2153,18 +2154,39 @@ for (let passNr in passNumberGroups){
                         "positiony": thistiletable[passNr][tileNr].attributes.positiony,
                         "speedx":  tile.speedx,
                         "speedy":  tile.speedy,
-                        "tileExposureTime": tile.tileExposureDuration
+                        "tileExposureTime": tile.tileExposureDuration,           
                       }			
-           };   
-      }
-  }
-}
+           };
+      
+           
+      }//tileNr
+      
+      
+      let firstTile =Math.min(...activeTile);
+      let lastTile =Math.max(...activeTile);
+      let currentTiles =exporter_3mf.content[passNr].children;
+      exporter_3mf.content[passNr].attributes.tilesInPass = lastTile-firstTile + 1;
+      let tilesToRemove = [];
+      for(let i =0; i<required_passes_y;i++){
+        if (i < firstTile || i > lastTile){
+          tilesToRemove.push(i);// remove unused tiles if they first or last in the pass   
+          }
+        }
+        
+       exporter_3mf.content[passNr].children = exporter_3mf.content[passNr].children.filter(function(child,index) {
+       return tilesToRemove.indexOf(index) === -1;
+         });   
+      
+  } // pass is pass (integer)
+} //passNr
+
+
 
 
 
 thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
 
-hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 
+//hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 
 
 }; // makeExposureLayer
 
