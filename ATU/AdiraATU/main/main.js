@@ -27,7 +27,7 @@ const type_support_contour = 6;
 
 const laser_count = 5;
 const bIncludeScanningAttributes = false;
-const nBufferduration = 1000000; //us
+const nBufferduration = 1000; //us
 //if openpolyline support is required set to false
 //when not in development mode set to false
 const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
@@ -1107,9 +1107,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     //this ensures that the hatching is always against the gas flow
       
   if (cur_hatch_angle >= 0.0 && cur_hatch_angle <= 180.0){     
-    cur_hatch_angle += 180.0; 
+    cur_hatch_angle += 180.0;
     }
-  
+    
   var down_skin_surface_angle = PARAM.getParamReal("downskin", "down_skin_surface_angle");
   var down_skin_layer_reference = PARAM.getParamInt("downskin", "down_skin_layer_reference");
   var down_skin_hatch_density = PARAM.getParamReal("downskin", "down_skin_hdens");
@@ -1377,7 +1377,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     clippedHatch = allHatch.clone();
     
     clippedHatch.clip(stripeArr[i],true);
-    //clippedHatch.setAttributeInt('stripeID',i+1);
+    clippedHatch.setAttributeInt('stripeID',i+1);
     
     hatchResult.moveDataFrom(clippedHatch); 
   }
@@ -2063,7 +2063,7 @@ for (let passNumber in passNumberGroups){
      
   // get exposure duration for laser with the largest workload
   let maxLaserScanningDuration = Math.max(...tileExposureArray);
-  //process.printInfo('laynr: '+ nLayerNr +' tile: '+ tileNumber + ' dur[ms]: ' + maxLaserScanningDuration/1000);
+ //process.printInfo('laynr: '+ nLayerNr +' tile: '+ tileNumber + ' dur[ms]: ' + maxLaserScanningDuration/1000);
   let speedy = 0;
    if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
          speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
