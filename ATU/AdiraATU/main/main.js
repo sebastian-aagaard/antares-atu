@@ -27,7 +27,7 @@ const type_support_contour = 6;
 
 const laser_count = 5;
 const bIncludeScanningAttributes = false;
-const nBufferduration = 1000; //us
+const nBufferduration = 0;//500000;//1000000; //us
 //if openpolyline support is required set to false
 //when not in development mode set to false
 const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
@@ -226,6 +226,8 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_limit',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //fixed values
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_limit',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110); //fixed values
 
+    //parameter.declareParameterReal('scanhead', 'y_scanner_ref_mm',LOCALIZER.GetMessage('param_y_scanner_ref_mm'),0,110,60);//110;
+
     parameter.declareParameterReal('scanhead', 'x_scanner1_max_mm',LOCALIZER.GetMessage('param_x_scanner1_max_mm'),0,100,80);
     parameter.declareParameterReal('scanhead', 'x_scanner1_min_mm',LOCALIZER.GetMessage('param_x_scanner1_min_mm'),-100,0,-40);
     parameter.declareParameterReal('scanhead', 'x_scanner1_ref_mm',LOCALIZER.GetMessage('param_x_scanner1_ref_mm'),0,390,40);
@@ -240,7 +242,7 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
 
     parameter.declareParameterReal('scanhead', 'x_scanner4_max_mm',LOCALIZER.GetMessage('param_x_scanner4_max_mm'),0,100,80);
     parameter.declareParameterReal('scanhead', 'x_scanner4_min_mm',LOCALIZER.GetMessage('param_x_scanner4_min_mm'),-100,0,-80);
-    parameter.declareParameterReal('scanhead', 'x_scanner4_ref_mm',LOCALIZER.GetMessage('param_x_scanner4_ref_mm'),0,390,265);
+    parameter.declareParameterReal('scanhead', 'x_scanner4_ref_mm',LOCALIZER.GetMessage('param_x_scanner4_ref_mm'),0,390,295);
 
     parameter.declareParameterReal('scanhead', 'x_scanner5_max_mm',LOCALIZER.GetMessage('param_x_scanner5_max_mm'),0,100,50);
     parameter.declareParameterReal('scanhead', 'x_scanner5_min_mm',LOCALIZER.GetMessage('param_x_scanner5_min_mm'),-100,0,-80);
@@ -341,6 +343,7 @@ exports.declareBuildAttributes = function(buildAttrib)
   buildAttrib.declareAttributeInt('tileID_3mf');
   buildAttrib.declareAttributeReal('Subtile_Duration');
   buildAttrib.declareAttributeInt('scanning_priority');
+  buildAttrib.declareAttributeReal('Hatch_Duration_ms');
   buildAttrib.declareAttributeInt('laser_index');
   buildAttrib.declareAttributeInt('sharedZone');
   buildAttrib.declareAttributeInt('zoneExposure');
@@ -695,7 +698,7 @@ exports.prepareModelExposure = function(model)
   function scanner(laserIndex){
     
     this.laserIndex = laserIndex;
-    this.x_ref = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) + '_ref_mm');  
+    this.x_ref = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) + '_ref_mm');
     this.rel_x_max = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) +'_max_mm'); // max
     this.rel_x_min =  PARAM.getParamReal('scanhead','x_scanner'+ (laserIndex) + '_min_mm'); // min
 
@@ -908,7 +911,12 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
 //         }   
       cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
       
+      //laser center
+      
+      
+      
       var tile = new PATH_SET.bsPathSet();
+      
       
        var scanhead_outlines = new Array(4);
        scanhead_outlines[0] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
@@ -917,12 +925,29 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
        scanhead_outlines[3] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min); //max,min
        scanhead_outlines[4] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
       
+      
+//        for (i=0;i<laser_count;i++){
+//        let scanner_center = [];  
+//        scanner_center.push( new VEC2.Vec2(cur_tile.x_min + PARAM.getParamReal('scanhead','x_scanner' + (i+1) +'_ref_mm'), cur_tile.y_min)); //min,mi
+//        scanner_center.push( new VEC2.Vec2(cur_tile.x_min + PARAM.getParamReal('scanhead','x_scanner' + (i+1) +'_ref_mm'), cur_tile.y_max)); //min,min
+//        
+//        let laser = new PATH_SET.bsPathSet();
+//        laser.addNewPath(scanner_center);
+//        laser.setClosed(false);  
+//         
+//        modelLayer.addPathSet(laser,MODEL.nSubtypeSupport);     
+//          }
+       
+      
        if (bDrawTile)
        {
+             
          tile.addNewPath(scanhead_outlines);
+         
          tile.setClosed(false);
               
-         modelLayer.addPathSet(tile,MODEL.nSubtypeSupport);         
+         modelLayer.addPathSet(tile,MODEL.nSubtypeSupport);
+               
        }
        
       // get laser zones within each tile
@@ -1939,8 +1964,10 @@ for (let pass in passNumberGroups){
 var processing_order = 0; // global processing order
 for (let passNumber in passNumberGroups){
   let pass = passNumberGroups[passNumber].tiles; // access the individual passes
-  
+  let lastPointArray = [];
   for(let tileNumber in pass){
+    
+    tileNumber = parseInt(tileNumber);
     
     let tile = pass[tileNumber].laser; // access the individual tiles
     let tileExposureArray = [];
@@ -1954,6 +1981,7 @@ for (let passNumber in passNumberGroups){
         
         let thisHatch = new HATCH.bsHatch();
         thisHatch = processLaser.hatchBlocks; // get the hatchs blocks designated to each laser
+        
         // prioritise hatchblocks 
         
         // group islands by ilands id (finalize islands before progressing = avoid a state of jumping madness!)
@@ -2009,17 +2037,54 @@ for (let passNumber in passNumberGroups){
         });
         
         // Flatten groupsArray into a single sorted array one pass - one tile - one laser
-        thisHatch = [].concat.apply([], groupsArray);
+        let newHatch = new HATCH.bsHatch();
+        newHatch = [].concat.apply([], groupsArray);
         
+        let timeFromOrigo_us = 0;
+        let timeBetweenBlocks_us = 0;
+        let skywritingDur = 0;
+        let timeToNextStartPos_us = 0;
         let thisLaserInTileExposureDuration = new EXPOSURETIME.bsExposureTime(); // duration for this laser scanning in this tile
-        let allLaserHatch = new HATCH.bsHatch();    
-        for (let i=0; i<thisHatch.length;i++){
-          let hatchblock = thisHatch[i]; // individual hatchblocks
+         
+        let lastPoint = new VEC2.Vec2();
+        
+        //laser is started at the center of each laser in X and the topside of the tile in Y
+        let laserStartPosX = tileArray[tileNumber].scanhead_x_coord + scanheadArray[nlaserId-1].x_ref;
+        let laserStartPosY = tileArray[tileNumber].scanhead_y_coord;// + scanheadArray[nlaserId].rel_y_max;
+       
+        let exposureDur = 0;
+        let skipDur = 0;
+        
+        for (let i=0; i<newHatch.length;i++){
+          let hatchblock = newHatch[i]; // individual hatchblocks
           hatchblock.setAttributeInt('_processing_order', processing_order++);
-          //calculate exposure duration of each hatch block
-                          
+
+          let firstPoint = hatchblock.getPoint(0); // get first point in hatchblock
+                                    
+          // calculate jump duration from previous hatchblock         
+          let prevPosX = 0;
+          let prevPosY = 0;
+          
+          if (i==0){
+          
+            prevPosX = laserStartPosX;
+            prevPosY = laserStartPosY;
+            
+           //the first hatch added to timeExposure is calculated from Origo, this is removed by finding the time: 
+           let distToOrigo = Math.sqrt((firstPoint.x)*(firstPoint.x) + (firstPoint.y)*(firstPoint.y));    
+           timeFromOrigo_us = (distToOrigo/PARAM.getParamReal('durationSim', 'JumpSpeed'))*1000*1000; 
+
+            } else {
+              
+            prevPosX = lastPoint.x;
+            prevPosY = lastPoint.y;
+              
+          }           
+                   
+          let jumpingDistance = Math.sqrt((prevPosX-firstPoint.x)*(prevPosX-firstPoint.x) + (prevPosY-firstPoint.y)*(prevPosY-firstPoint.y));
+          timeBetweenBlocks_us += ((jumpingDistance/PARAM.getParamReal('durationSim', 'JumpSpeed')))*1000*1000;
           let exposureSettings =  {
-            'fJumpSpeed' : PARAM.getParamReal('durationSim', 'JumpSpeed'),
+            'fJumpSpeed' :PARAM.getParamReal('durationSim', 'JumpSpeed'),
             'fMeltSpeed' : hatchblock.getAttributeReal('speed'),
             'fJumpLengthLimit' : PARAM.getParamReal('durationSim', 'JumpLengthLimit'),
             'nJumpDelay' : PARAM.getParamInt('durationSim', 'JumpDelay'),
@@ -2028,42 +2093,88 @@ for (let passNumber in passNumberGroups){
             'nPolygonDelay': PARAM.getParamInt('durationSim', 'PolygonDelay'),
             'polygonDelayMode' : PARAM.getParamStr('durationSim', 'PolygonDelayMode'),
           };    
+           
+          thisLaserInTileExposureDuration.addHatchBlock(hatchblock,exposureSettings);
+        
+          let tempHatch = new HATCH.bsHatch();
+          //process.printInfo('duration: ' + thisLaserInTileExposureDuration.getExposureTimeMicroSeconds()/1000);
+          hatchblock.setAttributeReal('Hatch_Duration_ms',thisLaserInTileExposureDuration.getExposureTimeMicroSeconds()/1000);
+          tempHatch.addHatchBlock(hatchblock);
           
-          thisLaserInTileExposureDuration.addHatchBlock(hatchblock,exposureSettings);            
-        
-        let tempHatch = new HATCH.bsHatch();
-        tempHatch.addHatchBlock(hatchblock);
-        allLaserHatch.addHatchBlock(hatchblock);  
-        hatchResult.moveDataFrom(tempHatch); // move hatches to result   
+          lastPoint = hatchblock.getPoint(hatchblock.getPointCount()-1);
+         
+          
+          if (i == newHatch.length-1 && tileNumber < tileArray.length-1) { // duration to move to next tile starting position
+              
+              let nextTileStartX = tileArray[tileNumber+1].scanhead_x_coord+scanheadArray[nlaserId-1].x_ref;
+              let nextTileStartY = tileArray[tileNumber+1].scanhead_y_coord;
+              
+              let tileFinalJumpLengt = Math.sqrt((lastPoint.x-nextTileStartX)*(lastPoint.x-nextTileStartX) + (lastPoint.y-nextTileStartY)*(lastPoint.y-nextTileStartY));
+              timeToNextStartPos_us = (tileFinalJumpLengt/PARAM.getParamReal('durationSim', 'JumpSpeed'))*1000*1000
+            }       
+          
+          let hatcblockPath = new PATH_SET.bsPathSet();
+          hatcblockPath.addHatches(tempHatch);
+          //process.printInfo('pathcount: ' + hatcblockPath.getPathCount());
+          
+          
+          
+          let skipCount = hatchblock.getSkipCount();
+          let pathCount = hatcblockPath.getPathCount();
+          
+          let skywritingPostConst = 0; 
+          let skywritingPrevConst = 0;
+          
+          if(PARAM.getParamInt('skywriting','skywritingMode') == 0){
+            
+            skywritingPostConst = 0;
+            skywritingPrevConst = 0;
+            
+            } else if (PARAM.getParamInt('skywriting','skywritingMode') == 1){
+              
+              skywritingPostConst = 20;
+              skywritingPrevConst = 20;
+              
+            } else {
+              
+              skywritingPostConst = 10;
+              skywritingPrevConst = 10;
+              
+            }           
+            
+          let npostDur = PARAM.getParamInt('skywriting','npost')*skywritingPostConst;
+          let nprevDur = PARAM.getParamInt('skywriting','nprev')*skywritingPrevConst;
+          
+          let switchOnDur = PARAM.getParamInt('skywriting','timelag') + PARAM.getParamInt('skywriting','laserOnShift')/64;
+          let switchOffDur = PARAM.getParamInt('skywriting','timelag');
+          
+          skywritingDur += (npostDur + nprevDur + switchOnDur + switchOffDur)*skipCount;
+          //process.printInfo('skipcount: ' + skipCount);
+          
+          hatchResult.moveDataFrom(tempHatch); // move hatches to result 
         }//for hatch
-        
-        let skipLengthHatch = allLaserHatch.getSkipLength(true);
-        let skipLengthInBlock = allLaserHatch.getSkipLength(false);
-        let skipLengthBetwBlocks = skipLengthHatch - skipLengthInBlock;
-        let skipDuration = (skipLengthBetwBlocks / PARAM.getParamReal('durationSim', 'JumpSpeed'))*(1000*1000);
-//         process.printInfo('length: ' + skipLengthHatch);
-//         process.printInfo('inblock: ' + skipLengthInBlock);
-//         process.printInfo('betw: ' + skipLengthBetwBlocks);
-//         process.printInfo('skidru: ' + skipDuration);
-//         
+                      
         //store the processing duration for this laser in this tile
         let exposureTimeMicroSeconds = thisLaserInTileExposureDuration.getExposureTimeMicroSeconds();
-        exposureTimeMicroSeconds += Math.ceil(skipDuration);
+
         
-        exposureTimeMicroSeconds += Math.ceil(skipDuration);
-        exposureTimeMicroSeconds += nBufferduration;
-//       process.printInfo('exposuredur: ' + exposureTimeMicroSeconds);
+        exposureTimeMicroSeconds += Math.ceil(nBufferduration); // add buffer duration        
+        exposureTimeMicroSeconds -= Math.ceil(timeFromOrigo_us); // remove traveltime from orego
+        //exposureTimeMicroSeconds += Math.ceil(timeBetweenBlocks_us); // add traveltime between blocks
+        if(PARAM.getParamInt('skywriting','skywritingMode') != 0){
+          exposureTimeMicroSeconds += Math.ceil(skywritingDur); // add delay from skywriting
+        }
+        //exposureTimeMicroSeconds += Math.ceil(timeToNextStartPos_us);
+        
         passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].laserProcessDuration = exposureTimeMicroSeconds;
         tileExposureArray.push(exposureTimeMicroSeconds);
-        
-        
-            
+             
       }//if integer         
   }//for laser
      
   // get exposure duration for laser with the largest workload
-  let maxLaserScanningDuration = Math.max(...tileExposureArray);
- //process.printInfo('laynr: '+ nLayerNr +' tile: '+ tileNumber + ' dur[ms]: ' + maxLaserScanningDuration/1000);
+ let maxLaserScanningDuration = Math.max(...tileExposureArray);
+ process.printInfo('laynr: '+ nLayerNr +' tile: '+ tileNumber + ' dur[ms]: ' + maxLaserScanningDuration/1000);
   let speedy = 0;
    if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
          speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
@@ -2072,19 +2183,21 @@ for (let passNumber in passNumberGroups){
       let speedLimit = PARAM.getParamReal('otf','axis_max_speed');
       
       if (maxLaserScanningDuration > 0) {
-  //      process.printInfo('speedy: ' + tileSize / (exposureTime/(1000*1000)));
          speedy = tileSize / (maxLaserScanningDuration/(1000*1000));
-        //process.printInfo('SpeedY: ' +speedy );
       }else{
         speedy = speedLimit;
         }           
     }
+    
+    if (speedy>PARAM.getParamReal('otf','axis_max_speed')){
+      speedy = PARAM.getParamReal('otf','axis_max_speed');
+      }
   passNumberGroups[passNumber].tiles[tileNumber].speedy = speedy;  
   passNumberGroups[passNumber].tiles[tileNumber].tileExposureDuration = maxLaserScanningDuration;  
  
 }//for tile
   
-  var passDuration = 0;
+  let passDuration = 0;
   for(let tileID in passNumberGroups[passNumber].tiles){ // calculate scanning duration of each pass
         passDuration += passNumberGroups[passNumber].tiles[tileID].tileExposureDuration;
   } // for  
@@ -2136,7 +2249,7 @@ for (let passNr in passNumberGroups){
                 "type": thispass.type,
                 "requiredPasses": thispass.requiredPasses,
                 "tilesInPass": thispass.tilesInPass,
-                "layerScanningDuration":passNumberGroups.layerExposureDuration            
+                "layerScanningDuration":passNumberGroups.layerExposureDuration
               },
               "children": thistiletable[passNr]
           };
@@ -2145,6 +2258,9 @@ for (let passNr in passNumberGroups){
       for (let tileNr in thispass.tiles){
          let tile =  thispass.tiles[tileNr];
          activeTile.push(tileNr);
+        
+        //process.printInfo('typeof:' + typeof(tile.tileExposureDuration));
+        
          exporter_3mf.content[passNr].children[tileNr] = {
            "name": "movement",
                       "attributes": {
@@ -2154,7 +2270,7 @@ for (let passNr in passNumberGroups){
                         "positiony": thistiletable[passNr][tileNr].attributes.positiony,
                         "speedx":  tile.speedx,
                         "speedy":  tile.speedy,
-                        "tileExposureTime": tile.tileExposureDuration,           
+                        "tileExposureTime": tile.tileExposureDuration         
                       }			
            };
       
@@ -2181,12 +2297,7 @@ for (let passNr in passNumberGroups){
 } //passNr
 
 
-
-
-
 thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
-
-//hatchResult.moveDataFrom(simplifiedDataHatch); // move hatches to result 
 
 }; // makeExposureLayer
 
@@ -2643,7 +2754,6 @@ function mergeBlocks(unmergedHatchBlocks) {
 	mergedblock = mergeblock.mergeHatchBlocks(mergeArgs);
 
 	let blockcount = mergedblock.getHatchBlockCount();
-	//process.printInfo(blockcount);
 	return mergedblock;
 }
 
