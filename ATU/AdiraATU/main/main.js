@@ -799,8 +799,11 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   // Define and store Tiles     //
   ////////////////////////////////
   
-   let scene_size_x = maxX - minX;
-   let scene_size_y = maxY - minY;     
+   let shiftOffsetMaxX =  (PARAM.getParamInt('tileing', 'number_x') * PARAM.getParamReal('tileing', 'step_x'))/2;
+   let shiftOffsetMaxY =  (PARAM.getParamInt('tileing', 'number_y') * PARAM.getParamReal('tileing', 'step_y'))/2;
+  
+   let scene_size_x = maxX - minX + shiftOffsetMaxX;
+   let scene_size_y = maxY - minY + shiftOffsetMaxY;     
   
    //let scence_center_x = minX + scene_size_x/2;
   // let scence_center_y = minY + scene_size_y/2;
@@ -892,7 +895,20 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    
    var tileTable = [];  // store the tilelayout
    var tileTable3mf = [];  
-     
+   
+    
+    // get shifting parameters 
+    function calculateShiftX(layerNr) {
+      let layerCount = PARAM.getParamInt('tileing', 'number_x');
+      let shiftIncrement =  PARAM.getParamReal('tileing', 'step_x');
+      let resetLayer = layerCount - 1;
+
+      let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
+      let layerWithinCycle = cyclePosition % layerCount;
+      let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
+
+      return shiftValue;
+    }
     
    function calculateShiftY(layerNr) {
       let layerCount = PARAM.getParamInt('tileing', 'number_y');
@@ -906,33 +922,29 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
       return shiftValue;
     }
     
+   let shiftX = calculateShiftX(layerNr);
    let shiftY = calculateShiftY(layerNr);
+    
+   //shift y pos of tiles for each layer
+   scanhead_x_starting_pos += shiftX;
+   scanhead_y_starting_pos += shiftY; 
     
    let cur_tile_coord_x =  scanhead_x_starting_pos;
    let cur_tile_coord_y =  scanhead_y_starting_pos;
        
   for (let i=0; i <required_passes_x; i++)
   {
-    
-//     if (i>0 && i<required_passes_x){
-//     cur_tile_coord_x+overlap_x;
-//       
-//       }
-//       
+         
     let cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
     let next_tile_coord_x = cur_tile.next_x_coord;
     
     
     for(let j =0; j<required_passes_y;j++)
     {       
-//        if (j>0 && j<required_passes_y){
-//        cur_tile_coord_y-=overlap_y;
-//         }   
+
       cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
-      cur_tile.y_min +=  shiftY;
-      cur_tile.y_max +=  shiftY;
+
       //laser center
-      
       
       
       var tile = new PATH_SET.bsPathSet();
@@ -2694,18 +2706,18 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
   let xDiv = new Array();
   let yDiv = new Array();
   
-  // get shifting parameters 
-  function calculateShiftX(layerNr) {
-    let layerCount = PARAM.getParamInt('tileing', 'number_x');
-    let shiftIncrement =  PARAM.getParamReal('tileing', 'step_x');
-    let resetLayer = layerCount - 1;
-
-    let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
-    let layerWithinCycle = cyclePosition % layerCount;
-    let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
-
-    return shiftValue;
-  }
+//   // get shifting parameters 
+//   function calculateShiftX(layerNr) {
+//     let layerCount = PARAM.getParamInt('tileing', 'number_x');
+//     let shiftIncrement =  PARAM.getParamReal('tileing', 'step_x');
+//     let resetLayer = layerCount - 1;
+// 
+//     let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
+//     let layerWithinCycle = cyclePosition % layerCount;
+//     let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
+// 
+//     return shiftValue;
+//   }
   
 //     function calculateShiftY(layerNr) {
 //     let layerCount = PARAM.getParamInt('tileing', 'number_y');
@@ -2719,8 +2731,8 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
 //     return shiftValue;
 //   }
   
-  let shiftX = calculateShiftX(nLayerNr);
-  /*let shiftY = calculateShiftY(nLayerNr);*/
+  //let shiftX = calculateShiftX(nLayerNr);
+  //let shiftY = calculateShiftY(nLayerNr);
 
 // get generic tile division based on laser reach
     // take shift in x into consideration only between lasers, outside is not shifted
@@ -2731,7 +2743,7 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
       }else if (i == scanheadArray.length) { // if arraylength is reached
             xDiv[i] = scanheadArray[i-1].abs_x_max;
       } else {      
-      xDiv[i] = (scanheadArray[i-1].x_ref + scanheadArray[i].x_ref)/2 + shiftX;
+      xDiv[i] = (scanheadArray[i-1].x_ref + scanheadArray[i].x_ref)/2;// + shiftX;
         } //if else       
     } // for
 
