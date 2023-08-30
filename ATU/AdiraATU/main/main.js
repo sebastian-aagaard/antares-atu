@@ -893,9 +893,23 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    var tileTable = [];  // store the tilelayout
    var tileTable3mf = [];  
      
-     
-    let cur_tile_coord_x =  scanhead_x_starting_pos;
-    let cur_tile_coord_y =  scanhead_y_starting_pos;
+    
+   function calculateShiftY(layerNr) {
+      let layerCount = PARAM.getParamInt('tileing', 'number_y');
+      let shiftIncrement =  PARAM.getParamReal('tileing', 'step_y');
+      let resetLayer = layerCount - 1;
+
+      let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
+      let layerWithinCycle = cyclePosition % layerCount;
+      let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
+
+      return shiftValue;
+    }
+    
+   let shiftY = calculateShiftY(layerNr);
+    
+   let cur_tile_coord_x =  scanhead_x_starting_pos;
+   let cur_tile_coord_y =  scanhead_y_starting_pos;
        
   for (let i=0; i <required_passes_x; i++)
   {
@@ -915,7 +929,8 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
 //        cur_tile_coord_y-=overlap_y;
 //         }   
       cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
-      
+      cur_tile.y_min +=  shiftY;
+      cur_tile.y_max +=  shiftY;
       //laser center
       
       
@@ -1194,20 +1209,20 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   var islandId = 0;  
   while(island_it.isValid())
     { 
-      var is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
-      var is_support = MODEL.nSubtypeSupport == island_it.getModelSubtype();
+      let is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
+      let is_support = MODEL.nSubtypeSupport == island_it.getModelSubtype();
       
       let bulkIsland = new ISLAND.bsIsland();
       let downSkinbulkIsland = new ISLAND.bsIsland();
       
-      var island = island_it.getIsland().clone();
+      let island = island_it.getIsland().clone();
   
       addBlockedPath(island,islandId);
       
-      var islandOffset = generateOffset(island,beam_compensation).offsetIsland;
+      let islandOffset = generateOffset(island,beam_compensation).offsetIsland;
       let islandContourHatch = new HATCH.bsHatch();
       islandOffset.borderToHatch(islandContourHatch);
-      var islandBorderClipper = generateOffset(islandOffset,0.0004).offsetIsland;
+      let islandBorderClipper = generateOffset(islandOffset,0.0004).offsetIsland;
       //check if the model is part or support and store them.
       if(is_part)
         {          
@@ -1347,7 +1362,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           allHatch.moveDataFrom(support_hatch);       
         }
         
-        
+                
       all_islands.addIslands(islandOffset);    
       island_it.next();
       islandId++;
@@ -1395,6 +1410,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       
  //divide into stripes (GLOBAL)
   var stripeIslands = new ISLAND.bsIsland();  
+  
   let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
   let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
   let fStripeOverlap = PARAM.getParamReal('strategy','fStripeOverlap');
@@ -1402,7 +1418,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
 
   
   all_islands.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,fStripeLength,cur_hatch_angle); // createStripes-0.03
-  //all_islands.createStripes(stripeIslands,10,2,-0.03,0,cur_hatch_angle); // createStripes-0.03
+  
+  
+  //let islandToStripe_it = all_islands.getFirstIsland;
+  
   var stripeHatch = new HATCH.bsHatch();
  
   // clip islands into stripes 
@@ -1419,6 +1438,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     
     hatchResult.moveDataFrom(clippedHatch); 
   }
+  
+  
   
   hatchResult.moveDataFrom(allContourHatch);
   
@@ -2686,20 +2707,20 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
     return shiftValue;
   }
   
-    function calculateShiftY(layerNr) {
-    let layerCount = PARAM.getParamInt('tileing', 'number_y');
-    let shiftIncrement =  PARAM.getParamReal('tileing', 'step_y');
-    let resetLayer = layerCount - 1;
-
-    let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
-    let layerWithinCycle = cyclePosition % layerCount;
-    let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
-
-    return shiftValue;
-  }
+//     function calculateShiftY(layerNr) {
+//     let layerCount = PARAM.getParamInt('tileing', 'number_y');
+//     let shiftIncrement =  PARAM.getParamReal('tileing', 'step_y');
+//     let resetLayer = layerCount - 1;
+// 
+//     let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
+//     let layerWithinCycle = cyclePosition % layerCount;
+//     let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
+// 
+//     return shiftValue;
+//   }
   
   let shiftX = calculateShiftX(nLayerNr);
-  let shiftY = calculateShiftY(nLayerNr);
+  /*let shiftY = calculateShiftY(nLayerNr);*/
 
 // get generic tile division based on laser reach
     // take shift in x into consideration only between lasers, outside is not shifted
