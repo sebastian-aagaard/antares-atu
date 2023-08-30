@@ -90,7 +90,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('strategy','fMinWidth',LOCALIZER.GetMessage('param_fMinWidth'),0.0,100.0,2.0);
     parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,-0.03);
     parameter.declareParameterReal('strategy','fStripeLength',LOCALIZER.GetMessage('param_fStripeLength'),0,100.0,0);
-  
+    parameter.declareParameterReal('strategy','fPatternShift',LOCALIZER.GetMessage('param_fPatternShift'),0,10.0,2.0);
   
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
@@ -1446,17 +1446,14 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
   let fStripeOverlap = PARAM.getParamReal('strategy','fStripeOverlap');
   let fStripeLength = PARAM.getParamReal('strategy','fStripeLength');
-
+  let fpatternShift = PARAM.getParamReal('strategy','fPatternShift');
+  
+  let stripeRefPoint = new VEC2.Vec2(nLayerNr*fpatternShift,0);
+  
   let allIsland_array = all_islands.getIslandArray();
-  for (let j = 0; j<allIsland_array.length;j++){
-    
-      let thisIslandBounds = allIsland_array[j].getBounds2D();
-//     //let islanditerator = allIsland_array[j].getFirstPolyline();
-     let stripeRefPoint = thisIslandBounds.getCenter();
-//     process.printInfo('stripeRefPoint: ' + stripeRefPoint);
+
     let stripeIslands = new ISLAND.bsIsland();
-    allIsland_array[j].createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,fStripeLength,cur_hatch_angle,stripeRefPoint); // 
-    //all_islands.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,fStripeLength,cur_hatch_angle); // 
+    all_islands.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,fStripeLength,cur_hatch_angle,stripeRefPoint); // 
     
     //let islandToStripe_it = all_islands.getFirstIsland;
   
@@ -1475,7 +1472,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
         
         hatchResult.moveDataFrom(clippedHatch); 
       } 
-    }
+
   
 
   hatchResult.moveDataFrom(allContourHatch);
