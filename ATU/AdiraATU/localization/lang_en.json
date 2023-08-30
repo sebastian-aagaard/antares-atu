@@ -1,5 +1,10 @@
 {
   "cli_format": "Extended CLI File",
+  "grp_strategy": "Scanning Strategy",
+    "param_fStripeWidth": "Stripe Width [mm]",
+    "param_fMinWidth": "Minimum Stripe Width (smaller are merged into neighbouring stripes) [mm]",
+    "param_fStripeOverlap": "Stripe Overlap (begative values create a gap) [mm]",
+    "param_fStripeLength": "Stripe Length (0 = no limit)",
   "grp_exposure": "Exposure",
     "param_min_vector_length": "Minimun Vector Lenght Allowed [mm]",
     "param_small_vector_merge_distance": "Max distance to look for merging small vectors [mm]",

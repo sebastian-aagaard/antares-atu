@@ -84,6 +84,13 @@ exports.declareParameters = function(parameter)
   // Parameter groups are always declared like this:
   // 'group-id', 'display string'
   
+
+  parameter.declareParameterGroup('strategy',LOCALIZER.GetMessage('grp_strategy'));
+    parameter.declareParameterReal('strategy','fStripeWidth',LOCALIZER.GetMessage('param_fStripeWidth'),0.0,100.0,10.0);
+    parameter.declareParameterReal('strategy','fMinWidth',LOCALIZER.GetMessage('param_fMinWidth'),0.0,100.0,2.0);
+    parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,-0.03);
+    parameter.declareParameterReal('strategy','fStripeLength',LOCALIZER.GetMessage('param_fStripeLength'),0,100.0,0);
+  
   
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
@@ -1386,16 +1393,22 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     }
   }
       
- //divide into stripes
+ //divide into stripes (GLOBAL)
   var stripeIslands = new ISLAND.bsIsland();  
+  let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
+  let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
+  let fStripeOverlap = PARAM.getParamReal('strategy','fStripeOverlap');
+  let fStripeLength = PARAM.getParamReal('strategy','fStripeLength');
+
   
-  all_islands.createStripes(stripeIslands,10,2,-0.03,0,cur_hatch_angle); // createStripes-0.03
+  all_islands.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,fStripeLength,cur_hatch_angle); // createStripes-0.03
+  //all_islands.createStripes(stripeIslands,10,2,-0.03,0,cur_hatch_angle); // createStripes-0.03
   var stripeHatch = new HATCH.bsHatch();
  
   // clip islands into stripes 
   let stripeCount = stripeIslands.getIslandCount();
   let stripeArr = stripeIslands.getIslandArray();
-  
+  //walk trough all stripes and assign islands to each stripe
   for(let i = 0; i<stripeCount;i++)
   {
     let clippedHatch = new HATCH.bsHatch();
