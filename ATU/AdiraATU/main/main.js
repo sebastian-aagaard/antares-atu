@@ -294,7 +294,7 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
       );
  
 
-    parameter.declareParameterReal('tileing','overlap', LOCALIZER.GetMessage('param_overlap'),0.0,100.0,0.1);
+    parameter.declareParameterReal('tileing','overlap', LOCALIZER.GetMessage('param_overlap'),0.0,100.0,0);
     parameter.declareParameterReal('tileing','step_x', LOCALIZER.GetMessage('param_step_x'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,7);
     parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
@@ -2766,12 +2766,13 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
    
     let laserIndex = 0;
     let laser_color = thisModel.getAttribEx('laser_color'); // retrive laser_color 
- 
+    
+    let tileOverlap = PARAM.getParamReal('scanhead', 'tile_overlap_x');
     for(let j = 0; j<xDiv.length-1; j++){
       
       let xTileOffset = tileArray[i].scanhead_x_coord;
-      let clip_min_x = xTileOffset+xDiv[j]-0.05; // laserZoneOverLap
-      let clip_max_x = xTileOffset+xDiv[j+1]+0.05; //laserZoneOverLap
+      let clip_min_x = xTileOffset+xDiv[j]+tileOverlap/2; // laserZoneOverLap
+      let clip_max_x = xTileOffset+xDiv[j+1]-tileOverlap/2; //laserZoneOverLap
       
        // add the corrdinates to vector pointset
        let clipPoints = new Array(4);
