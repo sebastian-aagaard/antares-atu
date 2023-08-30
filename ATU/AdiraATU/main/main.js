@@ -205,7 +205,7 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
 // put in lang_en if needed:
 //   "grp_travelrange": "Axes Travel range",
 //     "param_x_travel_range_min_mm": "X-Axes Travel Range min (mm)",
-//     "param_x_travel_range_max_mm": "X-Axes Travel Range max (mm)",
+//     "param_x_travel_range_max_mm": "X-A xes Travel Range max (mm)",
 //     "param_y_travel_range_min_mm": "Y-Axes Travel Range min (mm)",
 //     "param_y_travel_range_max_mm": "Y-Axes Travel Range max (mm)", 
     
@@ -789,6 +789,41 @@ function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
 
 function getTileArray(modelLayer,bDrawTile,layerNr){
    
+  ////////////////////////////////
+  // get shifting parameters    //
+  ////////////////////////////////
+  
+    function calculateShiftX(layerNr) {
+      let layerCount = PARAM.getParamInt('tileing', 'number_x');
+      let shiftIncrement =  PARAM.getParamReal('tileing', 'step_x');
+      let resetLayer = layerCount - 1;
+
+      let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
+      let layerWithinCycle = cyclePosition % layerCount;
+      let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
+
+      return shiftValue;
+    }
+    
+   function calculateShiftY(layerNr) {
+      let layerCount = PARAM.getParamInt('tileing', 'number_y');
+      let shiftIncrement =  PARAM.getParamReal('tileing', 'step_y');
+      let resetLayer = layerCount - 1;
+
+      let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
+      let layerWithinCycle = cyclePosition % layerCount;
+      let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
+
+      return shiftValue;
+    }
+    
+   let shiftX = calculateShiftX(layerNr);
+   let shiftY = calculateShiftY(layerNr);
+  
+   let maxShiftY = PARAM.getParamInt('tileing', 'number_y')*PARAM.getParamReal('tileing', 'step_y');
+   let maxShiftX = PARAM.getParamInt('tileing', 'number_x')*PARAM.getParamReal('tileing', 'step_x');
+
+  
    var boundaries = modelLayer.getAttribEx('boundaries');
    let maxX = boundaries.m_max.m_coord[0];
    let minX = boundaries.m_min.m_coord[0];
@@ -799,11 +834,11 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   // Define and store Tiles     //
   ////////////////////////////////
   
-   let shiftOffsetMaxX =  (PARAM.getParamInt('tileing', 'number_x') * PARAM.getParamReal('tileing', 'step_x'))/2;
-   let shiftOffsetMaxY =  (PARAM.getParamInt('tileing', 'number_y') * PARAM.getParamReal('tileing', 'step_y'))/2;
+   let shiftOffsetMaxX =  (PARAM.getParamInt('tileing', 'number_x') * PARAM.getParamReal('tileing', 'step_x'));
+   let shiftOffsetMaxY =  (PARAM.getParamInt('tileing', 'number_y') * PARAM.getParamReal('tileing', 'step_y'));
   
-   let scene_size_x = maxX - minX + shiftOffsetMaxX;
-   let scene_size_y = maxY - minY + shiftOffsetMaxY;     
+   let scene_size_x = (maxX - minX) + shiftOffsetMaxX;
+   let scene_size_y = (maxY - minY) + shiftOffsetMaxY;     
   
    //let scence_center_x = minX + scene_size_x/2;
   // let scence_center_y = minY + scene_size_y/2;
@@ -847,7 +882,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    if((scene_size_y-PARAM.getParamReal('scanhead','y_scanfield_size_mm'))/2+minY < workarea_min_y ){ // if the bounds are outside the powderbed force the tiling to start within // shouldn't happen
        scanhead_y_starting_pos = workarea_min_y;
      } else {
-     scanhead_y_starting_pos = (scene_size_y-tile_reach_y)/2+minY;
+     scanhead_y_starting_pos = (scene_size_y-tile_reach_y)/2+minY - maxShiftY;
      }
     
      let maxPositionY = scanhead_y_starting_pos+tile_reach_y;
@@ -864,7 +899,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    if((scene_size_x-PARAM.getParamReal('scanhead','x_scanfield_size_mm'))/2+minX < workarea_min_x  ){
        scanhead_x_starting_pos = workarea_min_x ; // cannot scan outside 
    } else {
-      scanhead_x_starting_pos = minX;//<- this code sets the xmin as starting pos (scene_size_x-tile_reach_x)/2+minX; <- this codes centers scanfield 
+      scanhead_x_starting_pos = minX-maxShiftX;//<- this code sets the xmin as starting pos (scene_size_x-tile_reach_x)/2+minX; <- this codes centers scanfield 
      }
    
    let maxPositionX = scanhead_x_starting_pos+tile_reach_x;
@@ -897,33 +932,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    var tileTable3mf = [];  
    
     
-    // get shifting parameters 
-    function calculateShiftX(layerNr) {
-      let layerCount = PARAM.getParamInt('tileing', 'number_x');
-      let shiftIncrement =  PARAM.getParamReal('tileing', 'step_x');
-      let resetLayer = layerCount - 1;
-
-      let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
-      let layerWithinCycle = cyclePosition % layerCount;
-      let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
-
-      return shiftValue;
-    }
     
-   function calculateShiftY(layerNr) {
-      let layerCount = PARAM.getParamInt('tileing', 'number_y');
-      let shiftIncrement =  PARAM.getParamReal('tileing', 'step_y');
-      let resetLayer = layerCount - 1;
-
-      let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
-      let layerWithinCycle = cyclePosition % layerCount;
-      let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
-
-      return shiftValue;
-    }
-    
-   let shiftX = calculateShiftX(layerNr);
-   let shiftY = calculateShiftY(layerNr);
     
    //shift y pos of tiles for each layer
    scanhead_x_starting_pos += shiftX;
@@ -1181,7 +1190,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     down_skin_cur_hatch_angle += 180.0; 
     }
     
-  var down_skin_overlap = PARAM.getParamReal("downskin", "down_skin_overlap");
+  let down_skin_overlap = PARAM.getParamReal("downskin", "down_skin_overlap");
   
   let support_hatch_density = PARAM.getParamReal("support","support_hdens");
   let support_skin_hatch_angle_increment =  PARAM.getParamReal("support", "support_hatch_angle_increment");
@@ -1224,14 +1233,15 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       let is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
       let is_support = MODEL.nSubtypeSupport == island_it.getModelSubtype();
       
-      let bulkIsland = new ISLAND.bsIsland();
-      let downSkinbulkIsland = new ISLAND.bsIsland();
+      //let bulkIsland = new ISLAND.bsIsland();
+      //let downSkinbulkIsland = new ISLAND.bsIsland();
       
       let island = island_it.getIsland().clone();
   
-      addBlockedPath(island,islandId);
+      //addBlockedPath(island,islandId);
       
       let islandOffset = generateOffset(island,beam_compensation).offsetIsland;
+      let islandOffsetx2 = generateOffset(island,beam_compensation*2).offsetIsland;
       let islandContourHatch = new HATCH.bsHatch();
       islandOffset.borderToHatch(islandContourHatch);
       let islandBorderClipper = generateOffset(islandOffset,0.0004).offsetIsland;
@@ -1240,14 +1250,16 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
         {          
                     
           //find down skin area
-          var down_skin_island = new ISLAND.bsIsland();
-          var not_down_skin_island = new ISLAND.bsIsland();
+          let down_skin_island = new ISLAND.bsIsland();
+          let not_down_skin_island = new ISLAND.bsIsland();
+          let down_skin_island_no_overhang = new ISLAND.bsIsland();
           
           if(PARAM.getParamInt('downskin','downskintoggle')){
           
             islandOffset.splitMultiLayerOverhang(down_skin_surface_angle, down_skin_overlap, down_skin_layer_reference,
-            not_down_skin_island, down_skin_island);
+            not_down_skin_island, down_skin_island,down_skin_island_no_overhang);
             
+            let emm = 0;
           } else {
             
              not_down_skin_island.copyFrom(islandOffset);
@@ -1258,7 +1270,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           if(!down_skin_island.isEmpty())
             {
               
-              downSkinbulkIsland = generateOffset(down_skin_island,beam_compensation).offsetIsland;
+              let downSkinbulkIsland = generateOffset(down_skin_island,beam_compensation).offsetIsland;
               
               let downSkinContourHatch = new HATCH.bsHatch(); 
               down_skin_island.borderToHatch(downSkinContourHatch);        
@@ -1308,9 +1320,11 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
             contourHatch.setAttributeInt('islandId',islandId);
             contourHatch.clip(downskinContourClipper,false);// WIP this clip splits it between different scanners
             allContourHatch.moveDataFrom(contourHatch);
-                       
-            bulkIsland = generateOffset(not_down_skin_island,beam_compensation).offsetIsland;
             
+                       
+            
+            let bulkIsland = generateOffset(not_down_skin_island,beam_compensation*1).offsetIsland;
+                
             
             let hatchingArgs = {
                "fHatchDensity" : hatch_density,
@@ -1329,11 +1343,15 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
             // Hatching remaining area (not down skin)
             var fill_hatch = new HATCH.bsHatch();
             bulkIsland.hatchExt2(fill_hatch,hatchingArgs);
+              
             
             fill_hatch.setAttributeReal('power', fill_power);
             fill_hatch.setAttributeReal('speed', fill_speed);      
             fill_hatch.setAttributeInt('type',type_part_hatch);
-            fill_hatch.setAttributeInt('islandId',islandId);
+            fill_hatch.setAttributeInt('islandId',islandId);            
+              
+            //fill_hatch.clip(down_skin_island_no_overhang,false);
+              
             allHatch.moveDataFrom(fill_hatch);
           }
           
@@ -1374,7 +1392,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           allHatch.moveDataFrom(support_hatch);       
         }
         
-                
+      
+      //let thisIsland = island_it.getFirstPolyline(0);
       all_islands.addIslands(islandOffset);    
       island_it.next();
       islandId++;
@@ -1421,38 +1440,44 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   }
       
  //divide into stripes (GLOBAL)
-  var stripeIslands = new ISLAND.bsIsland();  
+    
   
   let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
   let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
   let fStripeOverlap = PARAM.getParamReal('strategy','fStripeOverlap');
   let fStripeLength = PARAM.getParamReal('strategy','fStripeLength');
 
-  
-  all_islands.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,fStripeLength,cur_hatch_angle); // createStripes-0.03
-  
-  
-  //let islandToStripe_it = all_islands.getFirstIsland;
-  
-  var stripeHatch = new HATCH.bsHatch();
- 
-  // clip islands into stripes 
-  let stripeCount = stripeIslands.getIslandCount();
-  let stripeArr = stripeIslands.getIslandArray();
-  //walk trough all stripes and assign islands to each stripe
-  for(let i = 0; i<stripeCount;i++)
-  {
-    let clippedHatch = new HATCH.bsHatch();
-    clippedHatch = allHatch.clone();
+  let allIsland_array = all_islands.getIslandArray();
+  for (let j = 0; j<allIsland_array.length;j++){
     
-    clippedHatch.clip(stripeArr[i],true);
-    clippedHatch.setAttributeInt('stripeID',i+1);
+      let thisIslandBounds = allIsland_array[j].getBounds2D();
+//     //let islanditerator = allIsland_array[j].getFirstPolyline();
+     let stripeRefPoint = thisIslandBounds.getCenter();
+//     process.printInfo('stripeRefPoint: ' + stripeRefPoint);
+    let stripeIslands = new ISLAND.bsIsland();
+    allIsland_array[j].createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,fStripeLength,cur_hatch_angle,stripeRefPoint); // 
+    //all_islands.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,fStripeLength,cur_hatch_angle); // 
     
-    hatchResult.moveDataFrom(clippedHatch); 
-  }
+    //let islandToStripe_it = all_islands.getFirstIsland;
   
+    let stripeHatch = new HATCH.bsHatch();  
+    // clip islands into stripes 
+    let stripeCount = stripeIslands.getIslandCount();
+    let stripeArr = stripeIslands.getIslandArray();
+    //walk trough all stripes and assign islands to each stripe
+    for(let i = 0; i<stripeCount;i++)
+      {
+        let clippedHatch = new HATCH.bsHatch();
+        clippedHatch = allHatch.clone();
+        
+        clippedHatch.clip(stripeArr[i],true);
+        clippedHatch.setAttributeInt('stripeID',i+1);
+        
+        hatchResult.moveDataFrom(clippedHatch); 
+      } 
+    }
   
-  
+
   hatchResult.moveDataFrom(allContourHatch);
   
   function addBlockedPath(island,ilandId) {
