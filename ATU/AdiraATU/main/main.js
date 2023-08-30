@@ -27,7 +27,7 @@ const type_support_contour = 6;
 
 const laser_count = 5;
 const bIncludeScanningAttributes = false;
-const nBufferduration = 0;//500000;//1000000; //us
+const nBufferduration = 0;//1000000;//500000;//1000000; //us
 //if openpolyline support is required set to false
 //when not in development mode set to false
 const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
@@ -158,9 +158,9 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
     parameter.declareParameterInt('durationSim', 'laserOnDelay', LOCALIZER.GetMessage('param_laserOnDelay'), 0, 2000, 2);
     parameter.declareParameterInt('durationSim', 'laserOffDelay', LOCALIZER.GetMessage('param_laserOffDelay'), 0, 2000, 10);
     //parameter.declareParameterReal('durationSim', 'MeltSpeed', LOCALIZER.GetMessage('param_MeltSpeed'), 0.001, 2000, 200);
-    parameter.declareParameterReal('durationSim', 'JumpLengthLimit', LOCALIZER.GetMessage('param_JumpLengthLimit'), 0.000, 1000, 0.1);
+    parameter.declareParameterReal('durationSim', 'JumpLengthLimit', LOCALIZER.GetMessage('param_JumpLengthLimit'), 0.000, 1000, 0);//0.1
     parameter.declareParameterInt('durationSim', 'JumpDelay', LOCALIZER.GetMessage('param_JumpDelay'), 0, 100, 50);
-    parameter.declareParameterInt('durationSim', 'MinJumpDelay', LOCALIZER.GetMessage('param_MinJumpDelay'), 0, 30, 30);
+    parameter.declareParameterInt('durationSim', 'MinJumpDelay', LOCALIZER.GetMessage('param_MinJumpDelay'), 0, 50, 50); //30
     parameter.declareParameterInt('durationSim', 'MarkDelay', LOCALIZER.GetMessage('param_MarkDelay'), 0, 100, 60);
     parameter.declareParameterInt('durationSim', 'PolygonDelay', LOCALIZER.GetMessage('param_PolygonDelay'), 0, 100, 65);
     parameter.declareParameterChoice('durationSim', 'PolygonDelayMode', 
@@ -773,9 +773,7 @@ function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
   //this.x_global_limit = PARAM.getParamReal('scanhead','x_global_max_limit');
   //this.y_global_limit = PARAM.getParamReal('scanhead','y_global_max_limit');
   this.tile_height = this.y_max - this.y_min;
-  this.tile_width =  this.x_max - this.x_min;
-    
-    
+  this.tile_width =  this.x_max - this.x_min; 
     
   this.next_x_coord = this.xpos + this.tile_width + overlap_x;
   this.next_y_coord = this.ypos + this.tile_height + overlap_y;
@@ -959,6 +957,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
       tile_obj.scanhead_outline = scanhead_outlines;
       tile_obj.scanhead_x_coord = cur_tile_coord_x;
       tile_obj.scanhead_y_coord = cur_tile_coord_y;
+      tile_obj.tile_height = cur_tile.tile_height;
       tileTable.push(tile_obj);
        
        let defaultSpeedY;
@@ -1389,13 +1388,14 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       
  //divide into stripes
   var stripeIslands = new ISLAND.bsIsland();  
+  
   all_islands.createStripes(stripeIslands,10,2,-0.03,0,cur_hatch_angle); // createStripes-0.03
   var stripeHatch = new HATCH.bsHatch();
  
   // clip islands into stripes 
   let stripeCount = stripeIslands.getIslandCount();
   let stripeArr = stripeIslands.getIslandArray();
-  let stripedHatch = new HATCH.bsHatch();
+  
   for(let i = 0; i<stripeCount;i++)
   {
     let clippedHatch = new HATCH.bsHatch();
@@ -1498,11 +1498,11 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   for(let j = 0; j<tileArray.length;j++)
     {
      // get the coordinates of the current tile 
-     let tile_x_min = tileArray[j].scanhead_outline[0].m_coord[0]//+0.002;
-     let tile_x_max = tileArray[j].scanhead_outline[2].m_coord[0]//-0.002;
+     let tile_x_min = tileArray[j].scanhead_outline[0].m_coord[0]//
+     let tile_x_max = tileArray[j].scanhead_outline[2].m_coord[0]//
      let tile_x_cen = (tile_x_min+tile_x_max)/2;
-     let tile_y_min = tileArray[j].scanhead_outline[0].m_coord[1];//+0.000000001;
-     let tile_y_max = tileArray[j].scanhead_outline[2].m_coord[1];//-0.000000001;
+     let tile_y_min = tileArray[j].scanhead_outline[0].m_coord[1];//
+     let tile_y_max = tileArray[j].scanhead_outline[2].m_coord[1];//
      let tile_y_cen = (tile_y_min+tile_y_max)/2;
       
      // add the corrdinates to vector pointset
@@ -1960,24 +1960,35 @@ for (let pass in passNumberGroups){
 // Prioritize and find the scan duration //
 ///////////////////////////////////////////
     
+    tileArray.sort(function(a, b) {
+          if (a.passNumber === b.passNumber) {
+            return a.tile_number - b.tile_number;
+          } else {
+            return a.passNumber - b.passNumber;
+          }
+        });
+
 // run through the passNumberGroups to prioritize scanning seqence and calculate scanning duration
 var processing_order = 0; // global processing order
 for (let passNumber in passNumberGroups){
+  passNumber = parseInt(passNumber);
   let pass = passNumberGroups[passNumber].tiles; // access the individual passes
   let lastPointArray = [];
   for(let tileNumber in pass){
     
     tileNumber = parseInt(tileNumber);
-    
-    let tile = pass[tileNumber].laser; // access the individual tiles
+    //process.printInfo(tileNumber);
+    let tile = pass[tileNumber]; // access the individual tiles
     let tileExposureArray = [];
+    let skipcountArray = [];
+    let pathcountArray =[];  
     
-    for(let laserId in tile){
+    for(let laserId in tile.laser){
       let nlaserId = parseInt(laserId);
       
       if(Number.isInteger(nlaserId)){ // only perfom task if the laserId is an integer
         //process.printInfo("laserid: " + nlaserId);
-        let processLaser = tile[nlaserId]; // access whats is designated to each laser
+        let processLaser = tile.laser[nlaserId]; // access whats is designated to each laser
         
         let thisHatch = new HATCH.bsHatch();
         thisHatch = processLaser.hatchBlocks; // get the hatchs blocks designated to each laser
@@ -2041,16 +2052,21 @@ for (let passNumber in passNumberGroups){
         newHatch = [].concat.apply([], groupsArray);
         
         let timeFromOrigo_us = 0;
-        let timeBetweenBlocks_us = 0;
+        let timeFromStartPosToHatch_us = 0;
         let skywritingDur = 0;
         let timeToNextStartPos_us = 0;
         let thisLaserInTileExposureDuration = new EXPOSURETIME.bsExposureTime(); // duration for this laser scanning in this tile
-         
+        
+        
+        
         let lastPoint = new VEC2.Vec2();
         
+    
+        
         //laser is started at the center of each laser in X and the topside of the tile in Y
-        let laserStartPosX = tileArray[tileNumber].scanhead_x_coord + scanheadArray[nlaserId-1].x_ref;
-        let laserStartPosY = tileArray[tileNumber].scanhead_y_coord;// + scanheadArray[nlaserId].rel_y_max;
+        //process.printInfo('scanhead_x: ' +tile.xcoord);
+        let laserStartPosX = tile.xcoord + scanheadArray[nlaserId-1].x_ref;
+        let laserStartPosY = tile.ycoord;// + scanheadArray[nlaserId].rel_y_max;
        
         let exposureDur = 0;
         let skipDur = 0;
@@ -2065,6 +2081,8 @@ for (let passNumber in passNumberGroups){
           let prevPosX = 0;
           let prevPosY = 0;
           
+             
+          
           if (i==0){
           
             prevPosX = laserStartPosX;
@@ -2073,6 +2091,10 @@ for (let passNumber in passNumberGroups){
            //the first hatch added to timeExposure is calculated from Origo, this is removed by finding the time: 
            let distToOrigo = Math.sqrt((firstPoint.x)*(firstPoint.x) + (firstPoint.y)*(firstPoint.y));    
            timeFromOrigo_us = (distToOrigo/PARAM.getParamReal('durationSim', 'JumpSpeed'))*1000*1000; 
+           //process.printInfo('timeFromOrigo_us: ' + timeFromOrigo_us);
+           let jumpingDistance = Math.sqrt((prevPosX-firstPoint.x)*(prevPosX-firstPoint.x) + (prevPosY-firstPoint.y)*(prevPosY-firstPoint.y));
+           timeFromStartPosToHatch_us = ((jumpingDistance/PARAM.getParamReal('durationSim', 'JumpSpeed')))*1000*1000; 
+           //process.printInfo('start: ' + laserStartPosX + '/' + laserStartPosY);  
 
             } else {
               
@@ -2080,9 +2102,10 @@ for (let passNumber in passNumberGroups){
             prevPosY = lastPoint.y;
               
           }           
-                   
-          let jumpingDistance = Math.sqrt((prevPosX-firstPoint.x)*(prevPosX-firstPoint.x) + (prevPosY-firstPoint.y)*(prevPosY-firstPoint.y));
-          timeBetweenBlocks_us += ((jumpingDistance/PARAM.getParamReal('durationSim', 'JumpSpeed')))*1000*1000;
+          
+                
+          let prevDuration_us = thisLaserInTileExposureDuration.getExposureTimeMicroSeconds();
+          
           let exposureSettings =  {
             'fJumpSpeed' :PARAM.getParamReal('durationSim', 'JumpSpeed'),
             'fMeltSpeed' : hatchblock.getAttributeReal('speed'),
@@ -2097,17 +2120,31 @@ for (let passNumber in passNumberGroups){
           thisLaserInTileExposureDuration.addHatchBlock(hatchblock,exposureSettings);
         
           let tempHatch = new HATCH.bsHatch();
+          let thisHatchDuration_ms = (thisLaserInTileExposureDuration.getExposureTimeMicroSeconds()-prevDuration_us)/1000;
+          if(i == 0){
+            thisHatchDuration_ms-=timeFromOrigo_us/1000;
+            }
           //process.printInfo('duration: ' + thisLaserInTileExposureDuration.getExposureTimeMicroSeconds()/1000);
-          hatchblock.setAttributeReal('Hatch_Duration_ms',thisLaserInTileExposureDuration.getExposureTimeMicroSeconds()/1000);
+          hatchblock.setAttributeReal('Hatch_Duration_ms',thisHatchDuration_ms);
           tempHatch.addHatchBlock(hatchblock);
           
-          lastPoint = hatchblock.getPoint(hatchblock.getPointCount()-1);
-         
+//           let tempHatchArray = tempHatch.getHatchBlockArray();
+//           let tempHatchArrayCount = tempHatchArray.length;
+//           process.printInfo(tempHatchArray[tempHatchArrayCount-1].getPolyLineMode());
           
-          if (i == newHatch.length-1 && tileNumber < tileArray.length-1) { // duration to move to next tile starting position
+          //lastPoint = hatchblock.getPoint(hatchblock.getPointCount()-1);
+          
+         
+          timeToNextStartPos_us =0;
+          if (i == newHatch.length-1) { // duration to move to next tile starting position
+              lastPoint = hatchblock.getPoint(0); // this will get the first points which is also the last point when contouring
+              //let nextTileStartX = tileArray[tileNumber+1].scanhead_x_coord+scanheadArray[nlaserId-1].x_ref;
+              //let nextTileStartY = tileArray[tileNumber+1].scanhead_y_coord;
               
-              let nextTileStartX = tileArray[tileNumber+1].scanhead_x_coord+scanheadArray[nlaserId-1].x_ref;
-              let nextTileStartY = tileArray[tileNumber+1].scanhead_y_coord;
+              let nextTileStartX = laserStartPosX;
+              let nextTileStartY = laserStartPosY+tileArray[tileNumber].tile_height;             
+              
+              //process.printInfo('next: ' + nextTileStartX + '/' + nextTileStartY);    
               
               let tileFinalJumpLengt = Math.sqrt((lastPoint.x-nextTileStartX)*(lastPoint.x-nextTileStartX) + (lastPoint.y-nextTileStartY)*(lastPoint.y-nextTileStartY));
               timeToNextStartPos_us = (tileFinalJumpLengt/PARAM.getParamReal('durationSim', 'JumpSpeed'))*1000*1000
@@ -2115,13 +2152,13 @@ for (let passNumber in passNumberGroups){
           
           let hatcblockPath = new PATH_SET.bsPathSet();
           hatcblockPath.addHatches(tempHatch);
-          //process.printInfo('pathcount: ' + hatcblockPath.getPathCount());
-          
-          
           
           let skipCount = hatchblock.getSkipCount();
-          let pathCount = hatcblockPath.getPathCount();
-          
+          let pathCount = hatcblockPath.getPathCount();            
+            
+          skipcountArray.push(skipCount);
+          pathcountArray.push(pathCount);
+            
           let skywritingPostConst = 0; 
           let skywritingPrevConst = 0;
           
@@ -2145,18 +2182,17 @@ for (let passNumber in passNumberGroups){
           let npostDur = PARAM.getParamInt('skywriting','npost')*skywritingPostConst;
           let nprevDur = PARAM.getParamInt('skywriting','nprev')*skywritingPrevConst;
           
-          let switchOnDur = PARAM.getParamInt('skywriting','timelag') + PARAM.getParamInt('skywriting','laserOnShift')/64;
-          let switchOffDur = PARAM.getParamInt('skywriting','timelag');
+          let switchOnDur = Math.abs(PARAM.getParamInt('skywriting','timelag')) + Math.abs(PARAM.getParamInt('skywriting','laserOnShift'))/64;
+          let switchOffDur = Math.abs(PARAM.getParamInt('skywriting','timelag'));
           
-          skywritingDur += (npostDur + nprevDur + switchOnDur + switchOffDur)*skipCount;
-          //process.printInfo('skipcount: ' + skipCount);
+          skywritingDur += (npostDur + nprevDur)*pathCount;
+          //skywritingDur += (npostDur + nprevDur + switchOnDur + switchOffDur)*skipCount;
           
           hatchResult.moveDataFrom(tempHatch); // move hatches to result 
         }//for hatch
                       
         //store the processing duration for this laser in this tile
         let exposureTimeMicroSeconds = thisLaserInTileExposureDuration.getExposureTimeMicroSeconds();
-
         
         exposureTimeMicroSeconds += Math.ceil(nBufferduration); // add buffer duration        
         exposureTimeMicroSeconds -= Math.ceil(timeFromOrigo_us); // remove traveltime from orego
@@ -2164,8 +2200,8 @@ for (let passNumber in passNumberGroups){
         if(PARAM.getParamInt('skywriting','skywritingMode') != 0){
           exposureTimeMicroSeconds += Math.ceil(skywritingDur); // add delay from skywriting
         }
-        //exposureTimeMicroSeconds += Math.ceil(timeToNextStartPos_us);
-        
+        exposureTimeMicroSeconds += Math.ceil(timeToNextStartPos_us);
+        exposureTimeMicroSeconds += Math.ceil(timeFromStartPosToHatch_us);
         passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].laserProcessDuration = exposureTimeMicroSeconds;
         tileExposureArray.push(exposureTimeMicroSeconds);
              
@@ -2174,7 +2210,10 @@ for (let passNumber in passNumberGroups){
      
   // get exposure duration for laser with the largest workload
  let maxLaserScanningDuration = Math.max(...tileExposureArray);
- process.printInfo('laynr: '+ nLayerNr +' tile: '+ tileNumber + ' dur[ms]: ' + maxLaserScanningDuration/1000);
+ let maxPathCount = Math.max(...pathcountArray);
+ let maxskipCount = Math.max(...skipcountArray);
+  process.printInfo('laynr: '+ nLayerNr + ' stripe: '+ (passNumber+1) + ' tile: '+ (tileNumber+1) + ' dur[ms]: ' + maxLaserScanningDuration/1000);
+  //process.printInfo(maxPathCount + ' / ' + maxskipCount);
   let speedy = 0;
    if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
          speedy = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
