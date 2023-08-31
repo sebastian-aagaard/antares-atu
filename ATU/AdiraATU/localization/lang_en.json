@@ -115,7 +115,6 @@
      "param_ScanningMode": "Scanning Mode",
      "param_ScanningMode_MoveAndShoot": "Move and Shoot",
      "param_ScanningMode_OnTheFly": "On the Fly",
-     "param_overlap": "Overlap [mm]",
      "param_step_x" : "X Step [mm]",
      "param_number_x" : "X Number",
      "param_step_y": "Y Step [mm]",

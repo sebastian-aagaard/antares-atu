@@ -294,7 +294,7 @@ parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_duratio
       );
  
 
-    parameter.declareParameterReal('tileing','overlap', LOCALIZER.GetMessage('param_overlap'),0.0,100.0,0);
+    //parameter.declareParameterReal('tileing','overlap', LOCALIZER.GetMessage('param_overlap'),0.0,100.0,0);
     parameter.declareParameterReal('tileing','step_x', LOCALIZER.GetMessage('param_step_x'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,7);
     parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
@@ -816,10 +816,12 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
 
       return shiftValue;
     }
-    
+   
+   //Calculate this layer shift in x and y 
    let shiftX = calculateShiftX(layerNr);
    let shiftY = calculateShiftY(layerNr);
   
+   //Max distance shifted
    let maxShiftY = PARAM.getParamInt('tileing', 'number_y')*PARAM.getParamReal('tileing', 'step_y');
    let maxShiftX = PARAM.getParamInt('tileing', 'number_x')*PARAM.getParamReal('tileing', 'step_x');
 
@@ -834,16 +836,9 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   // Define and store Tiles     //
   ////////////////////////////////
   
-   let shiftOffsetMaxX =  (PARAM.getParamInt('tileing', 'number_x') * PARAM.getParamReal('tileing', 'step_x'));
-   let shiftOffsetMaxY =  (PARAM.getParamInt('tileing', 'number_y') * PARAM.getParamReal('tileing', 'step_y'));
+   let scene_size_x = (maxX - minX)+Math.abs(shiftX);
+   let scene_size_y = (maxY - minY)+Math.abs(shiftY);  
   
-   let scene_size_x = (maxX - minX) + shiftOffsetMaxX;
-   let scene_size_y = (maxY - minY) + shiftOffsetMaxY;     
-  
-   //let scence_center_x = minX + scene_size_x/2;
-  // let scence_center_y = minY + scene_size_y/2;
-   // add some check cannot be larger then required
-   
    //let scanhead_global_pass_position = new Array();
    let scanhead_x_starting_pos = 0;
    let scanhead_y_starting_pos = 0;
@@ -869,8 +864,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
      }  
      
    ///// find the actual starting position of the scanner_head (defined by the scenesize)
-   
-
+ 
    var workarea_min_x = PARAM.getParamInt('workarea','x_workarea_min_mm');
    var workarea_min_y = PARAM.getParamInt('workarea','y_workarea_min_mm');
    var workarea_max_x = PARAM.getParamInt('workarea','x_workarea_max_mm');
@@ -882,7 +876,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    if((scene_size_y-PARAM.getParamReal('scanhead','y_scanfield_size_mm'))/2+minY < workarea_min_y ){ // if the bounds are outside the powderbed force the tiling to start within // shouldn't happen
        scanhead_y_starting_pos = workarea_min_y;
      } else {
-     scanhead_y_starting_pos = (scene_size_y-tile_reach_y)/2+minY - maxShiftY;
+     scanhead_y_starting_pos = minY;//(scene_size_y-tile_reach_y)/2+minY; //
      }
     
      let maxPositionY = scanhead_y_starting_pos+tile_reach_y;
@@ -899,7 +893,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    if((scene_size_x-PARAM.getParamReal('scanhead','x_scanfield_size_mm'))/2+minX < workarea_min_x  ){
        scanhead_x_starting_pos = workarea_min_x ; // cannot scan outside 
    } else {
-      scanhead_x_starting_pos = minX-maxShiftX;//<- this code sets the xmin as starting pos (scene_size_x-tile_reach_x)/2+minX; <- this codes centers scanfield 
+      scanhead_x_starting_pos = minX;//<- this code sets the xmin as starting pos (scene_size_x-tile_reach_x)/2+minX; <- this codes centers scanfield 
      }
    
    let maxPositionX = scanhead_x_starting_pos+tile_reach_x;
@@ -926,17 +920,21 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
     scanhead_y_starting_pos = workarea_min_y; // set start to min x
   }
      
+   // offset starting position to allow shift in x and y
+    scanhead_x_starting_pos -= maxShiftX/2;
+    scanhead_y_starting_pos -= maxShiftY/2;
+    
+   //shift y pos of tiles for each layer
+   scanhead_x_starting_pos += shiftX;
+   scanhead_y_starting_pos += shiftY; 
+  
    // calulate the free distance (play) from the tile start to the part top and bottom
    
    var tileTable = [];  // store the tilelayout
    var tileTable3mf = [];  
    
     
-    
-    
-   //shift y pos of tiles for each layer
-   scanhead_x_starting_pos += shiftX;
-   scanhead_y_starting_pos += shiftY; 
+  
     
    let cur_tile_coord_x =  scanhead_x_starting_pos;
    let cur_tile_coord_y =  scanhead_y_starting_pos;
