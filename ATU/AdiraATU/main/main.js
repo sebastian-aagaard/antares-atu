@@ -27,7 +27,7 @@ const type_support_contour = 6;
 
 const laser_count = 5;
 const bIncludeScanningAttributes = false;
-const nBufferduration = 0;//1000000;//500000;//1000000; //us
+const nBufferduration = 1500000;//1500000;//500000;//1000000; //us
 //if openpolyline support is required set to false
 //when not in development mode set to false
 const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
@@ -920,13 +920,13 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
     scanhead_y_starting_pos = workarea_min_y; // set start to min x
   }
      
-   // offset starting position to allow shift in x and y
+   // offset starting position to allow shift in x and y // these are allowed to be outside the working area 
     scanhead_x_starting_pos -= maxShiftX/2;
     scanhead_y_starting_pos -= maxShiftY/2;
     
    //shift y pos of tiles for each layer
-   scanhead_x_starting_pos += shiftX;
-   scanhead_y_starting_pos += shiftY; 
+   scanhead_x_starting_pos += Math.abs(shiftX);
+   scanhead_y_starting_pos += Math.abs(shiftY); 
   
    // calulate the free distance (play) from the tile start to the part top and bottom
    
@@ -2122,11 +2122,9 @@ for (let passNumber in passNumberGroups){
         let skywritingDur = 0;
         let timeToNextStartPos_us = 0;
         let thisLaserInTileExposureDuration = new EXPOSURETIME.bsExposureTime(); // duration for this laser scanning in this tile
+                
         
-        
-        
-        let lastPoint = new VEC2.Vec2();
-        
+        let lastPoint = new VEC2.Vec2();       
     
         
         //laser is started at the center of each laser in X and the topside of the tile in Y
@@ -2259,7 +2257,7 @@ for (let passNumber in passNumberGroups){
                       
         //store the processing duration for this laser in this tile
         let exposureTimeMicroSeconds = thisLaserInTileExposureDuration.getExposureTimeMicroSeconds();
-        
+        //Process.printInfo();
         exposureTimeMicroSeconds += Math.ceil(nBufferduration); // add buffer duration        
         exposureTimeMicroSeconds -= Math.ceil(timeFromOrigo_us); // remove traveltime from orego
         //exposureTimeMicroSeconds += Math.ceil(timeBetweenBlocks_us); // add traveltime between blocks
@@ -2268,6 +2266,7 @@ for (let passNumber in passNumberGroups){
         }
         exposureTimeMicroSeconds += Math.ceil(timeToNextStartPos_us);
         exposureTimeMicroSeconds += Math.ceil(timeFromStartPosToHatch_us);
+        
         passNumberGroups[passNumber].tiles[tileNumber].laser[laserId].laserProcessDuration = exposureTimeMicroSeconds;
         tileExposureArray.push(exposureTimeMicroSeconds);
              
