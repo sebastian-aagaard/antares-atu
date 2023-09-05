@@ -821,12 +821,14 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    let shiftX = calculateShiftX(layerNr);
    let shiftY = calculateShiftY(layerNr);
   
+   process.printInfo('layerNr: ' + layerNr);
+    
    //Max distance shifted
    let maxShiftY = PARAM.getParamInt('tileing', 'number_y')*PARAM.getParamReal('tileing', 'step_y');
    let maxShiftX = PARAM.getParamInt('tileing', 'number_x')*PARAM.getParamReal('tileing', 'step_x');
 
   
-   var boundaries = modelLayer.getAttribEx('boundaries');
+   let boundaries = modelLayer.getAttribEx('boundaries');
    let maxX = boundaries.m_max.m_coord[0];
    let minX = boundaries.m_min.m_coord[0];
    let maxY = boundaries.m_max.m_coord[1];
@@ -847,8 +849,8 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    let tileOutlineOrigin = new getTilePosition(scanhead_x_starting_pos,scanhead_y_starting_pos); // get the tile layout information.
    
    // calculate the required tiles both in x and y (rounded up to make fit into whole passes)
-   var required_passes_x = Math.ceil(scene_size_x/tileOutlineOrigin.tile_width);
-   var required_passes_y = Math.ceil(scene_size_y/tileOutlineOrigin.tile_height);
+   let required_passes_x = Math.ceil(scene_size_x/tileOutlineOrigin.tile_width);
+   let required_passes_y = Math.ceil(scene_size_y/tileOutlineOrigin.tile_height);
    
    //get overlap
    let overlap_y = PARAM.getParamReal('scanhead','tile_overlap_y');
@@ -865,10 +867,10 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
      
    ///// find the actual starting position of the scanner_head (defined by the scenesize)
  
-   var workarea_min_x = PARAM.getParamInt('workarea','x_workarea_min_mm');
-   var workarea_min_y = PARAM.getParamInt('workarea','y_workarea_min_mm');
-   var workarea_max_x = PARAM.getParamInt('workarea','x_workarea_max_mm');
-   var workarea_max_y = PARAM.getParamInt('workarea','y_workarea_max_mm');  
+   let workarea_min_x = PARAM.getParamInt('workarea','x_workarea_min_mm');
+   let workarea_min_y = PARAM.getParamInt('workarea','y_workarea_min_mm');
+   let workarea_max_x = PARAM.getParamInt('workarea','x_workarea_max_mm');
+   let workarea_max_y = PARAM.getParamInt('workarea','y_workarea_max_mm');  
 
    // check boundaries in y   
    let tile_reach_y = tileOutlineOrigin.tile_height*required_passes_y+overlap_y*(required_passes_y-1);  
@@ -930,12 +932,9 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   
    // calulate the free distance (play) from the tile start to the part top and bottom
    
-   var tileTable = [];  // store the tilelayout
-   var tileTable3mf = [];  
-   
-    
-  
-    
+   let tileTable = [];  // store the tilelayout
+   let tileTable3mf = [];  
+     
    let cur_tile_coord_x =  scanhead_x_starting_pos;
    let cur_tile_coord_y =  scanhead_y_starting_pos;
        
@@ -951,45 +950,23 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
 
       cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
 
-      //laser center
+      let tile = new PATH_SET.bsPathSet();
       
-      
-      var tile = new PATH_SET.bsPathSet();
-      
-      
-       var scanhead_outlines = new Array(4);
+       let scanhead_outlines = new Array(4);
        scanhead_outlines[0] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
        scanhead_outlines[1] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_max); //min,max
        scanhead_outlines[2] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_max); //max,max
        scanhead_outlines[3] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min); //max,min
-       scanhead_outlines[4] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
-      
-      
-//        for (i=0;i<laser_count;i++){
-//        let scanner_center = [];  
-//        scanner_center.push( new VEC2.Vec2(cur_tile.x_min + PARAM.getParamReal('scanhead','x_scanner' + (i+1) +'_ref_mm'), cur_tile.y_min)); //min,mi
-//        scanner_center.push( new VEC2.Vec2(cur_tile.x_min + PARAM.getParamReal('scanhead','x_scanner' + (i+1) +'_ref_mm'), cur_tile.y_max)); //min,min
-//        
-//        let laser = new PATH_SET.bsPathSet();
-//        laser.addNewPath(scanner_center);
-//        laser.setClosed(false);  
-//         
-//        modelLayer.addPathSet(laser,MODEL.nSubtypeSupport);     
-//          }
-       
+       scanhead_outlines[4] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min   
       
        if (bDrawTile)
        {
              
          tile.addNewPath(scanhead_outlines);
-         
-         tile.setClosed(false);
-              
+         tile.setClosed(false);              
          modelLayer.addPathSet(tile,MODEL.nSubtypeSupport);
                
        }
-       
-      // get laser zones within each tile
            
       // dataToPass
       var tile_obj = new Object();
@@ -999,6 +976,9 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
       tile_obj.scanhead_x_coord = cur_tile_coord_x;
       tile_obj.scanhead_y_coord = cur_tile_coord_y;
       tile_obj.tile_height = cur_tile.tile_height;
+      tile_obj.shiftX = shiftX;
+      tile_obj.shiftY = shiftY;
+      tile_obj.layer = layerNr;
       tileTable.push(tile_obj);
        
        let defaultSpeedY;
@@ -1085,14 +1065,13 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
     {
     let thisModel = modelDataTarget.getModel(modelIndex); // look at the joint models
       
-      for (let layerIt = 0; layerIt <modelLayerCount;layerIt++)
-      {
-       var modelLayer =  thisModel.getModelLayer((layerIt+1)*modelLayerHeight);
+      for (let layerIt = 1; layerIt <modelLayerCount+1;layerIt++){
+       var modelLayer =  thisModel.getModelLayer((layerIt)*modelLayerHeight);
         
-        if (modelLayer.isValid())
-        {
+        if (modelLayer.isValid()){  
           
           let thisLayerBounds = modelLayer.tryGetBounds2D();
+          
           if (thisLayerBounds !== undefined) {
             layerBoundaries[layerIt] = thisLayerBounds;
         
@@ -2277,7 +2256,7 @@ for (let passNumber in passNumberGroups){
  let maxLaserScanningDuration = Math.max(...tileExposureArray);
  let maxPathCount = Math.max(...pathcountArray);
  let maxskipCount = Math.max(...skipcountArray);
-  process.printInfo('laynr: '+ nLayerNr + ' stripe: '+ (passNumber+1) + ' tile: '+ (tileNumber+1) + ' dur[ms]: ' + maxLaserScanningDuration/1000);
+ process.printInfo('laynr: '+ nLayerNr + ' stripe: '+ (passNumber+1) + ' tile: '+ (tileNumber+1) + ' dur[ms]: ' + maxLaserScanningDuration/1000);
   //process.printInfo(maxPathCount + ' / ' + maxskipCount);
   let speedy = 0;
    if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
