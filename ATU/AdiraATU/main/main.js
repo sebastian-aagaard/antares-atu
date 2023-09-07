@@ -795,24 +795,35 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   
     function calculateShiftX(layerNr) {
       let layerCount = PARAM.getParamInt('tileing', 'number_x');
-      let shiftIncrement =  PARAM.getParamReal('tileing', 'step_x');
-      let resetLayer = layerCount - 1;
+      let shiftIncrement = PARAM.getParamReal('tileing', 'step_x');
+      let middleLayer = Math.floor(layerCount / 2); // Determine the middle layer
 
-      let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
-      let layerWithinCycle = cyclePosition % layerCount;
-      let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
-
+       // Calculate the cycle position of the layer number
+      let cyclePosition = layerNr % layerCount;
+      
+       // Calculate the distance from the middle layer
+      let distanceFromMiddle = cyclePosition - middleLayer;
+      
+      // Compute the shift value based on the distance from the middle layer
+      let shiftValue = distanceFromMiddle * shiftIncrement;
+      
+     // process.printInfo('L: ' +  layerNr + ' S: ' + shiftValue);
       return shiftValue;
     }
     
    function calculateShiftY(layerNr) {
       let layerCount = PARAM.getParamInt('tileing', 'number_y');
-      let shiftIncrement =  PARAM.getParamReal('tileing', 'step_y');
-      let resetLayer = layerCount - 1;
+      let shiftIncrement = PARAM.getParamReal('tileing', 'step_y');
+      let middleLayer = Math.floor(layerCount / 2); // Determine the middle layer
 
-      let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
-      let layerWithinCycle = cyclePosition % layerCount;
-      let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
+       // Calculate the cycle position of the layer number
+      let cyclePosition = layerNr % layerCount;
+     
+       // Calculate the distance from the middle layer
+      let distanceFromMiddle = cyclePosition - middleLayer;
+     
+      // Compute the shift value based on the distance from the middle layer
+      let shiftValue = distanceFromMiddle * shiftIncrement;
 
       return shiftValue;
     }
@@ -821,11 +832,11 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    let shiftX = calculateShiftX(layerNr);
    let shiftY = calculateShiftY(layerNr);
   
-   process.printInfo('layerNr: ' + layerNr);
+   //process.printInfo('layerNr: ' + layerNr);
     
    //Max distance shifted
-   let maxShiftY = PARAM.getParamInt('tileing', 'number_y')*PARAM.getParamReal('tileing', 'step_y');
-   let maxShiftX = PARAM.getParamInt('tileing', 'number_x')*PARAM.getParamReal('tileing', 'step_x');
+   let maxShiftY = (PARAM.getParamInt('tileing', 'number_y')-1)*PARAM.getParamReal('tileing', 'step_y');
+   let maxShiftX = (PARAM.getParamInt('tileing', 'number_x')-1)*PARAM.getParamReal('tileing', 'step_x');
 
   
    let boundaries = modelLayer.getAttribEx('boundaries');
@@ -838,8 +849,8 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
   // Define and store Tiles     //
   ////////////////////////////////
   
-   let scene_size_x = (maxX - minX)+Math.abs(shiftX);
-   let scene_size_y = (maxY - minY)+Math.abs(shiftY);  
+   let scene_size_x = (maxX - minX)+Math.abs(maxShiftX);
+   let scene_size_y = (maxY - minY)+Math.abs(maxShiftY);
   
    //let scanhead_global_pass_position = new Array();
    let scanhead_x_starting_pos = 0;
@@ -878,7 +889,7 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
    if((scene_size_y-PARAM.getParamReal('scanhead','y_scanfield_size_mm'))/2+minY < workarea_min_y ){ // if the bounds are outside the powderbed force the tiling to start within // shouldn't happen
        scanhead_y_starting_pos = workarea_min_y;
      } else {
-     scanhead_y_starting_pos = minY;//(scene_size_y-tile_reach_y)/2+minY; //
+     scanhead_y_starting_pos = minY; //(scene_size_y-tile_reach_y)/2+minY; //minY;//
      }
     
      let maxPositionY = scanhead_y_starting_pos+tile_reach_y;
@@ -927,8 +938,10 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
     scanhead_y_starting_pos -= maxShiftY/2;
     
    //shift y pos of tiles for each layer
-   scanhead_x_starting_pos += Math.abs(shiftX);
-   scanhead_y_starting_pos += Math.abs(shiftY); 
+   scanhead_x_starting_pos += shiftX;
+   scanhead_y_starting_pos += shiftY; 
+  
+  //process.printInfo('offset: ' + (shiftY - maxShiftY/2));
   
    // calulate the free distance (play) from the tile start to the part top and bottom
    
