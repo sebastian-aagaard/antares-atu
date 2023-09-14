@@ -90,7 +90,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('strategy','fMinWidth',LOCALIZER.GetMessage('param_fMinWidth'),0.0,100.0,2.0);
     parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,-0.03);
     parameter.declareParameterReal('strategy','fStripeLength',LOCALIZER.GetMessage('param_fStripeLength'),0,100.0,0);
-    parameter.declareParameterReal('strategy','fPatternShift',LOCALIZER.GetMessage('param_fPatternShift'),0,10.0,2.0);
+    parameter.declareParameterReal('strategy','fPatternShift',LOCALIZER.GetMessage('param_fPatternShift'),0,10.0,1.67);
   
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
@@ -1008,8 +1008,8 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
          "attributes": {
             "tileID": j+1+(i+1)*1000,
             "targetx": cur_tile_coord_x,
-            "targety": cur_tile.y_max,
-            "positiony": cur_tile_coord_y,
+            "targety": cur_tile.y_max-cur_tile.tile_height,
+            "positiony": cur_tile_coord_y-cur_tile.tile_height,
             "speedx" : 0,
             "speedy": defaultSpeedY,
             "tileExposureTime" : 0
@@ -1439,6 +1439,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   let fpatternShift = PARAM.getParamReal('strategy','fPatternShift');
   
   let stripeRefPoint = new VEC2.Vec2(nLayerNr*fpatternShift,0);
+  
+  process.printInfo(nLayerNr*fpatternShift);
   
   let allIsland_array = all_islands.getIslandArray();
 
@@ -2340,7 +2342,7 @@ for (let passNr in passNumberGroups){
              "attributes": {
                 "uuid": thispass.uuid,
                 "startx": thispass.startx,
-                "starty": thispass.starty,
+                "starty": thispass.starty-scanheadArray[0].rel_y_max,
                 "sequencetransferspeed": thispass.sequencetransferspeed,
                 "type": thispass.type,
                 "requiredPasses": thispass.requiredPasses,
