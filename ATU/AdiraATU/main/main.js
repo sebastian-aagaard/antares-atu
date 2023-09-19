@@ -1008,8 +1008,8 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
          "attributes": {
             "tileID": j+1+(i+1)*1000,
             "targetx": cur_tile_coord_x,
-            "targety": cur_tile.y_max-cur_tile.tile_height,
-            "positiony": cur_tile_coord_y-cur_tile.tile_height,
+            "targety": cur_tile.y_max,//-cur_tile.tile_height,
+            "positiony": cur_tile_coord_y,//-cur_tile.tile_height,
             "speedx" : 0,
             "speedy": defaultSpeedY,
             "tileExposureTime" : 0
@@ -1429,8 +1429,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     }
   }
       
- //divide into stripes (GLOBAL)
-    
+ //divide into stripes (GLOBAL) 
   
   let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
   let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
@@ -1440,7 +1439,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   
   let stripeRefPoint = new VEC2.Vec2(nLayerNr*fpatternShift,0);
   
-  process.printInfo(nLayerNr*fpatternShift);
+  //process.printInfo(nLayerNr*fpatternShift);
   
   let allIsland_array = all_islands.getIslandArray();
 
@@ -2342,7 +2341,7 @@ for (let passNr in passNumberGroups){
              "attributes": {
                 "uuid": thispass.uuid,
                 "startx": thispass.startx,
-                "starty": thispass.starty-scanheadArray[0].rel_y_max,
+                "starty": thispass.starty,//-scanheadArray[0].rel_y_max,
                 "sequencetransferspeed": thispass.sequencetransferspeed,
                 "type": thispass.type,
                 "requiredPasses": thispass.requiredPasses,
