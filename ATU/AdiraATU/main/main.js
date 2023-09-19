@@ -2270,7 +2270,7 @@ for (let passNumber in passNumberGroups){
  let maxLaserScanningDuration = Math.max(...tileExposureArray);
  let maxPathCount = Math.max(...pathcountArray);
  let maxskipCount = Math.max(...skipcountArray);
- process.printInfo('laynr: '+ nLayerNr + ' stripe: '+ (passNumber+1) + ' tile: '+ (tileNumber+1) + ' dur[ms]: ' + maxLaserScanningDuration/1000);
+ //process.printInfo('laynr: '+ nLayerNr + ' stripe: '+ (passNumber+1) + ' tile: '+ (tileNumber+1) + ' dur[ms]: ' + maxLaserScanningDuration/1000);
   //process.printInfo(maxPathCount + ' / ' + maxskipCount);
   let speedy = 0;
    if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot
