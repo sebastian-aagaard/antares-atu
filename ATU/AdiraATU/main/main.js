@@ -91,6 +91,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,-0.03);
     parameter.declareParameterReal('strategy','fStripeLength',LOCALIZER.GetMessage('param_fStripeLength'),0,100.0,0);
     parameter.declareParameterReal('strategy','fPatternShift',LOCALIZER.GetMessage('param_fPatternShift'),0,10.0,1.67);
+    //parameter.declareParameterReal('strategy','nBufferduration_ms',LOCALIZER.GetMessage('param_nBufferduration_ms'),0,10.0,1.67);
   
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
@@ -332,8 +333,7 @@ exports.configurePostProcessingSteps = function(a_config)
 *
 * @param  buildAttrib   bsBuildAttribute
 */
-exports.declareBuildAttributes = function(buildAttrib)
-{
+exports.declareBuildAttributes = function(buildAttrib){
   
   buildAttrib.declareAttributeInt('bsid'); // buildstyle ID
   buildAttrib.declareAttributeReal('power'); // beam laser power
@@ -363,7 +363,7 @@ exports.declareBuildAttributes = function(buildAttrib)
   for(let i = 0 ; i<laser_count ; i++){
     buildAttrib.declareAttributeInt('laser_index_'+(i+1));
   }
- 
+  
 };
 
 
@@ -373,8 +373,7 @@ exports.declareBuildAttributes = function(buildAttrib)
 *
 * @param  exportFilter  bsExportFilter
 */
-exports.declareExportFilter = function(exportFilter)
-{    
+exports.declareExportFilter = function(exportFilter){    
   exportFilter.declareFilterEx({
     'sFilterId' : 'CLI-C108C8EC-70C4-40AE-94D2-75B778311531',
     'sFilterName' : LOCALIZER.GetMessage('cli_format'),
@@ -402,10 +401,8 @@ exports.declareExportFilter = function(exportFilter)
 * @param  model   bsModel
 */
 
-exports.prepareModelExposure = function(model)
-{
+exports.prepareModelExposure = function(model){
   
-
   let layer_thickness = model.getLayerThickness();
   let material_name = model.getMaterialID(); 
   
@@ -1008,8 +1005,8 @@ function getTileArray(modelLayer,bDrawTile,layerNr){
          "attributes": {
             "tileID": j+1+(i+1)*1000,
             "targetx": cur_tile_coord_x,
-            "targety": cur_tile.y_max,//-cur_tile.tile_height,
-            "positiony": cur_tile_coord_y,//-cur_tile.tile_height,
+            "targety": cur_tile.y_max,
+            "positiony": cur_tile_coord_y,
             "speedx" : 0,
             "speedy": defaultSpeedY,
             "tileExposureTime" : 0
@@ -1615,9 +1612,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     
     // generate data for 3mf exporter
     if (PARAM.getParamInt('tileing','ScanningMode') == 0){
-      var type = 'moveandshoot'
+      var type = 'moveandshoot';
       } else {
-      var type = 'onthefly'
+      var type = 'onthefly';
     };
   var required_passes_x = thisLayer.getAttrib('requiredPassesX');
   var required_passes_y = thisLayer.getAttrib('requiredPassesY');
@@ -1913,7 +1910,7 @@ for (let passNumber in passNumberGroups){
     
   passNumberGroups[passNumber].blocks = mergedHatch.getHatchBlockArray();
 
-  simplifiedDataHatch.moveDataFrom(mergedHatch)
+  simplifiedDataHatch.moveDataFrom(mergedHatch);
 }
 
 function generateUUID() { // Public Domain/MIT
@@ -1995,7 +1992,7 @@ for (let passNumber in passNumberGroups){
     
 // define where the scanner starts
     
-for (let pass in passNumberGroups){
+for(let pass in passNumberGroups){
       
   let thisPass = passNumberGroups[pass];
   let indices = Object.keys(thisPass.tiles);
@@ -2019,13 +2016,14 @@ for (let pass in passNumberGroups){
 // Prioritize and find the scan duration //
 ///////////////////////////////////////////
     
-    tileArray.sort(function(a, b) {
-          if (a.passNumber === b.passNumber) {
-            return a.tile_number - b.tile_number;
-          } else {
-            return a.passNumber - b.passNumber;
-          }
-        });
+tileArray.sort(function(a, b) {
+    if (a.passNumber === b.passNumber) {
+      return a.tile_number - b.tile_number;
+    } else {
+      return a.passNumber - b.passNumber;
+    }
+  }
+);
 
 // run through the passNumberGroups to prioritize scanning seqence and calculate scanning duration
 var processing_order = 0; // global processing order
@@ -2826,10 +2824,7 @@ function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_
         
         
         hatchObj.moveDataFrom(tileHatch);
-     }
-   
-  
-   
+     }   
    }
    return hatchObj;
   } //fixedLaserWorkload
