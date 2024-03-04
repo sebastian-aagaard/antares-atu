@@ -1,5 +1,13 @@
+/************************************************************
+ * Adira AddCreative Buildstyle
+ *
+ * @author Sebastian Aagaard
+ * Copyright (c). All rights reserved.
+ *********************************************************** */
+
 'use strict';
 
+// -------- INCLUDES -------- //
 var RND = requireBuiltin('random');
 var RGBA = requireBuiltin('bsColRGBAi');
 var MODEL = requireBuiltin('bsModel');
@@ -7,15 +15,34 @@ var HATCH = requireBuiltin('bsHatch');
 var ISLAND = requireBuiltin('bsIsland');
 var BOUNDS = requireBuiltin('bsBounds2D');
 var PARAM = requireBuiltin('bsParam');
-var BUILD = requireBuiltin('bsBuildParam');
 var VEC2 = requireBuiltin('vec2');
 var SEG2D = requireBuiltin('seg2d');
 var PATH_SET = requireBuiltin('bsPathSet');
 var EXPORT_FILTER = requireBuiltin('bsExportFilter');
 var POLY_IT = requireBuiltin('bsPolylineIterator');
+var EXPOSURETIME = requireBuiltin('bsExposureTime');
+
 var CLI = require('main/export_cli.js');
 var LOCALIZER = require('localization/localizer.js');
-var EXPOSURETIME = requireBuiltin('bsExposureTime');
+
+// -------- CONFIGURATION -------- //
+var MACHINE_CONFIG = require('../configuration/machine_declaration.js');
+var PARAM_CONFIG = require('../configuration/parameter_declaration.js');
+var ATTRIB_CONFIG = require('../configuration/attribute_declaration.js');
+
+
+// -------- CONSTANTS -------- //
+
+//  global handles
+
+const laser_count = 5;
+const bIncludeScanningAttributes = false;
+const nBufferduration = 0;//1500000;//500000;//1000000; //us
+//if openpolyline support is required set to false
+//when not in development mode set to false
+const bDrawTile = true; // this inversly toggles the ability to handle CAD generated openpolilines (eg in support)
+
+// type designation 
 
 const type_openPolyline = 0;
 const type_part_hatch = 1;
@@ -25,298 +52,43 @@ const type_downskin_contour = 4;
 const type_support_hatch = 5;
 const type_support_contour = 6;
 
-const laser_count = 5;
-const bIncludeScanningAttributes = false;
-const nBufferduration = 1500000;//1500000;//500000;//1000000; //us
-//if openpolyline support is required set to false
-//when not in development mode set to false
-const bDrawTile = true; // this inversly toggle the ability to handle CAD generated openpolilines (eg in support)
+// -------- GENERAL INFORMATION -------- //
+/** @param  aboutInfo  bsAboutInfo */
 
-
-/** 
-* Specify general information
-* @param  aboutInfo  bsAboutInfo
-*/
-exports.about = function(aboutInfo)
-{
+exports.about = function(aboutInfo){
+  
    aboutInfo.addCommentLine('AddCreator');
    aboutInfo.addCommentLine('Adira');
    aboutInfo.addCommentLine('Copyright 2023');
+  
 };
 
-/**
-*  Declare machine configuration
-*
-* @param  machineConfig   bsMachineConfig
-*/
-exports.declareMachine = function(machineConfig)
-{
-  machineConfig.setBuildstyleName('Adira');
-  machineConfig.setMachineName('AddCreator');
-  machineConfig.addMaterialName('IN718');
-  machineConfig.addLayerThicknessToMaterial('IN718', 50);
-  machineConfig.addLayerThicknessToMaterial('IN718', 60);
-  machineConfig.addMaterialName('unspecified');
-  machineConfig.addLayerThicknessToMaterial('unspecified', 10);
-  machineConfig.addLayerThicknessToMaterial('unspecified', 20);
-  machineConfig.addLayerThicknessToMaterial('unspecified', 30);
-  machineConfig.addLayerThicknessToMaterial('unspecified', 40);
-  machineConfig.addLayerThicknessToMaterial('unspecified', 50);
-  machineConfig.addLayerThicknessToMaterial('unspecified', 60);
-  machineConfig.addLayerThicknessToMaterial('unspecified', 70);
-  machineConfig.addLayerThicknessToMaterial('unspecified', 80);
-  machineConfig.addLayerThicknessToMaterial('unspecified', 90);
-  machineConfig.addLayerThicknessToMaterial('unspecified', 100);
-};
+// -------- MACHINE CONFIGURATION -------- //
+/** @param  machineConfig   bsMachineConfig */
 
-/**
-* The buildstyle declares its parameters to the main application. 
-* These parameters can be modified by the user within the specified range.
-* Parameters are always declared like this:
-* 'group-id', 'name', 'display string', min, max, default
-*
-* @param  parameter   bsBuildParam
-*/
-exports.declareParameters = function(parameter)
-{
-  // declare hatch parameter groups (volume/overhang)
-  // later on parameters are declared within these groups
-  // Parameter groups are always declared like this:
-  // 'group-id', 'display string'
-  
-
-  parameter.declareParameterGroup('strategy',LOCALIZER.GetMessage('grp_strategy'));
-    parameter.declareParameterReal('strategy','fStripeWidth',LOCALIZER.GetMessage('param_fStripeWidth'),0.0,100.0,10.0);
-    parameter.declareParameterReal('strategy','fMinWidth',LOCALIZER.GetMessage('param_fMinWidth'),0.0,100.0,2.0);
-    parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,-0.03);
-    parameter.declareParameterReal('strategy','fStripeLength',LOCALIZER.GetMessage('param_fStripeLength'),0,100.0,0);
-    parameter.declareParameterReal('strategy','fPatternShift',LOCALIZER.GetMessage('param_fPatternShift'),0,10.0,1.67);
-    //parameter.declareParameterReal('strategy','nBufferduration_ms',LOCALIZER.GetMessage('param_nBufferduration_ms'),0,10.0,1.67);
-  
- parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
-    parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
-    parameter.declareParameterReal('exposure', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.05);
-
-    parameter.declareParameterReal('exposure', 'beam_compensation', LOCALIZER.GetMessage('param_beam_compensation'), 0.0, 10.0, 0.05);
-    parameter.declareParameterReal('exposure', 'boarder_offset', LOCALIZER.GetMessage('param_boarder_offset'), 0.0, 10.0, 0.05);
-    parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 50.0, 0.1);//0.1 50.0   
-    parameter.declareParameterReal('exposure', 'hatch_angle_init', LOCALIZER.GetMessage('param_hatch_angle_init'), 0, 360, 45);
-    parameter.declareParameterReal('exposure', 'hatch_angle_increment', LOCALIZER.GetMessage('param_hatch_angle_increment'), -360, 360, 90.0);   
-  
- parameter.declareParameterGroup('support',LOCALIZER.GetMessage('grp_support'));
-    parameter.declareParameterReal('support', 'support_hdens', LOCALIZER.GetMessage('param_hatch_support_density'), 0.001, 2.0, 0.1);
-    parameter.declareParameterReal('support', 'support_hatch_angle_init', LOCALIZER.GetMessage('param_support_hatch_angle_init'), 0, 360, 45);
-    parameter.declareParameterReal('support', 'support_hatch_angle_increment', LOCALIZER.GetMessage('param_support_hatch_angle_increment'), -360, 360, 90.0);
-    parameter.declareParameterChoice('support', 'supportContourToogle', 
-       LOCALIZER.GetMessage('param_supportContourToogle'),
-       [LOCALIZER.GetMessage('param_supportContourToogle_disable'),
-       LOCALIZER.GetMessage('param_supportContourToogle_enable')],
-       LOCALIZER.GetMessage('param_supportContourToogle_enable')
-    );
- 
- parameter.declareParameterGroup('downskin',LOCALIZER.GetMessage('grp_downskin'));
-    parameter.declareParameterChoice('downskin', 'downskintoggle', 
-       LOCALIZER.GetMessage('param_downskintoggle'),
-       [LOCALIZER.GetMessage('param_downskintoggle_disable'),
-       LOCALIZER.GetMessage('param_downskintoggle_enable')],
-       LOCALIZER.GetMessage('param_downskintoggle_enable')
-        );
-    parameter.declareParameterReal('downskin', "down_skin_surface_angle", LOCALIZER.GetMessage('param_down_skin_surface_angle'), 0.0, 89.0, 60.0);
-    parameter.declareParameterInt('downskin', "down_skin_layer_reference", LOCALIZER.GetMessage('param_down_skin_layer_reference'), 1, 9, 5);
-    parameter.declareParameterReal('downskin', "down_skin_hdens", LOCALIZER.GetMessage('param_hatch_down_skin_density'), 0.001, 2.0, 0.1);
-    parameter.declareParameterReal('downskin', "down_skin_hangle", LOCALIZER.GetMessage('param_hatch_down_skin_angle'), 0, 360, 45);
-    parameter.declareParameterReal('downskin', 'down_skin_hangle_increment', LOCALIZER.GetMessage('param_hatch_down_skin_angle_increment'), -360.0, 360.0, 90.0);
-    parameter.declareParameterReal('downskin', 'down_skin_overlap', LOCALIZER.GetMessage('param_down_skin_overlap'), 0.0, 100.0, 0.7);
+  exports.declareMachine = function(machineConfig){
     
+    MACHINE_CONFIG.declareMachine(machineConfig);
 
- parameter.declareParameterGroup('ScanningParameters',LOCALIZER.GetMessage('grp_ScanningParameters'));
-    parameter.declareParameterReal('ScanningParameters', 'hatch_power', LOCALIZER.GetMessage('param_hatch_power'), 0.0, 500.0, 260.0);
-    parameter.declareParameterReal('ScanningParameters', 'hatch_markspeed', LOCALIZER.GetMessage('param_hatch_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'hatch_defocus', LOCALIZER.GetMessage('param_hatch_defocus'), 0.0, 100.0, 0.0);
- 
-    parameter.declareParameterReal('ScanningParameters', 'contour_power', LOCALIZER.GetMessage('param_contour_power'), 0.0, 500.0, 220.0);
-    parameter.declareParameterReal('ScanningParameters', 'contour_markspeed', LOCALIZER.GetMessage('param_contour_markspeed'), 0.0, 9000.0, 600.0);
-    parameter.declareParameterReal('ScanningParameters', 'contour_defocus', LOCALIZER.GetMessage('param_contour_defocus'), 0.0, 100.0, 0.0);
+    };
+
+  // -------- PARAMETER CONFIGURATION -------- //
+  /** @param  parameter   bsBuildParam */
+
+  exports.declareParameters = function(parameter){
     
-    parameter.declareParameterReal('ScanningParameters', 'overhang_hatch_power', LOCALIZER.GetMessage('param_overhang_hatch_power'), 0.0, 500.0, 106.0);
-    parameter.declareParameterReal('ScanningParameters', 'overhang_hatch_markspeed', LOCALIZER.GetMessage('param_overhang_hatch_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'overhang_hatch_defocus', LOCALIZER.GetMessage('param_overhang_hatch_defocus'), 0.0, 100.0, 0.0);
+    PARAM_CONFIG.declareParameters(parameter)
     
-    parameter.declareParameterReal('ScanningParameters', 'overhang_contour_power', LOCALIZER.GetMessage('param_overhang_contour_power'), 0.0, 500.0, 201.0);
-    parameter.declareParameterReal('ScanningParameters', 'overhang_contour_markspeed', LOCALIZER.GetMessage('param_overhang_contour_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'overhang_contour_defocus', LOCALIZER.GetMessage('param_overhang_contour_defocus'), 0.0, 100.0, 0.0); 
- 
-    parameter.declareParameterReal('ScanningParameters', 'support_hatch_power', LOCALIZER.GetMessage('param_support_hatch_power'), 0.0, 500.0, 260.0);
-    parameter.declareParameterReal('ScanningParameters', 'support_hatch_markspeed', LOCALIZER.GetMessage('param_support_hatch_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'support_hatch_defocus', LOCALIZER.GetMessage('param_support_hatch_defocus'), 0.0, 100.0, 0.0);
-  
-    parameter.declareParameterReal('ScanningParameters', 'support_contour_power', LOCALIZER.GetMessage('param_support_contour_power'), 0.0, 500.0, 260.0);
-    parameter.declareParameterReal('ScanningParameters', 'support_contour_markspeed', LOCALIZER.GetMessage('param_support_contour_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'support_contour_defocus', LOCALIZER.GetMessage('param_support_contour_defocus'), 0.0, 100.0, 0.0);    
+    };
 
-    parameter.declareParameterReal('ScanningParameters', 'openpolyline_power', LOCALIZER.GetMessage('param_openpolyline_power'), 0.0, 500.0, 260.0);
-    parameter.declareParameterReal('ScanningParameters', 'openpolyline_markspeed', LOCALIZER.GetMessage('param_openpolyline_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'openpolyline_defocus', LOCALIZER.GetMessage('param_openpolyline_defocus'), 0.0, 100.0, 0.0);      
+  // -------- ATTRIBUTE CONFIGURATION -------- //
+  /** @param  buildAttrib   bsBuildAttribute */
 
-// parameter.declareParameterGroup('partExposure')
-// parameter.declareParameterGroup('downSkinExposure') 
+  exports.declareBuildAttributes = function(buildAttrib){
     
-parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_durationSim'));
-    parameter.declareParameterReal('durationSim', 'JumpSpeed', LOCALIZER.GetMessage('param_JumpSpeed'), 0.001, 2000, 1000);
-    parameter.declareParameterInt('durationSim', 'laserOnDelay', LOCALIZER.GetMessage('param_laserOnDelay'), 0, 2000, 2);
-    parameter.declareParameterInt('durationSim', 'laserOffDelay', LOCALIZER.GetMessage('param_laserOffDelay'), 0, 2000, 10);
-    //parameter.declareParameterReal('durationSim', 'MeltSpeed', LOCALIZER.GetMessage('param_MeltSpeed'), 0.001, 2000, 200);
-    parameter.declareParameterReal('durationSim', 'JumpLengthLimit', LOCALIZER.GetMessage('param_JumpLengthLimit'), 0.000, 1000, 0);//0.1
-    parameter.declareParameterInt('durationSim', 'JumpDelay', LOCALIZER.GetMessage('param_JumpDelay'), 0, 100, 50);
-    parameter.declareParameterInt('durationSim', 'MinJumpDelay', LOCALIZER.GetMessage('param_MinJumpDelay'), 0, 50, 50); //30
-    parameter.declareParameterInt('durationSim', 'MarkDelay', LOCALIZER.GetMessage('param_MarkDelay'), 0, 100, 60);
-    parameter.declareParameterInt('durationSim', 'PolygonDelay', LOCALIZER.GetMessage('param_PolygonDelay'), 0, 100, 65);
-    parameter.declareParameterChoice('durationSim', 'PolygonDelayMode', 
-       LOCALIZER.GetMessage('param_PolygonDelayMode'),
-        [LOCALIZER.GetMessage('param_PolygonDelayMode_Variable'),
-        LOCALIZER.GetMessage('param_PolygonDelayMode_Fixed')],
-        LOCALIZER.GetMessage('param_PolygonDelayMode_Fixed')
-        );
-   
-
+    ATTRIB_CONFIG.declareBuildAttributes(buildAttrib,laser_count);
     
-    //parameter.declareParameterReal('exposure', 'field_size_x', LOCALIZER.GetMessage('param_hatch_field_size_x'), 0.1, 200.0, 10);
-    //parameter.declareParameterReal('exposure', 'field_size_y', LOCALIZER.GetMessage('param_hatch_field_size_y'), 0.1, 100.0, 33.3);
-    //parameter.declareParameterReal('exposure', 'field_overlap_x', LOCALIZER.GetMessage('param_hatch_field_overlap_x'), -100.0, 100.0, 0);//0.1
-    //parameter.declareParameterReal('exposure', 'field_overlap_y', LOCALIZER.GetMessage('param_hatch_field_overlap_y'), -100, 100.0, 0); //0.1
-    //parameter.declareParameterReal('exposure', 'field_min_area', LOCALIZER.GetMessage('param_hatch_field_min_area'), 0.05, 100.0, 0.05);
-    
-//     "param_hatch_field_size_x": "Field Size X (mm)",
-//     "param_hatch_field_size_y": "Field Size Y (mm)",
-//     "param_hatch_field_overlap_x": "Field Overlap X (mm)",
-//     "param_hatch_field_overlap_y": "Field Overlap Y (mm)",
-//     "param_hatch_field_min_area": "Min Field Area (mm^2)",
-  
-  parameter.declareParameterGroup('workarea',LOCALIZER.GetMessage('grp_workarea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterInt('workarea', 'x_workarea_min_mm',LOCALIZER.GetMessage('param_x_workarea_min_mm'),0,1010,0);
-    parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,1010,1000);
-    parameter.declareParameterInt('workarea', 'y_workarea_min_mm',LOCALIZER.GetMessage('param_y_workarea_min_mm'),0,1010,0);
-    parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),0,1010,995);
-  
-//   parameter.declareParameterGroup('travelrange',LOCALIZER.GetMessage('grp_travelrange'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-//     parameter.declareParameterInt('travelrange', 'x_travel_range_min_mm',LOCALIZER.GetMessage('param_x_travel_range_min_mm'),-10,650,-10);
-//     parameter.declareParameterInt('travelrange', 'x_travel_range_max_mm',LOCALIZER.GetMessage('param_x_travel_range_max_mm'),-10,650,650);
-//     parameter.declareParameterInt('travelrange', 'y_travel_range_min_mm',LOCALIZER.GetMessage('param_y_travel_range_min_mm'),-525,995,-525);
-//     parameter.declareParameterInt('travelrange', 'y_travel_range_max_mm',LOCALIZER.GetMessage('param_y_travel_range_max_mm'),-525,995,995);
-// put in lang_en if needed:
-//   "grp_travelrange": "Axes Travel range",
-//     "param_x_travel_range_min_mm": "X-Axes Travel Range min (mm)",
-//     "param_x_travel_range_max_mm": "X-A xes Travel Range max (mm)",
-//     "param_y_travel_range_min_mm": "Y-Axes Travel Range min (mm)",
-//     "param_y_travel_range_max_mm": "Y-Axes Travel Range max (mm)", 
-    
-  parameter.declareParameterGroup('movementSettings',LOCALIZER.GetMessage('grp_movementSettings'),'Movement Settings',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterInt('movementSettings', 'recoating_time_ms',LOCALIZER.GetMessage('param_recoating_time'),0,100000,26000);
-    parameter.declareParameterInt('movementSettings', 'sequencetransfer_speed_mms',LOCALIZER.GetMessage('param_sequencetransfer_speed_mms'),0,1000,120);
-    parameter.declareParameterInt('movementSettings', 'recoating_speed_mms',LOCALIZER.GetMessage('param_recoating_speed_mms'),0,1000,120);
-    parameter.declareParameterReal('movementSettings', 'head_startpos_x',LOCALIZER.GetMessage('param_head_startpos_x'),0.0,1000.0,0.0);
-    parameter.declareParameterReal('movementSettings', 'head_startpos_y',LOCALIZER.GetMessage('param_head_startpos_y'),-500.0,1000.0,0.0);
-
-  
-
-  // scanner head
-  parameter.declareParameterGroup('scanhead',LOCALIZER.GetMessage('grp_scanhead'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    //parameter.declareParameterReal('scanhead', 'y_global_max_limit', LOCALIZER.GetMessage('param_y_global_max_limit'),0,1000,995);
-    //parameter.declareParameterReal('scanhead', 'x_global_max_limit', LOCALIZER.GetMessage('param_x_global_max_limit'),0,1000,660);
-    
-    
-    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-0.1); //-5
-    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-0.1); //-5
-    
-    parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
-    parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);//110;
-    
-    parameter.declareParameterReal('scanhead', 'x_scanfield_size_limit',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //fixed values
-    parameter.declareParameterReal('scanhead', 'y_scanfield_size_limit',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110); //fixed values
-
-    //parameter.declareParameterReal('scanhead', 'y_scanner_ref_mm',LOCALIZER.GetMessage('param_y_scanner_ref_mm'),0,110,60);//110;
-
-    parameter.declareParameterReal('scanhead', 'x_scanner1_max_mm',LOCALIZER.GetMessage('param_x_scanner1_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner1_min_mm',LOCALIZER.GetMessage('param_x_scanner1_min_mm'),-100,0,-40);
-    parameter.declareParameterReal('scanhead', 'x_scanner1_ref_mm',LOCALIZER.GetMessage('param_x_scanner1_ref_mm'),0,390,40);
-
-    parameter.declareParameterReal('scanhead', 'x_scanner2_max_mm',LOCALIZER.GetMessage('param_x_scanner2_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner2_min_mm',LOCALIZER.GetMessage('param_x_scanner2_min_mm'),-100,0,-80);
-    parameter.declareParameterReal('scanhead', 'x_scanner2_ref_mm',LOCALIZER.GetMessage('param_x_scanner2_ref_mm'),0,390,125);
-
-    parameter.declareParameterReal('scanhead', 'x_scanner3_max_mm',LOCALIZER.GetMessage('param_x_scanner3_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner3_min_mm',LOCALIZER.GetMessage('param_x_scanner3_min_mm'),-100,0,-80);
-    parameter.declareParameterReal('scanhead', 'x_scanner3_ref_mm',LOCALIZER.GetMessage('param_x_scanner3_ref_mm'),0,390,210);
-
-    parameter.declareParameterReal('scanhead', 'x_scanner4_max_mm',LOCALIZER.GetMessage('param_x_scanner4_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner4_min_mm',LOCALIZER.GetMessage('param_x_scanner4_min_mm'),-100,0,-80);
-    parameter.declareParameterReal('scanhead', 'x_scanner4_ref_mm',LOCALIZER.GetMessage('param_x_scanner4_ref_mm'),0,390,295);
-
-    parameter.declareParameterReal('scanhead', 'x_scanner5_max_mm',LOCALIZER.GetMessage('param_x_scanner5_max_mm'),0,100,50);
-    parameter.declareParameterReal('scanhead', 'x_scanner5_min_mm',LOCALIZER.GetMessage('param_x_scanner5_min_mm'),-100,0,-80);
-    parameter.declareParameterReal('scanhead', 'x_scanner5_ref_mm',LOCALIZER.GetMessage('param_x_scanner5_ref_mm'),0,390,380);    
-    
- parameter.declareParameterGroup('skywriting', LOCALIZER.GetMessage('grp_skywriting')); 
-      parameter.declareParameterChoice('skywriting','skywritingMode',
-          LOCALIZER.GetMessage('param_skywritingMode'),
-          [LOCALIZER.GetMessage('param_skywritingMode_0'),
-          LOCALIZER.GetMessage('param_skywritingMode_1'),
-          LOCALIZER.GetMessage('param_skywritingMode_2'),
-          LOCALIZER.GetMessage('param_skywritingMode_3')],
-          LOCALIZER.GetMessage('param_skywritingMode_3')
-          );
-          
-      parameter.declareParameterInt('skywriting','timelag', LOCALIZER.GetMessage('param_timelag'),0,1000,174);
-      parameter.declareParameterInt('skywriting','laserOnShift', LOCALIZER.GetMessage('param_laserOnShift'),-1000,1000,-40);
-      parameter.declareParameterInt('skywriting','nprev', LOCALIZER.GetMessage('param_nprev'),0,1000,110);
-      parameter.declareParameterInt('skywriting','npost', LOCALIZER.GetMessage('param_npost'),0,1000,90);
-      parameter.declareParameterReal('skywriting','mode3limit', LOCALIZER.GetMessage('param_mode3limit'),0.0,100.0,0.9);
-    
-
-  // onthefly
-  parameter.declareParameterGroup('otf', LOCALIZER.GetMessage('grp_otf'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterReal('otf','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,160.0,33.0);
-    parameter.declareParameterReal('otf','axis_max_speed', LOCALIZER.GetMessage('param_axis_max_speed'),0.0,100.0,80.0);
-    parameter.declareParameterReal('otf','tile_rest_period', LOCALIZER.GetMessage('param_tile_rest_period'),0.0,120.0,0);
-    
-    // group tileing
-  parameter.declareParameterGroup('tileing',LOCALIZER.GetMessage('grp_tileing'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterChoice('tileing', 'TilingMode', 
-     LOCALIZER.GetMessage('param_TilingMode'),
-      [LOCALIZER.GetMessage('param_TilingMode_Static'),
-      LOCALIZER.GetMessage('param_TilingMode_Smart')],
-     LOCALIZER.GetMessage('param_TilingMode_Static')
-      );
-   parameter.declareParameterChoice('tileing', 'ScanningMode', 
-     LOCALIZER.GetMessage('param_ScanningMode'),
-      [LOCALIZER.GetMessage('param_ScanningMode_MoveAndShoot'),
-      LOCALIZER.GetMessage('param_ScanningMode_OnTheFly')],
-      LOCALIZER.GetMessage('param_ScanningMode_OnTheFly')
-      );
- 
-
-    //parameter.declareParameterReal('tileing','overlap', LOCALIZER.GetMessage('param_overlap'),0.0,100.0,0);
-    parameter.declareParameterReal('tileing','step_x', LOCALIZER.GetMessage('param_step_x'),0.0,10.0,0.4);
-    parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,7);
-    parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
-    parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,7); 
-   
-//   parameter.declareParameterGroup('laser', LOCALIZER.GetMessage('grp_laser'));
-//     parameter.declareParameterInt('laser', 'fill_power', LOCALIZER.GetMessage('param_hatch_power'), 0, 1000, 190);
-//     parameter.declareParameterReal('laser', 'fill_speed', LOCALIZER.GetMessage('param_hatch_speed'), 0, 10000, 1900);
-//     parameter.declareParameterInt('laser', 'open_border_power', LOCALIZER.GetMessage('param_openline_power'), 0, 1000, 170);
-//     parameter.declareParameterReal('laser', 'open_border_speed', LOCALIZER.GetMessage('param_openline_speed'), 0, 10000, 1700);
-
-  parameter.declareParameterGroup('scanning_priority', LOCALIZER.GetMessage('grp_scanning_priority'));
-    parameter.declareParameterInt('scanning_priority','part_hatch_priority', LOCALIZER.GetMessage('param_part_hatch_priority'),0,2000,100);
-    parameter.declareParameterInt('scanning_priority','downskin_hatch_priority', LOCALIZER.GetMessage('param_downskin_hatch_priority'),0,2000,200);
-    parameter.declareParameterInt('scanning_priority','support_hatch_priority', LOCALIZER.GetMessage('param_support_hatch_priority'),0,2000,300);
-    parameter.declareParameterInt('scanning_priority','part_contour_priority', LOCALIZER.GetMessage('param_part_contour_priority'),0,2000,400);
-    parameter.declareParameterInt('scanning_priority','downskin_contour_priority', LOCALIZER.GetMessage('param_downskin_contour_priority'),0,2000,500);
-    parameter.declareParameterInt('scanning_priority','support_contour_priority', LOCALIZER.GetMessage('param_support_contour_priority'),0,2000,600);
-    parameter.declareParameterInt('scanning_priority','openPolyline_priority', LOCALIZER.GetMessage('param_openPolyline_priority'),0,2000,700);
-};
-
+    };
 
 
 /** 
@@ -326,44 +98,6 @@ exports.configurePostProcessingSteps = function(a_config)
 {
   // Postprocessing the toolpaths using the given function:
   a_config.addPostProcessingStep(postprocessLayerStack_MT,{bMultithread: true, nProgressWeight: 1});
-};
-
-/**
-*  Declare attributes to be stored within exposure vectors
-*
-* @param  buildAttrib   bsBuildAttribute
-*/
-exports.declareBuildAttributes = function(buildAttrib){
-  
-  buildAttrib.declareAttributeInt('bsid'); // buildstyle ID
-  buildAttrib.declareAttributeReal('power'); // beam laser power
-  buildAttrib.declareAttributeReal('speed'); // scanning speed
-  buildAttrib.declareAttributeInt('type'); // scanning type
-  buildAttrib.declareAttributeInt('3mf_attribute');
-  buildAttrib.declareAttributeInt('atu_attribute');
-  buildAttrib.declareAttributeInt('priority');
-  buildAttrib.declareAttributeInt('passNumber');
-  buildAttrib.declareAttributeInt('passNumber_3mf');//
-  buildAttrib.declareAttributeReal('xcoord');
-  buildAttrib.declareAttributeReal('ycoord');
-  buildAttrib.declareAttributeInt('tile_index');
-  buildAttrib.declareAttributeInt('tileID_3mf');
-  buildAttrib.declareAttributeReal('Subtile_Duration');
-  buildAttrib.declareAttributeInt('scanning_priority');
-  buildAttrib.declareAttributeReal('Hatch_Duration_ms');
-  buildAttrib.declareAttributeInt('laser_index');
-  buildAttrib.declareAttributeInt('sharedZone');
-  buildAttrib.declareAttributeInt('zoneExposure');
-  buildAttrib.declareAttributeInt('zoneIndex');
-  buildAttrib.declareAttributeInt('islandId');
-  buildAttrib.declareAttributeInt('stripeID');
-  buildAttrib.declareAttributeInt('assigned');
-
-  buildAttrib.declareAttributeReal('ScanheadMoveSpeed');
-  for(let i = 0 ; i<laser_count ; i++){
-    buildAttrib.declareAttributeInt('laser_index_'+(i+1));
-  }
-  
 };
 
 
@@ -384,16 +118,6 @@ exports.declareExportFilter = function(exportFilter){
   });  
 };
 
-/**
-* Activate additional features which requires additional resources
-* like memory or cpu time.
-* Only activate features if they are actually used.
-* @param  modelFeatures  bsModelFeatures
-*/
-// exports.declareModelFeatures = function(modelFeatures)
-// {
-// 
-// };
 
 /**
 * Prepare a part for calculation. Checking configuration
@@ -473,7 +197,6 @@ exports.prepareModelExposure = function(model){
     model.setAttrib('density','0');
     model.setAttrib('gas','undefined');
 
-    
     let openpolyline = {
     power_watt:PARAM.getParamReal('ScanningParameters','openpolyline_power'),
     power_percent: (500/PARAM.getParamReal('ScanningParameters','openpolyline_power'))*100,
@@ -563,14 +286,7 @@ exports.prepareModelExposure = function(model){
   var support_contour_speed = model.getAttribEx('support_contour').markspeed;
   var support_contour_defocus = model.getAttribEx('support_contour').defocus;
     
- 
- // let part_hatch_power = PARAM.getParamInt('laser', 'fill_power');
-//  let part_hatch_speed = PARAM.getParamReal('laser', 'fill_speed');
-    
- // let open_border_power = PARAM.getParamInt('laser', 'open_border_power');
-  //let open_border_speed = PARAM.getParamReal('laser', 'open_border_speed');
-  
-  //let laser_count = PARAM.getParamInt('exposure', 'laser_count');
+
 
   // Create custom table
   //generates a custom  table containing different parameters depending on laser number
@@ -579,10 +295,10 @@ exports.prepareModelExposure = function(model){
     "schema": "http://schemas.scanlab.com/skywriting/2023/01",          
     "mode": PARAM.getParamInt('skywriting','skywritingMode'),
     "timelag": PARAM.getParamInt('skywriting','timelag'),
-    "laseronshift": PARAM.getParamInt('skywriting','laserOnShift'),
+    "laseronshift": PARAM.getParamInt('skywriting','laserOnShift')*64,
     "limit": PARAM.getParamReal('skywriting','mode3limit'),
-    "nprev": PARAM.getParamInt('skywriting','nprev'),
-    "npost": PARAM.getParamInt('skywriting','npost')
+    "nprev": PARAM.getParamInt('skywriting','nprev')/10,
+    "npost": PARAM.getParamInt('skywriting','npost')/10
   };
   
     let scanningAttributes = {      
@@ -1117,11 +833,9 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     return;
   
   let hatch_density = PARAM.getParamReal('exposure', '_hdens');
-  //let laser_count = PARAM.getParamInt('exposure', 'laser_count');
   
   var beam_compensation = PARAM.getParamReal("exposure", "beam_compensation");
   var boarder_offset = PARAM.getParamReal("exposure", "boarder_offset"); 
-  //var number_of_borders = PARAM.getParamReal("exposure", "number_of_border");
   
   let hatch_param = thisModel.getAttribEx('hatch');
   
@@ -1603,10 +1317,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
     hatchResult.moveDataFrom(tileHatch);
 
     } //for
-    
-    
-      
-    //hatchResult.moveDataFrom(hatch);    
+     
     
     thisLayer.setAttribEx('tileSegmentArr',tileSegmentArr);   
     
@@ -1628,90 +1339,14 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   /////////////////////////////////////
      
   /* currently limited to keeping the x pos static during one pass */
-     
-  //var vec2LaserZoneArray = new Array;
-     
+          
   var tempTileHatch = new HATCH.bsHatch();
  
   tempTileHatch.moveDataFrom(hatchResult); // move all tiles to temp hatch object
-             
-//   for (let i = 0; i< required_passes_x*required_passes_y;i++) // run through the different passes
-//     {
-//        
-//       let scanheadXCoord = tileArray[i].scanhead_x_coord;
-//       let scanheadYCoord = tileArray[i].scanhead_y_coord;
-// 
-//       //var sceneMinY = currentLayerBoundaries.minY;
-//       //var sceneMaxY = currentLayerBoundaries.maxY;
-//         
-//       for (let j=0;j<laser_count;j++)
-//         {
-//         // get information about the lasing zone in X
-//           let curLaserId = scanheadArray[j].laserIndex; // get laser ID
-//           let curXref = scanheadArray[j].x_ref;
-//           let curRelXmin = scanheadArray[j].rel_x_min;
-//           let curRelXmax = scanheadArray[j].rel_x_max;
-//           
-//           let curLaserXmin = curXref + curRelXmin + scanheadXCoord;
-//           let curLaserXmax = curXref + curRelXmax + scanheadXCoord;
-//           
-//           let curYref = scanheadArray[j].y_ref;
-//           let curRelYmin = scanheadArray[j].rel_y_min;
-//           let curRelYmax = scanheadArray[j].rel_y_max;
-//           
-//           let curLaserYmin = curYref + curRelYmin + scanheadYCoord;
-//           let curLaserYmax = curYref + curRelYmax + scanheadYCoord;
-//            
-//          // add the corrdinates to vector pointset
-//          let laserZonePoints = new Array(4);
-//          laserZonePoints[0] = new VEC2.Vec2(curLaserXmin, curLaserYmin); //min,min
-//          laserZonePoints[1] = new VEC2.Vec2(curLaserXmin, curLaserYmax); //min,max
-//          laserZonePoints[2] = new VEC2.Vec2(curLaserXmax, curLaserYmax); // max,max
-//          laserZonePoints[3] = new VEC2.Vec2(curLaserXmax, curLaserYmin); // max,min
-//          
-//          let laserZoneHatch = new HATCH.bsHatch();
-//          let laserZoneHatchOutside = new HATCH.bsHatch();
-         
-//          let laserZone_pathset = new PATH_SET.bsPathSet(); // generate pathset object
-//          laserZone_pathset.addNewPath(laserZonePoints); // add tiles zones to pathset  
-//          laserZone_pathset.setClosed(true); // set the zones to closed polygons
-//          let laserZone_clipping_island = new ISLAND.bsIsland(); // generate island object
-//          laserZone_clipping_island.addPathSet(laserZone_pathset); // add pathset as new island
-//          laserZoneHatch = tempTileHatch.clone(); // clone overall hatching
-//          laserZoneHatchOutside = tempTileHatch.clone(); // clone overall hatching
-//          tempTileHatch.makeEmpty(); // empty the container to refill it later
-//           
-//          laserZoneHatch.clip(laserZone_clipping_island,true); // clip the hatching with the tile_islands
-//          laserZoneHatchOutside.clip(laserZone_clipping_island,false); // get ouside of currentzone
-          
-//           let clippingHatch = tempTileHatch.clone();                    
-//           laserZoneHatch = ClipHatchByRect(clippingHatch,laserZonePoints);
-//           laserZoneHatchOutside = ClipHatchByRect(clippingHatch,laserZonePoints,false);
-          //tempTileHatch.clear();
-                
-          //laserZoneHatchOutside=ClipHatchByRect(clippingHatch,laserZonePoints,false);
-         // assign laser index
-//         laserZoneHatch.setAttributeInt('laser_index_' + (curLaserId), 1);
-         
-
-//           tempTileHatch = laserZoneHatch.clone();
-//           tempTileHatch.moveDataFrom(laserZoneHatchOutside);      
-//         } // for laser count       
-//       }   // all tiles
- 
      
-      
       let mergeblock = new HATCH.bsHatch();
          mergeblock.moveDataFrom(tempTileHatch);
       
-
-         // merge similar hatch blocks to speed up process
-//          let mergeArgs = {
-//            'bConvertToHatchMode': true,
-//            'nConvertToHatchMaxPointCount': 2,
-//            //'nMaxBlockSize': 1024,
-//            'bCheckAttributes': true
-//          };
          
          //tempTileHatch = mergeblock.mergeHatchBlocks(mergeArgs);  
          var allTileHatch = new HATCH.bsHatch();
@@ -1723,6 +1358,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
           fSegRegionFillingGridSize         : 0.0,
           sSetAssignedRegionIndexMemberName : "regionIndex"
          }; 
+         
+         //process.printInfo('sortutil' + SortUtil.nSortMinDistToSegmentsMethod_MinJumpLength);
          
          tempTileHatch.sortHatchBlocksForMinDistToSegments(tileSegmentArr,0,args);
       
@@ -1968,6 +1605,7 @@ for (let passNumber in passNumberGroups){
             'laser': []
         };
     }
+    
     // If the laser with the current laserID doesn't exist in the current tile, create a new laser
     if (!zoneMap.tiles[tileID].laser[laserID]) {
         zoneMap.tiles[tileID].laser[laserID] = {
@@ -1991,7 +1629,8 @@ for (let passNumber in passNumberGroups){
 }//for passnumber
     
 // define where the scanner starts
-    
+
+
 for(let pass in passNumberGroups){
       
   let thisPass = passNumberGroups[pass];
@@ -1999,13 +1638,13 @@ for(let pass in passNumberGroups){
   
     if(pass % 2 === 0) {
 
-      let startingTile = Math.min(...indices); // from front to back
+      let startingTile = Math.min.apply(Math,indices); // from front to back
       thisPass.startx = thisPass.tiles[startingTile].xcoord;
       thisPass.starty = thisPass.tiles[startingTile].ycoord;
       
     } else {
       
-      let startingTile = Math.min(...indices); // from front to back // update to get backtofront
+      let startingTile = Math.min.apply(Math,indices); // from front to back // update to get backtofront
       thisPass.startx = thisPass.tiles[startingTile].xcoord;
       thisPass.starty = thisPass.tiles[startingTile].ycoord;
       
@@ -2128,6 +1767,7 @@ for (let passNumber in passNumberGroups){
         
         for (let i=0; i<newHatch.length;i++){
           let hatchblock = newHatch[i]; // individual hatchblocks
+          
           hatchblock.setAttributeInt('_processing_order', processing_order++);
 
           let firstPoint = hatchblock.getPoint(0); // get first point in hatchblock
@@ -2151,7 +1791,7 @@ for (let passNumber in passNumberGroups){
            timeFromStartPosToHatch_us = ((jumpingDistance/PARAM.getParamReal('durationSim', 'JumpSpeed')))*1000*1000; 
            //process.printInfo('start: ' + laserStartPosX + '/' + laserStartPosY);  
 
-            } else {
+          } else {
               
             prevPosX = lastPoint.x;
             prevPosY = lastPoint.y;
@@ -2172,7 +1812,7 @@ for (let passNumber in passNumberGroups){
             'polygonDelayMode' : PARAM.getParamStr('durationSim', 'PolygonDelayMode'),
           };    
            
-          thisLaserInTileExposureDuration.addHatchBlock(hatchblock,exposureSettings);
+          thisLaserInTileExposureDuration.addHatchBlock(hatchblock,exposureSettings); // add the current hatchblock with the 
         
           let tempHatch = new HATCH.bsHatch();
           let thisHatchDuration_ms = (thisLaserInTileExposureDuration.getExposureTimeMicroSeconds()-prevDuration_us)/1000;
@@ -2210,6 +1850,10 @@ for (let passNumber in passNumberGroups){
           
           let skipCount = hatchblock.getSkipCount();
           let pathCount = hatcblockPath.getPathCount();            
+          
+          
+          let pathpoint_1 = hatchblock.getPoint[i];
+          let pathpoint_2 = hatchblock.getPoint[i+2];
             
           skipcountArray.push(skipCount);
           pathcountArray.push(pathCount);
@@ -2234,17 +1878,17 @@ for (let passNumber in passNumberGroups){
               
             }           
             
-          let npostDur = PARAM.getParamInt('skywriting','npost')*skywritingPostConst;
-          let nprevDur = PARAM.getParamInt('skywriting','nprev')*skywritingPrevConst;
+          let npostDur = PARAM.getParamInt('skywriting','npost')*skywritingPostConst/10;
+          let nprevDur = PARAM.getParamInt('skywriting','nprev')*skywritingPrevConst/10;
           
-          let switchOnDur = Math.abs(PARAM.getParamInt('skywriting','timelag')) + Math.abs(PARAM.getParamInt('skywriting','laserOnShift'))/64;
-          let switchOffDur = Math.abs(PARAM.getParamInt('skywriting','timelag'));
+          //let switchOnDur = Math.abs(PARAM.getParamInt('skywriting','timelag')) + Math.abs(PARAM.getParamInt('skywriting','laserOnShift'))/64;
+          //let switchOffDur = Math.abs(PARAM.getParamInt('skywriting','timelag'));
           
-          skywritingDur += (npostDur + nprevDur)*pathCount;
+          skywritingDur += (npostDur + nprevDur)*skipCount;
           //skywritingDur += (npostDur + nprevDur + switchOnDur + switchOffDur)*skipCount;
           
           hatchResult.moveDataFrom(tempHatch); // move hatches to result 
-        }//for hatch
+         }//for hatch
                       
         //store the processing duration for this laser in this tile
         let exposureTimeMicroSeconds = thisLaserInTileExposureDuration.getExposureTimeMicroSeconds();
@@ -2265,9 +1909,9 @@ for (let passNumber in passNumberGroups){
   }//for laser
      
   // get exposure duration for laser with the largest workload
- let maxLaserScanningDuration = Math.max(...tileExposureArray);
- let maxPathCount = Math.max(...pathcountArray);
- let maxskipCount = Math.max(...skipcountArray);
+ let maxLaserScanningDuration = Math.max.apply(Math,tileExposureArray);
+ let maxPathCount = Math.max.apply(Math,pathcountArray);
+ let maxskipCount = Math.max.apply(Math,skipcountArray);
  //process.printInfo('laynr: '+ nLayerNr + ' stripe: '+ (passNumber+1) + ' tile: '+ (tileNumber+1) + ' dur[ms]: ' + maxLaserScanningDuration/1000);
   //process.printInfo(maxPathCount + ' / ' + maxskipCount);
   let speedy = 0;
@@ -2282,15 +1926,15 @@ for (let passNumber in passNumberGroups){
       }else{
         speedy = speedLimit;
         }           
-    }
+     }
     
     if (speedy>PARAM.getParamReal('otf','axis_max_speed')){
       speedy = PARAM.getParamReal('otf','axis_max_speed');
       }
   passNumberGroups[passNumber].tiles[tileNumber].speedy = speedy;  
   passNumberGroups[passNumber].tiles[tileNumber].tileExposureDuration = maxLaserScanningDuration;  
- 
-}//for tile
+  
+ }//for tile
   
   let passDuration = 0;
   for(let tileID in passNumberGroups[passNumber].tiles){ // calculate scanning duration of each pass
@@ -2350,9 +1994,9 @@ for (let passNr in passNumberGroups){
           };
       
       let activeTile = [];     
-      for (let tileNr in thispass.tiles){
+      for (let tileNr in thispass.tiles){ // consider substituting for OF
          let tile =  thispass.tiles[tileNr];
-         activeTile.push(tileNr);
+         activeTile.push(Number(tileNr));
         
         //process.printInfo('typeof:' + typeof(tile.tileExposureDuration));
         
@@ -2371,10 +2015,9 @@ for (let passNr in passNumberGroups){
       
            
       }//tileNr
-      
-      
-      let firstTile =Math.min(...activeTile);
-      let lastTile =Math.max(...activeTile);
+             
+      let firstTile = Math.min.apply(Math,activeTile);
+      let lastTile = Math.max.apply(Math,activeTile);
       let currentTiles =exporter_3mf.content[passNr].children;
       exporter_3mf.content[passNr].attributes.tilesInPass = lastTile-firstTile + 1;
       let tilesToRemove = [];
@@ -2388,7 +2031,7 @@ for (let passNr in passNumberGroups){
        return tilesToRemove.indexOf(index) === -1;
          });   
       
-  } // pass is pass (integer)
+   } // pass is pass (integer)
 } //passNr
 
 
@@ -2401,7 +2044,6 @@ thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
  /////////////////////////
   /// Custom Functions /// 
   ////////////////////////
-
 
 // return the sum of the array
 function getArraySum(arr) {
@@ -2439,272 +2081,7 @@ function ClipHatchByRect(hatchObj, arr_2dVec, bKeepInside) {
 	return clippedHatch;
 }
 
-// // smart tileing
-function smartLaserWorkload(hatchObj, modelData, scanheadArray, tileArray, required_passes_x, required_passes_y, nLayerNr, vec2_tile_array, tileSegmentArr) {
-// 
-//  	let curHatch = new HATCH.bsHatch();
-//  	curHatch.moveDataFrom(hatchObj);
-//  
-//  	let hatchIt = curHatch.getHatchBlockIterator();
-//  	let activeLasers = new Array();
-// 	let zoneWorkload = new Array();
-//  	var clipArray = new Array();
-//  	let clipIt = 0;
-// 	while (hatchIt.isValid()) {
-// 		let thisHatch = new HATCH.bsHatch();
-// 		thisHatch = hatchIt.get();
-// 
-// 		let zoneIndex = thisHatch.getAttributeInt('zoneIndex');
-// 		//let thisWorkload = thisHatch.getAttributeReal('zoneExposure');
-// 		let thisSharedZone = thisHatch.getAttributeInt('sharedZone');
-// 		//var laserCount = PARAM.getParamInt('exposure', 'laser_count');
-// 
-// 		if (thisSharedZone > 0) {
-// 			for (let curLaserId = 0; curLaserId < laser_count; curLaserId++) {
-// 				activeLasers[curLaserId] = thisHatch.getAttributeInt('laser_index_' + (curLaserId + 1));
-// 
-// 			}
-// 
-// 			// subdivide each sharedzone into smaller zones to allow smart sorting
-// 			let zoneBounds = new BOUNDS.bsBounds2D();
-// 			zoneBounds = thisHatch.getBounds2D();
-// 
-// 			let zoneMinY = zoneBounds.m_min.y;
-// 			let zoneMaxY = zoneBounds.m_max.y;
-// 
-// 			let zoneLengthX = zoneBounds.m_max.x - zoneBounds.m_min.x;
-// 			let subdivsizeX = 50;
-// 			let subdivcount = Math.ceil(zoneLengthX / subdivsizeX);
-// 			let subdivHatch = new HATCH.bsHatch();
-// 
-// 
-// 
-// 			for (let subdivIt = 0; subdivIt < subdivcount; subdivIt++) {
-// 				if (subdivIt == subdivcount - 1) {
-// 					let subdivMinX = zoneBounds.m_min.x + subdivIt * subdivsizeX;
-// 					let subdivMaxX = zoneBounds.m_max.x;
-// 
-// 				} else {
-// 					let subdivMinX = zoneBounds.m_min.x + subdivIt * subdivsizeX;
-// 					let subdivMaxX = subdivMinX + subdivsizeX;
-// 
-// 				}
-// 
-// 				//          let subdivMinX = zoneBounds.m_min.x + subdivIt*subdivsizeX;
-// 				//          let subdivMaxX = subdivMinX + subdivsizeX;          
-// 
-// 				let subdivPoints = new Array();
-// 				subdivPoints[0] = new VEC2.Vec2(subdivMinX, zoneMinY); //min,min
-// 				subdivPoints[1] = new VEC2.Vec2(subdivMinX, zoneMaxY); //min,max
-// 				subdivPoints[2] = new VEC2.Vec2(subdivMaxX, zoneMaxY); //max,max
-// 				subdivPoints[3] = new VEC2.Vec2(subdivMaxX, zoneMinY); //max,min
-// 
-// 				clipArray[clipIt++] = subdivPoints;
-// 			}
-// 		}
-// 		hatchIt.next();
-//  	}
-// 
-//  	// Clip hatches by clipArray subdivide to subhatch
-//  	for (let i = 0; i < clipArray.length; i++) {
-// 
-// 		let clipHatch = new HATCH.bsHatch();
-// 		let clipHatchOutside = new HATCH.bsHatch();
-// 
-// 		let clipZonePathset = new PATH_SET.bsPathSet(); // generate pathset object
-// 		clipZonePathset.addNewPath(clipArray[i]); // add tiles zones to pathset  
-// 		clipZonePathset.setClosed(true); // set the zones to closed polygons
-// 		let clippingiIsland = new ISLAND.bsIsland(); // generate island object
-// 		clippingiIsland.addPathSet(clipZonePathset); // add pathset as new island
-// 		clipHatch = curHatch.clone(); // clone overall hatching
-// 		clipHatchOutside = curHatch.clone(); // clone overall hatching
-// 		curHatch.makeEmpty(); // empty the container to refill it later
-// 
-// 		clipHatch.clip(clippingiIsland, true); // clip the hatching with the tile_islands
-// 		clipHatchOutside.clip(clippingiIsland, false); // get ouside of currentzone
-// 
-// 		curHatch.moveDataFrom(clipHatch);
-// 		curHatch.moveDataFrom(clipHatchOutside);
-//  	}
-//  
-//  	// add exposure for all zones
-//  	let hatchIt2 = curHatch.getHatchBlockIterator();
-//  	while (hatchIt2.isValid()) {
-// 		let thisHatch = new HATCH.bsHatch();
-// 		thisHatch = hatchIt2.get();
-// 
-// 		let thisExposureDuration = new EXPOSURETIME.bsExposureTime();
-// 		thisExposureDuration.configure(modelData.getTrayAttribEx('exposureSettings'));
-// 		thisExposureDuration.addHatchBlock(thisHatch);
-// 		thisHatch.setAttributeInt('zoneExposure', thisExposureDuration.getExposureTimeMicroSeconds());
-// 
-// 		hatchIt2.next();
-// 	}
-// 
-//  	// createZoneObjects  
-// 	function setLaserObjects(laserId) {
-// 		this.id = laserId;
-// 		this.workload = 0;
-// 	}
-//  
-// 	var lasers = new Array();
-// 	for (let i = 0; i < laserCount; i++) {
-// 		lasers[i] = new setLaserObjects(i);
-// 	}
-// 
-//  	function setZoneProperties(hatchBlock, iterator) {
-// 		this.hatch = hatchBlock;
-// 		this.zoneDuration = hatchBlock.getAttributeInt('zoneExposure');
-// 		this.passNumber = hatchBlock.getAttributeInt('passNumber');
-// 		this.zoneID = iterator;
-// 		hatchBlock.setAttributeInt('zoneIndex', iterator);
-// 		let lasersInReach = new Array;
-// 
-// 		for (let i = 0; i < laserCount; i++) {
-// 
-// 			let laserID = hatchBlock.getAttributeInt('laser_index_' + (i + 1));
-// 
-// 			if (laserID > 0) {
-// 				lasersInReach.push(i);
-// 			}
-// 		}
-// 
-// 		this.reachableBy = lasersInReach;
-// 		this.bsid = null;
-//  	}
-//  
-//  //	var laser_color = new Array();
-//  //	laser_color = modelData.getTrayAttribEx('laser_color'); // retrive laser_color 
-//   var laser_color = thisModel.getTrayAttribEx('laser_color'); // retrive laser_color 
-//  	//run trough each scanzone looking at the entire width
-//  
-//  	let smartHatch = new HATCH.bsHatch();
-//  
-//  	for (let tileIt = 0; tileIt < required_passes_y; tileIt++) // clip into fullwidth tiles
-//  	{
-//  
-// 		let tile_x_min = tileArray[tileIt * required_passes_x].scanhead_outline[0].m_coord[0];
-// 		let tile_y_min = tileArray[tileIt * required_passes_x].scanhead_outline[0].m_coord[1];
-// 
-// 		// get max coordinates for full width tile
-// 		let tile_x_max = tileArray[(tileIt + 1) * required_passes_x - 1].scanhead_outline[2].m_coord[0];
-// 		let tile_y_max = tileArray[(tileIt + 1) * required_passes_x - 1].scanhead_outline[2].m_coord[1];
-// 
-// 		let fullWidthClip = new Array();
-// 		fullWidthClip[0] = new VEC2.Vec2(tile_x_min, tile_y_min); //min,min
-// 		fullWidthClip[1] = new VEC2.Vec2(tile_x_min, tile_y_max); //min,max
-// 		fullWidthClip[2] = new VEC2.Vec2(tile_x_max, tile_y_max); //max,max
-// 		fullWidthClip[3] = new VEC2.Vec2(tile_x_max, tile_y_min); //max,min
-// 
-// 		let hatchBlockArr = new HATCH.bsHatch();
-// 		let clippedHatch = ClipHatchByRect(curHatch, fullWidthClip);
-// // 
-// 		// sort hatchblocks
-// 		var args = {
-// 			sSegRegionFillingMode: "PositiveX",
-// 			bInvertFillingSequence: false,
-// 			fSegRegionFillingGridSize: 0.0,
-// 			sSetAssignedRegionIndexMemberName: "regionIndex"
-// 		};
-// 
-// 		clippedHatch.sortHatchBlocksForMinDistToSegments(tileSegmentArr, 0, args);
-// 		hatchBlockArr = clippedHatch.getHatchBlockArray();
-// 
-// 		var smartZones = new Array();
-// 		for (let i = 0; i < hatchBlockArr.length; i++) {
-// 			smartZones[i] = new setZoneProperties(hatchBlockArr[i], i);
-// 		}
-// 
-//  		// Sort zones by zoneDuration in descending order within each fulltile
-//  		smartZones.sort(function(a, b) {
-//       return b.zoneDuration - a.zoneDuration;
-//     });
-//   }
-// 
-// 		// Group smartZones by passNumber
-// 		let passGroups = {};
-// 		let passMaxDurations = {};
-// 		for (let x = 0; x < smartZones.length; x++) {
-// 			let curZone = smartZones[x];
-// 			if (!passGroups[curZone.passNumber]) {
-// 				passGroups[curZone.passNumber] = [];
-// 			}
-// 			passGroups[curZone.passNumber].push(curZone);
-// 			passMaxDurations[curZone.passNumber] = Math.max(passMaxDurations[curZone.passNumber], curZone.zoneDuration);
-// 		}
-// 
-// 		let passZones = new Array();
-// 		// iterate through and divdie workload within each pass
-// 		for (let passNumber = 0; passNumber < required_passes_x; passNumber++) {
-// 			passZones = passGroups[passNumber];
-// 			if (!passZones) {continue}; // if no zones for this passNumber, skip to the next passNumber
-// 			let temp = 1;
-//     
-//        
-//  			for (let x = 0; x < passZones.length; x++) {
-// 				let curZone = passZones[x];
-// 
-// 				// If a laser has already been assigned to this zone, skip to the next zone
-// 				if (curZone.bsid) continue;
-// 
-// 				// what lasers are capable of reaching the current zone  
-// 				var capableLasers = curZone.reachableBy.map(function(id) {
-//           return lasers.find(function(laser) {
-//             return laser.id === id;
-//           });
-//         });
-// 
-// 
-// 				let minWorkloadLaser;
-// 				let minWorkload = Infinity;
-// 				let lastTaskZone = null;
-// 
-// 				for (let j = 0; j < capableLasers.length; j++) { // rund through capabale lasers
-// 					let laser = capableLasers[j];
-// 
-// 					// if the workload of the laser is less than current minWorkload
-// 					// or if the laser's last task was the immediate neighbour of the current zone (i.e., curZone),
-// 					// update the minWorkload and minWorkloadLaser
-// 					if (laser.workload < minWorkload || (laser.lastTask && laser.lastTask.id === curZone.id - 1)) {
-// 						minWorkload = laser.workload;
-// 						minWorkloadLaser = laser;
-// 						lastTaskZone = laser.lastTask;
-// 					} //if
-// 				} //for
-// 
-// 
-// 				minWorkloadLaser.workload += curZone.zoneDuration;
-// 				minWorkloadLaser.lastTask = curZone; // Update the last task of this laser  
-// 
-// 				// set 
-// 
-// 				curZone.bsid = (minWorkloadLaser.id + 1) * 10; // Assign bsid to the task based on the assigned laser's id        
-// 				curZone.hatch.setAttributeInt('bsid', curZone.bsid);
-// 				curZone.hatch.setAttributeInt('_disp_color', laser_color[minWorkloadLaser.id]);
-// 
-// 			// get the tile duration, by finding the longest required for most worked laser 
-// 			// After assigning all tasks, find the laser with max duration
-// 			let laserWithMaxDuration = lasers[0];
-// 			for (let i = 1; i < lasers.length; i++) {
-// 				if (lasers[i].workload > laserWithMaxDuration.workload) {
-// 					laserWithMaxDuration = lasers[i];
-// 				}
-// 			}
-// 
-// 			let maxLaserDuration = laserWithMaxDuration.workload;
-// 
-// 
-// 			for (let i = 0; i < passZones.length; i++) {
-// 				let curZone = passZones[i];
-// 				curZone.hatch.setAttributeInt('tileDuration', maxLaserDuration);
-// 				smartHatch.addHatchBlock(curZone.hatch);
-// 			}
-//     } //for
-//   }
-//        
-// 	hatchObj.moveDataFrom(smartHatch);
- 	return hatchObj;
- } // smartTileing
+
 
 // function statically distributing the lasing zone <- not smart !
 function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_passes_x,required_passes_y,nLayerNr){
