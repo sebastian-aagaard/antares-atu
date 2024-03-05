@@ -25,16 +25,20 @@ var EXPOSURETIME = requireBuiltin('bsExposureTime');
 var CLI = require('main/export_cli.js');
 var LOCALIZER = require('localization/localizer.js');
 
-// -------- CONFIGURATION -------- //
+// -------- CONFIG INCLUDES -------- //
 var MACHINE_CONFIG = require('../configuration/machine_declaration.js');
 var PARAM_CONFIG = require('../configuration/parameter_declaration.js');
 var ATTRIB_CONFIG = require('../configuration/attribute_declaration.js');
+var POST_PROCESS = require('main/post_processor.js');
 
+// -------- BUILDSTYLE INCLUDES -------- //
+var UTIL = require('main/utility_functions.js');
+var TILE = require('main/tileing.js');
+var LASER = require('main/laser_designation.js');
 
 // -------- CONSTANTS -------- //
 
-//  global handles
-
+//  global
 const laser_count = 5;
 const bIncludeScanningAttributes = false;
 const nBufferduration = 0;//1500000;//500000;//1000000; //us
@@ -66,38 +70,40 @@ exports.about = function(aboutInfo){
 // -------- MACHINE CONFIGURATION -------- //
 /** @param  machineConfig   bsMachineConfig */
 
-  exports.declareMachine = function(machineConfig){
-    
-    MACHINE_CONFIG.declareMachine(machineConfig);
+exports.declareMachine = function(machineConfig){
+  
+  MACHINE_CONFIG.declareMachine(machineConfig);
+  
+};
 
-    };
+// -------- PARAMETER CONFIGURATION -------- //
+/** @param  parameter   bsBuildParam */
 
-  // -------- PARAMETER CONFIGURATION -------- //
-  /** @param  parameter   bsBuildParam */
-
-  exports.declareParameters = function(parameter){
+exports.declareParameters = function(parameter){
     
     PARAM_CONFIG.declareParameters(parameter)
+  
+};
+
+// -------- ATTRIBUTE CONFIGURATION -------- //
+/** @param  buildAttrib   bsBuildAttribute */
+
+exports.declareBuildAttributes = function(buildAttrib){
     
-    };
-
-  // -------- ATTRIBUTE CONFIGURATION -------- //
-  /** @param  buildAttrib   bsBuildAttribute */
-
-  exports.declareBuildAttributes = function(buildAttrib){
+  ATTRIB_CONFIG.declareBuildAttributes(buildAttrib,laser_count);
     
-    ATTRIB_CONFIG.declareBuildAttributes(buildAttrib,laser_count);
-    
-    };
+};
+  
 
 
-/** 
-* @param  a_config    bsPostProcessingConfig 
-*/
+
+// -------- CONFIGURE POST PROCESSING -------- //
+/** @param  a_config    bsPostProcessingConfig */
+
 exports.configurePostProcessingSteps = function(a_config)
 {
   // Postprocessing the toolpaths using the given function:
-  a_config.addPostProcessingStep(postprocessLayerStack_MT,{bMultithread: true, nProgressWeight: 1});
+  a_config.addPostProcessingStep(POST_PROCESS.postprocessLayerStack_MT,{bMultithread: true, nProgressWeight: 1});
 };
 
 
@@ -412,7 +418,7 @@ exports.prepareModelExposure = function(model){
 
 
  ////////////////////////////////////////
- // generate scannerhead data obejcts //
+ // generate scannerhead data objects //
  ///////////////////////////////////////
     
   function scanner(laserIndex){
@@ -472,280 +478,6 @@ exports.prepareModelExposure = function(model){
 
 }; //prepareModelExposure
 
-// get all relevant information for the tiling providing the origin of the scanhead
-function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
-  
-  if(typeof overlap_x === "undefined") overlap_x = PARAM.getParamReal('scanhead','tile_overlap_x');
-  if(typeof overlap_y === "undefined") overlap_y = PARAM.getParamReal('scanhead','tile_overlap_y');
-  
-  this.xpos = x_pos;//-overlap_x/2;
-  this.ypos = y_pos;//-overlap_y/2;
-  this.x_min = this.xpos;// + PARAM.getParamReal('scanhead','x_scanner1_ref_mm') + PARAM.getParamReal('scanhead','x_scanner1_min_mm2');
-  this.x_max = this.xpos + PARAM.getParamReal('scanhead','x_scanfield_size_mm');//(PARAM.getParamReal('scanhead','x_scanner5_ref_mm') + PARAM.getParamReal('scanhead','x_scanner5_max_mm2');
-  this.y_min = this.ypos;// + PARAM.getParamReal('scanhead','stripe_ref_mm') + PARAM.getParamReal('scanhead','stripe_min_y_mm');
-  
-    if(PARAM.getParamInt('tileing','ScanningMode') == 0){ // moveandshoot     
-      this.y_max = this.ypos + PARAM.getParamReal('scanhead','y_scanfield_size_mm'); 
-    } else { //onthefly   
-      this.y_max = this.ypos + PARAM.getParamReal('otf','tile_size');
-    }  
-    
-  //this.x_global_limit = PARAM.getParamReal('scanhead','x_global_max_limit');
-  //this.y_global_limit = PARAM.getParamReal('scanhead','y_global_max_limit');
-  this.tile_height = this.y_max - this.y_min;
-  this.tile_width =  this.x_max - this.x_min; 
-    
-  this.next_x_coord = this.xpos + this.tile_width + overlap_x;
-  this.next_y_coord = this.ypos + this.tile_height + overlap_y;
-} 
-
-
-function getTileArray(modelLayer,bDrawTile,layerNr){
-   
-  ////////////////////////////////
-  // get shifting parameters    //
-  ////////////////////////////////
-  
-    function calculateShiftX(layerNr) {
-      let layerCount = PARAM.getParamInt('tileing', 'number_x');
-      let shiftIncrement = PARAM.getParamReal('tileing', 'step_x');
-      let middleLayer = Math.floor(layerCount / 2); // Determine the middle layer
-
-       // Calculate the cycle position of the layer number
-      let cyclePosition = layerNr % layerCount;
-      
-       // Calculate the distance from the middle layer
-      let distanceFromMiddle = cyclePosition - middleLayer;
-      
-      // Compute the shift value based on the distance from the middle layer
-      let shiftValue = distanceFromMiddle * shiftIncrement;
-      
-     // process.printInfo('L: ' +  layerNr + ' S: ' + shiftValue);
-      return shiftValue;
-    }
-    
-   function calculateShiftY(layerNr) {
-      let layerCount = PARAM.getParamInt('tileing', 'number_y');
-      let shiftIncrement = PARAM.getParamReal('tileing', 'step_y');
-      let middleLayer = Math.floor(layerCount / 2); // Determine the middle layer
-
-       // Calculate the cycle position of the layer number
-      let cyclePosition = layerNr % layerCount;
-     
-       // Calculate the distance from the middle layer
-      let distanceFromMiddle = cyclePosition - middleLayer;
-     
-      // Compute the shift value based on the distance from the middle layer
-      let shiftValue = distanceFromMiddle * shiftIncrement;
-
-      return shiftValue;
-    }
-   
-   //Calculate this layer shift in x and y 
-   let shiftX = calculateShiftX(layerNr);
-   let shiftY = calculateShiftY(layerNr);
-  
-   //process.printInfo('layerNr: ' + layerNr);
-    
-   //Max distance shifted
-   let maxShiftY = (PARAM.getParamInt('tileing', 'number_y')-1)*PARAM.getParamReal('tileing', 'step_y');
-   let maxShiftX = (PARAM.getParamInt('tileing', 'number_x')-1)*PARAM.getParamReal('tileing', 'step_x');
-
-  
-   let boundaries = modelLayer.getAttribEx('boundaries');
-   let maxX = boundaries.m_max.m_coord[0];
-   let minX = boundaries.m_min.m_coord[0];
-   let maxY = boundaries.m_max.m_coord[1];
-   let minY = boundaries.m_min.m_coord[1];
-  
-  ////////////////////////////////
-  // Define and store Tiles     //
-  ////////////////////////////////
-  
-   let scene_size_x = (maxX - minX)+Math.abs(maxShiftX);
-   let scene_size_y = (maxY - minY)+Math.abs(maxShiftY);
-  
-   //let scanhead_global_pass_position = new Array();
-   let scanhead_x_starting_pos = 0;
-   let scanhead_y_starting_pos = 0;
-   
-  // find the tileOutlineOrigin if scannerarray positioned at origo (0,0)
-   let tileOutlineOrigin = new getTilePosition(scanhead_x_starting_pos,scanhead_y_starting_pos); // get the tile layout information.
-   
-   // calculate the required tiles both in x and y (rounded up to make fit into whole passes)
-   let required_passes_x = Math.ceil(scene_size_x/tileOutlineOrigin.tile_width);
-   let required_passes_y = Math.ceil(scene_size_y/tileOutlineOrigin.tile_height);
-   
-   //get overlap
-   let overlap_y = PARAM.getParamReal('scanhead','tile_overlap_y');
-   let overlap_x = PARAM.getParamReal('scanhead','tile_overlap_x');
-   
-   // readjust required passes based on overlapping tiles
-   if (required_passes_x > 1 && overlap_x!=0) {
-    required_passes_x = Math.ceil(scene_size_x/(tileOutlineOrigin.tile_width+overlap_x));
-     }
-     
-   if (required_passes_y > 1 && overlap_y!=0) {
-    required_passes_y = Math.ceil(scene_size_y/(tileOutlineOrigin.tile_height+overlap_y));
-     }  
-     
-   ///// find the actual starting position of the scanner_head (defined by the scenesize)
- 
-   let workarea_min_x = PARAM.getParamInt('workarea','x_workarea_min_mm');
-   let workarea_min_y = PARAM.getParamInt('workarea','y_workarea_min_mm');
-   let workarea_max_x = PARAM.getParamInt('workarea','x_workarea_max_mm');
-   let workarea_max_y = PARAM.getParamInt('workarea','y_workarea_max_mm');  
-
-   // check boundaries in y   
-   let tile_reach_y = tileOutlineOrigin.tile_height*required_passes_y+overlap_y*(required_passes_y-1);  
-           
-   if((scene_size_y-PARAM.getParamReal('scanhead','y_scanfield_size_mm'))/2+minY < workarea_min_y ){ // if the bounds are outside the powderbed force the tiling to start within // shouldn't happen
-       scanhead_y_starting_pos = workarea_min_y;
-     } else {
-     scanhead_y_starting_pos = minY; //(scene_size_y-tile_reach_y)/2+minY; //minY;//
-     }
-    
-     let maxPositionY = scanhead_y_starting_pos+tile_reach_y;
-        
-     if (maxPositionY > workarea_max_y)
-       { // pull back the position with overshoot
-         let yOverShoot = maxPositionY - workarea_max_y;
-         scanhead_y_starting_pos -= yOverShoot;
-       }
-     
-   // check boundaries in x   
-   let tile_reach_x = tileOutlineOrigin.tile_width*required_passes_x+overlap_x*(required_passes_x-1); 
-       
-   if((scene_size_x-PARAM.getParamReal('scanhead','x_scanfield_size_mm'))/2+minX < workarea_min_x  ){
-       scanhead_x_starting_pos = workarea_min_x ; // cannot scan outside 
-   } else {
-      scanhead_x_starting_pos = minX;//<- this code sets the xmin as starting pos (scene_size_x-tile_reach_x)/2+minX; <- this codes centers scanfield 
-     }
-   
-   let maxPositionX = scanhead_x_starting_pos+tile_reach_x;
-     
-   if (maxPositionX > workarea_max_x)
-     { // pull back the position with overshoot
-       let xOverShoot = maxPositionX - workarea_max_x;
-       scanhead_x_starting_pos -= xOverShoot;
-     }
-  
-   // if the required passes STILL does not fit within the working area update the overlap bewteen tiles
-
-  //x first
-  if(scanhead_x_starting_pos<workarea_min_x){
-    let outsideby = scanhead_x_starting_pos-workarea_min_x; // calculate how much outside
-    overlap_x = outsideby/(required_passes_x-1); //calculate overlap needed per pass
-    scanhead_x_starting_pos = workarea_min_x; // set start to min x
-  }
-  
-    //y
-  if(scanhead_y_starting_pos<workarea_min_y){
-    let outsideby = scanhead_y_starting_pos-workarea_min_y; // calculate how much outside
-    overlap_y = outsideby/(required_passes_y-1); //calculate overlap needed per pass
-    scanhead_y_starting_pos = workarea_min_y; // set start to min x
-  }
-     
-   // offset starting position to allow shift in x and y // these are allowed to be outside the working area 
-    scanhead_x_starting_pos -= maxShiftX/2;
-    scanhead_y_starting_pos -= maxShiftY/2;
-    
-   //shift y pos of tiles for each layer
-   scanhead_x_starting_pos += shiftX;
-   scanhead_y_starting_pos += shiftY; 
-  
-  //process.printInfo('offset: ' + (shiftY - maxShiftY/2));
-  
-   // calulate the free distance (play) from the tile start to the part top and bottom
-   
-   let tileTable = [];  // store the tilelayout
-   let tileTable3mf = [];  
-     
-   let cur_tile_coord_x =  scanhead_x_starting_pos;
-   let cur_tile_coord_y =  scanhead_y_starting_pos;
-       
-  for (let i=0; i <required_passes_x; i++)
-  {
-         
-    let cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
-    let next_tile_coord_x = cur_tile.next_x_coord;
-    
-    
-    for(let j =0; j<required_passes_y;j++)
-    {       
-
-      cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
-
-      let tile = new PATH_SET.bsPathSet();
-      
-       let scanhead_outlines = new Array(4);
-       scanhead_outlines[0] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
-       scanhead_outlines[1] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_max); //min,max
-       scanhead_outlines[2] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_max); //max,max
-       scanhead_outlines[3] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min); //max,min
-       scanhead_outlines[4] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min   
-      
-       if (bDrawTile)
-       {
-             
-         tile.addNewPath(scanhead_outlines);
-         tile.setClosed(false);              
-         modelLayer.addPathSet(tile,MODEL.nSubtypeSupport);
-               
-       }
-           
-      // dataToPass
-      var tile_obj = new Object();
-      tile_obj.passNumber = i; 
-      tile_obj.tile_number = j; 
-      tile_obj.scanhead_outline = scanhead_outlines;
-      tile_obj.scanhead_x_coord = cur_tile_coord_x;
-      tile_obj.scanhead_y_coord = cur_tile_coord_y;
-      tile_obj.tile_height = cur_tile.tile_height;
-      tile_obj.shiftX = shiftX;
-      tile_obj.shiftY = shiftY;
-      tile_obj.layer = layerNr;
-      tileTable.push(tile_obj);
-       
-       let defaultSpeedY;
-       if(PARAM.getParamInt('tileing','ScanningMode') == 0) { // moveandshoot
-          defaultSpeedY = PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms');
-       } else { //onthefly
-          defaultSpeedY = PARAM.getParamReal('otf','axis_max_speed');
-       }
-       
-       //3mf data:
-       var tile3mf = new Object;
-       let TileEntry3mf = {
-         "name": "movement",
-         "attributes": {
-            "tileID": j+1+(i+1)*1000,
-            "targetx": cur_tile_coord_x,
-            "targety": cur_tile.y_max,
-            "positiony": cur_tile_coord_y,
-            "speedx" : 0,
-            "speedy": defaultSpeedY,
-            "tileExposureTime" : 0
-         }
-       };
-       if (!tileTable3mf[i]) tileTable3mf[i] = [];
-       
-       tileTable3mf[i].push(TileEntry3mf);
-      
-      cur_tile_coord_y = cur_tile.next_y_coord;
-    }
-    
-    cur_tile_coord_y = scanhead_y_starting_pos; // resest y coord
-    cur_tile_coord_x = next_tile_coord_x; // set next stripe pass
-  }
-  
-  modelLayer.setAttribEx('tileTable',tileTable);
-  modelLayer.setAttribEx('tileTable_3mf',tileTable3mf);
-  modelLayer.setAttrib('requiredPassesX',required_passes_x.toString());
-  modelLayer.setAttrib('requiredPassesY',required_passes_y.toString());
-} // gettileArray
-
-
 /**
 * Preprocessing step. This function is optional.
 * If no preprocessing is required then remove this function.
@@ -783,9 +515,7 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
       modelDataTarget.addModelCopy(thisModel);  
       //modelDataTarget.addModelCopy(targetModel);  
     }
-    
-    
-    
+       
   // run through all layers and find the boundaries
   for( let modelIndex=0; modelIndex < modelCount && !progress.cancelled(); modelIndex++ )
     {
@@ -802,14 +532,13 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
             layerBoundaries[layerIt] = thisLayerBounds;
         
             modelLayer.setAttribEx('boundaries',layerBoundaries[layerIt]);          
-            // calculate the tileArray
-            getTileArray(modelLayer,bDrawTile,layerIt);  
+            // calculate the tileArray and stores it layer
+            TILE.getTileArray(modelLayer,bDrawTile,layerIt);  
           }
         } 
       }
     }
-         
-};
+}; //preprocessLayerStack
 
 /**
 * Calculate the exposure data / hatch vectors for one layer of a part
@@ -825,7 +554,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
   
   let l_cur_layer = thisModel.getModelLayerByNr(nLayerNr);
   if(!l_cur_layer.isValid()) 
-    throw new Error("Invalid Layer "+nLayerNr);
+    throw new Error("Invalid Layer " + nLayerNr);
     
     
   let thisLayerBounds = l_cur_layer.tryGetBounds2D();
@@ -1294,7 +1023,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       
       let tileHatch = new HATCH.bsHatch();  // generate hatching object
       let hatchOutside = new HATCH.bsHatch();
-      tileHatch = ClipHatchByRect(hatch,vec2_tile_array[j],true);
+      tileHatch = UTIL.ClipHatchByRect(hatch,vec2_tile_array[j],true);
       //hatchOutside = ClipHatchByRect(hatch,vec2_tile_array[j],false);
 //       process.printInfo('tilehatch: ' + tileHatch.getHatchBlockCount());
 //       process.printInfo('tilehatch length: ' + tileHatch.getExposureLength() );
@@ -1365,46 +1094,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr)
       
          allTileHatch.moveDataFrom(tempTileHatch);
   
-function defineSharedZones(){
-  
-  /////////////////////////////////////
-  /// Define zones shared by lasers /// 
-  /////////////////////////////////////
-   
-  let hatchblockIt = allTileHatch.getHatchBlockIterator();         
-  let allocatedLasers = [];
-  let zoneId = 0;
-  
-  while(hatchblockIt.isValid())
-    {
-    let hatchBlock = new HATCH.bsHatch();
-    hatchBlock = hatchblockIt.get();
-    
-    hatchBlock.setAttributeInt('zoneIndex',zoneId++);
-      
-    for(let m = 0; m<laser_count; m++)
-      {     
-        if(hatchblockIt.isValid())
-          {             
-            allocatedLasers[m] = hatchBlock.getAttributeInt('laser_index_' + (m+1));
-                   
-          }         
-      }
-      
-    if (getArraySum(allocatedLasers)>1)
-      {            
-        hatchBlock.setAttributeInt('sharedZone', 1);        
-        
-      } else {       
-        
-        hatchBlock.setAttributeInt('sharedZone', 0);  
-        
-      }
-    hatchblockIt.next();
-    }
-}  
 
-  defineSharedZones();
+  LASER.defineSharedZones(allTileHatch,laser_count);
 
 // let tempVar = PARAM.getParamInt('tileing', 'TilingMode');
 
@@ -1412,7 +1103,14 @@ function defineSharedZones(){
 
  if (PARAM.getParamInt('tileing', 'TilingMode') == 0){ // static tiling
    
- allTileHatch = fixedLaserWorkload(allTileHatch,modelData,scanheadArray,tileArray,required_passes_x,required_passes_y,nLayerNr);  
+ allTileHatch = LASER.staticDistribution(allTileHatch,
+                                         modelData,
+                                         scanheadArray,
+                                         tileArray,
+                                         required_passes_x,
+                                         required_passes_y,
+                                         nLayerNr,
+                                         laser_count);  
 
  } else { // smarttileing
    
@@ -1550,21 +1248,7 @@ for (let passNumber in passNumberGroups){
   simplifiedDataHatch.moveDataFrom(mergedHatch);
 }
 
-function generateUUID() { // Public Domain/MIT
-    var d = new Date().getTime();//Timestamp
-    var d2 = ((typeof performance !== 'undefined') && performance.now && (performance.now()*1000)) || 0;//Time in microseconds since page-load or 0 if unsupported
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16;//random number between 0 and 16
-        if(d > 0){//Use timestamp until depleted
-            r = (d + r)%16 | 0;
-            d = Math.floor(d/16);
-        } else {//Use microseconds since page-load if supported
-            r = (d2 + r)%16 | 0;
-            d2 = Math.floor(d2/16);
-        }
-        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-    });
-}
+
 
 // get BSID table:
 var bsidTable = thisModel.getAttribEx('customTable');
@@ -1574,7 +1258,7 @@ var tileMap = {};
 for (let passNumber in passNumberGroups){
     let thisPass = passNumberGroups[passNumber];
     let zoneMap = {
-          "uuid": generateUUID(),
+          "uuid": UTIL.generateUUID(),
           "startx": 0,
           "starty": 0,
           "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
@@ -2038,384 +1722,7 @@ for (let passNr in passNumberGroups){
 thisLayer.setAttribEx('exporter_3mf', exporter_3mf);
 
 }; // makeExposureLayer
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
- /////////////////////////
-  /// Custom Functions /// 
-  ////////////////////////
-
-// return the sum of the array
-function getArraySum(arr) {
-	let sum = 0;
-	for (let i = 0; i < arr.length; i++) {
-		if (arr[i]) {
-			sum += arr[i];
-		}
-	}
-	return sum;
-}
-
-// check if there is anything at the given index
-function getValueAtIndex(array, index) {
-	if (index >= 0 && index < array.length) {
-		return index;
-	} else {
-		return false;
-	}
-}
-
-// clip hatch by rectangle
-function ClipHatchByRect(hatchObj, arr_2dVec, bKeepInside) {
-  if (typeof bKeepInside === 'undefined') bKeepInside = true;
-	let clippedHatch = new HATCH.bsHatch();
-	let tiles_pathset = new PATH_SET.bsPathSet(); // generate pathset object
-	tiles_pathset.addNewPath(arr_2dVec); // add tiles zones to pathset  
-	tiles_pathset.setClosed(true); // set the zones to closed polygons
-	let tile_clipping_island = new ISLAND.bsIsland(); // generate island object
-	tile_clipping_island.addPathSet(tiles_pathset); // add pathset as new island
-	
-	clippedHatch = hatchObj.clone(); // clone overall hatching
-	clippedHatch.clip(tile_clipping_island, bKeepInside); // clip the hatching with the tile_islands
-	
-	return clippedHatch;
-}
-
-
-
-// function statically distributing the lasing zone <- not smart !
-function fixedLaserWorkload(hatchObj,modelData,scanheadArray,tileArray,required_passes_x,required_passes_y,nLayerNr){
-  let thisModel = modelData.getModel(0);
-  let curHatch = new HATCH.bsHatch(); 
-  curHatch.moveDataFrom(hatchObj);
   
-  //get divison of scanfields in x!
-  let xDiv = new Array();
-  let yDiv = new Array();
-  
-//   // get shifting parameters 
-//   function calculateShiftX(layerNr) {
-//     let layerCount = PARAM.getParamInt('tileing', 'number_x');
-//     let shiftIncrement =  PARAM.getParamReal('tileing', 'step_x');
-//     let resetLayer = layerCount - 1;
-// 
-//     let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
-//     let layerWithinCycle = cyclePosition % layerCount;
-//     let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
-// 
-//     return shiftValue;
-//   }
-  
-//     function calculateShiftY(layerNr) {
-//     let layerCount = PARAM.getParamInt('tileing', 'number_y');
-//     let shiftIncrement =  PARAM.getParamReal('tileing', 'step_y');
-//     let resetLayer = layerCount - 1;
-// 
-//     let cyclePosition = layerNr % (layerCount * (resetLayer + 1));
-//     let layerWithinCycle = cyclePosition % layerCount;
-//     let shiftValue = (layerWithinCycle * shiftIncrement) - ((layerCount / 2) * shiftIncrement);
-// 
-//     return shiftValue;
-//   }
-  
-  //let shiftX = calculateShiftX(nLayerNr);
-  //let shiftY = calculateShiftY(nLayerNr);
-
-// get generic tile division based on laser reach
-    // take shift in x into consideration only between lasers, outside is not shifted
-  for (let i = 0; i<scanheadArray.length+1;i++)
-    {
-      if (i==0) { // if first elements 
-        xDiv[i] = scanheadArray[i].abs_x_min;
-      }else if (i == scanheadArray.length) { // if arraylength is reached
-            xDiv[i] = scanheadArray[i-1].abs_x_max;
-      } else {      
-      xDiv[i] = (scanheadArray[i-1].x_ref + scanheadArray[i].x_ref)/2;// + shiftX;
-        } //if else       
-    } // for
-
- // first get each tile, x laser seperation with overlap.
-  
- for (let i = 0; i<tileArray.length;i++){
-   
-    let clip_min_y = tileArray[i].scanhead_outline[0].m_coord[1];
-    let clip_max_y = tileArray[i].scanhead_outline[2].m_coord[1];
-    
-    let currentTileNr = tileArray[i].tile_number;
-    let currentPassNr = tileArray[i].passNumber;
-   
-//     if (tileArray[i].tile_number != 0 || tileArray[i].tile_number != required_passes_y-1){
-//       
-//       clip_min_y += shiftY;// - 0.05;
-//       clip_max_y += shiftY;// + 0.05;
-//       
-//       }
-   
-    let laserIndex = 0;
-    let laser_color = thisModel.getAttribEx('laser_color'); // retrive laser_color 
-    
-    let tileOverlap = PARAM.getParamReal('scanhead', 'tile_overlap_x');
-    for(let j = 0; j<xDiv.length-1; j++){
-      
-      let xTileOffset = tileArray[i].scanhead_x_coord;
-      let clip_min_x = xTileOffset+xDiv[j]+tileOverlap/2; // laserZoneOverLap
-      let clip_max_x = xTileOffset+xDiv[j+1]-tileOverlap/2; //laserZoneOverLap
-      
-       // add the corrdinates to vector pointset
-       let clipPoints = new Array(4);
-       clipPoints[0] = new VEC2.Vec2(clip_min_x, clip_min_y); //min,min
-       clipPoints[1] = new VEC2.Vec2(clip_min_x, clip_max_y); //min,max
-       clipPoints[2] = new VEC2.Vec2(clip_max_x, clip_max_y); // max,max
-       clipPoints[3] = new VEC2.Vec2(clip_max_x, clip_min_y); // max,min
-       //vec2LaserZoneArray[j] =  clipPoints;
-       
-       //let tileHatch = new HATCH.bsHatch();
-       let tileHatch = ClipHatchByRect(curHatch,clipPoints);
-  //    let outsideHatch = ClipHatchByRect(curHatch,clipPoints,false);
-  //      curHatch.makeEmpty();
-  //      curHatch.moveDataFrom(outsideHatch);
-       
-       // add display and bsid attributes to hatchblocks
-       let hatchIterator = tileHatch.getHatchBlockIterator();
-       while(hatchIterator.isValid())
-       {
-         let currHatcBlock = hatchIterator.get();
-          
-         if(currHatcBlock.getAttributeInt('passNumber') == currentPassNr && currHatcBlock.getAttributeInt('tile_index') == currentTileNr){      
-           
-           let type = currHatcBlock.getAttributeInt('type');
-           currHatcBlock.setAttributeInt('_disp_color',laser_color[laserIndex]);
-           currHatcBlock.setAttributeInt('bsid', (10 * (laserIndex+1))+type); // set attributes
-           
-           } else {
-           currHatcBlock.makeEmpty();
-             }
-         hatchIterator.next();
-       }
-      
-       laserIndex++;
-       if (laserIndex>laser_count-1)
-       {
-         laserIndex=0;
-       }
-        
-        
-        hatchObj.moveDataFrom(tileHatch);
-     }   
-   }
-   return hatchObj;
-  } //fixedLaserWorkload
-  
-  
-function mergeBlocks(unmergedHatchBlocks) {
-	let mergeblock = new HATCH.bsHatch();
-	let mergedblock = new HATCH.bsHatch();
-	mergeblock.moveDataFrom(unmergedHatchBlocks);
-
-
-	// merge similar hatch blocks to speed up process
-	let mergeArgs = {
-		'bConvertToHatchMode': true,
-		//'nConvertToHatchMaxPointCount': 2,
-		//'nMaxBlockSize': 1024,
-		'bCheckAttributes': true
-	};
-
-	mergedblock = mergeblock.mergeHatchBlocks(mergeArgs);
-
-	let blockcount = mergedblock.getHatchBlockCount();
-	return mergedblock;
-}
-
-/** 
- * Multithreaded post-processing. This function may be called
- * several times with a different layer range.
- * @param  modelData        bsModelData
- * @param  progress         bsProgress
- * @param  layer_start_nr   Integer. First layer to process
- * @param  layer_end_nr     Integer. Last layer to process
- */
-var postprocessLayerStack_MT = function(
-  modelData, 
-  progress, 
-  layer_start_nr, 
-  layer_end_nr)
-{  
-  // calculate the porocessign order based on tiles and hatchtype
-    progress.initSteps(layer_end_nr-layer_start_nr+1);
-  var surfaceAreaTotal = 0;
-  var buildTimeEstimate = 0;
- // process.printInfo("postprocess model count: " + modelData.getModelCount());
-  let model = modelData.getModel(0);
-
-  var layerThickness = model.getLayerThickness();
-  for(let layer_nr = layer_start_nr; layer_nr <= layer_end_nr; ++layer_nr)
-  {
-    progress.step(1);
-     
-    let modelLayer = model.getModelLayerByNr(layer_nr);
-    
-    let exporter_3mf = modelLayer.getAttribEx('exporter_3mf');
-   
-   
-    let totalMoveDuration=0;
-    // calculate distance travelled single
-    for (let i = 0; i < exporter_3mf.content.length;i++){
-      
-    
-    let requiredPasses = exporter_3mf.content[i].attributes.requiredPasses;
-    let tilesInPass = exporter_3mf.content[i].attributes.tilesInPass;
-    let startx = exporter_3mf.content[i].attributes.startx;
-    let starty = exporter_3mf.content[i].attributes.starty;
-    let transferSpeed = exporter_3mf.content[i].attributes.sequencetransferspeed;
-    
-      
-      
-      let movementSpeed = transferSpeed;
-      
-      for (let j = 0; j< tilesInPass;j++){
-        
-        let targetx = exporter_3mf.content[i].children[j].attributes.targetx;
-        let targety = exporter_3mf.content[i].children[j].attributes.targety;
-
-        let a = startx-targetx;
-        let b = starty-targety;
-        let c = Math.sqrt(a*a+b*b);
-        
-        startx = targetx;
-        starty = targety;
-        
-        var moveDuration = c/transferSpeed;
-        totalMoveDuration += moveDuration;   
-      
-        movementSpeed = exporter_3mf.content[i].children[j].attributes.speedy;
-    
-        }
-      }
-    
-    
-    let recoatingDuration = PARAM.getParamInt('movementSettings','recoating_time_ms');
-    let thisLayerDuration = exporter_3mf.content[0].attributes.layerScanningDuration; 
-    
-    buildTimeEstimate += thisLayerDuration+recoatingDuration+totalMoveDuration;
-    
-    let islandIT = modelLayer.getFirstIsland();
-    
-    while(islandIT.isValid())
-    {
-      let thisIland = islandIT.getIsland();
-      surfaceAreaTotal += thisIland.getSurfaceArea();
-      islandIT.next();
-    }
-    
-    // get model data polylinearray
-//     var exposure_array = modelData.getLayerPolylineArray(layer_nr, POLY_IT.nLayerExposure, 'rw');
-//     
-//     
-//      // Sort array by bounding box in Y direction 
-//       // and assign processing order
-//       exposure_array.sort(function(a,b){   
-//         return a.getBounds().minY - b.getBounds().minY
-//       });   
-//    
-//       
-//       //sort into different scan
-//       
-//       for(var i=0; i < exposure_array.length; ++i){         
-//         exposure_array[i].setAttributeInt('_processing_order', i);
-//       }   
-    
-    
-  } //for (iterate through layers)
-  
-      
-  var totalPartMass = surfaceAreaTotal*layerThickness*model.getAttrib('density')/(1000*1000*1000);
-  var totalPackedPowder = layer_end_nr * layerThickness * PARAM.getParamInt('workarea','x_workarea_max_mm') * PARAM.getParamInt('workarea','y_workarea_max_mm')*model.getAttrib('density') / (1000*1000*1000);
-  
- // let modeldataSkywriting = modelData.getTrayAttribEx('skywriting');
-  
-//   modelData.setTrayAttrib('totalPartMass',totalPartMass.toString());
-//   modelData.setTrayAttrib('totalPackedPowder',totalPackedPowder.toString());
-
-//      // generate data for 3mf exporter
-//     if (PARAM.getParamInt('tileing','ScanningMode') == 0){
-//       var type = 'moveandshoot'
-//       } else {
-//       var type = 'onthefly'
-//     };
-
-  var isoDateString = new Date().toISOString();
-
-  let customJSON = {
-    
-    "namespaces": [
-      {
-        "schema": "http://schemas.scanlab.com/skywriting/2023/01",
-        "prefix": "skywriting"
-      },      
-      {
-        "schema": "http://adira.com/addcreator/202305",
-        "prefix": "adira"
-      },
-      {
-        "schema": "http://adira.com/tilinginformation/202305",
-        "prefix": "tiling"
-      }    
-    ],
-      
-    toolpathdata: [
-      {
-        "name": "statistics",
-        "schema": "http://adira.com/addcreator/202305",
-        attributes: {
-          "build_time": buildTimeEstimate,
-          "total_mass": totalPartMass,
-          "total_packed_powder": totalPackedPowder                
-        }        
-      },
-      
-      {
-        "name": "generation",
-        "schema": "http://adira.com/addcreator/202305",
-        attributes: {
-          "created_at": isoDateString,
-          "created_by": "engineer"
-        }        
-      },
-
-      {
-        "name": "material",
-        "schema": "http://adira.com/addcreator/202305",
-        attributes: {
-          "layerthickness": layerThickness,
-          "identifier": model.getMaterialID(),
-          "density": parseFloat(model.getAttrib('density')),
-          "gas": model.getAttrib('gas')          
-        }        
-      },
-      
-      {
-        "name": "process",
-        "schema": "http://adira.com/addcreator/202305",
-        "children": [
-          {
-            "name": "recoating",
-            attributes: {
-              "speed": PARAM.getParamInt('movementSettings','recoating_speed_mms')
-            }        
-          
-          }
-        ]
-                
-      }
-
-    ]};
-    
-    //"type": PARAM.getParamStr('tileing','ScanningMode'),
-      
-   modelData.setTrayAttribEx('custom', customJSON);
-};
-
 /**
 * Export exposure data to file
 * @param  exportFile     bsFile

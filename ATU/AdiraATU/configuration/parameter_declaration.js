@@ -9,8 +9,8 @@
 // -------- INCLUDES -------- //
 
 var PARAM = requireBuiltin('bsParam');
-var LOCALIZER = require('localization/localizer.js');
 var BUILD = requireBuiltin('bsBuildParam');
+var LOCALIZER = require('localization/localizer.js');
 
 // -------- CODE -------- //
 
