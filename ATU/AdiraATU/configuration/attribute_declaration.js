@@ -6,6 +6,13 @@
  *********************************************************** */
 'use strict';
 
+// -------- INCLUDES -------- //
+
+var CONST = require('main/constants.js');
+
+// -------- CODE -------- //
+
+
 exports.declareBuildAttributes = function(buildAttrib,laser_count){
   
   buildAttrib.declareAttributeInt('bsid'); // buildstyle ID
@@ -31,9 +38,10 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('islandId');
   buildAttrib.declareAttributeInt('stripeID');
   buildAttrib.declareAttributeInt('assigned');
+  buildAttrib.declareAttributeInt('modelIndex');
 
   buildAttrib.declareAttributeReal('ScanheadMoveSpeed');
-  for(let i = 0 ; i<laser_count ; i++){
+  for(let i = 0 ; i<CONST.nLaserCount; i++){
     buildAttrib.declareAttributeInt('laser_index_'+(i+1));
   }
   

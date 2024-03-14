@@ -11,6 +11,10 @@
 var HATCH = requireBuiltin('bsHatch');
 var PATH_SET = requireBuiltin('bsPathSet');
 var ISLAND = requireBuiltin('bsIsland');
+var RND = requireBuiltin('random');
+var RGBA = requireBuiltin('bsColRGBAi');
+
+var CONST = require('main/constants.js');
 
 
 // -------- FUNCTION TOC -------- //
@@ -18,6 +22,7 @@ var ISLAND = requireBuiltin('bsIsland');
 // getArraySum(array)
 // getValueAtIndex(array, index)
 // ClipHatchByRect(hatchObj, arr_2dVec, bKeepInside)
+// setLaserDisplayColor(bsModel)
 // -------- FUNCTIONS -------- //
 
 ////////////////////////////////
@@ -94,4 +99,35 @@ exports.mergeBlocks = function(unmergedHatchBlocks) {
 
 	let blockcount = mergedblock.getHatchBlockCount();
 	return mergedblock;
+}
+
+////////////////////////////////
+  //  Laser display color def   //
+  ////////////////////////////////
+
+exports.setLaserDisplayColor = function(bsModel){
+  
+  let l_rnd_gen = new RND.Rand(239803);
+  let laser_color = new Array();
+   
+  let l_col = new Array(CONST.nLaserCount);
+   // using the previously defined color scheme for displaying lasers
+   l_col[0] = new RGBA.bsColRGBAi(247,4,4,255);  // red
+   l_col[1] = new RGBA.bsColRGBAi(72,215,85,255); // green
+   l_col[2] = new RGBA.bsColRGBAi(10,8,167,255); // blue
+   l_col[3] = new RGBA.bsColRGBAi(249,9,254,255); // purple
+   l_col[4] = new RGBA.bsColRGBAi(13,250,249,255); // light blue
+
+  for(let l_laser_nr = 0;l_laser_nr<CONST.nLaserCount;l_laser_nr++)
+  {
+    if (l_laser_nr > 4) // support for auto generating colors for additional lasers
+    {
+    l_col[l_laser_nr] = new RGBA.bsColRGBAi(215 - (l_rnd_gen.getNextRandom()*100),
+      215 - (l_rnd_gen.getNextRandom()*100),
+      215 - (l_rnd_gen.getNextRandom()*100),
+      255);  
+    } // if
+    laser_color[l_laser_nr] = l_col[l_laser_nr].rgba();
+  } // for
+  bsModel.setAttribEx('laser_color',laser_color);
 }

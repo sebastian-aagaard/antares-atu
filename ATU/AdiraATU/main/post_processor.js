@@ -32,7 +32,7 @@ exports.postprocessLayerStack_MT = function(
   
   var surfaceAreaTotal = 0;
   var buildTimeEstimate = 0;
- // process.printInfo("postprocess model count: " + modelData.getModelCount());
+  //process.printInfo("postprocess model count: " + modelData.getModelCount());
   let model = modelData.getModel(0);
 
   var layerThickness = model.getLayerThickness();
@@ -40,8 +40,9 @@ exports.postprocessLayerStack_MT = function(
   {
     progress.step(1);
      
-    let modelLayer = model.getModelLayerByNr(layer_nr);
+    let modelLayer = model.getModelLayerByNr(layer_nr);   
     
+    model 
     let exporter_3mf = modelLayer.getAttribEx('exporter_3mf');
    
    

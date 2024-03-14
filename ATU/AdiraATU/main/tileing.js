@@ -98,7 +98,7 @@ function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
     
 }
 
-exports.getTileArray =function(modelLayer,bDrawTile,layerNr){
+exports.getTileArray = function(modelLayer,bDrawTile,layerNr,modelData){
    
    //Calculate this layer shift in x and y 
    let shiftX = getShiftX(layerNr);
@@ -106,14 +106,14 @@ exports.getTileArray =function(modelLayer,bDrawTile,layerNr){
       
    //Max distance shifted
    let maxShiftY = (PARAM.getParamInt('tileing', 'number_y')-1)*PARAM.getParamReal('tileing', 'step_y');
-   let maxShiftX = (PARAM.getParamInt('tileing', 'number_x')-1)*PARAM.getParamReal('tileing', 'step_x');
-
-   // get coordinates of bounding box
-   let boundaries = modelLayer.getAttribEx('boundaries');
-   let maxX = boundaries.m_max.m_coord[0];
-   let minX = boundaries.m_min.m_coord[0];
-   let maxY = boundaries.m_max.m_coord[1];
-   let minY = boundaries.m_min.m_coord[1];
+   let maxShiftX = (PARAM.getParamInt('tileing', 'number_x')-1)*PARAM.getParamReal('tileing', 'step_x');  
+  // get coordinates of bounding box
+  
+   let boundaries = modelData.getTrayAttribEx('allLayerBoundaries')
+   let minX = boundaries[layerNr][0]; 
+   let maxX = boundaries[layerNr][1];
+   let minY = boundaries[layerNr][2];
+   let maxY = boundaries[layerNr][3];
   
   ////////////////////////////////
   // Define and store tiles     //
@@ -225,37 +225,39 @@ exports.getTileArray =function(modelLayer,bDrawTile,layerNr){
     let cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
     let next_tile_coord_x = cur_tile.next_x_coord;
      
-    for(let j =0; j<required_passes_y;j++)
+    for(let j = 0; j<required_passes_y;j++)
     {       
 
       cur_tile = new getTilePosition(cur_tile_coord_x,cur_tile_coord_y,overlap_x,overlap_y);
 
-      let tile = new PATH_SET.bsPathSet();
+      let thisTile = new PATH_SET.bsPathSet();
       
        let scanhead_outlines = new Array(4);
-       scanhead_outlines[0] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
+       scanhead_outlines[0] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min
        scanhead_outlines[1] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_max); //min,max
        scanhead_outlines[2] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_max); //max,max
        scanhead_outlines[3] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min); //max,min
-       scanhead_outlines[4] = new  VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min   
+       scanhead_outlines[4] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min   
       
        if (bDrawTile)
        {
              
-         tile.addNewPath(scanhead_outlines);
-         tile.setClosed(false);              
-         modelLayer.addPathSet(tile,MODEL.nSubtypeSupport);
+         thisTile.addNewPath(scanhead_outlines);
+         thisTile.setClosed(false);              
+         modelLayer.addPathSet(thisTile,MODEL.nSubtypeSupport);
                
        }
            
       // dataToPass
       var tile_obj = new Object();
-      tile_obj.passNumber = i; 
-      tile_obj.tile_number = j; 
+      tile_obj.passNumber = i+1; 
+      tile_obj.tile_number = j+1; 
       tile_obj.scanhead_outline = scanhead_outlines;
       tile_obj.scanhead_x_coord = cur_tile_coord_x;
       tile_obj.scanhead_y_coord = cur_tile_coord_y;
       tile_obj.tile_height = cur_tile.tile_height;
+      tile_obj.overlapX = overlap_x;
+      tile_obj.overlapY = overlap_y;
       tile_obj.shiftX = shiftX;
       tile_obj.shiftY = shiftY;
       tile_obj.layer = layerNr;

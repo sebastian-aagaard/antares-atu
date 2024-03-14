@@ -171,6 +171,9 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', 'x_scanner5_min_mm',LOCALIZER.GetMessage('param_x_scanner5_min_mm'),-100,0,-80);
     parameter.declareParameterReal('scanhead', 'x_scanner5_ref_mm',LOCALIZER.GetMessage('param_x_scanner5_ref_mm'),0,390,380);    
     
+    parameter.declareParameterReal('scanhead', 'x_scanner_actual_allowed_reach',LOCALIZER.GetMessage('param_x_scanner_actual_allowed_reach'),0,200,200);
+    parameter.declareParameterReal('scanhead', 'y_scanner_actual_allowed_reach',LOCALIZER.GetMessage('param_y_scanner_actual_allowed_reach'),0,200,200);
+    
  parameter.declareParameterGroup('skywriting', LOCALIZER.GetMessage('grp_skywriting')); 
       parameter.declareParameterChoice('skywriting','skywritingMode',
           LOCALIZER.GetMessage('param_skywritingMode'),
