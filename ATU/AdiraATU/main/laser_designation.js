@@ -12,35 +12,122 @@ var HATCH = requireBuiltin('bsHatch');
 var PARAM = requireBuiltin('bsParam');
 var VEC2 = requireBuiltin('vec2');
 var PATH_SET = requireBuiltin('bsPathSet');
+var RND = requireBuiltin('random');
+var RGBA = requireBuiltin('bsColRGBAi');
+
+// -------- SCRIPT INCLUDES -------- //
 var UTIL = require('main/utility_functions.js');
 var CONST = require('main/constants.js');
 
 // -------- TOC -------- //
-
-/*Static distribution(
-  hatchObj,
-  modelData,
-  scanheadArray,
-  tileArray,
-  required_passes_x,
-  required_passes_y,
-  nLayerNr) */
-
+/* getScanner (laserIndex)
+ * defineScannerArray (bsModel)
+ * setLaserDisplayColor (bsModel)
+ * staticDistribution (thisModel,nLayerNr,hatchObj)
+ * defineSharedZones(bsHatch)
+*/
 // -------- FUNCTIONS -------- //
 
 
+ ////////////////////////////////////////
+ //   generate scan head objects       //
+ ///////////////////////////////////////
+    
+const getScanner = (laserIndex) => {
+    
+  let x_ref = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) + '_ref_mm');
+  //let y_ref
+  let rel_x_max = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) +'_max_mm'); // max
+  let rel_x_min =  PARAM.getParamReal('scanhead','x_scanner'+ (laserIndex) + '_min_mm'); // min
+  let rel_y_min = 0;
+  let abs_x_min = x_ref+rel_x_min;
+  let abs_x_max = x_ref+rel_x_max;
+  let rel_y_max = undefined;
+  //define rel_y_max from the scanningMode
+  if (PARAM.getParamInt('tileing','ScanningMode') == 0) {
+    
+    rel_y_max = PARAM.getParamReal('scanhead','y_scanfield_size_mm');
+
+  } else {
+    
+    rel_y_max = PARAM.getParamReal('otf','tile_size');
+    
+    }
+
+  return {
+    'laserIndex': laserIndex,
+    'x_ref': x_ref,
+    'rel_x_max': rel_x_max,
+    'rel_x_min': rel_x_min,
+    'rel_y_min': rel_y_min,
+    'rel_y_max' : rel_y_max,
+    'abs_x_min' : abs_x_min,
+    'abs_x_max' : abs_x_max
+    }
+  }
+
+//---------------------------------------------------------------------------------------------//
+  
+  ///////////////////////////////////////
+  //  Define and store scanner array   //
+  ///////////////////////////////////////
+  
+exports.defineScannerArray = (bsModelData) => {
+
+  let scannerArray = [];
+  
+  for (let i = 0; i < CONST.nLaserCount; i++) {
+  scannerArray[i] = getScanner(i+1);
+    }
+    
+  bsModelData.setTrayAttribEx('scanhead_array',scannerArray);  
+  }
+
+//---------------------------------------------------------------------------------------------//
+    
+  ////////////////////////////////
+  //  Laser display color def   //
+  ////////////////////////////////
+
+exports.setLaserDisplayColor = (bsModelData) => {
+  
+  const l_rnd_gen = new RND.Rand(239803);
+  let laser_color = [];
+   
+  let l_col = new Array(CONST.nLaserCount);
+  // using the previously defined color scheme for displaying lasers
+  l_col[0] = new RGBA.bsColRGBAi(247,4,4,255);  // red
+  l_col[1] = new RGBA.bsColRGBAi(72,215,85,255); // green
+  l_col[2] = new RGBA.bsColRGBAi(10,8,167,255); // blue
+  l_col[3] = new RGBA.bsColRGBAi(249,9,254,255); // purple
+  l_col[4] = new RGBA.bsColRGBAi(13,250,249,255); // light blue
+
+  for(let l_laser_nr = 0;l_laser_nr<CONST.nLaserCount;l_laser_nr++)
+    {
+      if (l_laser_nr > 4) {// support for auto generating colors for additional lasers
+      l_col[l_laser_nr] = new RGBA.bsColRGBAi(215 - (l_rnd_gen.getNextRandom()*100),
+        215 - (l_rnd_gen.getNextRandom()*100),
+        215 - (l_rnd_gen.getNextRandom()*100),
+        255);  
+      } // if
+      laser_color[l_laser_nr] = l_col[l_laser_nr].rgba();
+    } // for
+    bsModelData.setTrayAttribEx('laser_color',laser_color);
+  }
+
+//---------------------------------------------------------------------------------------------//
+
 // static distributing the lasing zone by 
 // finding the midway point of the scanner reach
-exports.staticDistribution = (thisModel,nLayerNr,hatchObj) => 
-  {
+exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
     
   let laserAssignedHatches = new HATCH.bsHatch(); // to be returned
     
   let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
   let tileArray = thisLayer.getAttribEx('tileTable');
-  let scanheadArray = thisModel.getAttribEx('scanhead_array'); 
+  let scanheadArray = bsModelData.getTrayAttribEx('scanhead_array'); 
   
-  let laser_color = thisModel.getAttribEx('laser_color'); // retrive laser_color 
+  let laser_color = bsModelData.getTrayAttribEx('laser_color'); // retrive laser_color 
   
   //get divison of scanfields in x!
   let xDiv = new Array();
@@ -123,8 +210,9 @@ exports.staticDistribution = (thisModel,nLayerNr,hatchObj) =>
    return laserAssignedHatches;
   } //fixedLaserWorkload
 
+//---------------------------------------------------------------------------------------------//
 
-exports.assignLasersToHatchesInTiles = function (thisModel,nLayerNr,allHatches){
+exports.assignLasersToHatchesInTiles = (thisModel,nLayerNr,allHatches) => {
   
   let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
   let passesInX = thisLayer.getAttribEx('requiredPassesX');
@@ -197,15 +285,38 @@ exports.assignLasersToHatchesInTiles = function (thisModel,nLayerNr,allHatches){
 
 }
 
+exports.assignProcessParameters = (bsHatch,bsModel) => {
 
+  const bsidTable = bsModel.getAttribEx('customTable');
   
-exports.defineSharedZones = function (allHatches){
+  let hatchIterator = bsHatch.getHatchBlockIterator();
+  
+  while(hatchIterator.isValid()){
+    
+    let thisHatchBlock = hatchIterator.get();
+    let bsid = thisHatchBlock.getAttributeInt('bsid');
+    
+    let thisProcessParameters = bsidTable.find(function (item) {
+        return item.bsid === bsid;
+    });
+    
+    thisHatchBlock.setAttributeReal('speed',thisProcessParameters.speed);
+    thisHatchBlock.setAttributeReal('power',thisProcessParameters.power);
+    thisHatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
+    
+    hatchIterator.next();
+  }
+}
+
+//---------------------------------------------------------------------------------------------//
+  
+exports.defineSharedZones = (bsHatch) => {
 
 /////////////////////////////////////
   /// Define zones shared by lasers /// 
   /////////////////////////////////////
    
-  let hatchblockIt = allHatches.getHatchBlockIterator();         
+  let hatchblockIt = bsHatch.getHatchBlockIterator();         
   let allocatedLasers = new Array();
   let zoneId = 0;
   
@@ -235,6 +346,4 @@ exports.defineSharedZones = function (allHatches){
       }
     hatchblockIt.next();
     }
-
-
 }

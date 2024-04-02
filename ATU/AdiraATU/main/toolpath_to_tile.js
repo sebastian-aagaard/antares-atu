@@ -7,16 +7,16 @@
 'use strict';
 
 // -------- INCLUDES -------- //
-var PARAM = requireBuiltin('bsParam');
+const PARAM = requireBuiltin('bsParam');
 // var MODEL = requireBuiltin('bsModel');
 // var ISLAND = requireBuiltin('bsIsland');
-var HATCH = requireBuiltin('bsHatch');
-var CONST = require('main/constants.js');
+const HATCH = requireBuiltin('bsHatch');
+const CONST = require('main/constants.js');
 // var POLY_IT = requireBuiltin('bsPolylineIterator');
-var VEC2 = requireBuiltin('vec2');
-var SEG2D = requireBuiltin('seg2d');
-var UTIL = require('main/utility_functions.js');
-var PATH_SET = requireBuiltin('bsPathSet');
+const VEC2 = requireBuiltin('vec2');
+const SEG2D = requireBuiltin('seg2d');
+const UTIL = require('main/utility_functions.js');
+const PATH_SET = requireBuiltin('bsPathSet');
 // ----- TOC ----- //
 
 
@@ -90,7 +90,6 @@ exports.assignToolpathToTiles = function(thisModel,nLayerNr,allHatches) {
             break;
           case 2:
             tile_x_min += overLapCompensation;
-          
             // if there is 3 passes
             if(thisLayer.getAttribEx('requiredPassesX')>2){
               tile_x_max -= overLapCompensation;
@@ -140,10 +139,10 @@ exports.assignToolpathToTiles = function(thisModel,nLayerNr,allHatches) {
 
 exports.sortHatchBlocks = (thisModel,nLayerNr,allHatches) => {
  
-  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
-  let tileSegmentArray = thisLayer.getAttribEx('tileSegmentArray');
+  const thisLayer = thisModel.getModelLayerByNr(nLayerNr);
+  const tileSegmentArray = thisLayer.getAttribEx('tileSegmentArray');
   
-  let sortingArguments = {
+  const sortingArguments = {
     sSegRegionFillingMode             : "NegativeY",
     bInvertFillingSequence            : false,
     fSegRegionFillingGridSize         : 0.0,
@@ -267,20 +266,20 @@ exports.sortHatchBlocks = (thisModel,nLayerNr,allHatches) => {
 //   
 // } //handleShortLines
 
-exports.handleShortLines = (passNumberGroups,thisModel) => {
+exports.handleShortLines = (passNumberGroups,thisModel,bsModelData) => {
   
-  let scanheadArray = thisModel.getAttribEx('scanhead_array');  
-  let returnHatch = new HATCH.bsHatch();
-  let mergedHatch = new HATCH.bsHatch();
+  const scanheadArray = bsModelData.getTrayAttribEx('scanhead_array');  
+  const returnHatch = new HATCH.bsHatch();
+  const mergedHatch = new HATCH.bsHatch();
   
-  let minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
-  let maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
+  const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
+  const maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
   
   for (let passNumber in passNumberGroups){
     
-    let thisPassHatch = new HATCH.bsHatch();
-    let thisPassHatchArray = passNumberGroups[passNumber].blocks;
-    let passYCoord = [];
+    const thisPassHatch = new HATCH.bsHatch();
+    const thisPassHatchArray = passNumberGroups[passNumber].blocks;
+    const passYCoord = [];
     let passXCoord = 0;
     
     for(let i = 0; i<thisPassHatchArray.length;i++){ // store blocks into hatch container
@@ -292,18 +291,18 @@ exports.handleShortLines = (passNumberGroups,thisModel) => {
     }
     
     //find merge blocking geometry
-    let blocking_min_x = passXCoord;
-    let blocking_max_x = passXCoord+scanheadArray[4].abs_x_max;
-    let blocking_min_y = Math.min(passYCoord);
-    let blocking_max_y = Math.max(passYCoord)+scanheadArray[0].rel_y_max;
+    const blocking_min_x = passXCoord;
+    const blocking_max_x = passXCoord+scanheadArray[4].abs_x_max;
+    const blocking_min_y = Math.min(passYCoord);
+    const blocking_max_y = Math.max(passYCoord)+scanheadArray[0].rel_y_max;
 
-    let firstBlock2Dvec = new Array();
+    const firstBlock2Dvec = new Array();
     firstBlock2Dvec[0] = new VEC2.Vec2(blocking_min_x, blocking_min_y); //min,min
     firstBlock2Dvec[1] = new VEC2.Vec2(blocking_min_x, blocking_max_y); //min,max
     firstBlock2Dvec[2] = new VEC2.Vec2(blocking_max_x, blocking_min_y); // max,min
     firstBlock2Dvec[3] = new VEC2.Vec2(blocking_max_x, blocking_max_y); // max,max
       
-    let blocking_pathset = new PATH_SET.bsPathSet();
+    const blocking_pathset = new PATH_SET.bsPathSet();
     blocking_pathset.addNewPath(firstBlock2Dvec);
 
     let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,maxMergeDistance,

@@ -82,8 +82,6 @@ exports.getBlockedPathHatch = function(thisModel, island_it, islandId) {
 
   thisIsland.createNarrowBridgePolylines(narrow_bridge, -beam_compensation);
 
-  narrow_bridge.setAttributeReal("power", border_power);
-  narrow_bridge.setAttributeReal("speed", border_speed);
   narrow_bridge.setAttributeInt("type", CONST.nType_openPolyline);
   narrow_bridge.setAttributeInt("islandId", islandId);
 
@@ -100,8 +98,6 @@ exports.getBlockedPathHatch = function(thisModel, island_it, islandId) {
     beam_compensation
       );  
 
-  narrow_app.setAttributeReal("power", border_power);
-  narrow_app.setAttributeReal("speed", border_speed);
   narrow_app.setAttributeInt("type",CONST.nType_openPolyline);       
   narrow_app.setAttributeInt("islandId", islandId);
 
@@ -111,40 +107,6 @@ exports.getBlockedPathHatch = function(thisModel, island_it, islandId) {
 }  
 
 exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
-
-  ///------------ GET PROCESS PARAMETERS-----------///
-  
-  // FILL PARAMETERS
-  let hatch_param = thisModel.getAttribEx('hatch');
-    let fill_power = hatch_param.power_watt;
-    let fill_speed = hatch_param.markspeed;
-    let fill_defocus = hatch_param.defocus;  
-  
-  // CONTOUR PARAMETERS
-  let contour_param = thisModel.getAttribEx('contour');
-    let border_power = contour_param.power_watt;
-    let border_speed = contour_param.markspeed;
-    let border_defocus = contour_param.defocus;
-  
-  
-  // OPEN POLYLINE PARAMTERS
-  let openpolyline_param = thisModel.getAttribEx('openpolyline');  
-    let openpolyline_power = openpolyline_param.power_watt;
-    let openpolyline_speed = openpolyline_param.markspeed;
-    let openpolyline_defocus = openpolyline_param.defocus;
-  
-  
-   // DOWNSKIN CONTOUR PARAMETERS  
-  let downskin_contour_param = thisModel.getAttribEx('downskin_contour'); 
-    let down_skin_contour_power = downskin_contour_param.power_watt;
-    let down_skin_contour_speed = downskin_contour_param.markspeed;
-    let down_skin_contour_defocus = downskin_contour_param.defocus;
-    
-  //DOWN SKIN FILL PARAMETERS
-  let downskin_hatch_param = thisModel.getAttribEx('downskin_hatch');
-    let down_skin_fill_power = downskin_hatch_param.power_watt;
-    let down_skin_fill_speed = downskin_hatch_param.markspeed;
-    let down_skin_defocus = downskin_hatch_param.defocus;
   
   // DOWNSKIN SETTINGS
   let down_skin_surface_angle = PARAM.getParamReal("downskin", "down_skin_surface_angle");
@@ -168,6 +130,10 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   // CREATE HATCH CONTAINERS
   let allContourHatch = new HATCH.bsHatch();
   let allHatch = new HATCH.bsHatch();
+  let allDownSkinHatch = new HATCH.bsHatch();
+  let allDownSkinContourHatch = new HATCH.bsHatch();
+  let allSupportHatch = new HATCH.bsHatch();
+  let allSupportContourHatch = new HATCH.bsHatch();
     
   //determine if the island is support or part  
   let is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
@@ -211,13 +177,13 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
         let downSkinbulkIsland = exports.generateOffset(down_skin_island,beam_compensation).offsetIsland;
         
         let downSkinContourHatch = new HATCH.bsHatch(); 
-        down_skin_island.borderToHatch(downSkinContourHatch);        
-        downSkinContourHatch.setAttributeReal('power', down_skin_contour_power);
-        downSkinContourHatch.setAttributeReal('speed', down_skin_contour_speed);
+        down_skin_island.borderToHatch(downSkinContourHatch);
+        
         downSkinContourHatch.setAttributeInt('type',CONST.nType_downskin_contour);
         downSkinContourHatch.setAttributeInt('islandId',islandId);
+        
         downSkinContourHatch.clip(islandBorderClipper,false);   
-        allContourHatch.moveDataFrom(downSkinContourHatch); // move downskin border to results                          
+        allDownSkinContourHatch.moveDataFrom(downSkinContourHatch); // move downskin border to results                          
 
           let hatchingArgs = {
          "fHatchDensity" : down_skin_hatch_density,
@@ -236,11 +202,9 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
         var downSkin_hatch = new HATCH.bsHatch();
         downSkinbulkIsland.hatchExt2(downSkin_hatch,hatchingArgs);
   
-        downSkin_hatch.setAttributeReal('power', down_skin_fill_power);
-        downSkin_hatch.setAttributeReal('speed', down_skin_fill_speed);
         downSkin_hatch.setAttributeInt('type',CONST.nType_downskin_hatch);
         downSkin_hatch.setAttributeInt('islandId',islandId);    
-        allHatch.moveDataFrom(downSkin_hatch);  // move down skin hatch to results  
+        allDownSkinHatch.moveDataFrom(downSkin_hatch);  // move down skin hatch to results  
         
       }
 
@@ -250,14 +214,13 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       
       let contourHatch = new HATCH.bsHatch();
       let downskinContourClipper = exports.generateOffset(down_skin_island,-0.0005).offsetIsland;
-      islandOffset.borderToHatch(contourHatch); // temp solutions
-      //not_down_skin_island.borderToHatch(contourHatch);            
-      contourHatch.setAttributeReal('power', border_power);
-      contourHatch.setAttributeReal('speed', border_speed);
-      contourHatch.setAttributeInt('type',CONST.nType_part_contour);
+      islandOffset.borderToHatch(contourHatch); // temp solutions        
+
+      contourHatch.setAttributeInt('type',CONST.nType_downskin_contour);
       contourHatch.setAttributeInt('islandId',islandId);
+      
       contourHatch.clip(downskinContourClipper,false);// WIP this clip splits it between different scanners
-      allContourHatch.moveDataFrom(contourHatch);
+      allDownSkinContourHatch.moveDataFrom(contourHatch);
                  
       let bulkIsland = exports.generateOffset(not_down_skin_island,beam_compensation).offsetIsland;    
       
@@ -281,8 +244,6 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       let fill_hatch = new HATCH.bsHatch();
       bulkStripeIslands.hatchExt2(fill_hatch,hatchingArgs);
    
-      fill_hatch.setAttributeReal('power', fill_power);
-      fill_hatch.setAttributeReal('speed', fill_speed);      
       fill_hatch.setAttributeInt('type',CONST.nType_part_hatch);
       fill_hatch.setAttributeInt('islandId',islandId);            
                     
@@ -294,11 +255,10 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     if(PARAM.getParamInt('support','param_supportContourToogle')){
     let supportBorderHatch = new HATCH.bsHatch();  
     islandOffset.borderToHatch(supportBorderHatch);
-    supportBorderHatch.setAttributeReal('power', support_contour_power);
-    supportBorderHatch.setAttributeReal('speed', support_contour_speed);
+
     supportBorderHatch.setAttributeInt('type',CONST.nType_support_contour);
     supportBorderHatch.setAttributeInt('islandId',islandId);
-    allContourHatch.moveDataFrom(supportBorderHatch);
+    allSupportContourHatch.moveDataFrom(supportBorderHatch);
     }
     
     let hatchingArgs = {
@@ -317,18 +277,19 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     let supportBulk = generateOffset(islandOffset,beam_compensation).offsetIsland;
     var support_hatch = new HATCH.bsHatch();
     supportBulk.hatchExt2(support_hatch,hatchingArgs);
-
-    support_hatch.setAttributeReal('power', support_hatch_power);
-    support_hatch.setAttributeReal('speed', support_hatch_speed);      
+      
     support_hatch.setAttributeInt('type',CONST.nType_support_hatch);
     support_hatch.setAttributeInt('islandId',islandId);
-    allHatch.moveDataFrom(support_hatch);       
+    allSupportHatch.moveDataFrom(support_hatch);       
   }
   
   return {
-        'fillHatch' : allHatch,
+        'partHatch' : allHatch,
+        'downSkinHatch' :  allDownSkinHatch,
+        'downSkinContourHatch' :  allDownSkinContourHatch,
         'contourHatch': allContourHatch,
-        'fillIsland' : fillIsland
+        'supportHatch': allSupportHatch,
+        'supportContourHatch':allSupportContourHatch
       };
 }
 
@@ -355,15 +316,11 @@ exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){
       if(is_part)
       {      
         // part
-        polyline_hatch_paths.setAttributeReal("power", openpolyline_power);
-        polyline_hatch_paths.setAttributeReal("speed", openpolyline_speed);
         polyline_hatch_paths.setAttributeInt("type", CONST.nType_openPolyline);
       }
       else
       {
         // support/fixtures
-        polyline_hatch_paths.setAttributeReal("power", openpolyline_power);
-        polyline_hatch_paths.setAttributeReal("speed", openpolyline_speed);
         polyline_hatch_paths.setAttributeInt("type", CONST.nType_openPolyline);
       }
       
@@ -375,7 +332,6 @@ exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){
   
   return allPolyLineHatch;
 }  
-
 
 //=============================================================================
 
@@ -400,42 +356,4 @@ function createStripes(islandObj,nLayerNr) {
 
 } //createStripes
 
-
-
 //=============================================================================
-
-// exports.createGlobalStripes = function(allIslands,allHatches,nLayerNr,addStripeID){
-// 
-//   // GET STRIPE PARAMETERS
-//   let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
-//   let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
-//   let fStripeOverlap = PARAM.getParamReal('strategy','fStripeOverlap');
-//   let fStripeLength = PARAM.getParamReal('strategy','fStripeLength');
-//   let fpatternShift = PARAM.getParamReal('strategy','fPatternShift');
-//   let stripeRefPoint = new VEC2.Vec2(nLayerNr*fpatternShift,0);
-//   
-//   // CREATE CONTAINERS
-//   let stripeIslands = new ISLAND.bsIsland();
-//   let globalStripeHatch = new HATCH.bsHatch();
-//   
-//   allIslands.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,
-//   fStripeLength,exports.getHatchAngle(nLayerNr),stripeRefPoint);
-// 
-//   let stripeCount = stripeIslands.getIslandCount();
-//   let stripeArray = stripeIslands.getIslandArray();
-//   
-//   //walk trough all stripes and assign islands to each stripe
-//    
-//   let hatchArray = allHatches.getHatchBlockArray();
-// 
-//   for(let i = 0; i<stripeCount;i++)
-//     {     
-//       let clippedHatch = allHatches.clone();
-//       clippedHatch.clip(stripeArray[i],true);
-//       if(addStripeID) clippedHatch.setAttributeInt('stripeID',i+1);
-//       
-//       globalStripeHatch.moveDataFrom(clippedHatch); 
-//     }
-//     
-//    return globalStripeHatch;
-// }

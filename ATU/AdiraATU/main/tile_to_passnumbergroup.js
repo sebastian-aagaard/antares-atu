@@ -7,32 +7,31 @@
 'use strict';
 
 // --------  INCLUDES -------- //
-var HATCH = requireBuiltin('bsHatch');
-var VEC2 = requireBuiltin('vec2');
-var PATH_SET = requireBuiltin('bsPathSet');
-var PARAM = requireBuiltin('bsParam');
+const HATCH = requireBuiltin('bsHatch');
+const VEC2 = requireBuiltin('vec2');
+const PATH_SET = requireBuiltin('bsPathSet');
+const PARAM = requireBuiltin('bsParam');
 
-exports.generatePassNumberGroup = (hatchObj) =>{
+exports.generatePassNumberGroup = (hatchObj) => {
   
-let passNumberGroups = {};
+  let passNumberGroups = {};
 
-let hatchArray = hatchObj.getHatchBlockArray();
+  let hatchArray = hatchObj.getHatchBlockArray();
 
-for (let i = 0; i<hatchArray.length;i++)
-{
-    let thisBlock = hatchArray[i];
-    let passNumber = thisBlock.getAttributeInt('passNumber');
-    
-    if (!passNumberGroups[passNumber]) 
-	{
-        passNumberGroups[passNumber] = {
-            'passExposureDuration': 0,
-            'blocks': [thisBlock]
-        };
-    } else {
-        passNumberGroups[passNumber].blocks.push(thisBlock);
-    }
-}
+  for (let i = 0; i<hatchArray.length;i++)
+  {
+      let passNumber = hatchArray[i].getAttributeInt('passNumber');
+      
+      if (!passNumberGroups[passNumber])
+        {
+          passNumberGroups[passNumber] = {
+              'passExposureDuration': 0,
+              'blocks': [hatchArray[i]]
+          };
+        } else {
+          passNumberGroups[passNumber].blocks.push(hatchArray[i]);
+        }
+  }
  
 return passNumberGroups;
   

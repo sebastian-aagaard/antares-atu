@@ -5,11 +5,25 @@
   </Globals>
   <Filters>
     <Filter Name="main">
+      <File Path="main/utility_functions.js"/>
       <File Path="main/main.js"/>
       <File Path="main/export_cli.js"/>
+      <Filter Name="prepare model exposure">
+        <File Path="main/prepare_model_exposure.js"/>
+      </Filter>
+      <Filter Name="post processor">
+        <File Path="main/post_processor.js"/>
+      </Filter>
     </Filter>
-    <Filter Name="localization">
-      <File Path="localization/localizer.js"/>
+    <Filter Name="constants">
+      <File Path="main/constants.js"/>
+    </Filter>
+    <Filter Name="Configuration">
+      <File Path="configuration/machine_declaration.js"/>
+      <File Path="configuration/parameter_declaration.js"/>
+      <File Path="configuration/attribute_declaration.js"/>
+    </Filter>
+    <Filter Name="Localization">
       <File Path="localization/lang_de.json"/>
       <File Path="localization/lang_en.json"/>
       <File Path="localization/lang_es.json"/>
@@ -19,6 +33,24 @@
       <File Path="localization/lang_pt-BR.json"/>
       <File Path="localization/lang_zh-Hans.json"/>
       <File Path="localization/lang_zh-Hant.json"/>
+      <File Path="localization/localizer.js"/>
+    </Filter>
+    <Filter Name="Tileing">
+      <File Path="main/tileing.js"/>
+      <File Path="main/smartTileing.js"/>
+    </Filter>
+    <File Path="main/laser_designation.js"/>
+    <Filter Name="Toolpath">
+      <File Path="main/tile_to_passnumbergroup.js"/>
+      <File Path="main/toolpath.js"/>
+      <File Path="main/toolpath_generation.js"/>
+      <File Path="main/toolpath_to_tile.js"/>
+    </Filter>
+    <Filter Name="preprocessor">
+      <File Path="main/preprocessor.js"/>
+    </Filter>
+    <Filter Name="3mf">
+      <File Path="3mf/3mf_data_collector.js"/>
     </Filter>
   </Filters>
 </Project>
