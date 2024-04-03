@@ -11,7 +11,7 @@
 const ISLAND = requireBuiltin('bsIsland');
 const HATCH = requireBuiltin('bsHatch');
 //var MODEL = requireBuiltin('bsModel');
-//var CONST = require('main/constants.js');
+const CONST = require('main/constants.js');
 const TPGEN = require('main/toolpath_generation.js');
 const TP2TILE = require('main/toolpath_to_tile.js');
 const TP2PASS = require('main/tile_to_passnumbergroup.js')
@@ -38,6 +38,7 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
   //CREATE CONTAINERS
   let allHatches = new HATCH.bsHatch();
 
+
   // RUN THROUGH ISLANDS
   let islandId = 1; 
 
@@ -56,8 +57,6 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
     // get blocked path hatches
     let blockedPathHatch = TPGEN.getBlockedPathHatch(thisModel,island_it,islandId);
 
-
-    // CheckScanningPriority.
     // store hatch from processed islands 
     allHatches.moveDataFrom(supportHatch);
     allHatches.moveDataFrom(supportContourHatch);      
@@ -67,6 +66,8 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
     allHatches.moveDataFrom(downSkinContourHatch);
     allHatches.moveDataFrom(blockedPathHatch);
     
+    TPGEN.sortHatchByPriority(allHatches);             
+          
     island_it.next();
     islandId++;
     }

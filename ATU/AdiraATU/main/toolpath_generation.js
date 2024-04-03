@@ -349,4 +349,31 @@ function createStripes(islandObj,nLayerNr) {
 
 } //createStripes
 
-//=============================================================================
+//============================================================================
+
+exports.sortHatchByPriority = (allHatches) => {
+
+  const typePriorityMap = new Map([
+  [CONST.nType_openPolyline, PARAM.getParamInt('scanning_priority','openPolyline_priority')],
+  [CONST.nType_part_hatch, PARAM.getParamInt('scanning_priority','part_hatch_priority')],
+  [CONST.nType_part_contour, PARAM.getParamInt('scanning_priority','part_contour_priority')],
+  [CONST.nType_downskin_hatch, PARAM.getParamInt('scanning_priority','downskin_hatch_priority')],
+  [CONST.nType_downskin_contour, PARAM.getParamInt('scanning_priority','downskin_contour_priority')],
+  [CONST.nType_support_hatch, PARAM.getParamInt('scanning_priority','support_hatch_priority')],
+  [CONST.nType_support_contour, PARAM.getParamInt('scanning_priority','support_contour_priority')],
+  ]);
+
+  let sortedHatches = allHatches.getHatchBlockArray()
+                .sort((a,b) => {
+                  let prioA = typePriorityMap.get(a.getAttributeInt('type'));
+                  let prioB = typePriorityMap.get(b.getAttributeInt('type'));
+                  return prioA - prioB;
+                });
+                
+  allHatches.makeEmpty();
+          
+  sortedHatches.forEach(hatchBlock => allHatches.addHatchBlock(hatchBlock));             
+
+} //sortHatchByPriority
+
+//============================================================================
