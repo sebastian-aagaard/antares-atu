@@ -8,7 +8,6 @@
 'use strict';
 
 // -------- INCLUDES -------- //
-let PARAM = requireBuiltin('bsParam');
 let EXPORT_FILTER = requireBuiltin('bsExportFilter');
 let CLI = require('main/export_cli.js');
 let LOCALIZER = require('localization/localizer.js');
@@ -17,11 +16,12 @@ let LOCALIZER = require('localization/localizer.js');
 let MACHINE_CONFIG = require('../configuration/machine_declaration.js');
 let PARAM_CONFIG = require('../configuration/parameter_declaration.js');
 let ATTRIB_CONFIG = require('../configuration/attribute_declaration.js');
-let POST_PROCESS = require('main/post_processor.js');
+let POST_PROCESS_SORT = require('main/post_processor_sort_exposure.js');
+//let POST_PROCESS_DURATION = require('main/post_processor_scanning_duration.js');
 let PREP_MODEL = require('main/prepare_model_exposure.js');
 
-let UTIL = require('main/utility_functions.js');
-let CONST = require('main/constants.js');
+//let UTIL = require('main/utility_functions.js');
+//let CONST = require('main/constants.js');
 let PREPROCESSOR = require('main/preprocessor.js');
 let TOOLPATH = require('main/Toolpath.js');
 
@@ -68,10 +68,9 @@ exports.declareBuildAttributes = (buildAttrib) => {
 
 exports.configurePostProcessingSteps = (a_config) => {
   // Postprocessing the toolpaths using the given function:
-  a_config.addPostProcessingStep(POST_PROCESS.postprocessLayerStack_MT,{bMultithread: true, nProgressWeight: 1});
-  
+  a_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,{bMultithread: true, nProgressWeight: 1});
+//  a_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,{bMultithread: true, nProgressWeight: 1});
   // create toolpath
-  // actual postprocessing
   // generate 3mf Data
 };
 

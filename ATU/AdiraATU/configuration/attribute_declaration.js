@@ -8,7 +8,7 @@
 
 // -------- INCLUDES -------- //
 
-var CONST = require('main/constants.js');
+const CONST = require('main/constants.js');
 
 // -------- CODE -------- //
 

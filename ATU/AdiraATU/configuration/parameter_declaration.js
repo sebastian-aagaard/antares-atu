@@ -8,9 +8,11 @@
 
 // -------- INCLUDES -------- //
 
-var PARAM = requireBuiltin('bsParam');
-var BUILD = requireBuiltin('bsBuildParam');
-var LOCALIZER = require('localization/localizer.js');
+//const PARAM = requireBuiltin('bsParam');
+const BUILD = requireBuiltin('bsBuildParam');
+const LOCALIZER = require('localization/localizer.js');
+
+
 
 // -------- CODE -------- //
 
@@ -237,6 +239,4 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('scanning_priority','downskin_contour_priority', LOCALIZER.GetMessage('param_downskin_contour_priority'),0,2000,500);
     parameter.declareParameterInt('scanning_priority','support_contour_priority', LOCALIZER.GetMessage('param_support_contour_priority'),0,2000,600);
     parameter.declareParameterInt('scanning_priority','openPolyline_priority', LOCALIZER.GetMessage('param_openPolyline_priority'),0,2000,700);
-
-  
 }
