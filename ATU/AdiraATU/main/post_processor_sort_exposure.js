@@ -11,6 +11,118 @@
 var MODEL = requireBuiltin('bsModel');
 var PARAM = requireBuiltin('bsParam');
 var POLY_IT = requireBuiltin('bsPolylineIterator');
+var EXPOSURE = requireBuiltin('bsExposureTime');
+
+
+
+/** 
+ * Multithreaded post-processing.
+ * @param  modelData        bsModelData
+ * @param  progress         bsProgress
+ * @param  layer_start_nr   Integer. First layer to process
+ * @param  layer_end_nr     Integer. Last layer to process
+ */
+ 
+ 
+exports.postprocessSortExposure_MT = function( 
+  modelData, 
+  progress, 
+  layer_start_nr, 
+  layer_end_nr){
+  
+  let layerCount = layer_end_nr - layer_start_nr + 1;
+  progress.initSteps(layerCount);
+
+  let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
+     layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
+
+   while(layerIt.isValid() && !progress.cancelled()) {
+     
+    let layerNr = layerIt.getLayerNr();
+
+    // calculate the processing order based on tiles and hatchtype
+    let tileExposureArray = getTileExposureArray(modelData,layerNr);
+    
+    // remove undefined entries from tile exposure array
+    let filteredExposureArray = 
+        tileExposureArray.filter(innerArray => 
+        innerArray.some(entry => entry !== undefined))
+        .map(innerArray => 
+        innerArray.filter(entry => entry !== undefined));
+
+
+    let sortedExposureArray = sortMovementDirectionOfTiles(filteredExposureArray);
+     
+    updateProcessingOrder(sortedExposureArray);
+     
+    getTileExposureDuration(sortedExposureArray);
+
+    layerIt.next();
+    progress.step(1); 
+   }
+   
+   
+   
+} // postprocessSortExposure_MT
+
+const getTileExposureDuration = (exposureArray) => {
+  
+ 
+  exposureArray.forEach(pass => {
+  pass.forEach(tile => {
+    // Initialize an object to store exposure durations for each laser
+    tile.laserDuration = {};
+
+    tile.exposure.forEach(cur => {
+      let laserID = Math.floor(cur.BSID / 10); // Calculate the laser ID
+      let exposureSettings = {
+        'fJumpSpeed': PARAM.getParamReal('durationSim', 'JumpSpeed'),
+        'fMeltSpeed': cur.getAttributeReal('speed'),
+        'fJumpLengthLimit': PARAM.getParamReal('durationSim', 'JumpLengthLimit'),
+        'nJumpDelay': PARAM.getParamInt('durationSim', 'JumpDelay'),
+        'nMinJumpDelay': PARAM.getParamInt('durationSim', 'MinJumpDelay'),
+        'nMarkDelay': PARAM.getParamInt('durationSim', 'MarkDelay'),
+        'nPolygonDelay': PARAM.getParamInt('durationSim', 'PolygonDelay'),
+        'polygonDelayMode': PARAM.getParamStr('durationSim', 'PolygonDelayMode')
+      };
+
+      // If the laser ID doesn't exist in tile.laserDuration, create a new entry
+      if (!tile.laserDuration[laserID]) {
+        tile.laserDuration[laserID] = new EXPOSURE.bsExposureTime();
+      }
+
+      // Add polyline to the corresponding laser exposure time
+      tile.laserDuration[laserID].addPolyline(cur, exposureSettings);
+    });
+  });
+});
+
+      
+//   exposureArray.forEach(pass => {
+//     pass.forEach(tile => {
+//       tile.tileDuration = tile.exposure.reduce(
+//         (acc, cur) => {
+//           
+//           let exposureSettings =  {
+//            'fJumpSpeed' :PARAM.getParamReal('durationSim', 'JumpSpeed'),
+//            'fMeltSpeed' : cur.getAttributeReal('speed'),
+//            'fJumpLengthLimit' : PARAM.getParamReal('durationSim', 'JumpLengthLimit'),
+//            'nJumpDelay' : PARAM.getParamInt('durationSim', 'JumpDelay'),
+//            'nMinJumpDelay': PARAM.getParamInt('durationSim', 'MinJumpDelay'),
+//            'nMarkDelay' : PARAM.getParamInt('durationSim', 'MarkDelay'),
+//            'nPolygonDelay': PARAM.getParamInt('durationSim', 'PolygonDelay'),
+//            'polygonDelayMode' : PARAM.getParamStr('durationSim', 'PolygonDelayMode')};
+//             
+//           acc.addPolyline(cur, exposureSettings); // Add polyline to accumulate exposure time
+//            
+//           return acc; // Return accumulator
+//         }, new EXPOSURE.bsExposureTime())
+//         .getExposureTimeMicroSeconds(); // Get total exposure time after all polylines are added
+//     });
+//   });
+
+
+} //getTileExposureDuration
 
 const getTileExposureArray = (modelData,layerNr) => {
   
@@ -36,53 +148,7 @@ const getTileExposureArray = (modelData,layerNr) => {
     } // exposurePolyLines 
     
     return tileObj;
-}
-
-/** 
- * Multithreaded post-processing.
- * @param  modelData        bsModelData
- * @param  progress         bsProgress
- * @param  layer_start_nr   Integer. First layer to process
- * @param  layer_end_nr     Integer. Last layer to process
- */
- 
- 
-exports.postprocessLayerStack_MT = function( 
-  modelData, 
-  progress, 
-  layer_start_nr, 
-  layer_end_nr){
-
-process.print(`layer start:  ${layer_start_nr}, layer end: ${layer_end_nr}`);
-  
-  let layerCount = layer_end_nr - layer_start_nr + 1;
-  progress.initSteps(layerCount);
-
-  let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
-     layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
-
-   while(layerIt.isValid() && !progress.cancelled()) {
-     
-    let layerNr = layerIt.getLayerNr();
-
-    // calculate the processing order based on tiles and hatchtype
-    let tileExposureArray = getTileExposureArray(modelData,layerNr);
-    
-    // remove undefined entries from tile exposure array
-    let filteredExposureArray = tileExposureArray
-        .filter(innerArray => innerArray
-        .some(entry => entry !== undefined))
-        .map(innerArray => innerArray
-        .filter(entry => entry !== undefined));
-
-
-    let sortedExposureArray = sortMovementDirectionOfTiles(filteredExposureArray);
-    updateProcessingOrder(sortedExposureArray);
-
-    layerIt.next();
-    progress.step(1); 
-   }
-}
+} //getTileExposureArray
 
 const updateProcessingOrder = (sortedExposureArray ) => {
 
