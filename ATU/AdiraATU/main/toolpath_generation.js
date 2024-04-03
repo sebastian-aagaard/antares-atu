@@ -113,20 +113,10 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let down_skin_layer_reference = PARAM.getParamInt("downskin", "down_skin_layer_reference");
   let down_skin_hatch_density = PARAM.getParamReal("downskin", "down_skin_hdens");
   let down_skin_overlap = PARAM.getParamReal("downskin", "down_skin_overlap");
-  let down_skin_hatch_angle_increment =  PARAM.getParamReal("downskin", "down_skin_hangle_increment");
-  let down_skin_cur_hatch_angle = (PARAM.getParamReal("downskin", "down_skin_hangle") + 
-      (nLayerNr * down_skin_hatch_angle_increment)) % 360;
   
-    //if the angle falls in the 1st or 2nd quadrant, move it to the 3rd or 4th
-    //this ensures that the hatching is always against the gas flow
-      
-  if (down_skin_cur_hatch_angle >= 0.0 && down_skin_cur_hatch_angle <= 180.0){     
-    down_skin_cur_hatch_angle += 180.0; 
-    }
- 
   // BEAM COMPENSATION
   let beam_compensation = PARAM.getParamReal("exposure", "beam_compensation");
-  
+ 
   // CREATE HATCH CONTAINERS
   let allContourHatch = new HATCH.bsHatch();
   let allHatch = new HATCH.bsHatch();
@@ -134,6 +124,9 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let allDownSkinContourHatch = new HATCH.bsHatch();
   let allSupportHatch = new HATCH.bsHatch();
   let allSupportContourHatch = new HATCH.bsHatch();
+  
+  //find this layer hatch angle
+  const hatchAngle = exports.getHatchAngle(nLayerNr);
     
   //determine if the island is support or part  
   let is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
@@ -187,7 +180,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
 
           let hatchingArgs = {
          "fHatchDensity" : down_skin_hatch_density,
-         "fHatchAngle" : down_skin_cur_hatch_angle,
+         "fHatchAngle" : hatchAngle,
          "nCycles" : 1,
          "fCollinearBorderSnapTol" : 0.0,
          "fBlocksortRunAheadLimit": 2.0,
@@ -229,7 +222,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       
       let hatchingArgs = {
          "fHatchDensity" : PARAM.getParamReal('exposure', '_hdens'),
-         "fHatchAngle" : exports.getHatchAngle(nLayerNr),
+         "fHatchAngle" : hatchAngle,
          "nCycles" : 1,
          "fCollinearBorderSnapTol" : 0.0,
          "fBlocksortRunAheadLimit": 2.0,
@@ -263,7 +256,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     
     let hatchingArgs = {
          "fHatchDensity" : support_hatch_density,
-         "fHatchAngle" : support_skin_cur_hatch_angle,
+         "fHatchAngle" : hatchAngle,
          "nCycles" : 1,
          "fCollinearBorderSnapTol" : 0.0,
          "fBlocksortRunAheadLimit": 2.0,
