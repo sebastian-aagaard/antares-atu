@@ -99,8 +99,9 @@ const updateProcessingOrder = (sortedExposureArray ) => {
 
 const sortMovementDirectionOfTiles = (tileExposureArray) => {
 
-  const isFirstPassFrontToBack = true; 
-  const isPassDirectionAlternating = true;
+  
+  const isFirstPassFrontToBack = PARAM.getParamInt('movementSettings','isFirstPassFrontToBack'); 
+  const isPassDirectionAlternating = PARAM.getParamInt('movementSettings','isPassDirectionAlternating'); 
     
   const filteredExposureArray =  tileExposureArray.filter (entry => {
     return entry;

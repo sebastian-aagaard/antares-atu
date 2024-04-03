@@ -136,7 +136,18 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('movementSettings', 'recoating_speed_mms',LOCALIZER.GetMessage('param_recoating_speed_mms'),0,1000,120);
     parameter.declareParameterReal('movementSettings', 'head_startpos_x',LOCALIZER.GetMessage('param_head_startpos_x'),0.0,1000.0,0.0);
     parameter.declareParameterReal('movementSettings', 'head_startpos_y',LOCALIZER.GetMessage('param_head_startpos_y'),-500.0,1000.0,0.0);
-
+    parameter.declareParameterChoice('movementSettings', 'isFirstPassFrontToBack', 
+       LOCALIZER.GetMessage('param_isFirstPassFrontToBack'),
+        [LOCALIZER.GetMessage('param_firstpass_from_back'),
+        LOCALIZER.GetMessage('param_firstpass_from_front')],
+        LOCALIZER.GetMessage('param_firstpass_from_front')
+        );
+    parameter.declareParameterChoice('movementSettings', 'isPassDirectionAlternating', 
+    LOCALIZER.GetMessage('param_isPassDirectionAlternating'),
+    [LOCALIZER.GetMessage('param_pass_same'),
+    LOCALIZER.GetMessage('param_pass_alternating')],
+    LOCALIZER.GetMessage('param_pass_alternating')
+    );
   
 
   // -------- SCANNER HEAD -------- //
