@@ -10,7 +10,7 @@
 
 exports.ENABLE_LOGGING = true;
 exports.nLaserCount = 5;
-exports.bIncludeScanningAttributes = false;
+exports.bIncludeScanningAttributes = true;
 exports.nBufferduration = 0;//1500000;//500000;//1000000; //us
 
 //if openpolyline support is required set to false
@@ -18,10 +18,33 @@ exports.nBufferduration = 0;//1500000;//500000;//1000000; //us
 exports.bDrawTile = true; // this inversly toggles the ability to handle CAD generated openpolilines (eg in support)
 
 // -------- TYPE DESIGNATION -------- //
-exports.nType_openPolyline = 0;
-exports.nType_part_hatch = 1;
-exports.nType_part_contour = 2;
-exports.nType_downskin_hatch = 3;
-exports.nType_downskin_contour = 4;
-exports.nType_support_hatch = 5;
-exports.nType_support_contour = 6;
+exports.typeDesignations = {
+  open_polyline: {
+    value: 0,
+    name: "open_polyline"
+  },
+  part_hatch: {
+    value: 1,
+    name: "part_hatch"
+  },
+  part_contour: {
+    value: 2,
+    name: "part_contour"
+  },
+  downskin_hatch: {
+    value: 3,
+    name: "downskin_hatch"
+  },
+  downskin_contour: {
+    value: 4,
+    name: "downskin_contour"
+  },
+  support_hatch: {
+    value: 5,
+    name: "support_hatch"
+  },
+  support_contour: {
+    value: 6,
+    name: "support_contour"
+  }
+};

@@ -71,18 +71,14 @@ exports.getBlockedPathHatch = function(thisModel, island_it, islandId) {
   
   let beam_compensation = PARAM.getParamReal("exposure", "beam_compensation");
   
-  let contour_param = thisModel.getAttribEx('contour');
-    let border_power = contour_param.power_watt;
-    let border_speed = contour_param.markspeed;
-    let border_defocus = contour_param.defocus;  
-  
+
   ///////////////////////////////////////////////////////////////////////
   // narrow bridges
   let narrow_bridge = new HATCH.bsHatch();
 
   thisIsland.createNarrowBridgePolylines(narrow_bridge, -beam_compensation);
 
-  narrow_bridge.setAttributeInt("type", CONST.nType_openPolyline);
+  narrow_bridge.setAttributeInt("type", CONST.typeDesignations.open_polyline.value);
   narrow_bridge.setAttributeInt("islandId", islandId);
 
   blockedPath.moveDataFrom(narrow_bridge);
@@ -98,7 +94,7 @@ exports.getBlockedPathHatch = function(thisModel, island_it, islandId) {
     beam_compensation
       );  
 
-  narrow_app.setAttributeInt("type",CONST.nType_openPolyline);       
+  narrow_app.setAttributeInt("type",CONST.typeDesignations.open_polyline.value);       
   narrow_app.setAttributeInt("islandId", islandId);
 
   blockedPath.moveDataFrom(narrow_app);
@@ -172,7 +168,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
         let downSkinContourHatch = new HATCH.bsHatch(); 
         down_skin_island.borderToHatch(downSkinContourHatch);
         
-        downSkinContourHatch.setAttributeInt('type',CONST.nType_downskin_contour);
+        downSkinContourHatch.setAttributeInt('type',CONST.typeDesignations.downskin_contour.value);
         downSkinContourHatch.setAttributeInt('islandId',islandId);
         
         downSkinContourHatch.clip(islandBorderClipper,false);   
@@ -195,7 +191,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
         var downSkin_hatch = new HATCH.bsHatch();
         downSkinbulkIsland.hatchExt2(downSkin_hatch,hatchingArgs);
   
-        downSkin_hatch.setAttributeInt('type',CONST.nType_downskin_hatch);
+        downSkin_hatch.setAttributeInt('type',CONST.typeDesignations.downskin_hatch.value);
         downSkin_hatch.setAttributeInt('islandId',islandId);    
         allDownSkinHatch.moveDataFrom(downSkin_hatch);  // move down skin hatch to results  
         
@@ -209,7 +205,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       let downskinContourClipper = exports.generateOffset(down_skin_island,-0.0005).offsetIsland;
       islandOffset.borderToHatch(contourHatch); // temp solutions        
 
-      contourHatch.setAttributeInt('type',CONST.nType_downskin_contour);
+      contourHatch.setAttributeInt('type',CONST.typeDesignations.part_contour.value);
       contourHatch.setAttributeInt('islandId',islandId);
       
       contourHatch.clip(downskinContourClipper,false);// WIP this clip splits it between different scanners
@@ -237,7 +233,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       let fill_hatch = new HATCH.bsHatch();
       bulkStripeIslands.hatchExt2(fill_hatch,hatchingArgs);
    
-      fill_hatch.setAttributeInt('type',CONST.nType_part_hatch);
+      fill_hatch.setAttributeInt('type',CONST.typeDesignations.part_hatch.value);
       fill_hatch.setAttributeInt('islandId',islandId);            
                     
       allHatch.moveDataFrom(fill_hatch);
@@ -249,7 +245,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     let supportBorderHatch = new HATCH.bsHatch();  
     islandOffset.borderToHatch(supportBorderHatch);
 
-    supportBorderHatch.setAttributeInt('type',CONST.nType_support_contour);
+    supportBorderHatch.setAttributeInt('type',CONST.typeDesignations.support_contour.value);
     supportBorderHatch.setAttributeInt('islandId',islandId);
     allSupportContourHatch.moveDataFrom(supportBorderHatch);
     }
@@ -354,13 +350,13 @@ function createStripes(islandObj,nLayerNr) {
 exports.sortHatchByPriority = (allHatches) => {
 
   const typePriorityMap = new Map([
-  [CONST.nType_openPolyline, PARAM.getParamInt('scanning_priority','openPolyline_priority')],
-  [CONST.nType_part_hatch, PARAM.getParamInt('scanning_priority','part_hatch_priority')],
-  [CONST.nType_part_contour, PARAM.getParamInt('scanning_priority','part_contour_priority')],
-  [CONST.nType_downskin_hatch, PARAM.getParamInt('scanning_priority','downskin_hatch_priority')],
-  [CONST.nType_downskin_contour, PARAM.getParamInt('scanning_priority','downskin_contour_priority')],
-  [CONST.nType_support_hatch, PARAM.getParamInt('scanning_priority','support_hatch_priority')],
-  [CONST.nType_support_contour, PARAM.getParamInt('scanning_priority','support_contour_priority')],
+  [CONST.typeDesignations.open_polyline.value, PARAM.getParamInt('scanning_priority','open_polyline_priority')],
+  [CONST.typeDesignations.part_hatch.value, PARAM.getParamInt('scanning_priority','part_hatch_priority')],
+  [CONST.typeDesignations.part_contour.value, PARAM.getParamInt('scanning_priority','part_contour_priority')],
+  [CONST.typeDesignations.downskin_hatch.value, PARAM.getParamInt('scanning_priority','downskin_hatch_priority')],
+  [CONST.typeDesignations.downskin_contour.value, PARAM.getParamInt('scanning_priority','downskin_contour_priority')],
+  [CONST.typeDesignations.support_hatch.value, PARAM.getParamInt('scanning_priority','support_hatch_priority')],
+  [CONST.typeDesignations.support_contour.value, PARAM.getParamInt('scanning_priority','support_contour_priority')],
   ]);
 
   let sortedHatches = allHatches.getHatchBlockArray()

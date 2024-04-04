@@ -29,7 +29,7 @@ const LOCALIZER = require('localization/localizer.js');
 exports.declareParameters = function(parameter)
 {
   
-  // declare hatch parameter groups (volume/overhang)
+  // declare hatch parameter groups (volume/downskin)
   // later on parameters are declared within these groups
   // Parameter groups are always declared like this:
   // 'group-id', 'display string'
@@ -78,21 +78,21 @@ exports.declareParameters = function(parameter)
     
   // -------- SCANNING PARAMETERS -------- //
   parameter.declareParameterGroup('ScanningParameters',LOCALIZER.GetMessage('grp_ScanningParameters'));
-    parameter.declareParameterReal('ScanningParameters', 'hatch_power', LOCALIZER.GetMessage('param_hatch_power'), 0.0, 500.0, 260.0);
-    parameter.declareParameterReal('ScanningParameters', 'hatch_markspeed', LOCALIZER.GetMessage('param_hatch_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'hatch_defocus', LOCALIZER.GetMessage('param_hatch_defocus'), 0.0, 100.0, 0.0);
+    parameter.declareParameterReal('ScanningParameters', 'part_hatch_power', LOCALIZER.GetMessage('param_part_hatch_power'), 0.0, 500.0, 260.0);
+    parameter.declareParameterReal('ScanningParameters', 'part_hatch_markspeed', LOCALIZER.GetMessage('param_part_hatch_markspeed'), 0.0, 9000.0, 800.0);
+    parameter.declareParameterReal('ScanningParameters', 'part_hatch_defocus', LOCALIZER.GetMessage('param_part_hatch_defocus'), 0.0, 100.0, 0.0);
  
-    parameter.declareParameterReal('ScanningParameters', 'contour_power', LOCALIZER.GetMessage('param_contour_power'), 0.0, 500.0, 220.0);
-    parameter.declareParameterReal('ScanningParameters', 'contour_markspeed', LOCALIZER.GetMessage('param_contour_markspeed'), 0.0, 9000.0, 600.0);
-    parameter.declareParameterReal('ScanningParameters', 'contour_defocus', LOCALIZER.GetMessage('param_contour_defocus'), 0.0, 100.0, 0.0);
+    parameter.declareParameterReal('ScanningParameters', 'part_contour_power', LOCALIZER.GetMessage('param_part_contour_power'), 0.0, 500.0, 220.0);
+    parameter.declareParameterReal('ScanningParameters', 'part_contour_markspeed', LOCALIZER.GetMessage('param_part_contour_markspeed'), 0.0, 9000.0, 600.0);
+    parameter.declareParameterReal('ScanningParameters', 'part_contour_defocus', LOCALIZER.GetMessage('param_part_contour_defocus'), 0.0, 100.0, 0.0);
     
-    parameter.declareParameterReal('ScanningParameters', 'overhang_hatch_power', LOCALIZER.GetMessage('param_overhang_hatch_power'), 0.0, 500.0, 106.0);
-    parameter.declareParameterReal('ScanningParameters', 'overhang_hatch_markspeed', LOCALIZER.GetMessage('param_overhang_hatch_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'overhang_hatch_defocus', LOCALIZER.GetMessage('param_overhang_hatch_defocus'), 0.0, 100.0, 0.0);
+    parameter.declareParameterReal('ScanningParameters', 'downskin_hatch_power', LOCALIZER.GetMessage('param_downskin_hatch_power'), 0.0, 500.0, 106.0);
+    parameter.declareParameterReal('ScanningParameters', 'downskin_hatch_markspeed', LOCALIZER.GetMessage('param_downskin_hatch_markspeed'), 0.0, 9000.0, 800.0);
+    parameter.declareParameterReal('ScanningParameters', 'downskin_hatch_defocus', LOCALIZER.GetMessage('param_downskin_hatch_defocus'), 0.0, 100.0, 0.0);
     
-    parameter.declareParameterReal('ScanningParameters', 'overhang_contour_power', LOCALIZER.GetMessage('param_overhang_contour_power'), 0.0, 500.0, 201.0);
-    parameter.declareParameterReal('ScanningParameters', 'overhang_contour_markspeed', LOCALIZER.GetMessage('param_overhang_contour_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'overhang_contour_defocus', LOCALIZER.GetMessage('param_overhang_contour_defocus'), 0.0, 100.0, 0.0); 
+    parameter.declareParameterReal('ScanningParameters', 'downskin_contour_power', LOCALIZER.GetMessage('param_downskin_contour_power'), 0.0, 500.0, 201.0);
+    parameter.declareParameterReal('ScanningParameters', 'downskin_contour_markspeed', LOCALIZER.GetMessage('param_downskin_contour_markspeed'), 0.0, 9000.0, 800.0);
+    parameter.declareParameterReal('ScanningParameters', 'downskin_contour_defocus', LOCALIZER.GetMessage('param_downskin_contour_defocus'), 0.0, 100.0, 0.0); 
  
     parameter.declareParameterReal('ScanningParameters', 'support_hatch_power', LOCALIZER.GetMessage('param_support_hatch_power'), 0.0, 500.0, 260.0);
     parameter.declareParameterReal('ScanningParameters', 'support_hatch_markspeed', LOCALIZER.GetMessage('param_support_hatch_markspeed'), 0.0, 9000.0, 800.0);
@@ -102,9 +102,9 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('ScanningParameters', 'support_contour_markspeed', LOCALIZER.GetMessage('param_support_contour_markspeed'), 0.0, 9000.0, 800.0);
     parameter.declareParameterReal('ScanningParameters', 'support_contour_defocus', LOCALIZER.GetMessage('param_support_contour_defocus'), 0.0, 100.0, 0.0);    
 
-    parameter.declareParameterReal('ScanningParameters', 'openpolyline_power', LOCALIZER.GetMessage('param_openpolyline_power'), 0.0, 500.0, 260.0);
-    parameter.declareParameterReal('ScanningParameters', 'openpolyline_markspeed', LOCALIZER.GetMessage('param_openpolyline_markspeed'), 0.0, 9000.0, 800.0);
-    parameter.declareParameterReal('ScanningParameters', 'openpolyline_defocus', LOCALIZER.GetMessage('param_openpolyline_defocus'), 0.0, 100.0, 0.0);      
+    parameter.declareParameterReal('ScanningParameters', 'open_polyline_power', LOCALIZER.GetMessage('param_open_polyline_power'), 0.0, 500.0, 260.0);
+    parameter.declareParameterReal('ScanningParameters', 'open_polyline_markspeed', LOCALIZER.GetMessage('param_open_polyline_markspeed'), 0.0, 9000.0, 800.0);
+    parameter.declareParameterReal('ScanningParameters', 'open_polyline_defocus', LOCALIZER.GetMessage('param_open_polyline_defocus'), 0.0, 100.0, 0.0);      
     
   // -------- PROCESS DURATION SIMULATION SETTINGS -------- //  
   parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_durationSim'));
@@ -238,5 +238,5 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('scanning_priority','part_contour_priority', LOCALIZER.GetMessage('param_part_contour_priority'),0,2000,400);
     parameter.declareParameterInt('scanning_priority','downskin_contour_priority', LOCALIZER.GetMessage('param_downskin_contour_priority'),0,2000,500);
     parameter.declareParameterInt('scanning_priority','support_contour_priority', LOCALIZER.GetMessage('param_support_contour_priority'),0,2000,600);
-    parameter.declareParameterInt('scanning_priority','openPolyline_priority', LOCALIZER.GetMessage('param_openPolyline_priority'),0,2000,700);
+    parameter.declareParameterInt('scanning_priority','open_polyline_priority', LOCALIZER.GetMessage('param_openPolyline_priority'),0,2000,700);
 }
