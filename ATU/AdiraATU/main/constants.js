@@ -17,6 +17,10 @@ exports.nBufferduration = 0;//1500000;//500000;//1000000; //us
 //when not in development mode set to false
 exports.bDrawTile = true; // this inversly toggles the ability to handle CAD generated openpolilines (eg in support)
 
+exports.scanningSchema = 'http://schemas.scanlab.com/scanning/2023/01';
+exports.skwritingSchema = 'http://schemas.scanlab.com/skywriting/2023/01';
+
+
 // -------- TYPE DESIGNATION -------- //
 exports.typeDesignations = {
   open_polyline: {

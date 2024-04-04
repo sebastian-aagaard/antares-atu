@@ -33,15 +33,15 @@ exports.prepareModelExposure = (model) => {
   
     let scanningAttributes = {      
     "schema": "http://schemas.scanlab.com/scanning/2023/01",
-    "laserondelay": PARAM.getParamInt('durationSim','laserOnDelay'),
-    "laseroffdelay": PARAM.getParamInt('durationSim','laserOffDelay'),      
-    "jumpspeed": PARAM.getParamReal('durationSim','JumpSpeed'),
-    "jumplengthlimit": PARAM.getParamReal('durationSim','JumpLengthLimit'),
-    "jumpdelay": PARAM.getParamInt('durationSim','JumpDelay'),
-    "minjumpdelay": PARAM.getParamInt('durationSim','MinJumpDelay'),
-    "markdelay": PARAM.getParamInt('durationSim','MarkDelay'),
-    "polygondelay": PARAM.getParamInt('durationSim','PolygonDelay'),
-    "polygondelaymode" : PARAM.getParamStr('durationSim','PolygonDelayMode')
+    "laserOnDelay": PARAM.getParamInt('durationSim','laserOnDelay'),
+    "laserOffDelay": PARAM.getParamInt('durationSim','laserOffDelay'),      
+    "jumpSpeed": PARAM.getParamReal('durationSim','JumpSpeed'),
+    "jumpLengthLimit": PARAM.getParamReal('durationSim','JumpLengthLimit'),
+    "jumpDelay": PARAM.getParamInt('durationSim','JumpDelay'),
+    "minJumpDelay": PARAM.getParamInt('durationSim','MinJumpDelay'),
+    "markDelay": PARAM.getParamInt('durationSim','MarkDelay'),
+    "polygonDelay": PARAM.getParamInt('durationSim','PolygonDelay'),
+    "polygonDelayMode" : PARAM.getParamStr('durationSim','PolygonDelayMode')
   };
   
   let additionalAttributes = [ skywritingAttributes ];
@@ -72,7 +72,6 @@ exports.prepareModelExposure = (model) => {
       customTable.push(bsid_obj);
     }
   }
-
 
   model.setAttribEx('customTable', customTable);
  

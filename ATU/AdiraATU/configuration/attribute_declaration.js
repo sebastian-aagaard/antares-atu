@@ -1,17 +1,12 @@
 /************************************************************
- * [Description]
+ * Declare build attributes
  *
- * @author []
+ * @author Sebastian Aagaard
  * Copyright (c). All rights reserved.
  *********************************************************** */
 'use strict';
 
-// -------- INCLUDES -------- //
-
-const CONST = require('main/constants.js');
-
 // -------- CODE -------- //
-
 
 exports.declareBuildAttributes = function(buildAttrib,laser_count){
   
@@ -28,21 +23,10 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeReal('ycoord');
   buildAttrib.declareAttributeInt('tile_index');
   buildAttrib.declareAttributeInt('tileID_3mf');
-  buildAttrib.declareAttributeReal('Subtile_Duration');
-  buildAttrib.declareAttributeInt('scanning_priority');
   buildAttrib.declareAttributeReal('Hatch_Duration_ms');
   buildAttrib.declareAttributeInt('laser_index');
   buildAttrib.declareAttributeInt('sharedZone');
-  buildAttrib.declareAttributeInt('zoneExposure');
-  buildAttrib.declareAttributeInt('zoneIndex');
   buildAttrib.declareAttributeInt('islandId');
   buildAttrib.declareAttributeInt('stripeID');
-  buildAttrib.declareAttributeInt('assigned');
-  buildAttrib.declareAttributeInt('modelIndex');
-
-  buildAttrib.declareAttributeReal('ScanheadMoveSpeed');
-  for(let i = 0 ; i<CONST.nLaserCount; i++){
-    buildAttrib.declareAttributeInt('laser_index_'+(i+1));
-  }
   
 };

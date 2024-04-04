@@ -1,14 +1,12 @@
-/*/************************************************************
+/************************************************************
  * Machine Configuration
  *
  * @author Sebastian Aagaard
  * Copyright (c). All rights reserved.
  *********************************************************** */
- 
 'use strict';
-var BUILD_PARAM  = requireBuiltin("bsBuildParam");
 
-// =============================================================================
+// -------- CODE -------- //
 
 /**
 *  Declare machine configuration

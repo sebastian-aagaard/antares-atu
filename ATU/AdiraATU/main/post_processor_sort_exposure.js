@@ -13,7 +13,8 @@ var PARAM = requireBuiltin('bsParam');
 var POLY_IT = requireBuiltin('bsPolylineIterator');
 var EXPOSURE = requireBuiltin('bsExposureTime');
 
-
+// -------- SCRIPTS INCLUDES -------- //
+let CONST = require('main/constants.js');
 
 /** 
  * Multithreaded post-processing.
@@ -55,7 +56,7 @@ exports.postprocessSortExposure_MT = function(
      
     updateProcessingOrder(sortedExposureArray);
      
-    getTileExposureDuration(sortedExposureArray);
+    getTileExposureDuration(sortedExposureArray,modelData);
 
     layerIt.next();
     progress.step(1); 
@@ -65,39 +66,61 @@ exports.postprocessSortExposure_MT = function(
    
 } // postprocessSortExposure_MT
 
-const getTileExposureDuration = (exposureArray) => {
+const getTileExposureDuration = (exposureArray,modelData) => {
   
  
   exposureArray.forEach(pass => {
   pass.forEach(tile => {
     // Initialize an object to store exposure durations for each laser
+    tile.laserDurationObj = {};
     tile.laserDuration = {};
 
     tile.exposure.forEach(cur => {
-      let laserID = Math.floor(cur.BSID / 10); // Calculate the laser ID
-      let exposureSettings = {
-        'fJumpSpeed': PARAM.getParamReal('durationSim', 'JumpSpeed'),
+      const cur_bsid = cur.getAttributeInt('bsid');
+      const laserID = Math.floor(cur_bsid / 10); // Calculate the laser ID
+      
+      const scanParamters = modelData
+        .getModel(cur.getModelIndex())
+        .getAttribEx('customTable')
+        .find(profile => profile.bsid === cur_bsid)
+        .attributes
+        .find(attr => attr.schema === CONST.scanningSchema);
+ 
+      const scanner = JSON.parse(modelData
+        .getTrayAttrib('scanhead_array'))
+        .find(scn => scn.laserIndex === laserID);
+      
+      const laserStartPos = { 
+        'x': cur.getAttributeReal('xcoord') + scanner.x_ref,
+        'y': cur.getAttributeReal('ycoord') + scanner.rel_y_max }
+       
+      const exposureSettings = {
+        'fJumpSpeed': scanParamters.jumpSpeed,
         'fMeltSpeed': cur.getAttributeReal('speed'),
-        'fJumpLengthLimit': PARAM.getParamReal('durationSim', 'JumpLengthLimit'),
-        'nJumpDelay': PARAM.getParamInt('durationSim', 'JumpDelay'),
-        'nMinJumpDelay': PARAM.getParamInt('durationSim', 'MinJumpDelay'),
-        'nMarkDelay': PARAM.getParamInt('durationSim', 'MarkDelay'),
-        'nPolygonDelay': PARAM.getParamInt('durationSim', 'PolygonDelay'),
-        'polygonDelayMode': PARAM.getParamStr('durationSim', 'PolygonDelayMode')
+        'fJumpLengthLimit': scanParamters.jumpLengthLimit,
+        'nJumpDelay': scanParamters.jumpDelay,
+        'nMinJumpDelay': scanParamters.minJumpDelay,
+        'nMarkDelay': scanParamters.markDelay,
+        'nPolygonDelay': scanParamters.polygonDelay,
+        'polygonDelayMode': scanParamters.polygonDelayMode,
+        'laserPos' : laserStartPos
       };
 
       // If the laser ID doesn't exist in tile.laserDuration, create a new entry
       if (!tile.laserDuration[laserID]) {
-        tile.laserDuration[laserID] = new EXPOSURE.bsExposureTime();
+        tile.laserDurationObj[laserID] = new EXPOSURE.bsExposureTime();
+        tile.laserDuration[laserID] = 0;
       }
 
       // Add polyline to the corresponding laser exposure time
-      tile.laserDuration[laserID].addPolyline(cur, exposureSettings);
+      tile.laserDurationObj[laserID].addPolyline(cur, exposureSettings);
+      tile.laserDuration[laserID] = tile.laserDurationObj[laserID].getExposureTimeMicroSeconds();
     });
   });
 });
 
-      
+let temo = 0;
+
 //   exposureArray.forEach(pass => {
 //     pass.forEach(tile => {
 //       tile.tileDuration = tile.exposure.reduce(
@@ -126,6 +149,7 @@ const getTileExposureDuration = (exposureArray) => {
 
 const getTileExposureArray = (modelData,layerNr) => {
   
+  let modelCount = modelData.getModelCount();
   let exposurePolylineIt = modelData.getFirstLayerPolyline(layerNr,POLY_IT.nLayerExposure,'rw');
   let tileObj =  [];
     
