@@ -68,84 +68,119 @@ exports.postprocessSortExposure_MT = function(
 
 const getTileExposureDuration = (exposureArray,modelData) => {
   
- 
   exposureArray.forEach(pass => {
-  pass.forEach(tile => {
-    // Initialize an object to store exposure durations for each laser
-    tile.laserDurationObj = {};
-    tile.laserDuration = {};
+    pass.forEach(tile => {
+      // Initialize an object to store exposure durations for each laser
+      let exposureTimeObj = {};
+      let skywritingTime = {};
+      let nextLaserStartPos = {};
+      tile.laserExposureTime = {};
+      tile.maxExposureTime = 0;
 
-    tile.exposure.forEach(cur => {
-      const cur_bsid = cur.getAttributeInt('bsid');
-      const laserID = Math.floor(cur_bsid / 10); // Calculate the laser ID
-      
-      const scanParamters = modelData
-        .getModel(cur.getModelIndex())
-        .getAttribEx('customTable')
-        .find(profile => profile.bsid === cur_bsid)
-        .attributes
-        .find(attr => attr.schema === CONST.scanningSchema);
+      tile.exposure.forEach((cur,curIndex) => {
+        const cur_bsid = cur.getAttributeInt('bsid');
+        const laserID = Math.floor(cur_bsid / 10); // Calculate the laser ID
+        
+        const scanParamters = modelData
+          .getModel(cur.getModelIndex())
+          .getAttribEx('customTable')
+          .find(profile => profile.bsid === cur_bsid)
+          .attributes
+          .find(attr => attr.schema === CONST.scanningSchema);
+        
+        const scanner = JSON.parse(modelData
+          .getTrayAttrib('scanhead_array'))
+          .find(scn => scn.laserIndex === laserID);
+        
+        const laserStartPos = {
+          'x': cur.getAttributeReal('xcoord') + scanner.x_ref,
+          'y': cur.getAttributeReal('ycoord') + scanner.rel_y_max };
+          
+        nextLaserStartPos[laserID] = {
+          'x': laserStartPos.x,
+          'y': laserStartPos.y += 
+            cur.getAttributeInt('bMoveFromFront') ? scanner.rel_y_max : -scanner.rel_y_max};  
+         
+        const exposureSettings = {
+          'fJumpSpeed': scanParamters.jumpSpeed,
+          'fMeltSpeed': cur.getAttributeReal('speed'),
+          'fJumpLengthLimit': scanParamters.jumpLengthLimit,
+          'nJumpDelay': scanParamters.jumpDelay,
+          'nMinJumpDelay': scanParamters.minJumpDelay,
+          'nMarkDelay': scanParamters.markDelay,
+          'nPolygonDelay': scanParamters.polygonDelay,
+          'polygonDelayMode': scanParamters.polygonDelayMode,
+          'laserPos' : laserStartPos };  
  
-      const scanner = JSON.parse(modelData
-        .getTrayAttrib('scanhead_array'))
-        .find(scn => scn.laserIndex === laserID);
-      
-      const laserStartPos = { 
-        'x': cur.getAttributeReal('xcoord') + scanner.x_ref,
-        'y': cur.getAttributeReal('ycoord') + scanner.rel_y_max }
-       
-      const exposureSettings = {
-        'fJumpSpeed': scanParamters.jumpSpeed,
-        'fMeltSpeed': cur.getAttributeReal('speed'),
-        'fJumpLengthLimit': scanParamters.jumpLengthLimit,
-        'nJumpDelay': scanParamters.jumpDelay,
-        'nMinJumpDelay': scanParamters.minJumpDelay,
-        'nMarkDelay': scanParamters.markDelay,
-        'nPolygonDelay': scanParamters.polygonDelay,
-        'polygonDelayMode': scanParamters.polygonDelayMode,
-        'laserPos' : laserStartPos
-      };
+        // If the laser ID doesn't exist in tile.laserDuration, create a new entry
+        if (!tile.laserExposureTime[laserID]) {
+          exposureTimeObj[laserID] = new EXPOSURE.bsExposureTime();
+          skywritingTime[laserID] = 0;
+          tile.laserExposureTime[laserID] = 0;
+        };
 
-      // If the laser ID doesn't exist in tile.laserDuration, create a new entry
-      if (!tile.laserDuration[laserID]) {
-        tile.laserDurationObj[laserID] = new EXPOSURE.bsExposureTime();
-        tile.laserDuration[laserID] = 0;
-      }
-
-      // Add polyline to the corresponding laser exposure time
-      tile.laserDurationObj[laserID].addPolyline(cur, exposureSettings);
-      tile.laserDuration[laserID] = tile.laserDurationObj[laserID].getExposureTimeMicroSeconds();
-    });
-  });
-});
-
-let temo = 0;
-
-//   exposureArray.forEach(pass => {
-//     pass.forEach(tile => {
-//       tile.tileDuration = tile.exposure.reduce(
-//         (acc, cur) => {
-//           
-//           let exposureSettings =  {
-//            'fJumpSpeed' :PARAM.getParamReal('durationSim', 'JumpSpeed'),
-//            'fMeltSpeed' : cur.getAttributeReal('speed'),
-//            'fJumpLengthLimit' : PARAM.getParamReal('durationSim', 'JumpLengthLimit'),
-//            'nJumpDelay' : PARAM.getParamInt('durationSim', 'JumpDelay'),
-//            'nMinJumpDelay': PARAM.getParamInt('durationSim', 'MinJumpDelay'),
-//            'nMarkDelay' : PARAM.getParamInt('durationSim', 'MarkDelay'),
-//            'nPolygonDelay': PARAM.getParamInt('durationSim', 'PolygonDelay'),
-//            'polygonDelayMode' : PARAM.getParamStr('durationSim', 'PolygonDelayMode')};
-//             
-//           acc.addPolyline(cur, exposureSettings); // Add polyline to accumulate exposure time
-//            
-//           return acc; // Return accumulator
-//         }, new EXPOSURE.bsExposureTime())
-//         .getExposureTimeMicroSeconds(); // Get total exposure time after all polylines are added
-//     });
-//   });
-
-
+        // Add polyline to the corresponding laser exposure time
+        exposureTimeObj[laserID].addPolyline(cur, exposureSettings);
+        // Get the added duration caused by skywriting
+        skywritingTime[laserID] += getSkywritingDuration(cur,modelData);
+        process.print(getSkywritingDuration(cur,modelData));        
+        // At last exposure polyline add position jump to next start pos plus added duration from skywriting
+        if (curIndex === tile.exposure.length - 1) {
+          
+          Object.keys(exposureTimeObj).forEach( key => {
+            
+            exposureTimeObj[key].setLaserPosition(
+              nextLaserStartPos[key].x,
+              nextLaserStartPos[key].y,
+              'jump');
+            
+            //get exposuretime of each laser in tile
+            tile.laserExposureTime[key] = exposureTimeObj[key].getExposureTimeMicroSeconds();
+            tile.laserExposureTime[key] += skywritingTime[key];
+            tile.maxExposureTime = tile.maxExposureTime < tile.laserExposureTime[key] ? tile.laserExposureTime[key] : tile.maxExposureTime;
+          }); // for each laser object
+        } // if
+        
+      }); // forEach .exposure
+    }); // forEach .tile
+  }); // forEach .pass
+  
 } //getTileExposureDuration
+
+
+const getSkywritingDuration = (cur,modelData) => {
+  
+  const skyWritingParamters = modelData
+          .getModel(cur.getModelIndex())
+          .getAttribEx('customTable')
+          .find(profile => profile.bsid === cur.getAttributeInt('bsid'))
+          .attributes
+          .find(attr => attr.schema === CONST.skywritingSchema);
+
+  let skywritingPostConst = 10; 
+  let skywritingPrevConst = 10;
+
+  if (skyWritingParamters.mode == 0) {
+    
+    let skywritingPostConst = 0; 
+    let skywritingPrevConst = 0;
+    
+    } else if (skyWritingParamters.mode == 1) {
+    
+    skywritingPostConst = 20;
+    skywritingPrevConst = 20;
+    
+  }  
+
+  let npostDur = skyWritingParamters.npost*skywritingPostConst/10; // do we still divide by 10 ? we also do it in perparemodelexposure
+  let nprevDur = skyWritingParamters.nprev*skywritingPrevConst/10; // do we still divide by 10 ?
+  
+  let skipCount = cur.getSkipCount();
+    
+  return (npostDur + nprevDur)*cur.getSkipCount()
+}
+
+   
 
 const getTileExposureArray = (modelData,layerNr) => {
   
@@ -197,17 +232,27 @@ const sortMovementDirectionOfTiles = (tileExposureArray) => {
     return entry;
   });
     
+  
   filteredExposureArray.forEach((entry, index) => {
-       
+    
+    let bFromFront = 1;
+    
     if ((index % 2 === 0 || !isPassDirectionAlternating) === !isFirstPassFrontToBack) {
       entry.sort().reverse();
-    }
-
+      bFromFront = 0;
+    };
+    
+    entry.forEach(tile => {
+      tile.exposure.forEach(polyIt => {
+        polyIt.setAttributeInt('bMoveFromFront', bFromFront)
+      });
+    })
+    
   });
   
   return filteredExposureArray;
   
-} // sortMovementDirectionOfTiles
+}; // sortMovementDirectionOfTiles
 
 
   

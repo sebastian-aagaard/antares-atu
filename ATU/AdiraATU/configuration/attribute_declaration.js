@@ -28,5 +28,6 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('sharedZone');
   buildAttrib.declareAttributeInt('islandId');
   buildAttrib.declareAttributeInt('stripeID');
-  
+  buildAttrib.declareAttributeInt('bMoveFromFront');
+
 };

@@ -22,7 +22,7 @@ exports.prepareModelExposure = (model) => {
   //generates a custom table containing different parameters depending on laser number
   
   let skywritingAttributes = {      
-    "schema": "http://schemas.scanlab.com/skywriting/2023/01",          
+    "schema": CONST.skywritingSchema,          
     "mode": PARAM.getParamInt('skywriting','skywritingMode'),
     "timelag": PARAM.getParamInt('skywriting','timelag'),
     "laseronshift": PARAM.getParamInt('skywriting','laserOnShift')*64,
@@ -32,7 +32,7 @@ exports.prepareModelExposure = (model) => {
   };
   
     let scanningAttributes = {      
-    "schema": "http://schemas.scanlab.com/scanning/2023/01",
+    "schema": CONST.scanningSchema,
     "laserOnDelay": PARAM.getParamInt('durationSim','laserOnDelay'),
     "laserOffDelay": PARAM.getParamInt('durationSim','laserOffDelay'),      
     "jumpSpeed": PARAM.getParamReal('durationSim','JumpSpeed'),
