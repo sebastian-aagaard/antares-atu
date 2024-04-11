@@ -8,14 +8,14 @@
 
 
 // -------- INCLUDES -------- //
-var MODEL = requireBuiltin('bsModel');
-var PARAM = requireBuiltin('bsParam');
-var POLY_IT = requireBuiltin('bsPolylineIterator');
-var EXPOSURE = requireBuiltin('bsExposureTime');
+const MODEL = requireBuiltin('bsModel');
+const PARAM = requireBuiltin('bsParam');
+const POLY_IT = requireBuiltin('bsPolylineIterator');
+const EXPOSURE = requireBuiltin('bsExposureTime');
 
 // -------- SCRIPTS INCLUDES -------- //
-let CONST = require('main/constants.js');
-
+const CONST = require('main/constants.js');
+const EXP3MF = require('../3mf/3mf_data_collector.js');
 /** 
  * Multithreaded post-processing.
  * @param  modelData        bsModelData
@@ -57,14 +57,93 @@ exports.postprocessSortExposure_MT = function(
     updateProcessingOrder(sortedExposureArray);
      
     getTileExposureDuration(sortedExposureArray,modelData);
-
+    
+    EXP3MF.createExporter3mf (sortedExposureArray,layerIt,modelData,layerNr);
+    
     layerIt.next();
     progress.step(1); 
    }
    
-   
-   
+   assignCustomJSON(modelData);
+     
+    let done =0;
+
 } // postprocessSortExposure_MT
+
+
+
+const assignCustomJSON  = (modelData) => {
+
+const isoDateString = new Date().toISOString(); // get date of file generation
+
+  var customJSON = {
+    
+    "namespaces": [
+      {
+        "schema": "http://schemas.scanlab.com/skywriting/2023/01",
+        "prefix": "skywriting"
+      },      
+      {
+        "schema": "http://adira.com/addcreator/202305",
+        "prefix": "adira"
+      },
+      {
+        "schema": "http://adira.com/tilinginformation/202305",
+        "prefix": "tiling"
+      }    
+    ],
+      
+    toolpathdata: [
+      {
+        "name": "statistics",
+        "schema": "http://adira.com/addcreator/202305",
+        attributes: {
+          "build_time": null,//buildTimeEstimate,
+          "total_mass": null,//totalPartMass,
+          "total_packed_powder":null,// totalPackedPowder                
+        }        
+      },
+      
+      {
+        "name": "generation",
+        "schema": "http://adira.com/addcreator/202305",
+        attributes: {
+          "created_at": isoDateString,
+          "created_by": "engineer"
+        }        
+      },
+
+      {
+        "name": "material",
+        "schema": "http://adira.com/addcreator/202305",
+        attributes: {
+          "layerthickness": null, //layerThickness,
+          "identifier": null,//model.getMaterialID(),
+          "density": null,//,
+          "gas": null,//         
+        }        
+      },
+      
+      {
+        "name": "process",
+        "schema": "http://adira.com/addcreator/202305",
+        "children": [
+          {
+            "name": "recoating",
+            attributes: {
+              "speed": PARAM.getParamInt('movementSettings','recoating_speed_mms')
+            }        
+          
+          }
+        ]
+                
+      }
+
+    ]};
+          
+   modelData.setTrayAttribEx('custom', customJSON);
+
+}
 
 const getTileExposureDuration = (exposureArray,modelData) => {
   
@@ -75,7 +154,7 @@ const getTileExposureDuration = (exposureArray,modelData) => {
       let skywritingTime = {};
       let nextLaserStartPos = {};
       tile.laserExposureTime = {};
-      tile.maxExposureTime = 0;
+      tile.exposureTime = 0;
 
       tile.exposure.forEach((cur,curIndex) => {
         const cur_bsid = cur.getAttributeInt('bsid');
@@ -123,7 +202,6 @@ const getTileExposureDuration = (exposureArray,modelData) => {
         exposureTimeObj[laserID].addPolyline(cur, exposureSettings);
         // Get the added duration caused by skywriting
         skywritingTime[laserID] += getSkywritingDuration(cur,modelData);
-        process.print(getSkywritingDuration(cur,modelData));        
         // At last exposure polyline add position jump to next start pos plus added duration from skywriting
         if (curIndex === tile.exposure.length - 1) {
           
@@ -137,7 +215,7 @@ const getTileExposureDuration = (exposureArray,modelData) => {
             //get exposuretime of each laser in tile
             tile.laserExposureTime[key] = exposureTimeObj[key].getExposureTimeMicroSeconds();
             tile.laserExposureTime[key] += skywritingTime[key];
-            tile.maxExposureTime = tile.maxExposureTime < tile.laserExposureTime[key] ? tile.laserExposureTime[key] : tile.maxExposureTime;
+            tile.exposureTime = tile.exposureTime < tile.laserExposureTime[key] ? tile.laserExposureTime[key] : tile.exposureTime;
           }); // for each laser object
         } // if
         
@@ -184,7 +262,6 @@ const getSkywritingDuration = (cur,modelData) => {
 
 const getTileExposureArray = (modelData,layerNr) => {
   
-  let modelCount = modelData.getModelCount();
   let exposurePolylineIt = modelData.getFirstLayerPolyline(layerNr,POLY_IT.nLayerExposure,'rw');
   let tileObj =  [];
     
@@ -329,70 +406,5 @@ const sortMovementDirectionOfTiles = (tileExposureArray) => {
 //   
 //   var isoDateString = new Date().toISOString(); // get date of file generation
 // 
-//   var customJSON = {
-//     
-//     "namespaces": [
-//       {
-//         "schema": "http://schemas.scanlab.com/skywriting/2023/01",
-//         "prefix": "skywriting"
-//       },      
-//       {
-//         "schema": "http://adira.com/addcreator/202305",
-//         "prefix": "adira"
-//       },
-//       {
-//         "schema": "http://adira.com/tilinginformation/202305",
-//         "prefix": "tiling"
-//       }    
-//     ],
-//       
-//     toolpathdata: [
-//       {
-//         "name": "statistics",
-//         "schema": "http://adira.com/addcreator/202305",
-//         attributes: {
-//           "build_time": buildTimeEstimate,
-//           "total_mass": totalPartMass,
-//           "total_packed_powder": totalPackedPowder                
-//         }        
-//       },
-//       
-//       {
-//         "name": "generation",
-//         "schema": "http://adira.com/addcreator/202305",
-//         attributes: {
-//           "created_at": isoDateString,
-//           "created_by": "engineer"
-//         }        
-//       },
-// 
-//       {
-//         "name": "material",
-//         "schema": "http://adira.com/addcreator/202305",
-//         attributes: {
-//           "layerthickness": layerThickness,
-//           "identifier": model.getMaterialID(),
-//           "density": parseFloat(model.getAttrib('density')),
-//           "gas": model.getAttrib('gas')          
-//         }        
-//       },
-//       
-//       {
-//         "name": "process",
-//         "schema": "http://adira.com/addcreator/202305",
-//         "children": [
-//           {
-//             "name": "recoating",
-//             attributes: {
-//               "speed": PARAM.getParamInt('movementSettings','recoating_speed_mms')
-//             }        
-//           
-//           }
-//         ]
-//                 
-//       }
-// 
-//     ]};
-//           
-//    modelData.setTrayAttribEx('custom', customJSON);
+
 //};

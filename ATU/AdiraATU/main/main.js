@@ -8,22 +8,23 @@
 'use strict';
 
 // -------- INCLUDES -------- //
-let EXPORT_FILTER = requireBuiltin('bsExportFilter');
-let CLI = require('main/export_cli.js');
-let LOCALIZER = require('localization/localizer.js');
+const EXPORT_FILTER = requireBuiltin('bsExportFilter');
+const CLI = require('main/export_cli.js');
+const LOCALIZER = require('localization/localizer.js');
 
 // -------- SCRIPTS INCLUDES -------- //
-let MACHINE_CONFIG = require('../configuration/machine_declaration.js');
-let PARAM_CONFIG = require('../configuration/parameter_declaration.js');
-let ATTRIB_CONFIG = require('../configuration/attribute_declaration.js');
-let POST_PROCESS_SORT = require('main/post_processor_sort_exposure.js');
+const MACHINE_CONFIG = require('../configuration/machine_declaration.js');
+const PARAM_CONFIG = require('../configuration/parameter_declaration.js');
+const ATTRIB_CONFIG = require('../configuration/attribute_declaration.js');
+const POST_PROCESS_SORT = require('main/post_processor_sort_exposure.js');
+const POST_PROCESS_META = require('main/post_processor_meta.js')
 //let POST_PROCESS_DURATION = require('main/post_processor_scanning_duration.js');
-let PREP_MODEL = require('main/prepare_model_exposure.js');
+const PREP_MODEL = require('main/prepare_model_exposure.js');
 
 //let UTIL = require('main/utility_functions.js');
 //let CONST = require('main/constants.js');
-let PREPROCESSOR = require('main/preprocessor.js');
-let TOOLPATH = require('main/Toolpath.js');
+const PREPROCESSOR = require('main/preprocessor.js');
+const TOOLPATH = require('main/Toolpath.js');
 
 // -------- GENERAL INFORMATION -------- //
 /** @param  aboutInfo  bsAboutInfo */
@@ -68,7 +69,8 @@ exports.declareBuildAttributes = (buildAttrib) => {
 
 exports.configurePostProcessingSteps = (a_config) => {
   // Postprocessing the toolpaths using the given function:
-  a_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,{bMultithread: true, nProgressWeight: 1});
+  a_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,{bMultithread: true, nProgressWeight: 10});
+  a_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta_MT,{bMultithread: true, nProgressWeight: 1});
 //  a_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,{bMultithread: true, nProgressWeight: 1});
   // create toolpath
   // generate 3mf Data

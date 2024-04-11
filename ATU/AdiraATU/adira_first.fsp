@@ -10,9 +10,11 @@
       <File Path="main/export_cli.js"/>
       <Filter Name="prepare model exposure">
         <File Path="main/prepare_model_exposure.js"/>
+        <File Path="main/post_processor_meta.js"/>
       </Filter>
       <Filter Name="post processor">
-        <File Path="main/post_processor.js"/>
+        <File Path="main/post_processor_sort_exposure.js"/>
+        <File Path="post_process_scanning_duration.js"/>
       </Filter>
     </Filter>
     <Filter Name="constants">

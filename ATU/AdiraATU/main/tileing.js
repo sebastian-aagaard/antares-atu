@@ -109,11 +109,16 @@ exports.getTileArray = function(modelLayer,bDrawTile,layerNr,modelData){
    let maxShiftX = (PARAM.getParamInt('tileing', 'number_x')-1)*PARAM.getParamReal('tileing', 'step_x');  
   // get coordinates of bounding box
   
+   
    let boundaries = modelData.getTrayAttribEx('allLayerBoundaries')
    let minX = boundaries[layerNr][0]; 
    let maxX = boundaries[layerNr][1];
    let minY = boundaries[layerNr][2];
    let maxY = boundaries[layerNr][3];
+  
+   if (layerNr>boundaries.lenght) {
+   let dummy = 0;
+     }
   
   ////////////////////////////////
   // Define and store tiles     //

@@ -30,6 +30,7 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
   let srcModelCount = modelDataSrc.getModelCount(); // get number of models
   let modelLayerCount = modelDataSrc.getLayerCount(); //get layer count
   
+  process.print('modelLayerCount: ' + modelLayerCount);
 
   ///////////////////////////////////////////////////////////////////
   // Define Scanner Array and set display Colour, store it in tray //
@@ -56,16 +57,16 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
   progress.initSteps(modelLayerCount+1);
     
 // run trough all layers and all models to get all boundaries
-  for ( let layerIt = 1; layerIt < modelLayerCount+1 && !progress.cancelled();layerIt++ )
+  for ( let layerIt = 1; layerIt < modelLayerCount && !progress.cancelled();layerIt++ )
     { 
     for( let modelIndex=0; modelIndex < targetModelCount && !progress.cancelled(); modelIndex++ )
       {
         
        // retrieve current model
-       let thisModel = modelDataTarget.getModel(0); 
+       let thisModel = modelDataTarget.getModel(0);
        let modelLayer =  thisModel.getModelLayerByNr(layerIt);
         
-        if (modelLayer.isValid()) {          
+        if (modelLayer.isValid() ) {          
           // get this model layer boundaries       
           let thisModelLayerBounds = modelLayer.tryGetBounds2D();
                    
@@ -88,13 +89,28 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
 // ADD LAYER BOUNDARIES
 
 let addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,layerIt) => {
-
+    
+  if (layerIt == 101){
+  
+    let dummy = 0;
+    }
+  
   let boundsArray = [
-    thisLayerBoundaries.m_min.m_coord[0], // xmin
-    thisLayerBoundaries.m_max.m_coord[0], // xmax
-    thisLayerBoundaries.m_min.m_coord[1], // ymin
-    thisLayerBoundaries.m_max.m_coord[1]];  // ymax
-
+        undefined, // xmin
+        undefined, // xmax
+        undefined, // ymin
+        undefined];  // ymax 
+    
+  if(thisLayerBoundaries){
+     boundsArray = [
+        thisLayerBoundaries.m_min.m_coord[0], // xmin
+        thisLayerBoundaries.m_max.m_coord[0], // xmax
+        thisLayerBoundaries.m_min.m_coord[1], // ymin
+        thisLayerBoundaries.m_max.m_coord[1]];  // ymax
+    
+    }
+    
+ 
   let allLayerBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
   
   // if allLayerBoundaries has nothing this is first layter
