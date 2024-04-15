@@ -36,10 +36,7 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
       }, 0);
       return totalPassSum + passSum;
   }, 0);
-
   
-  let scanningType = PARAM.getParamStr('tileing','ScanningMode');
-
   exposureArray.forEach((pass,passIndex) => {
     exporter_3mf.content[passIndex] = {
      "name": "sequence",
@@ -48,7 +45,7 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
         "uuid": UTIL.generateUUID(),
         "startx": pass[0].exposure[0].getAttribReal('xcoord'),
         "starty": pass[0].exposure[0].getAttribReal('ycoord'),
-        "sequencetransferspeed": 0,
+        "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
         "type": PARAM.getParamStr('tileing','ScanningMode').toLowerCase().replace(/\s+/g, ''),
         "requiredPasses": exposureArray.length,
         "tilesInPass": pass.length,
@@ -58,95 +55,77 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
       
       };
 
+    
     pass.forEach((tile, tileIndex) => {
+       
+      let speedY,tileSize;
+           
+      //find tile size and y speed
+      if(PARAM.getParamInt('tileing','ScanningMode')) 
+      {
+
+      tileSize = PARAM.getParamReal('otf','tile_size');
+      speedY = tile.exposureTime > 0 ? tileSize / (tile.exposureTime /(1000*1000)) : PARAM.getParamReal('otf','axis_max_speed');
+      speedY = speedY > PARAM.getParamReal('otf','axis_max_speed') ? PARAM.getParamReal('otf','axis_max_speed') : speedY;
+
+      } else { // point ans shoot
+       
+      tileSize = PARAM.getParamReal('scanhead','y_scanfield_size_mm');
+      speedY = PARAM.getParamReal('movementSettings','sequencetransfer_speed_mms');
+       
+      }
+
+      //find next ycoordinate
+
+      let nextTileYCoord;
+
+      if ( tileIndex + 1 < pass.length) {
+        nextTileYCoord = pass[tileIndex + 1].exposure[0].getAttribReal('ycoord');
+      } else {
+        nextTileYCoord =  pass[tileIndex].exposure[0].getAttribReal('ycoord') + tileSize
+      }
       
       exporter_3mf.content[passIndex].children[tileIndex] = {
         "name": "movement",
           "attributes": {
             "tileID":  tile.tileID,
-            "targetx": 99,
-            "targety": 99,
-            "positiony": 99,
-            "speedx":  99,
-            "speedy": 99,
+            "targetx": tile.exposure[0].getAttribReal('xcoord'),
+            "targety": nextTileYCoord,
+            "positiony": tile.exposure[0].getAttribReal('ycoord'),
+            "speedx":  0,
+            "speedy": speedY,
             "tileExposureTime": tile.exposureTime         
         }			
       }
     })
   })
+  
+  exporter_3mf = removeEmptyTilesIfFirstOrLast (exporter_3mf);
 
  arrayOfModels.forEach(m => {
     m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf)
     });
-
-
-// for (let passNr in passNumberGroups){
-//     
-//    if(Number.isInteger(Number(passNr))){ // only perfom task if the passNr is an integer*/
-//       let thispass = passNumberGroups[passNr];
-// 
-//       exporter_3mf.content[passNr] = {
-//              "name": "sequence",
-//              "namespace": "http://adira.com/tilinginformation/202305",
-//              "attributes": {
-//                 "uuid": UTIL.generateUUID(),
-//                 "startx": thispass.startx,
-//                 "starty": thispass.starty,//-scanheadArray[0].rel_y_max,
-//                 "sequencetransferspeed": thispass.sequencetransferspeed,
-//                 "type": thispass.type,
-//                 "requiredPasses": thispass.requiredPasses,
-//                 "tilesInPass": thispass.tilesInPass,
-//                 "layerScanningDuration":passNumberGroups.layerExposureDuration
-//               },
-//               "children": thistiletable[passNr]
-//           };
-//       
-//       let activeTile = [];     
-//       for (let tileNr in thispass.tiles){
-//          let tile =  thispass.tiles[tileNr];
-//          activeTile.push(tileNr);
-//         
-//         process.printInfo('typeof:' + typeof(tile.tileExposureDuration));
-//         
-//          exporter_3mf.content[passNr].children[tileNr] = {
-//            "name": "movement",
-//                       "attributes": {
-//                         "tileID":  thistiletable[passNr][tileNr].attributes.tileID,
-//                         "targetx": tile.xcoord,
-//                         "targety": thistiletable[passNr][tileNr].attributes.targety,
-//                         "positiony": thistiletable[passNr][tileNr].attributes.positiony,
-//                         "speedx":  tile.speedx,
-//                         "speedy":  tile.speedy,
-//                         "tileExposureTime": tile.tileExposureDuration         
-//                       }			
-//            };
-//       
-//            
-//       }//tileNr
-//       
-//       
-//       let firstTile =Math.min(...activeTile);
-//       let lastTile =Math.max(...activeTile);
-//       let currentTiles =exporter_3mf.content[passNr].children;
-//       exporter_3mf.content[passNr].attributes.tilesInPass = lastTile-firstTile + 1;
-//       let tilesToRemove = [];
-//       for(let i =0; i<required_passes_y;i++){
-//         if (i < firstTile || i > lastTile){
-//           tilesToRemove.push(i);// remove unused tiles if they first or last in the pass   
-//           }
-//         }
-//         
-//        exporter_3mf.content[passNr].children = exporter_3mf.content[passNr].children.filter(function(child,index) {
-//        return tilesToRemove.indexOf(index) === -1;
-//          });   
-//       
-//   } // pass is pass (integer)
-// } //passNr
-
-
-
- 
 }
+
+
+const removeEmptyTilesIfFirstOrLast = (exporter_3mf) => {
+  exporter_3mf.content = exporter_3mf.content.map(pass => {
+    const firstNonZeroIndex = pass.children.findIndex(tile => tile.attributes.tileExposureTime !== 0);
+    const lastNonZeroIndex = [...pass.children].reverse().findIndex(tile => tile.attributes.tileExposureTime !== 0);
+    const actualLastNonZeroIndex = lastNonZeroIndex !== -1 ? pass.children.length - 1 - lastNonZeroIndex : -1;
+    let filteredTiles = pass.children.filter((tile, index) => {
+      return index >= firstNonZeroIndex && index <= actualLastNonZeroIndex;
+    });
+    return { ...pass, children: filteredTiles };
+  }).filter(pass => pass.children.length > 0);
+  return exporter_3mf;
+};
+
+const getNextPosArray = (exposureArray) => {
+  
+  
+  
+};
 
 exports.createCustomJson = (model,modelData) => {
 
