@@ -58,19 +58,21 @@ exports.postprocessSortExposure_MT = function(
      
     getTileExposureDuration(sortedExposureArray,modelData);
     
+     
+    //process.print('layerNr: ' + layerNr); 
     EXP3MF.createExporter3mf (sortedExposureArray,layerIt,modelData,layerNr);
     
+    
     layerIt.next();
-    progress.step(1); 
+    progress.step(1);
+    
    }
    
-   assignCustomJSON(modelData);
+   // MOVE TO NON PARALELL POSTProcess
+   assignCustomJSON(modelData); //
      
-    let done =0;
-
 } // postprocessSortExposure_MT
-
-
+ 
 
 const assignCustomJSON  = (modelData) => {
 

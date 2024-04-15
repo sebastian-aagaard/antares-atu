@@ -20,17 +20,16 @@ let LASER = require('main/laser_designation.js');
 
 // -------- CODE -------- //
 
-// PREPROCESS LAYER STACK //
+// PREPROCESS LAYER STACK //pre
   /** preprocess layer stack is run once for each model.
    *  finds the boundaries of all models for each layer
    *  sets up the tile layout based on all layer boundaries for each layers
    */
 exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {  
   
-  let srcModelCount = modelDataSrc.getModelCount(); // get number of models
   let modelLayerCount = modelDataSrc.getLayerCount(); //get layer count
   
-  process.print('modelLayerCount: ' + modelLayerCount);
+ process.print('modelLayerCount: ' + modelLayerCount);
 
   ///////////////////////////////////////////////////////////////////
   // Define Scanner Array and set display Colour, store it in tray //
@@ -42,45 +41,35 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
   /////////////////////////////////////////
   // Caclulate Scene Boundaries pr Layer //
   /////////////////////////////////////////
-  
-    //progress.initSteps(srcModelCount);
-
-  // add all models on the platform into modelDataTarget
-   for( let modelIndex=0; modelIndex < srcModelCount && !progress.cancelled(); modelIndex++ )
-    {
-      let srcModel = modelDataSrc.getModel(modelIndex);      
-      modelDataTarget.addModelCopy(srcModel);
-    }
-    
-  let targetModelCount = modelDataTarget.getModelCount();
+ 
+  let srcModel = modelDataSrc.getModel(0);      
+  modelDataTarget.addModelCopy(srcModel);
+  let jointModels
  
   progress.initSteps(modelLayerCount+1);
     
 // run trough all layers and all models to get all boundaries
-  for ( let layerIt = 1; layerIt < modelLayerCount && !progress.cancelled();layerIt++ )
+  for ( let layerIt = 1; layerIt < modelLayerCount+1 && !progress.cancelled() ; layerIt++ )
     { 
-    for( let modelIndex=0; modelIndex < targetModelCount && !progress.cancelled(); modelIndex++ )
-      {
+
+       // retrieve current model layer
+       let modelLayer =  srcModel.getModelLayerByNr(layerIt);
         
-       // retrieve current model
-       let thisModel = modelDataTarget.getModel(0);
-       let modelLayer =  thisModel.getModelLayerByNr(layerIt);
-        
-        if (modelLayer.isValid() ) {          
-          // get this model layer boundaries       
+        if (modelLayer.isValid() && modelLayer.tryGetBounds2D()) {          
+          // get this model layer boundaries      
           let thisModelLayerBounds = modelLayer.tryGetBounds2D();
                    
           // check if this boundary exceeds the previous and store it
-          addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,layerIt)
-                 
-          // calculate the tileArray and stores it in modelLayer 
-          TILE.getTileArray(modelLayer,CONST.bDrawTile,layerIt,modelDataTarget); 
-          
-          } // is model layer valid
-          
+          addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,layerIt)                 
+               
+          } else {
+            
+            throw new Error('failed to access layer ' + layerIt + ', in ' + srcModel.getAttribEx('ModelName'));     
+            
+            }
+                      
      progress.step(1);
           
-    } //model iterator 
   } //layer iterator
 }; //preprocessLayerStack
 
@@ -90,11 +79,8 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
 
 let addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,layerIt) => {
     
-  if (layerIt == 101){
-  
-    let dummy = 0;
-    }
-  
+
+
   let boundsArray = [
         undefined, // xmin
         undefined, // xmax
@@ -113,7 +99,7 @@ let addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,laye
  
   let allLayerBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
   
-  // if allLayerBoundaries has nothing this is first layter
+  // if allLayerBoundaries has nothing this is first layer
   if (allLayerBoundaries == undefined) {
     
     allLayerBoundaries = [];
@@ -121,6 +107,12 @@ let addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,laye
     
     }
   
+      if (layerIt == 50){
+  
+    let dummy = 0;
+    
+    }
+    
   // if there is nothing yet for this layer, push this boundary 
   if (allLayerBoundaries[layerIt] == undefined) {
     

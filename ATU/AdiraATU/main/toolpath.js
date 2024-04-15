@@ -20,11 +20,14 @@ const TP2PASS = require('main/tile_to_passnumbergroup.js')
 const LASER = require('main/laser_designation.js');
 //var PATH_SET = requireBuiltin('bsPathSet');
 //var EXPOSURETIME = requireBuiltin('bsExposureTime');
+let TILE = require('main/tileing.js');
 
 exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {  
 
  let thisModel = modelData.getModel(0);
  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
+ 
+ TILE.getTileArray(thisLayer,nLayerNr,modelData);
   
  // check if this layer is valid, if not move on
   if(!thisLayer.isValid()) 

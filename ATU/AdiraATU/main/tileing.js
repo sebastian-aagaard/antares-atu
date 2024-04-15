@@ -8,10 +8,10 @@
 
 // -------- INCLUDES -------- //
 
-var PARAM = requireBuiltin('bsParam');
-var PATH_SET = requireBuiltin('bsPathSet');
-var VEC2 = requireBuiltin('vec2');
-var MODEL = requireBuiltin('bsModel');
+const PARAM = requireBuiltin('bsParam');
+const PATH_SET = requireBuiltin('bsPathSet');
+const VEC2 = requireBuiltin('vec2');
+const MODEL = requireBuiltin('bsModel');
 
 // -------- FUNCTIONS -------- //
 
@@ -98,7 +98,9 @@ function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
     
 }
 
-exports.getTileArray = function(modelLayer,bDrawTile,layerNr,modelData){
+exports.getTileArray = function(modelLayer,layerNr,modelData){
+  
+  //modelLayer = modelData.getModelLayerByNr(layerNr);
    
    //Calculate this layer shift in x and y 
    let shiftX = getShiftX(layerNr);
@@ -115,10 +117,6 @@ exports.getTileArray = function(modelLayer,bDrawTile,layerNr,modelData){
    let maxX = boundaries[layerNr][1];
    let minY = boundaries[layerNr][2];
    let maxY = boundaries[layerNr][3];
-  
-   if (layerNr>boundaries.lenght) {
-   let dummy = 0;
-     }
   
   ////////////////////////////////
   // Define and store tiles     //
@@ -244,14 +242,6 @@ exports.getTileArray = function(modelLayer,bDrawTile,layerNr,modelData){
        scanhead_outlines[3] = new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min); //max,min
        scanhead_outlines[4] = new VEC2.Vec2(cur_tile.x_min, cur_tile.y_min); //min,min   
       
-       if (bDrawTile)
-       {
-             
-         thisTile.addNewPath(scanhead_outlines);
-         thisTile.setClosed(false);              
-         modelLayer.addPathSet(thisTile,MODEL.nSubtypeSupport);
-               
-       }
            
       // dataToPass
       var tile_obj = new Object();

@@ -12,9 +12,9 @@ const UTIL = require('main/utility_functions.js');
 
 exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
   
-const modelZeroAtThisLayer = modelData.getModel(0).getModelLayerByNr(layerNr); // the first model of the platform will be where 
-  
-const tileTable_3mf = modelZeroAtThisLayer.getAttribEx('tileTable_3mf');
+  const arrayOfModels = UTIL.getModelsInLayer(modelData,layerNr);
+    
+  const tileTable_3mf = arrayOfModels[0].getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
   
   let exporter_3mf = {    
     "segment_attributes": [
@@ -29,32 +29,55 @@ const tileTable_3mf = modelZeroAtThisLayer.getAttribEx('tileTable_3mf');
       "content": []
   };
 
-const layerScanningDuration = exposureArray.reduce((totalPassSum, currentPass) => {
-    const passSum = currentPass.reduce((totalTileSum, currentTile) => {
-        // Assuming each `currentTile` is an array with a single number, extract that number.
-        return totalTileSum + currentTile.exposureTime;
-    }, 0);
-    return totalPassSum + passSum;
-}, 0);
+  const layerScanningDuration = exposureArray.reduce((totalPassSum, currentPass) => {
+      const passSum = currentPass.reduce((totalTileSum, currentTile) => {
+          // Assuming each `currentTile` is an array with a single number, extract that number.
+          return totalTileSum + currentTile.exposureTime;
+      }, 0);
+      return totalPassSum + passSum;
+  }, 0);
 
-exposureArray.forEach((pass,passIndex) => {
-  exporter_3mf.content[passIndex] = {
-   "name": "sequence",
-   "namespace": "http://adira.com/tilinginformation/202305",
-   "attributes": {
-      "uuid": UTIL.generateUUID(),
-      "startx": pass[0].exposure[0].getAttribReal('xcoord'),
-      "starty": pass[0].exposure[0].getAttribReal('ycoord'),
-      "sequencetransferspeed": 0,
-      "type": pass[0].exposure[0].getAttribReal('ycoord'),
-      "requiredPasses": exposureArray.length,
-      "tilesInPass": pass.length,
-      "layerScanningDuration":layerScanningDuration
-    },
-    "children": tileTable_3mf[passIndex]
-    
-    };
-})
+  
+  let scanningType = PARAM.getParamStr('tileing','ScanningMode');
+
+  exposureArray.forEach((pass,passIndex) => {
+    exporter_3mf.content[passIndex] = {
+     "name": "sequence",
+     "namespace": "http://adira.com/tilinginformation/202305",
+     "attributes": {
+        "uuid": UTIL.generateUUID(),
+        "startx": pass[0].exposure[0].getAttribReal('xcoord'),
+        "starty": pass[0].exposure[0].getAttribReal('ycoord'),
+        "sequencetransferspeed": 0,
+        "type": PARAM.getParamStr('tileing','ScanningMode').toLowerCase().replace(/\s+/g, ''),
+        "requiredPasses": exposureArray.length,
+        "tilesInPass": pass.length,
+        "layerScanningDuration":layerScanningDuration
+      },
+      "children": tileTable_3mf[passIndex]
+      
+      };
+
+    pass.forEach((tile, tileIndex) => {
+      
+      exporter_3mf.content[passIndex].children[tileIndex] = {
+        "name": "movement",
+          "attributes": {
+            "tileID":  tile.tileID,
+            "targetx": 99,
+            "targety": 99,
+            "positiony": 99,
+            "speedx":  99,
+            "speedy": 99,
+            "tileExposureTime": tile.exposureTime         
+        }			
+      }
+    })
+  })
+
+ arrayOfModels.forEach(m => {
+    m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf)
+    });
 
 
 // for (let passNr in passNumberGroups){
@@ -121,10 +144,8 @@ exposureArray.forEach((pass,passIndex) => {
 // } //passNr
 
 
-modelZeroAtThisLayer.setAttribEx('exporter_3mf', exporter_3mf);
 
-
-
+ 
 }
 
 exports.createCustomJson = (model,modelData) => {
