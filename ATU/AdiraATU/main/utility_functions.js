@@ -23,6 +23,20 @@ var CONST = require('main/constants.js');
 
 // -------- FUNCTIONS -------- //
 
+exports.getModelsInLayer = (modelData,layerNr) => {
+ 
+  let modelCount = modelData.getModelCount(); 
+  let arrayofModels = [];
+  
+  for (let modelIt = 0; modelIt < modelCount; modelIt++){
+  
+    if (modelData.getModelMaxLayerNr(modelIt) >= layerNr)
+      arrayofModels.push(modelData.getModel(modelIt))
+    }
+    
+    return arrayofModels;
+}
+
 ////////////////////////////////
 //        generateUUID        //
 //////////////////////////////// 
