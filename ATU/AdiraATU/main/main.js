@@ -19,7 +19,7 @@ const ATTRIB_CONFIG = require('../configuration/attribute_declaration.js');
 const POST_PROCESS_SORT = require('main/post_processor_sort_exposure.js');
 const POST_PROCESS_META = require('main/post_processor_meta.js')
 const POST_PROCESS_PLOT = require('main/post_processor_plot.js')
-
+const POST_PROCESS_STATS = require('main/post_processor_statistics.js');
 //let POST_PROCESS_DURATION = require('main/post_processor_scanning_duration.js');
 const PREP_MODEL = require('main/prepare_model_exposure.js');
 
@@ -72,12 +72,9 @@ exports.declareBuildAttributes = (buildAttrib) => {
 exports.configurePostProcessingSteps = (a_config) => {
   // Postprocessing the toolpaths using the given function:
   a_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,{bMultithread: true, nProgressWeight: 10});
-  a_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta_MT,{bMultithread: true, nProgressWeight: 1});
+   a_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta_MT,{bMultithread: true, nProgressWeight: 1});
   a_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,{bMultithread: true, nProgressWeight: 1});
-
-//  a_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,{bMultithread: true, nProgressWeight: 1});
-  // create toolpath
-  // generate 3mf Data
+  a_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,{bMultithread: false, nProgressWeight: 1});
 };
 
 

@@ -1,7 +1,7 @@
 /************************************************************
  * Parameter Declaration
  *
- * @author []
+ * @author Sebastian Aagaard
  * Copyright (c). All rights reserved.
  *********************************************************** */
 'use strict';
@@ -210,7 +210,13 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('otf','axis_max_speed', LOCALIZER.GetMessage('param_axis_max_speed'),0.0,100.0,80.0);
     parameter.declareParameterReal('otf','tile_rest_period', LOCALIZER.GetMessage('param_tile_rest_period'),0.0,120.0,0);
     
-    // group tileing
+  // group material
+  parameter.declareParameterGroup('material',LOCALIZER.GetMessage('grp_material'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+        parameter.declareParameterReal('material','density_g_cc', LOCALIZER.GetMessage('param_material_densitet'),0.0,1000.0,8.19);
+
+        
+    
+   // group tileing
   parameter.declareParameterGroup('tileing',LOCALIZER.GetMessage('grp_tileing'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterChoice('tileing', 'TilingMode', 
      LOCALIZER.GetMessage('param_TilingMode'),

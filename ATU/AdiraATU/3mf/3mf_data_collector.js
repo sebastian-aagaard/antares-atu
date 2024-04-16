@@ -109,7 +109,9 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
 
 
 const removeEmptyTilesIfFirstOrLast = (exporter_3mf) => {
+ 
   exporter_3mf.content = exporter_3mf.content.map(pass => {
+    
     const firstNonZeroIndex = pass.children.findIndex(tile => tile.attributes.tileExposureTime !== 0);
     const lastNonZeroIndex = [...pass.children].reverse().findIndex(tile => tile.attributes.tileExposureTime !== 0);
     const actualLastNonZeroIndex = lastNonZeroIndex !== -1 ? pass.children.length - 1 - lastNonZeroIndex : -1;
@@ -120,84 +122,3 @@ const removeEmptyTilesIfFirstOrLast = (exporter_3mf) => {
   }).filter(pass => pass.children.length > 0);
   return exporter_3mf;
 };
-
-const getNextPosArray = (exposureArray) => {
-  
-  
-  
-};
-
-exports.createCustomJson = (model,modelData) => {
-
-  const isoDateString = new Date().toISOString();
-
-  let customJSON = {
-
-  "namespaces": [
-    {
-      "schema": "http://schemas.scanlab.com/skywriting/2023/01",
-      "prefix": "skywriting"
-    },      
-    {
-      "schema": "http://adira.com/addcreator/202305",
-      "prefix": "adira"
-    },
-    {
-      "schema": "http://adira.com/tilinginformation/202305",
-      "prefix": "tiling"
-    }    
-  ],
-    
-  toolpathdata: [
-    {
-      "name": "statistics",
-      "schema": "http://adira.com/addcreator/202305",
-      attributes: {
-        "build_time": buildTimeEstimate,
-        "total_mass": totalPartMass,
-        "total_packed_powder": totalPackedPowder                
-      }        
-    },
-    
-    {
-      "name": "generation",
-      "schema": "http://adira.com/addcreator/202305",
-      attributes: {
-        "created_at": isoDateString,
-        "created_by": "engineer"
-      }        
-    },
-
-    {
-      "name": "material",
-      "schema": "http://adira.com/addcreator/202305",
-      attributes: {
-        "layerthickness": layerThickness,
-        "identifier": model.getMaterialID(),
-        "density": parseFloat(model.getAttrib('density')),
-        "gas": model.getAttrib('gas')          
-      }        
-    },
-    
-    {
-      "name": "process",
-      "schema": "http://adira.com/addcreator/202305",
-      "children": [
-        {
-          "name": "recoating",
-          attributes: {
-            "speed": PARAM.getParamInt('movementSettings','recoating_speed_mms')
-          }        
-        
-        }
-      ]
-              
-    }
-
-  ]};
-
-  //"type": PARAM.getParamStr('tileing','ScanningMode'),
-    
-  modelData.setTrayAttribEx('custom', customJSON);
-    
-}

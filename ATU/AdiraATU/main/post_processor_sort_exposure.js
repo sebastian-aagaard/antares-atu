@@ -68,85 +68,8 @@ exports.postprocessSortExposure_MT = function(
     
    }
    
-   // MOVE TO NON PARALELL POSTProcess
-   assignCustomJSON(modelData); //
-     
 } // postprocessSortExposure_MT
  
-
-const assignCustomJSON  = (modelData) => {
-
-const isoDateString = new Date().toISOString(); // get date of file generation
-
-  var customJSON = {
-    
-    "namespaces": [
-      {
-        "schema": "http://schemas.scanlab.com/skywriting/2023/01",
-        "prefix": "skywriting"
-      },      
-      {
-        "schema": "http://adira.com/addcreator/202305",
-        "prefix": "adira"
-      },
-      {
-        "schema": "http://adira.com/tilinginformation/202305",
-        "prefix": "tiling"
-      }    
-    ],
-      
-    toolpathdata: [
-      {
-        "name": "statistics",
-        "schema": "http://adira.com/addcreator/202305",
-        attributes: {
-          "build_time": null,//buildTimeEstimate,
-          "total_mass": null,//totalPartMass,
-          "total_packed_powder":null,// totalPackedPowder                
-        }        
-      },
-      
-      {
-        "name": "generation",
-        "schema": "http://adira.com/addcreator/202305",
-        attributes: {
-          "created_at": isoDateString,
-          "created_by": "engineer"
-        }        
-      },
-
-      {
-        "name": "material",
-        "schema": "http://adira.com/addcreator/202305",
-        attributes: {
-          "layerthickness": null, //layerThickness,
-          "identifier": null,//model.getMaterialID(),
-          "density": null,//,
-          "gas": null,//         
-        }        
-      },
-      
-      {
-        "name": "process",
-        "schema": "http://adira.com/addcreator/202305",
-        "children": [
-          {
-            "name": "recoating",
-            attributes: {
-              "speed": PARAM.getParamInt('movementSettings','recoating_speed_mms')
-            }        
-          
-          }
-        ]
-                
-      }
-
-    ]};
-          
-   modelData.setTrayAttribEx('custom', customJSON);
-
-}
-
 const getTileExposureDuration = (exposureArray,modelData) => {
   
   exposureArray.forEach(pass => {
