@@ -72,6 +72,7 @@
     "param_y_workarea_max_mm": "Y-Coordinate max [mm]",
   "grp_movementSettings": "Scanner Head and Recoater Movement",
     "param_recoating_time": "Recoating Duration [ms] [ONLY used for estimating buildtime]",
+    "param_powderfilling_time_ms": "Powder Refilling Time [ms] [ONLY used for estimating buildtime]",
     "param_sequencetransfer_speed_mms": "Scanner Head x-Travel Speed Between Passes [mm/s]",
     "param_recoating_speed_mms" : "Recoating Velocity [mm/s]",
     "param_head_startpos_x": "Scanner Head Starting Position - X coord [mm]",

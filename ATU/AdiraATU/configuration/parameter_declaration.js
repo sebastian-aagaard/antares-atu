@@ -134,6 +134,7 @@ exports.declareParameters = function(parameter)
   // -------- MOVEMENT SETTINGS -------- //  
   parameter.declareParameterGroup('movementSettings',LOCALIZER.GetMessage('grp_movementSettings'),'Movement Settings',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterInt('movementSettings', 'recoating_time_ms',LOCALIZER.GetMessage('param_recoating_time'),0,100000,26000);
+    parameter.declareParameterInt('movementSettings', 'powderfilling_time_ms',LOCALIZER.GetMessage('param_powderfilling_time_ms'),0,100000,21000);
     parameter.declareParameterInt('movementSettings', 'sequencetransfer_speed_mms',LOCALIZER.GetMessage('param_sequencetransfer_speed_mms'),0,1000,120);
     parameter.declareParameterInt('movementSettings', 'recoating_speed_mms',LOCALIZER.GetMessage('param_recoating_speed_mms'),0,1000,120);
     parameter.declareParameterReal('movementSettings', 'head_startpos_x',LOCALIZER.GetMessage('param_head_startpos_x'),0.0,1000.0,0.0);

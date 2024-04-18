@@ -35,10 +35,10 @@ exports.getStatistics = function(
       * PARAM.getParamInt('workarea','y_workarea_max_mm')
       * PARAM.getParamReal('material','density_g_cc') / (1000*1000*1000);
     
-  //process.print('buildtime_us: ' + buildTime_us);
-  //process.print('buildtime_s: ' + buildTime_us/(1000*1000));
-  //process.print('buildtime_min: ' + buildTime_us/(1000*1000)/60);
-  //process.print('buildtime_hours: ' + buildTime_us/(3600*1000*1000*1000));
+  process.print('buildtime_us: ' + buildTime_us);
+  process.print('buildtime_s: ' + buildTime_us/(1000*1000));
+  process.print('buildtime_min: ' + buildTime_us/(1000*1000)/60);
+  process.print('buildtime_hours: ' + buildTime_us/(3600*1000*1000));
   
     
   let customJSON = {
@@ -122,17 +122,23 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
   
   while(layerIt.isValid() && !progress.cancelled())
   {
-    let layerNr = layerIt.getLayerNr();
-    buildTime += 
-      UTIL.getModelsInLayer(modelData,layerNr)[0]
+    const layerNr = layerIt.getLayerNr();
+    
+    const recoatingTime = PARAM.getParamInt('movementSettings','recoating_time_ms') * 1000;
+    const powderFillingTime = PARAM.getParamInt('movementSettings', 'powderfilling_time_ms') * 1000;
+    
+    
+    let layerDuration =   UTIL.getModelsInLayer(modelData,layerNr)[0]
       .getModelLayerByNr(layerNr)
       .getAttribEx('exporter_3mf')
       .content[0]
       .attributes
       .layerTotalDuration;
     
-    buildTime += PARAM.getParamInt('movementSettings','recoating_time_ms') * 1000;
-     
+    buildTime += (layerDuration<powderFillingTime) ? powderFillingTime : layerDuration ;
+    
+    buildTime += recoatingTime;
+    
     progress.step(1);
     layerIt.next();
   }

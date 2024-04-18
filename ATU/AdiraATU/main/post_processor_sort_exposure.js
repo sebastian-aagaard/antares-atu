@@ -76,6 +76,7 @@ const getTileExposureDuration = (exposureArray,modelData) => {
       let exposureTimeObj = {};
       let skywritingTime = {};
       let nextLaserStartPos = {};
+      
       tile.laserExposureTime = {};
       tile.exposureTime = 0;
 
@@ -111,11 +112,7 @@ const getTileExposureDuration = (exposureArray,modelData) => {
           
         nextLaserStartPos[laserID] = {
           'x': laserStartPos.x,
-          'y': laserStartPos.y + cur.getAttributeInt('bMoveFromFront') ? scanner.rel_y_max : -scanner.rel_y_max};
-
-        //process.print('laserStart: ' + laserStartPos.x + '/' +  laserStartPos.y);
-        //process.print('laserNext : ' +  nextLaserStartPos[laserID].x + '/' +  nextLaserStartPos[laserID].y);
-
+          'y': laserStartPos.y + (cur.getAttributeInt('bMoveFromFront') ? scanner.rel_y_max : -scanner.rel_y_max)};
  
         // If the laser ID doesn't exist in tile.laserDuration, create a new entry
         if (!tile.laserExposureTime[laserID]) {
@@ -140,19 +137,18 @@ const getTileExposureDuration = (exposureArray,modelData) => {
               nextLaserStartPos[key].x,
               nextLaserStartPos[key].y,
               'jump');
-            
-            //process.print(nextLaserStartPos[key].x + '/' +  nextLaserStartPos[key].y);
-            
+
             //get exposuretime of each laser in tile
             tile.laserExposureTime[key] = exposureTimeObj[key]
               .getExposureTimeMicroSeconds();
             tile.laserExposureTime[key] += skywritingTime[key];
-            tile.exposureTime = tile.exposureTime < tile.laserExposureTime[key] ? tile.laserExposureTime[key] : tile.exposureTime;
+            tile.exposureTime = ((tile.exposureTime < tile.laserExposureTime[key]) 
+              ? tile.laserExposureTime[key] : tile.exposureTime);
           }); // for each laser object
           
-          //process.print(tile.exposureTime);
+         //process.print(tile.exposureTime);
         } // if
-        
+      
       }); // forEach .exposure
     }); // forEach .tile
   }); // forEach .pass
@@ -186,9 +182,7 @@ const getSkywritingDuration = (cur,modelData) => {
 
   let npostDur = skyWritingParamters.npost*skywritingPostConst/10; // do we still divide by 10 ? we also do it in perparemodelexposure
   let nprevDur = skyWritingParamters.nprev*skywritingPrevConst/10; // do we still divide by 10 ?
-  
-  //process.print(npostDur + ' / ' + nprevDur); 
-    
+      
   return (npostDur + nprevDur)*cur.getSkipCount()
 }
 
