@@ -1,4 +1,4 @@
-/************************************************************
+ /************************************************************
  * Post Processing Get Statistics
  *
  * @author Sebastian Aagaard
@@ -28,10 +28,17 @@ exports.getStatistics = function(
 
   
   const partMassKg = getPartMassKg(modelData,progress,layer_start_nr,layer_end_nr);
-  const buildTime = getBuildTime(modelData,progress,layer_start_nr,layer_end_nr);
-  
-  process.print('buildtime_ms: ' + buildTime);
-  process.print('buildtime_hours: ' + buildTime/3600000);
+  const buildTime_us = getBuildTime_us(modelData,progress,layer_start_nr,layer_end_nr);
+  const totalPowder = layer_end_nr 
+      * modelData.getLayerThickness() 
+      * PARAM.getParamInt('workarea','x_workarea_max_mm') 
+      * PARAM.getParamInt('workarea','y_workarea_max_mm')
+      * PARAM.getParamReal('material','density_g_cc') / (1000*1000*1000);
+    
+  //process.print('buildtime_us: ' + buildTime_us);
+  //process.print('buildtime_s: ' + buildTime_us/(1000*1000));
+  //process.print('buildtime_min: ' + buildTime_us/(1000*1000)/60);
+  //process.print('buildtime_hours: ' + buildTime_us/(3600*1000*1000*1000));
   
     
   let customJSON = {
@@ -56,7 +63,7 @@ exports.getStatistics = function(
         "name": "statistics",
         "schema": "http://adira.com/addcreator/202305",
         attributes: {
-          "build_time": buildTime,
+          "build_time": buildTime_us,
           "total_mass": partMassKg,
           "total_packed_powder":null,// totalPackedPowder                
         }        
@@ -78,7 +85,7 @@ exports.getStatistics = function(
           "layerthickness": modelData.getLayerThickness(),
           "identifier": null,//model.getMaterialID(),
           "density": PARAM.getParamReal('material','density_g_cc'),//,
-          "gas": null,//         
+          "gas": totalPowder,//         
         }        
       },
       
@@ -100,10 +107,9 @@ exports.getStatistics = function(
     ]};
           
    modelData.setTrayAttribEx('custom', customJSON);
-   let done =0;
 }
 
-const getBuildTime = (modelData,progress,layer_start_nr,layer_end_nr) => {
+const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
   
   let layerCount = layer_end_nr-layer_start_nr+1;
  
@@ -123,7 +129,9 @@ const getBuildTime = (modelData,progress,layer_start_nr,layer_end_nr) => {
       .getAttribEx('exporter_3mf')
       .content[0]
       .attributes
-      .layerScanningDuration;
+      .layerTotalDuration;
+    
+    buildTime += PARAM.getParamInt('movementSettings','recoating_time_ms') * 1000;
      
     progress.step(1);
     layerIt.next();

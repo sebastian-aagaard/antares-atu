@@ -28,16 +28,9 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
     ],
       "content": []
   };
-
-  const layerScanningDuration = exposureArray.reduce((totalPassSum, currentPass) => {
-      const passSum = currentPass.reduce((totalTileSum, currentTile) => {
-          // Assuming each `currentTile` is an array with a single number, extract that number.
-          return totalTileSum + currentTile.exposureTime;
-      }, 0);
-      return totalPassSum + passSum;
-  }, 0);
   
   exposureArray.forEach((pass,passIndex) => {
+    
     exporter_3mf.content[passIndex] = {
      "name": "sequence",
      "namespace": "http://adira.com/tilinginformation/202305",
@@ -49,10 +42,10 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
         "type": PARAM.getParamStr('tileing','ScanningMode').toLowerCase().replace(/\s+/g, ''),
         "requiredPasses": exposureArray.length,
         "tilesInPass": pass.length,
-        "layerScanningDuration":layerScanningDuration
+        "layerScanningDuration":null,
+        "layerTotalDuration" : null
       },
       "children": tileTable_3mf[passIndex]
-      
       };
 
     
@@ -68,13 +61,15 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
       speedY = tile.exposureTime > 0 ? tileSize / (tile.exposureTime /(1000*1000)) : PARAM.getParamReal('otf','axis_max_speed');
       speedY = speedY > PARAM.getParamReal('otf','axis_max_speed') ? PARAM.getParamReal('otf','axis_max_speed') : speedY;
 
-      } else { // point ans shoot
+      } else { // point and shoot
        
       tileSize = PARAM.getParamReal('scanhead','y_scanfield_size_mm');
       speedY = PARAM.getParamReal('movementSettings','sequencetransfer_speed_mms');
        
       }
-
+      
+      const tileMovementDuration = (tileSize/speedY)*1000*1000;
+      
       //find next ycoordinate
 
       let nextTileYCoord;
@@ -94,18 +89,41 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
             "positiony": tile.exposure[0].getAttribReal('ycoord'),
             "speedx":  0,
             "speedy": speedY,
-            "tileExposureTime": tile.exposureTime         
+            "tileExposureTime": tile.exposureTime,
+            "tileTotalTime": tileMovementDuration         
         }			
       }
     })
   })
   
+  assignLayerTotals(exporter_3mf);
+  
   exporter_3mf = removeEmptyTilesIfFirstOrLast (exporter_3mf);
 
- arrayOfModels.forEach(m => {
+  // set the exporter_3mf for all models
+  arrayOfModels.forEach(m => {
     m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf)
     });
 }
+
+
+const assignLayerTotals = (exporter_3mf) => {
+  exporter_3mf.content.forEach((passContent, passIndex) => {
+    // Initialize total durations
+    let layerScanningDuration = 0;
+    let layerTotalDuration = 0;
+
+    passContent.children.forEach(tile => {
+      layerScanningDuration += tile.attributes.tileExposureTime;
+      layerTotalDuration += tile.attributes.tileTotalTime;
+    });
+
+    // Assign the calculated durations to the respective pass
+    passContent.attributes.layerScanningDuration = layerScanningDuration;
+    passContent.attributes.layerTotalDuration = layerTotalDuration;
+  });
+}
+
 
 
 const removeEmptyTilesIfFirstOrLast = (exporter_3mf) => {

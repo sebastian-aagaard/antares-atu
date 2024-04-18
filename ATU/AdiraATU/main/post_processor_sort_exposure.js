@@ -57,11 +57,9 @@ exports.postprocessSortExposure_MT = function(
     updateProcessingOrder(sortedExposureArray);
      
     getTileExposureDuration(sortedExposureArray,modelData);
-    
      
     //process.print('layerNr: ' + layerNr); 
     EXP3MF.createExporter3mf (sortedExposureArray,layerIt,modelData,layerNr);
-    
     
     layerIt.next();
     progress.step(1);
@@ -98,12 +96,7 @@ const getTileExposureDuration = (exposureArray,modelData) => {
         
         const laserStartPos = {
           'x': cur.getAttributeReal('xcoord') + scanner.x_ref,
-          'y': cur.getAttributeReal('ycoord') + scanner.rel_y_max };
-          
-        nextLaserStartPos[laserID] = {
-          'x': laserStartPos.x,
-          'y': laserStartPos.y += 
-            cur.getAttributeInt('bMoveFromFront') ? scanner.rel_y_max : -scanner.rel_y_max};  
+          'y': cur.getAttributeReal('ycoord') + scanner.rel_y_max }; 
          
         const exposureSettings = {
           'fJumpSpeed': scanParamters.jumpSpeed,
@@ -115,10 +108,20 @@ const getTileExposureDuration = (exposureArray,modelData) => {
           'nPolygonDelay': scanParamters.polygonDelay,
           'polygonDelayMode': scanParamters.polygonDelayMode,
           'laserPos' : laserStartPos };  
+          
+        nextLaserStartPos[laserID] = {
+          'x': laserStartPos.x,
+          'y': laserStartPos.y + cur.getAttributeInt('bMoveFromFront') ? scanner.rel_y_max : -scanner.rel_y_max};
+
+        //process.print('laserStart: ' + laserStartPos.x + '/' +  laserStartPos.y);
+        //process.print('laserNext : ' +  nextLaserStartPos[laserID].x + '/' +  nextLaserStartPos[laserID].y);
+
  
         // If the laser ID doesn't exist in tile.laserDuration, create a new entry
         if (!tile.laserExposureTime[laserID]) {
           exposureTimeObj[laserID] = new EXPOSURE.bsExposureTime();
+          exposureTimeObj[laserID].configure(exposureSettings);
+          
           skywritingTime[laserID] = 0;
           tile.laserExposureTime[laserID] = 0;
         };
@@ -127,6 +130,7 @@ const getTileExposureDuration = (exposureArray,modelData) => {
         exposureTimeObj[laserID].addPolyline(cur, exposureSettings);
         // Get the added duration caused by skywriting
         skywritingTime[laserID] += getSkywritingDuration(cur,modelData);
+        
         // At last exposure polyline add position jump to next start pos plus added duration from skywriting
         if (curIndex === tile.exposure.length - 1) {
           
@@ -137,11 +141,16 @@ const getTileExposureDuration = (exposureArray,modelData) => {
               nextLaserStartPos[key].y,
               'jump');
             
+            //process.print(nextLaserStartPos[key].x + '/' +  nextLaserStartPos[key].y);
+            
             //get exposuretime of each laser in tile
-            tile.laserExposureTime[key] = exposureTimeObj[key].getExposureTimeMicroSeconds();
+            tile.laserExposureTime[key] = exposureTimeObj[key]
+              .getExposureTimeMicroSeconds();
             tile.laserExposureTime[key] += skywritingTime[key];
             tile.exposureTime = tile.exposureTime < tile.laserExposureTime[key] ? tile.laserExposureTime[key] : tile.exposureTime;
           }); // for each laser object
+          
+          //process.print(tile.exposureTime);
         } // if
         
       }); // forEach .exposure
@@ -165,20 +174,20 @@ const getSkywritingDuration = (cur,modelData) => {
 
   if (skyWritingParamters.mode == 0) {
     
-    let skywritingPostConst = 0; 
-    let skywritingPrevConst = 0;
+    skywritingPostConst = 0; 
+    skywritingPrevConst = 0;
     
     } else if (skyWritingParamters.mode == 1) {
     
     skywritingPostConst = 20;
-    skywritingPrevConst = 20;
+    skywritingPrevConst = 20;  
     
   }  
 
   let npostDur = skyWritingParamters.npost*skywritingPostConst/10; // do we still divide by 10 ? we also do it in perparemodelexposure
   let nprevDur = skyWritingParamters.nprev*skywritingPrevConst/10; // do we still divide by 10 ?
   
-  let skipCount = cur.getSkipCount();
+  //process.print(npostDur + ' / ' + nprevDur); 
     
   return (npostDur + nprevDur)*cur.getSkipCount()
 }
@@ -255,81 +264,3 @@ const sortMovementDirectionOfTiles = (tileExposureArray) => {
   return filteredExposureArray;
   
 }; // sortMovementDirectionOfTiles
-
-
-  
-//   var surfaceAreaTotal = 0;
-//   var buildTimeEstimate = 0;
-//   //process.printInfo("postprocess model count: " + modelData.getModelCount());
-//   let model = modelData.getModel(0);
-// 
-//   var layerThickness = model.getLayerThickness();
-//   for(let layer_nr = layer_start_nr; layer_nr <= layer_end_nr; ++layer_nr)
-//   {
-//     progress.step(1);
-//      
-//     let modelLayer = model.getModelLayerByNr(layer_nr);   
-//     
-// 
-//  
-//     let exporter_3mf = modelLayer.getAttribEx('exporter_3mf');
-//    
-//    
-//     let totalMoveDuration=0;
-//     // calculate distance travelled single
-//     for (let i = 0; i < exporter_3mf.content.length;i++){
-//       
-//     
-//     let requiredPasses = exporter_3mf.content[i].attributes.requiredPasses;
-//     let tilesInPass = exporter_3mf.content[i].attributes.tilesInPass;
-//     let startx = exporter_3mf.content[i].attributes.startx;
-//     let starty = exporter_3mf.content[i].attributes.starty;
-//     let transferSpeed = exporter_3mf.content[i].attributes.sequencetransferspeed;
-//       
-//       let movementSpeed = transferSpeed;
-//       
-//       for (let j = 0; j< tilesInPass;j++){
-//         
-//         let targetx = exporter_3mf.content[i].children[j].attributes.targetx;
-//         let targety = exporter_3mf.content[i].children[j].attributes.targety;
-// 
-//         let a = startx-targetx;
-//         let b = starty-targety;
-//         let c = Math.sqrt(a*a+b*b);
-//         
-//         startx = targetx;
-//         starty = targety;
-//         
-//         var moveDuration = c/transferSpeed;
-//         totalMoveDuration += moveDuration;   
-//       
-//         movementSpeed = exporter_3mf.content[i].children[j].attributes.speedy;
-//     
-//         }
-//       }
-//     
-//     
-//     let recoatingDuration = PARAM.getParamInt('movementSettings','recoating_time_ms');
-//     let thisLayerDuration = exporter_3mf.content[0].attributes.layerScanningDuration; 
-//     
-//     buildTimeEstimate += thisLayerDuration+recoatingDuration+totalMoveDuration;
-//     
-//     let islandIT = modelLayer.getFirstIsland();
-//     
-//     while(islandIT.isValid())
-//     {
-//       let thisIland = islandIT.getIsland();
-//       surfaceAreaTotal += thisIland.getSurfaceArea();
-//       islandIT.next();
-//     }    
-//   } //for (iterate through layers)
-//   
-//       
-//   var totalPartMass = surfaceAreaTotal*layerThickness*model.getAttrib('density')/(1000*1000*1000);
-//   var totalPackedPowder = layer_end_nr * layerThickness * PARAM.getParamInt('workarea','x_workarea_max_mm') * PARAM.getParamInt('workarea','y_workarea_max_mm')*model.getAttrib('density') / (1000*1000*1000);
-//   
-//   
-//   var isoDateString = new Date().toISOString(); // get date of file generation
-// 
-
-//};

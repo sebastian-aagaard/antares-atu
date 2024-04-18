@@ -29,7 +29,7 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
   
   let modelLayerCount = modelDataSrc.getLayerCount(); //get layer count
   
- process.print('modelLayerCount: ' + modelLayerCount);
+ //process.print('modelLayerCount: ' + modelLayerCount);
 
   ///////////////////////////////////////////////////////////////////
   // Define Scanner Array and set display Colour, store it in tray //

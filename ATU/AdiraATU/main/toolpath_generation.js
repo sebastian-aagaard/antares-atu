@@ -241,7 +241,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     
   } else { // is support
     
-    if(PARAM.getParamInt('support','param_supportContourToogle')){
+    if(PARAM.getParamInt('support','supportContourToogle')){
     let supportBorderHatch = new HATCH.bsHatch();  
     islandOffset.borderToHatch(supportBorderHatch);
 
@@ -251,8 +251,8 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     }
     
     let hatchingArgs = {
-         "fHatchDensity" : support_hatch_density,
-         "fHatchAngle" : hatchAngle,
+         "fHatchDensity" : PARAM.getParamReal('support','support_hdens'),
+         "fHatchAngle" : hatchAngle,  
          "nCycles" : 1,
          "fCollinearBorderSnapTol" : 0.0,
          "fBlocksortRunAheadLimit": 2.0,
@@ -263,11 +263,11 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
           HATCH.nHatchFlagFlexDensity
         };              
     
-    let supportBulk = generateOffset(islandOffset,beam_compensation).offsetIsland;
+    let supportBulk = exports.generateOffset(islandOffset,beam_compensation).offsetIsland;
     var support_hatch = new HATCH.bsHatch();
     supportBulk.hatchExt2(support_hatch,hatchingArgs);
       
-    support_hatch.setAttributeInt('type',CONST.nType_support_hatch);
+    support_hatch.setAttributeInt('type',CONST.typeDesignations.support_hatch.value);
     support_hatch.setAttributeInt('islandId',islandId);
     allSupportHatch.moveDataFrom(support_hatch);       
   }
@@ -305,12 +305,12 @@ exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){
       if(is_part)
       {      
         // part
-        polyline_hatch_paths.setAttributeInt("type", CONST.nType_openPolyline);
+        polyline_hatch_paths.setAttributeInt("type", CONST.typeDesignations.open_polyline.value);
       }
       else
       {
         // support/fixtures
-        polyline_hatch_paths.setAttributeInt("type", CONST.nType_openPolyline);
+        polyline_hatch_paths.setAttributeInt("type", CONST.typeDesignations.support_hatch.value);
       }
       
       allPolyLineHatch.moveDataFrom(polyline_hatch_paths); // moves polyline_hatch_paths to hatchResult
