@@ -20,6 +20,7 @@ exports.bDrawTile = true; // this inversly toggles the ability to handle CAD gen
 exports.scanningSchema = 'http://schemas.scanlab.com/scanning/2023/01';
 exports.skywritingSchema = 'http://schemas.scanlab.com/skywriting/2023/01';
 
+exports.parkingPosition = { x: -50 , y: - 560 };
 
 // -------- TYPE DESIGNATION -------- //
 exports.typeDesignations = {

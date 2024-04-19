@@ -9,8 +9,10 @@
 // -------- INCLUDES -------- //
 //const MODEL = requireBuiltin('bsModel');
 const PARAM = requireBuiltin('bsParam');
+const VEC2 = requireBuiltin('vec2');
 const POLY_IT = requireBuiltin('bsPolylineIterator');
 const UTIL = require('main/utility_functions.js');
+const CONST = require('main/constants.js');
 
 /** 
  * Multithreaded post-processing.
@@ -118,33 +120,81 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
       layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
   
-  let buildTime = 0;
+  let buildTime_us = 0;
   
   while(layerIt.isValid() && !progress.cancelled())
   {
     const layerNr = layerIt.getLayerNr();
     
-    const recoatingTime = PARAM.getParamInt('movementSettings','recoating_time_ms') * 1000;
-    const powderFillingTime = PARAM.getParamInt('movementSettings', 'powderfilling_time_ms') * 1000;
+    const recoatingTime_us = PARAM.getParamInt('movementSettings','recoating_time_ms') * 1000;
+    const powderFillingTime_us = PARAM.getParamInt('movementSettings', 'powderfilling_time_ms') * 1000;
     
-    
-    let layerDuration =   UTIL.getModelsInLayer(modelData,layerNr)[0]
+    let exportData =    UTIL.getModelsInLayer(modelData,layerNr)[0]
       .getModelLayerByNr(layerNr)
       .getAttribEx('exporter_3mf')
-      .content[0]
+      .content;
+    
+    let layerDuration_us = exportData[0]
       .attributes
       .layerTotalDuration;
     
-    buildTime += (layerDuration<powderFillingTime) ? powderFillingTime : layerDuration ;
-    
-    buildTime += recoatingTime;
+    let transport_mm = getTransportationDistance_mm(exportData);
+    let transportTime_us = (transport_mm/PARAM.getParamInt('movementSettings', 'sequencetransfer_speed_mms'))*1000*1000;
+              
+    buildTime_us += transportTime_us;  
+    buildTime_us += (layerDuration_us<powderFillingTime_us) ? powderFillingTime_us : layerDuration_us ;
+    buildTime_us += recoatingTime_us;
     
     progress.step(1);
     layerIt.next();
   }
   
-  return buildTime
+  return buildTime_us
 } 
+
+const getTransportationDistance_mm = (exportData) => {
+  
+  let transport_mm = 0;
+    
+  exportData.forEach((pass, index) => {
+    
+    
+    if (index == 0) { // if first
+      //from park
+      let parkPos = new VEC2.Vec2(CONST.parkingPosition.x,CONST.parkingPosition.y);
+      let startPos = new VEC2.Vec2(pass.attributes.startx,pass.attributes.starty);
+      transport_mm += startPos.distance(parkPos);
+      //process.print('from park ' + startPos.distance(parkPos))
+      }
+   
+    let passTarget = new VEC2.Vec2(
+      pass.children[pass.children.length-1].attributes.targetx, 
+      pass.children[pass.children.length-1].attributes.targety);
+      
+    if(index < exportData.length-1){ // if not last
+     
+     let nextPassStart = new VEC2.Vec2(
+     exportData[index+1].attributes.startx,
+     exportData[index+1].attributes.starty);
+     
+     transport_mm += passTarget.distance(nextPassStart); 
+      
+      //process.print('from pass to pass ' + passTarget.distance(nextPassStart))
+     }
+      
+    if (index == exportData.length-1) { // if last
+      
+      let parkPos = new VEC2.Vec2(CONST.parkingPosition.x,CONST.parkingPosition.y);
+      transport_mm += passTarget.distance(parkPos); 
+      
+      
+      //process.print('back to park ' + passTarget.distance(parkPos))
+      // do we move back to park?
+      }
+  });
+
+  return transport_mm;
+};
 
 const getPartMassKg = (modelData,progress,layer_start_nr,layer_end_nr) => {
   
