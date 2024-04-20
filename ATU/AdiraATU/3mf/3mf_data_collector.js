@@ -13,9 +13,7 @@ const UTIL = require('main/utility_functions.js');
 exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
   
   const arrayOfModels = UTIL.getModelsInLayer(modelData,layerNr);
-    
-  const tileTable_3mf = arrayOfModels[0].getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
-  
+      
   let exporter_3mf = {    
     "segment_attributes": [
         {
@@ -31,6 +29,10 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
   
   exposureArray.forEach((pass,passIndex) => {
     
+    if(passIndex == 1){
+      let stop =0;
+        }
+    
     exporter_3mf.content[passIndex] = {
      "name": "sequence",
      "namespace": "http://adira.com/tilinginformation/202305",
@@ -45,7 +47,7 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
         "layerScanningDuration":null,
         "layerTotalDuration" : null
       },
-      "children": tileTable_3mf[passIndex]
+      "children": [] //tileTable_3mf
       };
 
     
@@ -71,30 +73,44 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
       const tileMovementDuration = (tileSize/speedY)*1000*1000;
       
       //find next ycoordinate
-
-      let nextTileYCoord;
-
-      if ( tileIndex + 1 < pass.length) {
-        nextTileYCoord = pass[tileIndex + 1].exposure[0].getAttribReal('ycoord');
+      
+      let nextTileYCoord = undefined;
+      let nextTileXCoord = undefined;
+      
+      process.print('pass ' + passIndex + ' / '+tile.tileID + ' / ' + tileIndex);
+      
+      if (tileIndex == pass.length-1) {
+        
+        nextTileYCoord =  tile.ycoord + ((tile.ProcessHeadFromFront) ? tileSize : -tileSize);
+        nextTileXCoord =  tile.xcoord;
+        
       } else {
-        nextTileYCoord =  pass[tileIndex].exposure[0].getAttribReal('ycoord') + tileSize
+       
+        nextTileYCoord = pass[tileIndex + 1].ycoord;        
+        nextTileXCoord = pass[tileIndex + 1].xcoord;
+        
       }
       
-      exporter_3mf.content[passIndex].children[tileIndex] = {
+      if(!nextTileXCoord || !nextTileYCoord) 
+        throw new Error('failed to get next tile coord, at pass ' + passIndex + ', tile ' + tileIndex);
+
+      // create objects
+      exporter_3mf.content[passIndex].children[tileIndex] = ({
         "name": "movement",
-          "attributes": {
-            "tileID":  tile.tileID,
-            "targetx": tile.exposure[0].getAttribReal('xcoord'),
-            "targety": nextTileYCoord,
-            "positiony": tile.exposure[0].getAttribReal('ycoord'),
-            "speedx":  0,
-            "speedy": speedY,
-            "tileExposureTime": tile.exposureTime,
-            "tileTotalTime": tileMovementDuration         
-        }			
-      }
-    })
-  })
+        "attributes": {
+          "tileID": tile.tileID,
+          "targetx": nextTileXCoord,
+          "targety": nextTileYCoord,
+          "positiony": tile.ycoord,
+          "speedx": 0,
+          "speedy": speedY,
+          "tileExposureTime": tile.exposureTime,
+          "tileTotalTime": tileMovementDuration
+        }
+      });    
+    });
+  });
+  
   
   assignLayerTotals(exporter_3mf);
   
@@ -104,6 +120,7 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
   arrayOfModels.forEach(m => {
     m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf)
     });
+        
 }
 
 

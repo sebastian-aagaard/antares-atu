@@ -16,6 +16,8 @@ const EXPOSURE = requireBuiltin('bsExposureTime');
 // -------- SCRIPTS INCLUDES -------- //
 const CONST = require('main/constants.js');
 const EXP3MF = require('../3mf/3mf_data_collector.js');
+const UTIL = require('main/utility_functions.js');
+
 /** 
  * Multithreaded post-processing.
  * @param  modelData        bsModelData
@@ -39,27 +41,22 @@ exports.postprocessSortExposure_MT = function(
 
    while(layerIt.isValid() && !progress.cancelled()) {
      
-    let layerNr = layerIt.getLayerNr();
+    const layerNr = layerIt.getLayerNr();
 
-    // calculate the processing order based on tiles and hatchtype
-    let tileExposureArray = getTileExposureArray(modelData,layerNr);
-    
-    // remove undefined entries from tile exposure array
-    let filteredExposureArray = 
-        tileExposureArray.filter(innerArray => 
-        innerArray.some(entry => entry !== undefined))
-        .map(innerArray => 
-        innerArray.filter(entry => entry !== undefined));
-
-
-    let sortedExposureArray = sortMovementDirectionOfTiles(filteredExposureArray);
+    const tileExposureData = mapTileExposureData(modelData,layerNr);
+     
+    let exposureArray = createExposureArray(tileExposureData);
+     
+   fillVoidsinExposureArray(exposureArray);
+   
+    let sortedExposureArray = sortMovementDirectionOfTiles(exposureArray);
      
     updateProcessingOrder(sortedExposureArray);
      
     getTileExposureDuration(sortedExposureArray,modelData);
      
     //process.print('layerNr: ' + layerNr); 
-    EXP3MF.createExporter3mf (sortedExposureArray,layerIt,modelData,layerNr);
+    EXP3MF.createExporter3mf(sortedExposureArray,layerIt,modelData,layerNr);
     
     layerIt.next();
     progress.step(1);
@@ -68,6 +65,57 @@ exports.postprocessSortExposure_MT = function(
    
 } // postprocessSortExposure_MT
  
+
+
+const fillVoidsinExposureArray = (exposureArray) => {
+  
+    exposureArray.forEach(pass => {
+        if (pass.length > 0) {
+            // Find the minimum and maximum tileID in this pass
+            const minTileID = Math.min(...pass.map(tile => tile.tileID));
+            const maxTileID = Math.max(...pass.map(tile => tile.tileID));
+
+            // Ensure every tileID from min to max is present
+            for (let tileID = minTileID; tileID <= maxTileID; tileID++) {
+                if (!pass.some(tile => tile.tileID === tileID)) {
+                    // If tileID is missing, append it with default structure
+                    pass.push({
+                        tileID: tileID,
+                        xcoord: thisTile.attributes.xcoord,
+                        ycoord: thisTile.attributes.ycoord,
+                        exposure: []
+                    });
+                }
+            }
+        }
+    });
+
+    exposureArray.forEach(pass => pass.sort((a, b) => a.tileID - b.tileID));
+} // fillVoidsinExposureArray
+
+const createExposureArray = (tileObj) => {
+  
+    let exposureArray = [];
+
+    // Iterate over each tile in the tileObj
+    Object.keys(tileObj).forEach(tileID => {
+        const tile = tileObj[tileID];
+        const passNumber =  Math.floor(tileID / 1000); // Use tileID to determine the pass
+
+        // Ensure there is an array to hold the current pass's tiles
+        if (!exposureArray[passNumber]) {
+            exposureArray[passNumber] = [];
+        }
+
+        // Add the tile to the appropriate pass
+        exposureArray[passNumber].push(tile);
+    });
+
+    // Filter out any empty entries if passes are not sequential
+    return exposureArray.filter(pass => pass !== undefined);
+}
+
+
 const getTileExposureDuration = (exposureArray,modelData) => {
   
   exposureArray.forEach(pass => {
@@ -188,40 +236,63 @@ const getSkywritingDuration = (cur,modelData) => {
 
    
 
-const getTileExposureArray = (modelData,layerNr) => {
+const mapTileExposureData = (modelData, layerNr) => {
+  let exposurePolylineIt = modelData.getFirstLayerPolyline(layerNr, POLY_IT.nLayerExposure, 'rw');
+  let tileExposureObj = {};
   
-  let exposurePolylineIt = modelData.getFirstLayerPolyline(layerNr,POLY_IT.nLayerExposure,'rw');
-  let tileObj =  [];
-    
-  while(exposurePolylineIt.isValid()){
-          
+  const tileTable_3mf = UTIL.getModelsInLayer(modelData,layerNr)[0].getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
+
+  // front load tileExposureObj
+  tileTable_3mf.forEach(pass => {
+    pass.forEach(tile => {
+      tileExposureObj[tile.attributes.tileID] = {        
+        tileID: tile.attributes.tileID,
+        xcoord: tile.attributes.xcoord,
+        ycoord: tile.attributes.ycoord,
+        exposure: []
+        
+        }
+      })
+    })
+
+  while (exposurePolylineIt.isValid()) {
     const thisExposurePolyline = exposurePolylineIt.clone();
-    
     const tileID = thisExposurePolyline.getAttributeInt('tileID_3mf');
     
-    const passNumber = Math.floor(tileID / 1000 );
-        
-    if (tileObj[passNumber] === undefined) tileObj[passNumber] = [];
-  
-    if(tileObj[passNumber][tileID] === undefined) tileObj[passNumber][tileID] = {tileID : tileID , exposure : []};
-    tileObj[passNumber][tileID].tileID = tileID;
-    tileObj[passNumber][tileID].exposure.push(thisExposurePolyline);
+    const passNumber =  Math.floor(tileID / 1000);
+    const thisTile = tileTable_3mf[passNumber-1].find(obj => obj.attributes.tileID === tileID);
     
+//     // Check if the object for this tileID already exists
+//     if (!tileExposureObj[tileID]) {
+//       // If it does not exist, create a new object
+//       tileExposureObj[tileID] = {
+//         tileID: tileID,
+//         xcoord: thisTile.attributes.xcoord,
+//         ycoord: thisTile.attributes.ycoord,
+//         exposure: []
+//       };
+//     }
+
+    // Add the polyline to the exposures array for this tileID
+    tileExposureObj[tileID].exposure.push(thisExposurePolyline);
+
+    // Move to the next polyline
     exposurePolylineIt.next();
-      
-    } // exposurePolyLines 
-    
-    return tileObj;
-} //getTileExposureArray
+  }
+
+  // Return the object containing all tile data
+  return tileExposureObj;
+}; //mapTileExposureData
+
 
 const updateProcessingOrder = (sortedExposureArray ) => {
 
-  let runningNumber = 0;
+  let processingOrder = 0;
   
   sortedExposureArray.forEach(innerArray => 
       innerArray.forEach(entry => 
           entry.exposure.forEach(obj => 
-              obj.setAttributeInt('_processing_order',runningNumber++)
+              obj.setAttributeInt('_processing_order',processingOrder++)
           )
       )
   );
@@ -240,18 +311,20 @@ const sortMovementDirectionOfTiles = (tileExposureArray) => {
   
   filteredExposureArray.forEach((entry, index) => {
     
-    let bFromFront = 1;
+    let bFromFront = true;
     
     if ((index % 2 === 0 || !isPassDirectionAlternating) === !isFirstPassFrontToBack) {
       entry.sort().reverse();
-      bFromFront = 0;
+      bFromFront = false;
     };
     
-    entry.forEach(tile => {
-      tile.exposure.forEach(polyIt => {
-        polyIt.setAttributeInt('bMoveFromFront', bFromFront)
-      });
-    })
+    entry.forEach(obj => obj.ProcessHeadFromFront = bFromFront);
+        
+//     entry.forEach(tile => {
+//       tile.exposure.forEach(polyIt => {
+//         polyIt.setAttributeInt('bMoveFromFront', bFromFront)
+//       });
+//     })
     
   });
   

@@ -271,8 +271,10 @@ exports.getTileArray = function(modelLayer,layerNr,modelData){
          "name": "movement",
          "attributes": {
             "tileID": j+1+(i+1)*1000,
-            "targetx": cur_tile_coord_x,
-            "targety": cur_tile.y_max,
+            "xcoord": cur_tile_coord_x ,
+            "ycoord": cur_tile_coord_y,
+            "targetx": 0,
+            "targety": 0,
             "positiony": cur_tile_coord_y,
             "speedx" : 0,
             "speedy": defaultSpeedY,
