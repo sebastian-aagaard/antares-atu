@@ -77,7 +77,7 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
       let nextTileYCoord = undefined;
       let nextTileXCoord = undefined;
       
-      process.print('pass ' + passIndex + ' / '+tile.tileID + ' / ' + tileIndex);
+      //process.print('pass ' + passIndex + ' / '+tile.tileID + ' / ' + tileIndex);
       
       if (tileIndex == pass.length-1) {
         
@@ -91,7 +91,7 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
         
       }
       
-      if(!nextTileXCoord || !nextTileYCoord) 
+      if(nextTileXCoord === undefined || nextTileYCoord === undefined) 
         throw new Error('failed to get next tile coord, at pass ' + passIndex + ', tile ' + tileIndex);
 
       // create objects

@@ -129,7 +129,7 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
     const recoatingTime_us = PARAM.getParamInt('movementSettings','recoating_time_ms') * 1000;
     const powderFillingTime_us = PARAM.getParamInt('movementSettings', 'powderfilling_time_ms') * 1000;
     
-    let exportData =    UTIL.getModelsInLayer(modelData,layerNr)[0]
+    let exportData = UTIL.getModelsInLayer(modelData,layerNr)[0]
       .getModelLayerByNr(layerNr)
       .getAttribEx('exporter_3mf')
       .content;
