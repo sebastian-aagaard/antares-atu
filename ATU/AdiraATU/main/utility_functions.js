@@ -30,7 +30,8 @@ exports.getModelsInLayer = (modelData,layerNr) => {
   
   for (let modelIt = 0; modelIt < modelCount; modelIt++){
   
-    if (modelData.getModelMaxLayerNr(modelIt) >= layerNr)
+    if (modelData.getModelMaxLayerNr(modelIt) >= layerNr 
+      && modelData.getModelMinLayerNr(modelIt) <= layerNr)
       arrayofModels.push(modelData.getModel(modelIt))
     }
     
