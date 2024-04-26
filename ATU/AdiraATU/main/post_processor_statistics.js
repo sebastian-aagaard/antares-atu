@@ -30,17 +30,20 @@ exports.getStatistics = function(
 
   
   const partMassKg = getPartMassKg(modelData,progress,layer_start_nr,layer_end_nr);
-  const buildTime_us = getBuildTime_us(modelData,progress,layer_start_nr,layer_end_nr);
+  const buildTime= getBuildTime_us(modelData,progress,layer_start_nr,layer_end_nr);
+    
+  const buildTime_us = buildTime.buildTime_us;
   const totalPowder = layer_end_nr 
       * modelData.getLayerThickness() 
       * PARAM.getParamInt('workarea','x_workarea_max_mm') 
       * PARAM.getParamInt('workarea','y_workarea_max_mm')
       * PARAM.getParamReal('material','density_g_cc') / (1000*1000*1000);
-    
+   
   process.print('buildtime_us: ' + buildTime_us);
   process.print('buildtime_s: ' + buildTime_us/(1000*1000));
   process.print('buildtime_min: ' + buildTime_us/(1000*1000)/60);
   process.print('buildtime_hours: ' + buildTime_us/(3600*1000*1000));
+  process.print('buildtime_days: ' + buildTime_us/(3600*1000*1000)/24);
   
     
   let customJSON = {
@@ -121,7 +124,7 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
       layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
   
   let buildTime_us = 0;
-  
+  let dayCounter = 0;
   while(layerIt.isValid() && !progress.cancelled())
   {
     const layerNr = layerIt.getLayerNr();

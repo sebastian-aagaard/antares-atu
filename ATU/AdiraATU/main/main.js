@@ -28,6 +28,13 @@ const PREP_MODEL = require('main/prepare_model_exposure.js');
 const PREPROCESSOR = require('main/preprocessor.js');
 const TOOLPATH = require('main/Toolpath.js');
 
+
+
+exports.unitTesting = function( testInfo ){
+  // testname, additional info, test passed
+  testInfo.addTest( 'DummyTest', 'Dummy', true);
+}
+
 // -------- GENERAL INFORMATION -------- //
 /** @param  aboutInfo  bsAboutInfo */
 
@@ -72,7 +79,7 @@ exports.declareBuildAttributes = (buildAttrib) => {
 exports.configurePostProcessingSteps = (a_config) => {
   // Postprocessing the toolpaths using the given function:
   a_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,{bMultithread: true, nProgressWeight: 10});
-   a_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta_MT,{bMultithread: true, nProgressWeight: 1});
+  a_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta_MT,{bMultithread: true, nProgressWeight: 1});
   a_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,{bMultithread: true, nProgressWeight: 1});
   a_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,{bMultithread: false, nProgressWeight: 1});
 };

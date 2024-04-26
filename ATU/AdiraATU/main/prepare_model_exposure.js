@@ -27,8 +27,8 @@ exports.prepareModelExposure = (model) => {
     "timelag": PARAM.getParamInt('skywriting','timelag'),
     "laseronshift": PARAM.getParamInt('skywriting','laserOnShift')*64,
     "limit": PARAM.getParamReal('skywriting','mode3limit'),
-    "nprev": PARAM.getParamInt('skywriting','nprev')/10,
-    "npost": PARAM.getParamInt('skywriting','npost')/10
+    "nprev": PARAM.getParamInt('skywriting','nprev'),
+    "npost": PARAM.getParamInt('skywriting','npost')
   };
   
     let scanningAttributes = {      

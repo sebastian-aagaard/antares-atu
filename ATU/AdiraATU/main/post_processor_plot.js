@@ -35,7 +35,7 @@ exports.drawTileArray_MT = function(
   layer_end_nr)
   {
     
-  if(CONST.bDrawTile){
+  if(CONST.bDrawTile) {
     const layerCount = layer_end_nr - layer_start_nr;
     const modelCount = modelData.getModelCount();
       

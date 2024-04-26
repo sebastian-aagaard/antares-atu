@@ -82,16 +82,16 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('ScanningParameters', 'part_hatch_markspeed', LOCALIZER.GetMessage('param_part_hatch_markspeed'), 0.0, 9000.0, 800.0);
     parameter.declareParameterReal('ScanningParameters', 'part_hatch_defocus', LOCALIZER.GetMessage('param_part_hatch_defocus'), 0.0, 100.0, 0.0);
  
-    parameter.declareParameterReal('ScanningParameters', 'part_contour_power', LOCALIZER.GetMessage('param_part_contour_power'), 0.0, 500.0, 220.0);
+    parameter.declareParameterReal('ScanningParameters', 'part_contour_power', LOCALIZER.GetMessage('param_part_contour_power'), 0.0, 500.0, 222.0);
     parameter.declareParameterReal('ScanningParameters', 'part_contour_markspeed', LOCALIZER.GetMessage('param_part_contour_markspeed'), 0.0, 9000.0, 600.0);
     parameter.declareParameterReal('ScanningParameters', 'part_contour_defocus', LOCALIZER.GetMessage('param_part_contour_defocus'), 0.0, 100.0, 0.0);
     
     parameter.declareParameterReal('ScanningParameters', 'downskin_hatch_power', LOCALIZER.GetMessage('param_downskin_hatch_power'), 0.0, 500.0, 106.0);
-    parameter.declareParameterReal('ScanningParameters', 'downskin_hatch_markspeed', LOCALIZER.GetMessage('param_downskin_hatch_markspeed'), 0.0, 9000.0, 800.0);
+    parameter.declareParameterReal('ScanningParameters', 'downskin_hatch_markspeed', LOCALIZER.GetMessage('param_downskin_hatch_markspeed'), 0.0, 9000.0, 667.0);
     parameter.declareParameterReal('ScanningParameters', 'downskin_hatch_defocus', LOCALIZER.GetMessage('param_downskin_hatch_defocus'), 0.0, 100.0, 0.0);
     
     parameter.declareParameterReal('ScanningParameters', 'downskin_contour_power', LOCALIZER.GetMessage('param_downskin_contour_power'), 0.0, 500.0, 201.0);
-    parameter.declareParameterReal('ScanningParameters', 'downskin_contour_markspeed', LOCALIZER.GetMessage('param_downskin_contour_markspeed'), 0.0, 9000.0, 800.0);
+    parameter.declareParameterReal('ScanningParameters', 'downskin_contour_markspeed', LOCALIZER.GetMessage('param_downskin_contour_markspeed'), 0.0, 9000.0, 1600.0);
     parameter.declareParameterReal('ScanningParameters', 'downskin_contour_defocus', LOCALIZER.GetMessage('param_downskin_contour_defocus'), 0.0, 100.0, 0.0); 
  
     parameter.declareParameterReal('ScanningParameters', 'support_hatch_power', LOCALIZER.GetMessage('param_support_hatch_power'), 0.0, 500.0, 260.0);
@@ -111,12 +111,12 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('durationSim', 'JumpSpeed', LOCALIZER.GetMessage('param_JumpSpeed'), 0.001, 2000, 1000);
     parameter.declareParameterInt('durationSim', 'laserOnDelay', LOCALIZER.GetMessage('param_laserOnDelay'), 0, 2000, 2);
     parameter.declareParameterInt('durationSim', 'laserOffDelay', LOCALIZER.GetMessage('param_laserOffDelay'), 0, 2000, 10);
-    //parameter.declareParameterReal('durationSim', 'MeltSpeed', LOCALIZER.GetMessage('param_MeltSpeed'), 0.001, 2000, 200);
     parameter.declareParameterReal('durationSim', 'JumpLengthLimit', LOCALIZER.GetMessage('param_JumpLengthLimit'), 0.000, 1000, 0);//0.1
     parameter.declareParameterInt('durationSim', 'JumpDelay', LOCALIZER.GetMessage('param_JumpDelay'), 0, 100, 50);
     parameter.declareParameterInt('durationSim', 'MinJumpDelay', LOCALIZER.GetMessage('param_MinJumpDelay'), 0, 50, 50); //30
     parameter.declareParameterInt('durationSim', 'MarkDelay', LOCALIZER.GetMessage('param_MarkDelay'), 0, 100, 60);
     parameter.declareParameterInt('durationSim', 'PolygonDelay', LOCALIZER.GetMessage('param_PolygonDelay'), 0, 100, 65);
+
     parameter.declareParameterChoice('durationSim', 'PolygonDelayMode', 
        LOCALIZER.GetMessage('param_PolygonDelayMode'),
         [LOCALIZER.GetMessage('param_PolygonDelayMode_Variable'),
@@ -200,9 +200,9 @@ exports.declareParameters = function(parameter)
           
       parameter.declareParameterInt('skywriting','timelag', LOCALIZER.GetMessage('param_timelag'),0,1000,174);
       parameter.declareParameterInt('skywriting','laserOnShift', LOCALIZER.GetMessage('param_laserOnShift'),-1000,1000,-40);
-      parameter.declareParameterInt('skywriting','nprev', LOCALIZER.GetMessage('param_nprev'),0,1000,110);
-      parameter.declareParameterInt('skywriting','npost', LOCALIZER.GetMessage('param_npost'),0,1000,90);
-      parameter.declareParameterReal('skywriting','mode3limit', LOCALIZER.GetMessage('param_mode3limit'),0.0,100.0,0.9);
+      parameter.declareParameterInt('skywriting','nprev', LOCALIZER.GetMessage('param_nprev'),0,1000,11);
+      parameter.declareParameterInt('skywriting','npost', LOCALIZER.GetMessage('param_npost'),0,1000,9);
+      parameter.declareParameterReal('skywriting','mode3limit', LOCALIZER.GetMessage('param_mode3limit'),-1.0,1.0,0.9);
     
 
   // onthefly

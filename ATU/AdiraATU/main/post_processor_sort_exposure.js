@@ -163,7 +163,7 @@ const getTileExposureDuration = (exposureArray,modelData) => {
           'y': laserStartPos.y + (cur.getAttributeInt('bMoveFromFront') ? scanner.rel_y_max : -scanner.rel_y_max)};
  
         // If the laser ID doesn't exist in tile.laserDuration, create a new entry
-        if (!tile.laserExposureTime[laserID]) {
+        if (tile.laserExposureTime[laserID] === undefined) {
           exposureTimeObj[laserID] = new EXPOSURE.bsExposureTime();
           exposureTimeObj[laserID].configure(exposureSettings);
           
@@ -180,7 +180,7 @@ const getTileExposureDuration = (exposureArray,modelData) => {
         if (curIndex === tile.exposure.length - 1) {
           
           Object.keys(exposureTimeObj).forEach( key => {
-            
+                        
             exposureTimeObj[key].setLaserPosition(
               nextLaserStartPos[key].x,
               nextLaserStartPos[key].y,
@@ -189,12 +189,12 @@ const getTileExposureDuration = (exposureArray,modelData) => {
             //get exposuretime of each laser in tile
             tile.laserExposureTime[key] = exposureTimeObj[key]
               .getExposureTimeMicroSeconds();
+            
             tile.laserExposureTime[key] += skywritingTime[key];
+            
             tile.exposureTime = ((tile.exposureTime < tile.laserExposureTime[key]) 
               ? tile.laserExposureTime[key] : tile.exposureTime);
           }); // for each laser object
-          
-         //process.print(tile.exposureTime);
         } // if
       
       }); // forEach .exposure
@@ -213,28 +213,77 @@ const getSkywritingDuration = (cur,modelData) => {
           .attributes
           .find(attr => attr.schema === CONST.skywritingSchema);
 
-  let skywritingPostConst = 10; 
-  let skywritingPrevConst = 10;
+
+
+  let skywritingPostConst,skywritingPrevConst;
 
   if (skyWritingParamters.mode == 0) {
     
     skywritingPostConst = 0; 
     skywritingPrevConst = 0;
     
-    } else if (skyWritingParamters.mode == 1) {
+    } else if (skyWritingParamters.mode == 1 ) {
     
     skywritingPostConst = 20;
     skywritingPrevConst = 20;  
     
-  }  
+  }  else if (skyWritingParamters.mode >= 2) {
+  
+     skywritingPostConst = 10; // skywriting mode 2 and 3
+     skywritingPrevConst = 10; // skywriting mode 2 and 3
+    }
+  
+  
+  const polylineMode = cur.getPolylineMode()
+  let skywritingOccurances = 0;
+  
+  if(polylineMode == 0 ||polylineMode == 1) { //closed or open polyline
 
-  let npostDur = skyWritingParamters.npost*skywritingPostConst/10; // do we still divide by 10 ? we also do it in perparemodelexposure
-  let nprevDur = skyWritingParamters.nprev*skywritingPrevConst/10; // do we still divide by 10 ?
+    const pointCount = cur.getPointCount();
+    const args = {
+       "bAttributes" : false,
+       "nStartIndex" : 0,
+       "nEndIndex" : pointCount-1};
+       
+    const polylinePointArray = cur.getPointArray(args);
+          
+     skywritingOccurances += getSkywritingCountForPolyline(polylinePointArray,skyWritingParamters);
+     skywritingOccurances += 1; // add extra instance for start and stop
+       
+    } else if (polylineMode == 2) { //hatch
+    
+    let skipcount = cur.getSkipCount();
+    skywritingOccurances += skipcount*2;
+    skywritingOccurances += 1; // add extra instance for start and stop
       
-  return (npostDur + nprevDur)*cur.getSkipCount()
+    } else if (polylineMode == 3) { // mode invalid
+    
+      throw new Error("polyline mode invalid");
+    }
+    
+
+  let npostDur = skyWritingParamters.npost*skywritingPostConst;///10; // do we still divide by 10
+  let nprevDur = skyWritingParamters.nprev*skywritingPrevConst;///10; // do we still divide by 10
+      
+  return (npostDur + nprevDur)*skywritingOccurances;
 }
 
-   
+const getSkywritingCountForPolyline = (points,skyWritingParamters) => {
+  
+  let count =0;
+  
+    for (let i = 1; i < points.length - 1; i++) {
+        let currentPoint = points[i].vec;
+        let previousPoint = points[i-1].vec;
+        let nextPoint = points[i+1].vec;
+        let angleBetweenVectors = currentPoint.getAngleDeg(previousPoint, nextPoint);
+        let angularChange = 180-angleBetweenVectors;
+        let cosTheta = Math.cos(angularChange);
+
+        if (cosTheta > skyWritingParamters.limit) count++;
+    }
+    return count; 
+}  
 
 const mapTileExposureData = (modelData, layerNr) => {
   let exposurePolylineIt = modelData.getFirstLayerPolyline(layerNr, POLY_IT.nLayerExposure, 'rw');
@@ -318,13 +367,7 @@ const sortMovementDirectionOfTiles = (tileExposureArray) => {
       bFromFront = false;
     };
     
-    entry.forEach(obj => obj.ProcessHeadFromFront = bFromFront);
-        
-//     entry.forEach(tile => {
-//       tile.exposure.forEach(polyIt => {
-//         polyIt.setAttributeInt('bMoveFromFront', bFromFront)
-//       });
-//     })
+    entry.forEach(obj => obj.ProcessHeadFromFront = bFromFront);        
     
   });
   

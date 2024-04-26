@@ -99,9 +99,7 @@ function getTilePosition(x_pos,y_pos,overlap_x,overlap_y){
 }
 
 exports.getTileArray = function(modelLayer,layerNr,modelData){
-  
-  //modelLayer = modelData.getModelLayerByNr(layerNr);
-   
+     
    //Calculate this layer shift in x and y 
    let shiftX = getShiftX(layerNr);
    let shiftY = getShiftY(layerNr);
@@ -111,13 +109,23 @@ exports.getTileArray = function(modelLayer,layerNr,modelData){
    let maxShiftX = (PARAM.getParamInt('tileing', 'number_x')-1)*PARAM.getParamReal('tileing', 'step_x');  
   // get coordinates of bounding box
   
-   
-   let boundaries = modelData.getTrayAttribEx('allLayerBoundaries')
-   let minX = boundaries[layerNr][0]; 
-   let maxX = boundaries[layerNr][1];
-   let minY = boundaries[layerNr][2];
-   let maxY = boundaries[layerNr][3];
+   let minX,maxX,minY,maxY;
   
+    try {
+   
+     let boundaries = modelData.getTrayAttribEx('allLayerBoundaries')
+      minX = boundaries[layerNr][0];
+      maxX = boundaries[layerNr][1];
+      minY = boundaries[layerNr][2];
+      maxY = boundaries[layerNr][3];
+   
+    } catch (err) {
+     
+       throw new Error('failed to access boundaries at layer nr: ' + layerNr); 
+   
+      }
+  
+   
   ////////////////////////////////
   // Define and store tiles     //
   ////////////////////////////////
@@ -294,6 +302,6 @@ exports.getTileArray = function(modelLayer,layerNr,modelData){
   
   modelLayer.setAttribEx('tileTable',tileTable);
   modelLayer.setAttribEx('tileTable_3mf',tileTable3mf);
-  modelLayer.setAttrib('requiredPassesX',required_passes_x.toString());
-  modelLayer.setAttrib('requiredPassesY',required_passes_y.toString());
+  //modelLayer.setAttrib('requiredPassesX',required_passes_x.toString());
+  //modelLayer.setAttrib('requiredPassesY',required_passes_y.toString());
 } // getTileArray
