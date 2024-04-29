@@ -30,9 +30,8 @@ exports.getStatistics = function(
 
   
   const partMassKg = getPartMassKg(modelData,progress,layer_start_nr,layer_end_nr);
-  const buildTime= getBuildTime_us(modelData,progress,layer_start_nr,layer_end_nr);
+  const buildTime_us = getBuildTime_us(modelData,progress,layer_start_nr,layer_end_nr);
     
-  const buildTime_us = buildTime.buildTime_us;
   const totalPowder = layer_end_nr 
       * modelData.getLayerThickness() 
       * PARAM.getParamInt('workarea','x_workarea_max_mm') 
@@ -70,7 +69,7 @@ exports.getStatistics = function(
         attributes: {
           "build_time": buildTime_us,
           "total_mass": partMassKg,
-          "total_packed_powder":null,// totalPackedPowder                
+          "total_packed_powder":totalPowder,// totalPackedPowder                
         }        
       },
       
@@ -175,7 +174,7 @@ const getTransportationDistance_mm = (exportData) => {
       pass.children[pass.children.length-1].attributes.targety);
       
     if(index < exportData.length-1){ // if not last
-     
+     //move to next start
      let nextPassStart = new VEC2.Vec2(
      exportData[index+1].attributes.startx,
      exportData[index+1].attributes.starty);
@@ -186,7 +185,7 @@ const getTransportationDistance_mm = (exportData) => {
      }
       
     if (index == exportData.length-1) { // if last
-      
+      //back to park
       let parkPos = new VEC2.Vec2(CONST.parkingPosition.x,CONST.parkingPosition.y);
       transport_mm += passTarget.distance(parkPos); 
       

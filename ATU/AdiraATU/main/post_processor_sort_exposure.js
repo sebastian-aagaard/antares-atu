@@ -196,7 +196,6 @@ const getTileExposureDuration = (exposureArray,modelData) => {
               ? tile.laserExposureTime[key] : tile.exposureTime);
           }); // for each laser object
         } // if
-      
       }); // forEach .exposure
     }); // forEach .tile
   }); // forEach .pass
@@ -213,24 +212,22 @@ const getSkywritingDuration = (cur,modelData) => {
           .attributes
           .find(attr => attr.schema === CONST.skywritingSchema);
 
-
-
   let skywritingPostConst,skywritingPrevConst;
 
   if (skyWritingParamters.mode == 0) {
-    
+    //no skywriting
     skywritingPostConst = 0; 
     skywritingPrevConst = 0;
     
     } else if (skyWritingParamters.mode == 1 ) {
-    
+    //skywriting mode 1
     skywritingPostConst = 20;
     skywritingPrevConst = 20;  
     
-  }  else if (skyWritingParamters.mode >= 2) {
-  
-     skywritingPostConst = 10; // skywriting mode 2 and 3
-     skywritingPrevConst = 10; // skywriting mode 2 and 3
+  }  else if (skyWritingParamters.mode >= 2) { 
+     //skywriting mode 2 and 3
+     skywritingPostConst = 10; 
+     skywritingPrevConst = 10; 
     }
   
   
@@ -248,8 +245,9 @@ const getSkywritingDuration = (cur,modelData) => {
     const polylinePointArray = cur.getPointArray(args);
           
      skywritingOccurances += getSkywritingCountForPolyline(polylinePointArray,skyWritingParamters);
-     skywritingOccurances += 1; // add extra instance for start and stop
-       
+     skywritingOccurances += .5; // add extra instance for stop
+     skywritingOccurances += 1; // all polylines will start with a skywriting mode 1 move  
+
     } else if (polylineMode == 2) { //hatch
     
     let skipcount = cur.getSkipCount();
@@ -259,29 +257,34 @@ const getSkywritingDuration = (cur,modelData) => {
     } else if (polylineMode == 3) { // mode invalid
     
       throw new Error("polyline mode invalid");
+      
     }
     
 
-  let npostDur = skyWritingParamters.npost*skywritingPostConst;///10; // do we still divide by 10
-  let nprevDur = skyWritingParamters.nprev*skywritingPrevConst;///10; // do we still divide by 10
+  let npostDur = skyWritingParamters.npost*skywritingPostConst/10; // do we still divide by 10
+  let nprevDur = skyWritingParamters.nprev*skywritingPrevConst/10; // do we still divide by 10
       
+    
+    //process.print('skywritingOccurances: '+ skywritingOccurances);
+    
   return (npostDur + nprevDur)*skywritingOccurances;
 }
 
 const getSkywritingCountForPolyline = (points,skyWritingParamters) => {
   
-  let count =0;
+  let count = 0;
   
     for (let i = 1; i < points.length - 1; i++) {
-        let currentPoint = points[i].vec;
-        let previousPoint = points[i-1].vec;
-        let nextPoint = points[i+1].vec;
-        let angleBetweenVectors = currentPoint.getAngleDeg(previousPoint, nextPoint);
-        let angularChange = 180-angleBetweenVectors;
-        let cosTheta = Math.cos(angularChange);
+        const currentPoint = points[i].vec;
+        const previousPoint = points[i-1].vec;
+        const nextPoint = points[i+1].vec;
+        const angleBetweenVectors = currentPoint.getAngleDeg(previousPoint, nextPoint);
+        const angularChange = 180-angleBetweenVectors;
+        const cosTheta = Math.cos(angularChange);
 
-        if (cosTheta > skyWritingParamters.limit) count++;
+        if (cosTheta < skyWritingParamters.limit) count++;
     }
+    
     return count; 
 }  
 
@@ -311,17 +314,6 @@ const mapTileExposureData = (modelData, layerNr) => {
     const passNumber =  Math.floor(tileID / 1000);
     const thisTile = tileTable_3mf[passNumber-1].find(obj => obj.attributes.tileID === tileID);
     
-//     // Check if the object for this tileID already exists
-//     if (!tileExposureObj[tileID]) {
-//       // If it does not exist, create a new object
-//       tileExposureObj[tileID] = {
-//         tileID: tileID,
-//         xcoord: thisTile.attributes.xcoord,
-//         ycoord: thisTile.attributes.ycoord,
-//         exposure: []
-//       };
-//     }
-
     // Add the polyline to the exposures array for this tileID
     tileExposureObj[tileID].exposure.push(thisExposurePolyline);
 
@@ -349,7 +341,6 @@ const updateProcessingOrder = (sortedExposureArray ) => {
 
 const sortMovementDirectionOfTiles = (tileExposureArray) => {
 
-  
   const isFirstPassFrontToBack = PARAM.getParamInt('movementSettings','isFirstPassFrontToBack'); 
   const isPassDirectionAlternating = PARAM.getParamInt('movementSettings','isPassDirectionAlternating'); 
     
