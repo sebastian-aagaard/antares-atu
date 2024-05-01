@@ -42,7 +42,7 @@ exports.getHatchAngle = function(nLayerNr) {
 
 // Generates offset and return the offset Island (bsIsland()) and the border (bsHatch()) 
 
-exports.generateOffset = function (islandObj,offset) {
+const generateOffset = function (islandObj,offset) {
   
       var offsetIsland = new ISLAND.bsIsland(); 
       var borderHatch = new HATCH.bsHatch();
@@ -69,7 +69,7 @@ exports.getBlockedPathHatch = function(thisModel, island_it, islandId) {
   // Create hatch container for blockedPath
   let blockedPath = new HATCH.bsHatch();
   
-  let beam_compensation = PARAM.getParamReal("exposure", "beam_compensation");
+  let beam_compensation = PARAM.getParamReal("border", "fBeamCompensation");
   
 
   ///////////////////////////////////////////////////////////////////////
@@ -111,7 +111,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let down_skin_overlap = PARAM.getParamReal("downskin", "down_skin_overlap");
   
   // BEAM COMPENSATION
-  let beam_compensation = PARAM.getParamReal("exposure", "beam_compensation");
+  let beam_compensation = PARAM.getParamReal("border", "fBeamCompensation");
  
   // CREATE HATCH CONTAINERS
   let allContourHatch = new HATCH.bsHatch();
@@ -132,11 +132,8 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let  thisIsland = island_it.getIsland().clone(); 
   
   // offset islands
-  let islandOffset = exports.generateOffset(thisIsland,beam_compensation).offsetIsland;
-  let fillIsland = exports.generateOffset(thisIsland,beam_compensation*2).offsetIsland;
-  let islandContourHatch = new HATCH.bsHatch();
-  islandOffset.borderToHatch(islandContourHatch);
-  let islandBorderClipper = exports.generateOffset(islandOffset,0.0004).offsetIsland;
+  let islandOffset = generateOffset(thisIsland,beam_compensation).offsetIsland;
+  let islandBorderClipper = generateOffset(islandOffset,0.0004).offsetIsland;
   
   //check if the model is part or support and store them.
   if(is_part)
@@ -144,26 +141,26 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
               
     //find down skin area
     let down_skin_island = new ISLAND.bsIsland();
-    let not_down_skin_island = new ISLAND.bsIsland();
+    let part_island = new ISLAND.bsIsland();
     let down_skin_island_no_overhang = new ISLAND.bsIsland();
     
     // find overhangs
     if(PARAM.getParamInt('downskin','downskintoggle')){
       
-      // split into downskin and not_downskins
+      // split into downskin islands and part islands
       islandOffset.splitMultiLayerOverhang(down_skin_surface_angle, down_skin_overlap, down_skin_layer_reference,
-      not_down_skin_island, down_skin_island,down_skin_island_no_overhang);
+      part_island, down_skin_island,down_skin_island_no_overhang);
       
     } else {
       
-       not_down_skin_island.copyFrom(islandOffset);
+       part_island.copyFrom(islandOffset);
     
     }
     
     if(!down_skin_island.isEmpty())
       {
         
-        let downSkinbulkIsland = exports.generateOffset(down_skin_island,beam_compensation).offsetIsland;
+        let downSkinbulkIsland = generateOffset(down_skin_island,beam_compensation).offsetIsland;
         
         let downSkinContourHatch = new HATCH.bsHatch(); 
         down_skin_island.borderToHatch(downSkinContourHatch);
@@ -198,23 +195,24 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       }
 
     // not down skin islands
-    if(!not_down_skin_island.isEmpty())
+    if(!part_island.isEmpty())
     {
       
-      let contourHatch = new HATCH.bsHatch();
-      let downskinContourClipper = exports.generateOffset(down_skin_island,-0.0005).offsetIsland;
-      islandOffset.borderToHatch(contourHatch); // temp solutions        
-
+      //let contourHatch = new HATCH.bsHatch();
+      //islandOffset.borderToHatch(contourHatch);        
+      
+      let borderContainer = makeBorders(islandOffset)
+      
+      let contourHatch = borderContainer.borderHatch;
       contourHatch.setAttributeInt('type',CONST.typeDesignations.part_contour.value);
       contourHatch.setAttributeInt('islandId',islandId);
       
-      contourHatch.clip(downskinContourClipper,false);// WIP this clip splits it between different scanners
       allDownSkinContourHatch.moveDataFrom(contourHatch);
                  
-      let bulkIsland = exports.generateOffset(not_down_skin_island,beam_compensation).offsetIsland;    
+      //let bulkIsland = generateOffset(part_island,beam_compensation).offsetIsland;    
       
       //make stripes 
-      let bulkStripeIslands = createStripes(bulkIsland,nLayerNr);
+      let bulkStripeIslands = createStripes(borderContainer.bulkIsland,nLayerNr);
       
       let hatchingArgs = {
          "fHatchDensity" : PARAM.getParamReal('exposure', '_hdens'),
@@ -263,7 +261,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
           HATCH.nHatchFlagFlexDensity
         };              
     
-    let supportBulk = exports.generateOffset(islandOffset,beam_compensation).offsetIsland;
+    let supportBulk = generateOffset(islandOffset,beam_compensation).offsetIsland;
     var support_hatch = new HATCH.bsHatch();
     supportBulk.hatchExt2(support_hatch,hatchingArgs);
       
@@ -280,6 +278,26 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
         'supportHatch': allSupportHatch,
         'supportContourHatch':allSupportContourHatch
       };
+}
+
+const makeBorders = (islandObj) => {
+  
+  const numberOfBorders = PARAM.getParamInt('border','nNumberOfBorders');
+  const borderOffsetDistance = PARAM.getParamReal('border','fBorderOffset');
+  let borderHatch = new HATCH.bsHatch();
+  let island = islandObj.clone();
+  
+  for (let borderIndex = 1; borderIndex<numberOfBorders+1;borderIndex++){
+  
+      island.borderToHatch(borderHatch);
+      let offsetContainer = generateOffset(island,borderOffsetDistance);
+      island.makeEmpty();
+      island = offsetContainer.offsetIsland;
+
+    }
+                    
+return {'borderHatch' : borderHatch,
+        'bulkIsland' : island}
 }
 
 exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){

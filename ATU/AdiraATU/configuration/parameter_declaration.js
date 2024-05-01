@@ -41,12 +41,20 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('strategy','fStripeLength',LOCALIZER.GetMessage('param_fStripeLength'),0,100.0,0);
     parameter.declareParameterReal('strategy','fPatternShift',LOCALIZER.GetMessage('param_fPatternShift'),0,10.0,1.67);
   
+ parameter.declareParameterGroup('border', LOCALIZER.GetMessage('grp_border')); 
+    parameter.declareParameterReal('border', 'fBeamCompensation', LOCALIZER.GetMessage('param_beam_compensation'), 0.0, 10.0, 0.05);
+    parameter.declareParameterInt('border', 'nNumberOfBorders', LOCALIZER.GetMessage('param_number_of_borders'), 0, 10, 1);
+    parameter.declareParameterReal('border', 'fBorderOffset', LOCALIZER.GetMessage('param_boarder_offset'), 0.0, 10.0, 0.05);
+    parameter.declareParameterChoice('border', 'bBorderOrderOutsideIn', LOCALIZER.GetMessage('param_border_order_outside_in'),
+       [LOCALIZER.GetMessage('param_border_order_outside_in_disable'),
+       LOCALIZER.GetMessage('param_border_order_outside_in_enable')],
+       LOCALIZER.GetMessage('param_border_order_outside_in_enable'));
+    
+  
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
     parameter.declareParameterReal('exposure', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.05);
 
-    parameter.declareParameterReal('exposure', 'beam_compensation', LOCALIZER.GetMessage('param_beam_compensation'), 0.0, 10.0, 0.05);
-    parameter.declareParameterReal('exposure', 'boarder_offset', LOCALIZER.GetMessage('param_boarder_offset'), 0.0, 10.0, 0.05);
     parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 50.0, 0.1);//0.1 50.0   
     parameter.declareParameterReal('exposure', 'hatch_angle_init', LOCALIZER.GetMessage('param_hatch_angle_init'), 0, 360, 45);
     parameter.declareParameterReal('exposure', 'hatch_angle_increment', LOCALIZER.GetMessage('param_hatch_angle_increment'), -360, 360, 90.0);   
