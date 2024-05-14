@@ -60,7 +60,7 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
     // get blocked path hatches
     let blockedPathHatch = TPGEN.getBlockedPathHatch(thisModel,island_it,islandId);
 
-    // store hatch from processed islands 
+    // store hatch from processed islands  (TODO move everythning to same hatch initially)
     allHatches.moveDataFrom(supportHatch);
     allHatches.moveDataFrom(supportContourHatch);      
     allHatches.moveDataFrom(partHatch);

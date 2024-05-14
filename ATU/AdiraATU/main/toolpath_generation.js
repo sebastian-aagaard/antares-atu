@@ -178,7 +178,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
         down_skin_island.createOffset(larger_down_skin_island,0.1);
         downSkinContourHatch.clip(larger_down_skin_island,true);  
         
-        //remove already assigned borderHatch. 
+        //remove already assigned borderHatch
         allBorderHatch.clip(larger_down_skin_island,false);
        
         //assign type designation
@@ -269,7 +269,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     
     if(PARAM.getParamInt('support','supportContourToogle')){
     let supportBorderHatch = new HATCH.bsHatch();  
-    islandOffset.borderToHatch(supportBorderHatch);
+    thisIsland.borderToHatch(supportBorderHatch);
 
     supportBorderHatch.setAttributeInt('type',CONST.typeDesignations.support_contour.value);
     supportBorderHatch.setAttributeInt('islandId',islandId);
@@ -289,7 +289,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
           HATCH.nHatchFlagFlexDensity
         };              
     
-    let supportBulk = generateOffset(islandOffset,beam_compensation).offsetIsland;
+    let supportBulk = generateOffset(thisIsland,beam_compensation).offsetIsland;
     var support_hatch = new HATCH.bsHatch();
     supportBulk.hatchExt2(support_hatch,hatchingArgs);
       

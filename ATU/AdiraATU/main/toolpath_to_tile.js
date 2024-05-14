@@ -305,8 +305,7 @@ exports.handleShortLines = (passNumberGroups,thisModel,bsModelData) => {
     const blocking_pathset = new PATH_SET.bsPathSet();
     blocking_pathset.addNewPath(firstBlock2Dvec);
 
-    let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,maxMergeDistance,
-    HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode,blocking_pathset);
+    let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,maxMergeDistance, HATCH.nMergeShortLinesFlagPreferHatchMode,blocking_pathset);
      
     mergedHatch.deleteShortLines(minVectorLenght); // remove small vectors
       
