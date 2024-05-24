@@ -8,19 +8,21 @@
 
 // -------- GLOBAL CONSTANTS -------- //
 
-exports.ENABLE_LOGGING = true;
+exports.ENABLE_LOGGING = false;
 exports.nLaserCount = 5;
 exports.bIncludeScanningAttributes = true;
 exports.nBufferduration = 0;//1500000;//500000;//1000000; //us
 
 //if openpolyline support is required set to false
 //when not in development mode set to false
-exports.bDrawTile = false; // this inversly toggles the ability to handle CAD generated openpolilines (eg in support)
+exports.bDrawTile = true; // this inversly toggles the ability to handle CAD generated openpolilines (eg in support)
 
 exports.scanningSchema = 'http://schemas.scanlab.com/scanning/2023/01';
 exports.skywritingSchema = 'http://schemas.scanlab.com/skywriting/2023/01';
 
 exports.parkingPosition = { x: 465 , y: - 560 };
+exports.tilePositionHardLimit = {xmin:-40 , ymin: -60, xmax: 620, ymax: 935};
+
 
 // -------- TYPE DESIGNATION -------- //
 exports.typeDesignations = {
