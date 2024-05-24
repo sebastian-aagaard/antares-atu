@@ -7,11 +7,10 @@
 'use strict';
 
 // --------  INCLUDES -------- //
-
-let TILE = require('main/tileing.js');
-let CONST = require('main/constants.js');
-let LASER = require('main/laser_designation.js');
-
+const PARAM = requireBuiltin('bsParam');
+const TILE = require('main/tileing.js');
+const CONST = require('main/constants.js');
+const LASER = require('main/laser_designation.js');
 
 // -------- TOC -------- //
 
@@ -27,7 +26,7 @@ let LASER = require('main/laser_designation.js');
    */
 exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {  
   
-  let modelLayerCount = modelDataSrc.getLayerCount(); //get layer count
+  const modelLayerCount = modelDataSrc.getLayerCount(); //get layer count
   
  //process.print('modelLayerCount: ' + modelLayerCount);
 
@@ -38,15 +37,30 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
   LASER.defineScannerArray(modelDataTarget);
   LASER.setLaserDisplayColor(modelDataTarget);
   
+  
+  //////////////////////////////////////////////////
+  // Get Boundaries of Work Area / build Envelope //
+  /////////////////////////////////////////////////
+    const workAreaLimits = {
+      xmin: PARAM.getParamInt('workarea', 'x_workarea_min_mm'),
+      ymin: PARAM.getParamInt('workarea', 'y_workarea_min_mm'),
+      xmax: PARAM.getParamInt('workarea', 'x_workarea_max_mm'),
+      ymax: PARAM.getParamInt('workarea', 'y_workarea_max_mm')
+    }
+    
+    modelDataTarget.setTrayAttribEx('workAreaLimits',workAreaLimits);
+  
+  
   /////////////////////////////////////////
   // Caclulate Scene Boundaries pr Layer //
   /////////////////////////////////////////
  
   let srcModel = modelDataSrc.getModel(0);      
   modelDataTarget.addModelCopy(srcModel);
-  let jointModels
  
   progress.initSteps(modelLayerCount+1);
+  
+
     
 // run trough all layers and all models to get all boundaries
   for ( let layerIt = 1; layerIt < modelLayerCount+1 && !progress.cancelled() ; layerIt++ )
@@ -60,7 +74,7 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
           let thisModelLayerBounds = modelLayer.tryGetBounds2D();
                    
           // check if this boundary exceeds the previous and store it
-          addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,layerIt)                 
+          addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,workAreaLimits,layerIt)                 
                
           } else {
             
@@ -75,10 +89,28 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
 
 //---------------------------------------------------------------------------------------------//
 
+const isModelOutsideWorkArea = (boundsArray,limits,layerNr) => {
+  
+  const bounds = {
+    xmin: boundsArray[0],
+    xmax: boundsArray[1],
+    ymin: boundsArray[2],
+    ymax: boundsArray[3]
+  }
+  
+
+if(bounds.xmin < limits.xmin || bounds.xmax > limits.xmax ||
+   bounds.ymin < limits.ymin || bounds.ymax > limits.ymax){
+   
+     throw new Error ("model outside workarea limits, breach found in layer: " + layerNr);
+     
+     }
+};
+
 // ADD LAYER BOUNDARIES
 
-let addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,layerIt) => {
-
+const addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,workAreaLimits,layerNr) => {
+  
   let boundsArray = [
         undefined,  // xmin
         undefined,  // xmax
@@ -95,6 +127,11 @@ let addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,laye
     }
     
  
+  //check if model is outside boundaries 
+    
+  //check if boundaries lies outside the allowed area
+  isModelOutsideWorkArea(boundsArray,workAreaLimits,layerNr);
+    
   let allLayerBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
   
   // if allLayerBoundaries has nothing this is first layer
@@ -107,17 +144,17 @@ let addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,laye
   
     
   // if there is nothing yet for this layer, push this boundary 
-  if (allLayerBoundaries[layerIt] == undefined) {
+  if (allLayerBoundaries[layerNr] == undefined) {
     
     allLayerBoundaries.push(boundsArray);
     
   } else { // check 
     
     // check if this layer boundaries exceeds the already stored, if true update the boundary
-    if (boundsArray[0] < allLayerBoundaries[layerIt][0]) allLayerBoundaries[layerIt][0] = boundsArray[0]; //xmin
-    if (boundsArray[1] > allLayerBoundaries[layerIt][1]) allLayerBoundaries[layerIt][1] = boundsArray[1]; //xmax
-    if (boundsArray[2] < allLayerBoundaries[layerIt][2]) allLayerBoundaries[layerIt][2] = boundsArray[2]; //ymin
-    if (boundsArray[3] > allLayerBoundaries[layerIt][3]) allLayerBoundaries[layerIt][3] = boundsArray[3]; //ymax
+    if (boundsArray[0] < allLayerBoundaries[layerNr][0]) allLayerBoundaries[layerNr][0] = boundsArray[0]; //xmin
+    if (boundsArray[1] > allLayerBoundaries[layerNr][1]) allLayerBoundaries[layerNr][1] = boundsArray[1]; //xmax
+    if (boundsArray[2] < allLayerBoundaries[layerNr][2]) allLayerBoundaries[layerNr][2] = boundsArray[2]; //ymin
+    if (boundsArray[3] > allLayerBoundaries[layerNr][3]) allLayerBoundaries[layerNr][3] = boundsArray[3]; //ymax
   
   }
   
