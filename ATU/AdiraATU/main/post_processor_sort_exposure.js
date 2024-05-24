@@ -191,9 +191,11 @@ const getTileExposureDuration = (exposureArray,modelData) => {
               .getExposureTimeMicroSeconds();
             
             tile.laserExposureTime[key] += skywritingTime[key];
+            tile.laserExposureTime[key] += CONST.nBufferduration;
             
             tile.exposureTime = ((tile.exposureTime < tile.laserExposureTime[key]) 
               ? tile.laserExposureTime[key] : tile.exposureTime);
+            
           }); // for each laser object
         } // if
       }); // forEach .exposure
