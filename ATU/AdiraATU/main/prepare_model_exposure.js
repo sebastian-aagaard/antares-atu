@@ -14,11 +14,7 @@ let CONST = require('main/constants.js');
 
 exports.prepareModelExposure = (model) => {
   
-  //model.setAttrib('melting-point', 'undefined');
-  //model.setAttrib('density','undefined');
-  //model.setAttrib('gas','undefined');
-
-  // Create custom table
+  //Create custom table
   //generates a custom table containing different parameters depending on laser number
   
   let skywritingAttributes = {      
