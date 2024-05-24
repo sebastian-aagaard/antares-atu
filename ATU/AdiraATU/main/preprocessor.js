@@ -78,20 +78,18 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
 // ADD LAYER BOUNDARIES
 
 let addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,layerIt) => {
-    
-
 
   let boundsArray = [
-        undefined, // xmin
-        undefined, // xmax
-        undefined, // ymin
-        undefined];  // ymax 
+        undefined,  // xmin
+        undefined,  // xmax
+        undefined,  // ymin
+        undefined]; // ymax 
     
   if(thisLayerBoundaries){
      boundsArray = [
-        thisLayerBoundaries.m_min.m_coord[0], // xmin
-        thisLayerBoundaries.m_max.m_coord[0], // xmax
-        thisLayerBoundaries.m_min.m_coord[1], // ymin
+        thisLayerBoundaries.m_min.m_coord[0],   // xmin
+        thisLayerBoundaries.m_max.m_coord[0],   // xmax
+        thisLayerBoundaries.m_min.m_coord[1],   // ymin
         thisLayerBoundaries.m_max.m_coord[1]];  // ymax
     
     }
@@ -107,11 +105,6 @@ let addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,laye
     
     }
   
-      if (layerIt == 50){
-  
-    let dummy = 0;
-    
-    }
     
   // if there is nothing yet for this layer, push this boundary 
   if (allLayerBoundaries[layerIt] == undefined) {
