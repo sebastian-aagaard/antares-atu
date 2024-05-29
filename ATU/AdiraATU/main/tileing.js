@@ -1,4 +1,4 @@
-/************************************************************
+ /************************************************************
  * Tieling
  *
  * @author Sebastian Aagaard
@@ -76,26 +76,26 @@ function getTilePosition(x_pos, y_pos, overlap_x = 0, overlap_y = 0) {
     if (overlap_x === 0) overlap_x = PARAM.getParamReal('scanhead', 'tile_overlap_x');
     if (overlap_y === 0) overlap_y = PARAM.getParamReal('scanhead', 'tile_overlap_y');
 
-    let x_min = x_pos;
-    let x_max = x_pos + PARAM.getParamReal('scanhead', 'x_scanfield_size_mm');
-    let y_min = y_pos;
-    let y_max;
+    let xmin = x_pos;
+    let xmax = x_pos + PARAM.getParamReal('scanhead', 'x_scanfield_size_mm');
+    let ymin = y_pos;
+    let ymax;
 
     if (PARAM.getParamInt('tileing', 'ScanningMode') === 0) { // moveandshoot
-        y_max = y_pos + PARAM.getParamReal('scanhead', 'y_scanfield_size_mm');
+        ymax = y_pos + PARAM.getParamReal('scanhead', 'y_scanfield_size_mm');
     } else { // onthefly
-        y_max = y_pos + PARAM.getParamReal('otf', 'tile_size');
+        ymax = y_pos + PARAM.getParamReal('otf', 'tile_size');
     }
 
     return {
-        x_min: x_min,
-        x_max: x_max,
-        y_min: y_min,
-        y_max: y_max,
-        tile_height: y_max - y_min,
-        tile_width: x_max - x_min,
-        next_x_coord: x_pos + (x_max - x_min) + overlap_x,
-        next_y_coord: y_pos + (y_max - y_min) + overlap_y
+        xmin: xmin,
+        xmax: xmax,
+        ymin: ymin,
+        ymax: ymax,
+        tile_height: ymax - ymin,
+        tile_width: xmax - xmin,
+        next_x_coord: x_pos + (xmax - xmin) + overlap_x,
+        next_y_coord: y_pos + (ymax - ymin) + overlap_y
     };
 }
 
@@ -117,10 +117,10 @@ function getBoundaryData(modelData, layerNr) {
 
 function calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY) {
     return {
-        scene_size_x: (modelBoundaries.xmax - modelBoundaries.minX) + Math.abs(maxShiftX),
-        scene_size_y: (modelBoundaries.ymax - modelBoundaries.minY) + Math.abs(maxShiftY),
-        model_size_x: modelBoundaries.xmax - modelBoundaries.minX,
-        model_size_y: modelBoundaries.ymax - modelBoundaries.minY
+        scene_size_x: (modelBoundaries.xmax - modelBoundaries.xmin) + Math.abs(maxShiftX),
+        scene_size_y: (modelBoundaries.ymax - modelBoundaries.ymin) + Math.abs(maxShiftY),
+        model_size_x: modelBoundaries.xmax - modelBoundaries.xmin,
+        model_size_y: modelBoundaries.ymax - modelBoundaries.ymin
     };
 }
 
@@ -136,7 +136,6 @@ function calculateRequiredPasses(sceneSize, tileWidth, tileHeight, overlapX, ove
         required_passes_y = Math.ceil(sceneSize.model_size_y / (tileHeight + overlapY));
     }
     
-    process.print("pass X: " + required_passes_x, "pass Y: " + required_passes_y);
     return {
         required_passes_x,
         required_passes_y
@@ -172,15 +171,7 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
     };
 }
 
-const isModelOutsideWorkArea = (modelBounds,workarea_min_x,workarea_min_y,workarea_max_x,workarea_max_y,layerNr) => {
 
-if(modelBounds.xmin < workarea_min_x || modelBounds.xmax > workarea_max_x ||
-   modelBounds.ymin < workarea_min_y || modelBounds.ymax > workarea_max_y){
-   
-     throw new Error ("model outside workarea, breach found in layer: " + layerNr);
-     
-     }
-};
 
 exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
@@ -195,17 +186,8 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     // Get boundary data
     const modelBoundaries = getBoundaryData(modelData, layerNr);
     
-    // Get work area boundaries
-    const workarea_min_x = PARAM.getParamInt('workarea', 'x_workarea_min_mm');
-    const workarea_min_y = PARAM.getParamInt('workarea', 'y_workarea_min_mm');
-    const workarea_max_x = PARAM.getParamInt('workarea', 'x_workarea_max_mm');
-    const workarea_max_y = PARAM.getParamInt('workarea', 'y_workarea_max_mm');
-  
-    //check if boundaries lies outside the allowed area
-    isModelOutsideWorkArea(modelBoundaries,workarea_min_x,workarea_min_y,workarea_max_x,workarea_max_y,layerNr);
-
     // Calculate scene size
-    const sceneSize = calculateSceneSize(modelBoundaries, shiftX, shiftY);
+    const sceneSize = calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY);
 
     // Get tile layout information
     const tileOutlineOrigin = getTilePosition(0, 0);
@@ -213,27 +195,24 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
         sceneSize, tileOutlineOrigin.tile_width, tileOutlineOrigin.tile_height,
         PARAM.getParamReal('scanhead', 'tile_overlap_x'), PARAM.getParamReal('scanhead', 'tile_overlap_y')
     );
-
-
-
-    process.print(required_passes_y);
     
+    const workAreaLimits = modelData.getTrayAttribEx('workAreaLimits');
+        
     // Adjust starting positions
     let { startingPos: scanhead_x_starting_pos, overlap: overlap_x, requiredPasses: required_passes_x_new } = adjustTileLayout(
-        modelBoundaries.minX,modelBoundaries.maxX, workarea_min_x, workarea_max_x, tileOutlineOrigin.tile_width,
+        modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
         required_passes_x, PARAM.getParamReal('scanhead', 'tile_overlap_x'),shiftX
     );
 
   required_passes_x = required_passes_x_new; 
 
     let { startingPos: scanhead_y_starting_pos, overlap: overlap_y, requiredPasses: required_passes_y_new  } = adjustTileLayout(
-        modelBoundaries.minY,modelBoundaries.maxY, workarea_min_y, workarea_max_y, tileOutlineOrigin.tile_height,
+        modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
         required_passes_y, PARAM.getParamReal('scanhead', 'tile_overlap_y'),shiftY
     );
     
     required_passes_y = required_passes_y_new; 
-    process.print(required_passes_y);
-
+    
     // Offset starting position for shifts
     scanhead_x_starting_pos += shiftX - maxShiftX / 2;
     scanhead_y_starting_pos += shiftY - maxShiftY / 2;
@@ -245,6 +224,12 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     // Generate tiles
     let cur_tile_coord_x = scanhead_x_starting_pos;
     let cur_tile_coord_y = scanhead_y_starting_pos;
+    
+    if (!cur_tile_coord_x || !cur_tile_coord_y)
+      throw new Error ("current tile coordinate not defined, layer nr: " + layerNr);
+      
+    if (!required_passes_x || !required_passes_y)
+      throw new Error ("no passes defined, layer nr: " + layerNr);
 
     for (let i = 0; i < required_passes_x; i++) {
         let cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y, overlap_x, overlap_y);
@@ -254,11 +239,11 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
             cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y, overlap_x, overlap_y);
 
             let scanhead_outlines = [
-                new VEC2.Vec2(cur_tile.x_min, cur_tile.y_min),
-                new VEC2.Vec2(cur_tile.x_min, cur_tile.y_max),
-                new VEC2.Vec2(cur_tile.x_max, cur_tile.y_max),
-                new VEC2.Vec2(cur_tile.x_max, cur_tile.y_min),
-                new VEC2.Vec2(cur_tile.x_min, cur_tile.y_min)
+                new VEC2.Vec2(cur_tile.xmin, cur_tile.ymin),
+                new VEC2.Vec2(cur_tile.xmin, cur_tile.ymax),
+                new VEC2.Vec2(cur_tile.xmax, cur_tile.ymax),
+                new VEC2.Vec2(cur_tile.xmax, cur_tile.ymin),
+                new VEC2.Vec2(cur_tile.xmin, cur_tile.ymin)
             ];
 
             let tile_obj = {
