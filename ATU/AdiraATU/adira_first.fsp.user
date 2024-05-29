@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Root>
   <LastOpened>
-    <File TabGroupIndex="1" TabIndex="0">configuration/parameter_declaration.js</File>
-    <File TabGroupIndex="0" TabIndex="3">main/constants.js</File>
-    <File TabGroupIndex="0" TabIndex="0">main/post_processor_sort_exposure.js</File>
-    <File TabGroupIndex="0" TabIndex="2">main/prepare_model_exposure.js</File>
-    <File TabGroupIndex="0" TabIndex="1">main/toolpath.js</File>
-    <File TabGroupIndex="0" TabIndex="4">main/toolpath_generation.js</File>
-    <File TabGroupIndex="0" TabIndex="5">main/toolpath_to_tile.js</File>
-    <Active>configuration/parameter_declaration.js</Active>
+    <File TabIndex="5" TabGroupIndex="0">configuration/machine_declaration.js</File>
+    <File TabIndex="4" TabGroupIndex="0">configuration/parameter_declaration.js</File>
+    <File TabIndex="7" TabGroupIndex="0">main/constants.js</File>
+    <File TabIndex="8" TabGroupIndex="0">main/export_cli.js</File>
+    <File TabIndex="6" TabGroupIndex="0">main/post_processor_statistics.js</File>
+    <File TabIndex="0" TabGroupIndex="0">main/preprocessor.js</File>
+    <File TabIndex="2" TabGroupIndex="0">main/toolpath.js</File>
+    <File TabIndex="1" TabGroupIndex="0">main/toolpath_generation.js</File>
+    <File TabIndex="3" TabGroupIndex="0">main/toolpath_to_tile.js</File>
+    <Active>configuration/machine_declaration.js</Active>
   </LastOpened>
   <LastBreakpoints>
     <Breakpoint>
-      <Line>61</Line>
-      <Filepath>C:/Users/sebas/OneDrive/Work/ADIRA6/first-rep/ATU/AdiraATU/main/post_processor_sort_exposure.js</Filepath>
+      <Line>148</Line>
+      <Filepath>C:/Users/sebas/OneDrive/Work/ADIRA6/first-rep/ATU/AdiraATU/main/tileing.js</Filepath>
     </Breakpoint>
   </LastBreakpoints>
   <LastBookmarks>
@@ -36,6 +38,14 @@
     <Bookmark>
       <Line>27</Line>
       <Filepath>C:/Users/sebas/OneDrive/Work/ADIRA5/first-rep/ATU/AdiraATU/main/post_processor.js</Filepath>
+    </Bookmark>
+    <Bookmark>
+      <Line>229</Line>
+      <Filepath>C:/Users/sebas/OneDrive/Work/ADIRA6/first-rep/ATU/AdiraATU/main/post_processor_sort_exposure.js</Filepath>
+    </Bookmark>
+    <Bookmark>
+      <Line>148</Line>
+      <Filepath>C:/Users/sebas/OneDrive/Work/ADIRA6/first-rep/ATU/AdiraATU/main/tileing.js</Filepath>
     </Bookmark>
   </LastBookmarks>
 </Root>

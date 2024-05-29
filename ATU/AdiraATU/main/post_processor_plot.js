@@ -52,14 +52,14 @@ exports.drawTileArray_MT = function(
            .getModelLayerByNr(layerNr);
          
          if(!thisModelLayer) {           
-           throw new Error('modelLayer ' + layerNr + ' ,in model ' +  modelData.getModel(modelIt).getAttribEx('ModelName'));
+           throw new Error('modelLayer ' + layerNr + ' , in model ' +  modelData.getModel(modelIt).getAttribEx('ModelName'));
          }
             
            let tileTable = thisModelLayer
            .getAttribEx('tileTable');
            
         if (!tileTable) {               
-          throw new Error('tile table at layer ' + layerNr + ' ,in model ' +  modelData.getModel(modelIt).getAttribEx('ModelName'));
+          throw new Error('tile table at layer ' + layerNr + ' , in model ' +  modelData.getModel(modelIt).getAttribEx('ModelName'));
         }  
         
        

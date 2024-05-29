@@ -50,7 +50,6 @@ exports.about = (aboutInfo) => {
 /** @param  machineConfig   bsMachineConfig */
 
 exports.declareMachine = (machineConfig) => {
-  
   MACHINE_CONFIG.declareMachine(machineConfig);
   
 };
@@ -77,6 +76,7 @@ exports.declareBuildAttributes = (buildAttrib) => {
 /** @param  a_config    bsPostProcessingConfig */
 
 exports.configurePostProcessingSteps = (a_config) => {
+
   // Postprocessing the toolpaths using the given function:
   a_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,{bMultithread: true, nProgressWeight: 10});
   a_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta_MT,{bMultithread: true, nProgressWeight: 1});
@@ -126,9 +126,9 @@ exports.prepareModelExposure = (model) => {
 * @param  modelDataTarget  bsModelData
 * @param  progress         bsProgress
 */
-exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {  
-
-PREPROCESSOR.preprocessLayerStack(modelDataSrc, modelDataTarget, progress);
+exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
+  
+  PREPROCESSOR.preprocessLayerStack(modelDataSrc, modelDataTarget, progress);
   
 }; //preprocessLayerStack
 
@@ -138,10 +138,10 @@ PREPROCESSOR.preprocessLayerStack(modelDataSrc, modelDataTarget, progress);
 * @param  hatchResult  bsHatch
 * @param  nLayerNr      int
 */
-exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {  
-
-  TOOLPATH.makeExposureLayer(modelData, hatchResult, nLayerNr);
+exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => { 
   
+TOOLPATH.makeExposureLayer(modelData, hatchResult, nLayerNr);
+   
   }; // makeExposureLayer
   
 /**

@@ -45,70 +45,123 @@ exports.getStatistics = function(
   process.print('buildtime_days: ' + buildTime_us/(3600*1000*1000)/24);
   
     
-  let customJSON = {
-    
+//   let customJSON = {
+//     
+//     "namespaces": [
+//       {
+//         "schema": "http://schemas.scanlab.com/skywriting/2023/01",
+//         "prefix": "skywriting"
+//       },      
+//       {
+//         "schema": "http://adira.com/addcreator/202305",
+//         "prefix": "adira"
+//       },
+//       {
+//         "schema": "http://adira.com/tilinginformation/202305",
+//         "prefix": "tiling"
+//       }    
+//     ],
+//       
+//     metadata: [ 
+//       {
+//         "name": "statistics",
+//         "schema": "http://adira.com/addcreator/202305",
+//         attributes: {
+//           "build_time": buildTime_us,
+//           "total_mass": partMassKg,
+//           "total_packed_powder":totalPowder,// totalPackedPowder                
+//         }        
+//       },
+//       
+//       {
+//         "name": "generation",
+//         "schema": "http://adira.com/addcreator/202305",
+//         attributes: {
+//           "created_at": new Date().toISOString(),
+//           "created_by": "engineer"
+//         }        
+//       },
+// 
+//       {
+//         "name": "material",
+//         "schema": "http://adira.com/addcreator/202305",
+//         att/ributes: {
+//           "layerthickness": modelData.getLayerThickness(),
+//           "identifier": null,//model.getMaterialID(),
+//           "density": PARAM.getParamReal('material','density_g_cc'),//,
+//           "gas": totalPowder,//         
+//         }        
+//       },
+//       
+//       {
+//         "name": "process",
+//         "schema": "http://adira.com/addcreator/202305",
+//         "children": [
+//           {
+//             "name": "recoating",
+//             attributes: {
+//               "speed": PARAM.getParamInt('movementSettings','recoating_speed_mms')
+//             }        
+//           
+//           }
+//         ]
+//                 
+//       }
+// 
+//     ]};
+
+let customJSON = {
+
     "namespaces": [
       {
         "schema": "http://schemas.scanlab.com/skywriting/2023/01",
         "prefix": "skywriting"
       },      
       {
-        "schema": "http://adira.com/addcreator/202305",
-        "prefix": "adira"
+        "schema": "http://nikonslm.com/origin/202305",
+        "prefix": "origin"
       },
       {
-        "schema": "http://adira.com/tilinginformation/202305",
+        "schema": "http://nikonslm.com/tilinginformation/202305",
         "prefix": "tiling"
-      }    
-    ],
-      
-    toolpathdata: [
-      {
-        "name": "statistics",
-        "schema": "http://adira.com/addcreator/202305",
-        attributes: {
-          "build_time": buildTime_us,
-          "total_mass": partMassKg,
-          "total_packed_powder":totalPowder,// totalPackedPowder                
-        }        
       },
-      
       {
-        "name": "generation",
-        "schema": "http://adira.com/addcreator/202305",
-        attributes: {
-          "created_at": new Date().toISOString(),
-          "created_by": "engineer"
-        }        
+        "schema": "http://nikonslm.com/statistics/202305",
+        "prefix": "statistics"
       },
-
       {
-        "name": "material",
-        "schema": "http://adira.com/addcreator/202305",
-        attributes: {
-          "layerthickness": modelData.getLayerThickness(),
-          "identifier": null,//model.getMaterialID(),
-          "density": PARAM.getParamReal('material','density_g_cc'),//,
-          "gas": totalPowder,//         
-        }        
-      },
-      
-      {
-        "name": "process",
-        "schema": "http://adira.com/addcreator/202305",
-        "children": [
-          {
-            "name": "recoating",
-            attributes: {
-              "speed": PARAM.getParamInt('movementSettings','recoating_speed_mms')
-            }        
-          
-          }
-        ]
-                
+       "schema": "http://test.com/test/202305",
+        "prefix": "tp"
       }
+    ],
 
-    ]};
+    "metadata": [{
+            "name": "totals",
+            "namespace": "http://nikonslm.com/statistics/202305",
+            "attributes": {
+                "build_time": buildTime_us,
+                "total_mass": partMassKg,
+                "total_packed_powder": totalPowder
+              }
+            },
+            {
+            "name":"origin",
+            "namespace": "http://nikonslm.com/origin/202305",
+            "attributes": {
+              "created_at": new Date().toISOString(),
+              "created_by": process.username
+            },
+            "nodes": [{
+                    "name": "node2",
+                    "attributes": {
+                        "attribute1": 5,
+                        "attributexxx": "250",
+                    }
+                }
+            ]
+        }
+    ]
+};
           
    modelData.setTrayAttribEx('custom', customJSON);
 }
@@ -232,5 +285,5 @@ const getPartMassKg = (modelData,progress,layer_start_nr,layer_end_nr) => {
   let mass_kilograms = mass_grams / 1000 ;
   
   
-  return mass_kilograms
+  return mass_kilograms;
 } 

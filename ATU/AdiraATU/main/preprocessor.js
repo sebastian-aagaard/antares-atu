@@ -139,7 +139,7 @@ const addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,wo
     
     allLayerBoundaries = [];
     allLayerBoundaries.push(undefined); // add empty layer for layer 0
-    
+    //allLayerBoundaries.push(undefined); // add empty layer for layer 0
     }
   
     

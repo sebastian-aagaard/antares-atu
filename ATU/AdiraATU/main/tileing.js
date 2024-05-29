@@ -103,6 +103,7 @@ function getTilePosition(x_pos, y_pos, overlap_x = 0, overlap_y = 0) {
 function getBoundaryData(modelData, layerNr) {
     try {
         let boundaries = modelData.getTrayAttribEx('allLayerBoundaries');
+        process.printInfo(layerNr);
         return {
             xmin: boundaries[layerNr][0],
             xmax: boundaries[layerNr][1],
@@ -110,8 +111,7 @@ function getBoundaryData(modelData, layerNr) {
             ymax: boundaries[layerNr][3]
         };
     } catch (err) {
-      
-        throw new Error('Failed to access boundaries at layer nr: ' + layerNr);
+       throw new Error('Tileing: Failed to access boundaries at layer nr: ' + layerNr);
     }
 }
 
@@ -175,6 +175,10 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
 
 exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
+    if(!modelData) {
+      throw new Error ("modelData could not be obtained for layer " + layerNr);
+      }
+      
     // Calculate shifts
     const shiftX = getShiftX(layerNr);
     const shiftY = getShiftY(layerNr);

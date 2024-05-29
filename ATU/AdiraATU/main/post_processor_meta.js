@@ -49,5 +49,4 @@ exports.postprocessMeta_MT = function(
 
   }
   
-  const done = 0;
 }

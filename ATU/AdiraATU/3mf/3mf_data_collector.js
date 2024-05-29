@@ -16,13 +16,13 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
   
   
   let exporter_3mf = {    
-    "segment_attributes": [
+    "segmentattributes": [
         {
          "segmenttype": "hatch",
          "datatype": "uint32",
          "attribute_name": 1,
          "attribute_value": 1,
-         "namespace": "http://adira.com/tilinginformation/202305"
+         "namespace": "http://nikonslm.com/tilinginformation/202305"
          }
     ],
       "content": []

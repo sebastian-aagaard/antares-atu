@@ -26,15 +26,17 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
 
  let thisModel = modelData.getModel(0);
  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
- 
- TILE.getTileArray(thisLayer,nLayerNr,modelData);
   
- // check if this layer is valid, if not move on
+   // check if this layer is valid, if not move on
   if(!thisLayer.isValid()) 
   {
-    //throw new Error("Invalid Layer " + nLayerNr);
+    throw new Error("Invalid Layer " + nLayerNr);
     return;
   }
+  
+ TILE.getTileArray(thisLayer,nLayerNr,modelData);
+  
+
     
   let island_it = modelData.getFirstIsland(nLayerNr); // get island Iterator
 
