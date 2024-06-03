@@ -16,8 +16,8 @@
 
 exports.declareMachine = function(machineConfig)
 {
-  machineConfig.setBuildstyleName('Adira');
-  machineConfig.setMachineName('AddCreator');
+  machineConfig.setBuildstyleName('Nikon SLM Solutions');
+  machineConfig.setMachineName('Antares');
   machineConfig.addMaterialName('unspecified');
 
 
