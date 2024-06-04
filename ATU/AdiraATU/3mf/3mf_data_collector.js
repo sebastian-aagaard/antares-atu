@@ -9,12 +9,8 @@
 const PARAM = requireBuiltin('bsParam');
 const UTIL = require('main/utility_functions.js');
 
-
 exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
-  
-  const arrayOfModels = UTIL.getModelsInLayer(modelData,layerNr);
-  
-  
+    
   let exporter_3mf = {    
     "segmentattributes": [
         {
@@ -30,28 +26,28 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
   
   exposureArray.forEach((pass,passIndex) => {
     
-       try {     
+    try {     
       exporter_3mf.content[passIndex] = {
-       "name": "sequence",
-       "namespace": "http://adira.com/tilinginformation/202305",
-       "attributes": {
-          "uuid": UTIL.generateUUID(),
-          "startx": pass[0].xcoord,
-          "starty": (pass[0].ProcessHeadFromFront) ? pass[0].ycoord : pass[0].ycoord+PARAM.getParamReal('otf','tile_size'),
-          "direction": (pass[0].ProcessHeadFromFront) ? "fromfront" : "fromback",
-          "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
-          "type": PARAM.getParamStr('tileing','ScanningMode').toLowerCase().replace(/\s+/g, ''),
-          "requiredPasses": exposureArray.length,
-          "tilesInPass": pass.length,
-          "layerScanningDuration": null,
-          "layerTotalDuration" : null
-        },
-        "children": [] //tileTable_3mf
+         "name": "sequence",
+         "namespace": "http://nikonslm.com/tilinginformation/202305",
+         "attributes": {
+            "uuid": UTIL.generateUUID(),
+            "startx": pass[0].xcoord,
+            "starty": (pass[0].ProcessHeadFromFront) ? pass[0].ycoord : pass[0].ycoord+PARAM.getParamReal('otf','tile_size'),
+            "direction": (pass[0].ProcessHeadFromFront) ? "fromfront" : "fromback",
+            "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
+            "type": PARAM.getParamStr('tileing','ScanningMode').toLowerCase().replace(/\s+/g, ''),
+            "requiredPasses": exposureArray.length,
+            "tilesInPass": pass.length,
+            "layerScanningDuration": null,
+            "layerTotalDuration" : null
+          },
+          "children": [] //tileTable_3mf
         };
 
       } catch {
           throw new Error('failed at pass ' + passIndex + ', layer' + layerNr)
-       };
+      };
        
     pass.forEach((tile, tileIndex) => {
        
@@ -80,9 +76,7 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
       
       let nextTileYCoord = undefined;
       let nextTileXCoord = undefined;
-      
-      //process.print('pass ' + passIndex + ' / '+tile.tileID + ' / ' + tileIndex);
-      
+            
       if (tileIndex == pass.length-1) { // if last tile
         
         nextTileYCoord =  tile.ycoord + ((tile.ProcessHeadFromFront) ? tileSize : -tileSize);
@@ -94,7 +88,6 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
         nextTileYCoord = (tile.ProcessHeadFromFront) ? pass[tileIndex + 1].ycoord : tile.ycoord;
         
       }
-      
       
       if(nextTileXCoord === undefined || nextTileYCoord === undefined) 
         throw new Error('failed to get next tile coord, at pass ' + passIndex + ', tile ' + tileIndex);
@@ -116,11 +109,12 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
     });
   });
   
-  
-  
   assignLayerTotals(exporter_3mf);
      
   // set the exporter_3mf for all models in this layer
+  
+  const arrayOfModels = UTIL.getModelsInLayer(modelData,layerNr);
+
   arrayOfModels.forEach(m => {
     m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf)
     });
