@@ -79,6 +79,9 @@ const fillVoidsinExposureArray = (exposureArray) => {
             for (let tileID = minTileID; tileID <= maxTileID; tileID++) {
                 if (!pass.some(tile => tile.tileID === tileID)) {
                     // If tileID is missing, append it with default structure
+                    
+                    throw new Error ("error in function fillVoidsinExposureArray");
+                  
                     pass.push({
                         tileID: tileID,
                         xcoord: thisTile.attributes.xcoord,
