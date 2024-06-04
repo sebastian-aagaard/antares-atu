@@ -154,7 +154,7 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
 
     if(startingPos + tileReach + shift <= maxCoord) {
       process.print("adjusted passes in layer");
-     //requiredPasses++;
+      requiredPasses++;
     }
 
     if (startingPos < workareaMin) {
@@ -178,6 +178,10 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     if(!modelData) {
       throw new Error ("modelData could not be obtained for layer " + layerNr);
       }
+      
+       if(!modelLayer) {
+      throw new Error ("modelLayer could not be obtained for layer " + layerNr);
+      }  
       
     // Calculate shifts
     const shiftX = getShiftX(layerNr);
@@ -235,7 +239,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     if (!required_passes_x || !required_passes_y)
       throw new Error ("no passes defined, layer nr: " + layerNr);
 
-    for (let i = 0; i < required_passes_x; i++) {
+    for (let passnumber_x = 0; passnumber_x < required_passes_x; passnumber_x++) {
         let cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y, overlap_x, overlap_y);
         let next_tile_coord_x = cur_tile.next_x_coord;
 
@@ -251,7 +255,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
             ];
 
             let tile_obj = {
-                passNumber: i + 1,
+                passNumber: passnumber_x + 1,
                 tile_number: j + 1,
                 scanhead_outline: scanhead_outlines,
                 scanhead_x_coord: cur_tile_coord_x,
@@ -272,7 +276,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
             let TileEntry3mf = {
                 name: "movement",
                 attributes: {
-                    tileID: j + 1 + (i + 1) * 1000,
+                    tileID: j + 1 + (passnumber_x + 1) * 1000,
                     xcoord: cur_tile_coord_x,
                     ycoord: cur_tile_coord_y,
                     targetx: 0,
@@ -284,8 +288,8 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
                 }
             };
 
-            if (!tileTable3mf[i]) tileTable3mf[i] = [];
-            tileTable3mf[i].push(TileEntry3mf);
+            if (!tileTable3mf[passnumber_x]) tileTable3mf[passnumber_x] = [];
+            tileTable3mf[passnumber_x].push(TileEntry3mf);
 
             cur_tile_coord_y = cur_tile.next_y_coord;
         }
@@ -293,7 +297,18 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
         cur_tile_coord_y = scanhead_y_starting_pos; // reset y coord
         cur_tile_coord_x = next_tile_coord_x; // set next stripe pass
     }
-
+    
     modelLayer.setAttribEx('tileTable', tileTable);
     modelLayer.setAttribEx('tileTable_3mf', tileTable3mf); //<-- 
+    
+    
+    if(!modelLayer.getAttribEx('tileTable') || !modelLayer.getAttribEx('tileTable_3mf')){
+  
+      process.printWarning("re-attempt to get tileArray, layer nr " + layerNr);
+      exports.getTileArray(modelLayer, layerNr, modelData);
+      }
+       
+//     if(!modelLayer.getAttribEx('tileTable')) throw new Error('failed to access tiletable, layernr ' + layerNr);
+//     if(!modelLayer.getAttribEx('tileTable_3mf')) throw new Error('failed to access tileTable_3mf, layernr ' + layerNr);
+//     
 };
