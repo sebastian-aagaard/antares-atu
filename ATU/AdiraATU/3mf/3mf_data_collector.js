@@ -37,7 +37,8 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
        "attributes": {
           "uuid": UTIL.generateUUID(),
           "startx": pass[0].xcoord,
-          "starty": pass[0].ycoord,
+          "starty": (pass[0].ProcessHeadFromFront) ? pass[0].ycoord : pass[0].ycoord+PARAM.getParamReal('otf','tile_size'),
+          "direction": (pass[0].ProcessHeadFromFront) ? "fromfront" : "fromback",
           "sequencetransferspeed": PARAM.getParamInt('movementSettings','sequencetransfer_speed_mms'),
           "type": PARAM.getParamStr('tileing','ScanningMode').toLowerCase().replace(/\s+/g, ''),
           "requiredPasses": exposureArray.length,
@@ -82,17 +83,18 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
       
       //process.print('pass ' + passIndex + ' / '+tile.tileID + ' / ' + tileIndex);
       
-      if (tileIndex == pass.length-1) {
+      if (tileIndex == pass.length-1) { // if last tile
         
         nextTileYCoord =  tile.ycoord + ((tile.ProcessHeadFromFront) ? tileSize : -tileSize);
         nextTileXCoord =  tile.xcoord;
         
       } else {
        
-        nextTileYCoord = pass[tileIndex + 1].ycoord;        
-        nextTileXCoord = pass[tileIndex + 1].xcoord;
+        nextTileXCoord = pass[tileIndex + 1].xcoord;        
+        nextTileYCoord = (tile.ProcessHeadFromFront) ? pass[tileIndex + 1].ycoord : tile.ycoord;
         
       }
+      
       
       if(nextTileXCoord === undefined || nextTileYCoord === undefined) 
         throw new Error('failed to get next tile coord, at pass ' + passIndex + ', tile ' + tileIndex);
