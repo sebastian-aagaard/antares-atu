@@ -103,7 +103,7 @@ function getTilePosition(x_pos, y_pos, overlap_x = 0, overlap_y = 0) {
 function getBoundaryData(modelData, layerNr) {
     try {
         let boundaries = modelData.getTrayAttribEx('allLayerBoundaries');
-        process.printInfo(layerNr);
+        //process.printInfo(layerNr);
         return {
             xmin: boundaries[layerNr][0],
             xmax: boundaries[layerNr][1],
@@ -153,8 +153,8 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
     }
 
     if(startingPos + tileReach + shift <= maxCoord) {
-      process.print("did we get here?");
-      requiredPasses++;
+      process.print("adjusted passes in layer");
+     //requiredPasses++;
     }
 
     if (startingPos < workareaMin) {
@@ -295,5 +295,5 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     }
 
     modelLayer.setAttribEx('tileTable', tileTable);
-    modelLayer.setAttribEx('tileTable_3mf', tileTable3mf);
+    modelLayer.setAttribEx('tileTable_3mf', tileTable3mf); //<-- 
 };
