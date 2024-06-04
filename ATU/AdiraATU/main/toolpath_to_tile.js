@@ -22,11 +22,12 @@ const PATH_SET = requireBuiltin('bsPathSet');
 
 // ----- CODE ---- //
 
-exports.assignToolpathToTiles = function(thisModel,nLayerNr,allHatches) {
+exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
 
-  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
+  let thisLayer = bsModel.getModelLayerByNr(nLayerNr);
   let tileArray = thisLayer.getAttribEx('tileTable');
-
+  
+  if(!tileArray) throw new Error("tileArray empty, layer: " + nLayerNr + ", model: " + bsModel.getAttribEx("ModelName"));
 
   ////////////////////////////////////////////////
   /// Merge Hatch Blocks with Same Attributes  ///
@@ -132,7 +133,8 @@ exports.assignToolpathToTiles = function(thisModel,nLayerNr,allHatches) {
           
     } //for
     
-    thisLayer.setAttribEx('tileSegmentArray',tileSegmentArray); 
+    //thisLayer.setAttribEx('tileSegmentArray',tileSegmentArray);
+    
     return assignedHatch;
     
 } //assignToolpathToTiles
