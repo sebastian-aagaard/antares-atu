@@ -31,13 +31,10 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
   if(!thisLayer.isValid()) 
   {
     throw new Error("Invalid Layer " + nLayerNr);
-    return;
   }
   
  TILE.getTileArray(thisLayer,nLayerNr,modelData);
   
-
-    
   let island_it = modelData.getFirstIsland(nLayerNr); // get island Iterator
 
   //CREATE CONTAINERS
