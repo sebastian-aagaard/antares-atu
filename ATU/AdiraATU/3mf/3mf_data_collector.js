@@ -119,10 +119,7 @@ exports.createExporter3mf = (exposureArray,layerIt,modelData,layerNr) => {
   
   
   assignLayerTotals(exporter_3mf);
-  
-  exporter_3mf = removeEmptyTilesIfFirstOrLast (exporter_3mf);
-
-
+     
   // set the exporter_3mf for all models in this layer
   arrayOfModels.forEach(m => {
     m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf)
@@ -166,20 +163,3 @@ const assignLayerTotals = (exporter_3mf) => {
       })
 
 }
-
-
-
-const removeEmptyTilesIfFirstOrLast = (exporter_3mf) => {
- 
-  exporter_3mf.content = exporter_3mf.content.map(pass => {
-    
-    const firstNonZeroIndex = pass.children.findIndex(tile => tile.attributes.tileExposureTime !== 0);
-    const lastNonZeroIndex = [...pass.children].reverse().findIndex(tile => tile.attributes.tileExposureTime !== 0);
-    const actualLastNonZeroIndex = lastNonZeroIndex !== -1 ? pass.children.length - 1 - lastNonZeroIndex : -1;
-    let filteredTiles = pass.children.filter((tile, index) => {
-      return index >= firstNonZeroIndex && index <= actualLastNonZeroIndex;
-    });
-    return { ...pass, children: filteredTiles };
-  }).filter(pass => pass.children.length > 0);
-  return exporter_3mf;
-};

@@ -55,6 +55,7 @@ exports.postprocessSortExposure_MT = function(
      
     getTileExposureDuration(sortedExposureArray,modelData);
      
+    trimAwayEmptyLeadingAndTrailingTiles(sortedExposureArray); 
     //process.print('layerNr: ' + layerNr); 
     EXP3MF.createExporter3mf(sortedExposureArray,layerIt,modelData,layerNr);
     
@@ -65,6 +66,21 @@ exports.postprocessSortExposure_MT = function(
    
 } // postprocessSortExposure_MT
  
+
+const trimAwayEmptyLeadingAndTrailingTiles = (exposureArray) => {
+  
+    exposureArray.forEach(pass => {
+    // Remove leading zeroes
+    while (pass.length > 0 && pass[0].exposureTime === 0) {
+      pass.shift();
+    }
+    
+    // Remove trailing zeroes
+    while (pass.length > 0 && pass[pass.length - 1].exposureTime === 0) {
+      pass.pop();
+    }
+  });
+}
 
 
 const fillVoidsinExposureArray = (exposureArray) => {
