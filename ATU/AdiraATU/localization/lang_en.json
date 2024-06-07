@@ -10,6 +10,7 @@
     "param_beam_compensation": "Beam Compensation [mm]",
     "param_number_of_borders" : "Number of Borders",
     "param_boarder_offset": "Offset between Borders [mm]",
+    "param_distance_border_to_hatch": "Offset from Border to Hatch [mm]",
     "param_border_order_outside_in": "Scanning Order of Borders",
     "param_border_order_outside_in_disable" : "inside out",
     "param_border_order_outside_in_enable": "outside in",
