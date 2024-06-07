@@ -7,13 +7,13 @@
 'use strict';
 
 // -------- INCLUDES -------- //
-var PARAM = requireBuiltin('bsParam');
-var MODEL = requireBuiltin('bsModel');
-var ISLAND = requireBuiltin('bsIsland');
-var HATCH = requireBuiltin('bsHatch');
-var CONST = require('main/constants.js');
-var POLY_IT = requireBuiltin('bsPolylineIterator');
-var VEC2 = requireBuiltin('vec2');
+const PARAM = requireBuiltin('bsParam');
+const MODEL = requireBuiltin('bsModel');
+const ISLAND = requireBuiltin('bsIsland');
+const HATCH = requireBuiltin('bsHatch');
+const CONST = require('main/constants.js');
+const POLY_IT = requireBuiltin('bsPolylineIterator');
+const VEC2 = requireBuiltin('vec2');
 
 // -------- TOC ---------- //
 
@@ -321,16 +321,23 @@ const sortBorders = (hatchObj) => {
 const makeBorders = (islandObj) => {
   
   const numberOfBorders = PARAM.getParamInt('border','nNumberOfBorders');
-  const borderOffsetDistance = PARAM.getParamReal('border','fBorderOffset');
+  const distanceBetweenBorders = PARAM.getParamReal('border','fDistanceBetweenBorders');
+  const distanceBorderToHatch = PARAM.getParamReal('border','fDistanceBorderToHatch');
   let allBorderHatch = new HATCH.bsHatch();
   let island = islandObj.clone();
   let offsetIsland = new ISLAND.bsIsland();
   
-  for (let borderIndex = 0; borderIndex < numberOfBorders ; borderIndex++){
-      
+  
+  for (let borderIndex = 1; borderIndex < numberOfBorders+1 ; borderIndex++){
+    
     island.borderToHatch(allBorderHatch);
-    island.createOffset(island,-borderOffsetDistance);
-      
+    
+    let offsetBorderBy = distanceBetweenBorders;
+    
+    if(borderIndex == numberOfBorders) offsetBorderBy = distanceBorderToHatch;
+    
+    island.createOffset(island,-offsetBorderBy);
+  
     if(island.isEmpty()) break;
       
   }
@@ -370,12 +377,17 @@ exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){
         polyline_hatch_paths.setAttributeInt("type", CONST.typeDesignations.support_hatch.value);
       }
       
+      
       allPolyLineHatch.moveDataFrom(polyline_hatch_paths); // moves polyline_hatch_paths to hatchResult
       
       polyline_it.next(); // looks at next polyline
     }
   }
   
+  //process.print(HATCH.nSortFlagShortestPath,HATCH.nSortFlagUseHotSpot,HATCH.nSortFlagFlipOrientation);  
+    
+  allPolyLineHatch.pathReordering(new VEC2.Vec2(1000,1000),HATCH.nSortFlagShortestPath|HATCH.nSortFlagFlipOrientation|HATCH.nSortFlagUseHotSpot  );
+
   return allPolyLineHatch;
 }  
 
