@@ -41,6 +41,10 @@ function getShiftX(layerNr) {
       
   // Compute the shift value based on the distance from the middle layer
   let shiftValue = distanceFromMiddle * shiftIncrement;
+  
+  if (!shiftValue) {
+    shiftValue = 0;
+  }
       
   return shiftValue;
 }
@@ -62,7 +66,10 @@ function getShiftY(layerNr) {
      
   // Compute the shift value based on the distance from the middle layer
   let shiftValue = distanceFromMiddle * shiftIncrement;
-
+  
+  if (!shiftValue) {
+    shiftValue = 0;
+  }
   return shiftValue;
 }
 
@@ -152,10 +159,10 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
         startingPos = workareaMax + shift - tileReach;
     }
 
-    if(startingPos + tileReach + shift <= maxCoord) {
-      process.print("adjusted passes in layer");
-      requiredPasses++;
-    }
+//     if(startingPos + tileReach + shift <= maxCoord) {
+//       process.print("adjusted passes in layer");
+//       requiredPasses++;
+//     }
 
     if (startingPos < workareaMin) {
         overlap = (startingPos - workareaMin) / (requiredPasses - 1);
@@ -205,7 +212,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     );
     
     const workAreaLimits = modelData.getTrayAttribEx('workAreaLimits');
-        
+    //process.print('scanhead_startPos 1: ' + scanhead_x_starting_pos);    
     // Adjust starting positions
     let { startingPos: scanhead_x_starting_pos, overlap: overlap_x, requiredPasses: required_passes_x_new } = adjustTileLayout(
         modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
@@ -224,7 +231,9 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     // Offset starting position for shifts
     scanhead_x_starting_pos += shiftX - maxShiftX / 2;
     scanhead_y_starting_pos += shiftY - maxShiftY / 2;
-
+    //process.print('shiftXtot: ' + (shiftX - maxShiftX / 2));
+    //process.print('scanhead_startPos 2: ' + scanhead_x_starting_pos);
+    
     // Initialize tile tables
     let tileTable = [];
     let tileTable3mf = [];
