@@ -154,15 +154,14 @@ exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
     
     let currentTileNr = tileArray[tileIndex].tile_number;
     let currentPassNr = tileArray[tileIndex].passNumber;
-      
-    let laserIndex = 0;    
+       
     let tileOverlap = PARAM.getParamReal('scanhead', 'tile_overlap_x');
    
-    for(let j = 0; j<xDiv.length-1; j++){ // run trough all laser dedication zones
+    for(let laserIndex = 0; laserIndex<xDiv.length-1; laserIndex++){ // run trough all laser dedication zones
       
       let xTileOffset = tileArray[tileIndex].scanhead_x_coord;
-      let clip_min_x = xTileOffset+xDiv[j]+tileOverlap/2; // laserZoneOverLap
-      let clip_max_x = xTileOffset+xDiv[j+1]-tileOverlap/2; //laserZoneOverLap
+      let clip_min_x = xTileOffset+xDiv[laserIndex]+tileOverlap/2; // laserZoneOverLap
+      let clip_max_x = xTileOffset+xDiv[laserIndex+1]-tileOverlap/2; //laserZoneOverLap
       
        // add the corrdinates to vector pointset
        let clipPoints = new Array(4);
@@ -190,9 +189,7 @@ exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
                    
          hatchIterator.next();
        }
-      
-       laserIndex++;
-       
+             
        if (laserIndex > CONST.nLaserCount-1) laserIndex = 0;
    
        // gethatchBlockArray
