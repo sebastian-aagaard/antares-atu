@@ -44,7 +44,9 @@ exports.declareParameters = function(parameter)
  parameter.declareParameterGroup('border', LOCALIZER.GetMessage('grp_border')); 
     parameter.declareParameterReal('border', 'fBeamCompensation', LOCALIZER.GetMessage('param_beam_compensation'), 0.0, 10.0, 0.05);
     parameter.declareParameterInt('border', 'nNumberOfBorders', LOCALIZER.GetMessage('param_number_of_borders'), 0, 10, 1);
-    parameter.declareParameterReal('border', 'fBorderOffset', LOCALIZER.GetMessage('param_boarder_offset'), 0.0, 10.0, 0.05);
+    parameter.declareParameterReal('border', 'fDistanceBetweenBorders', LOCALIZER.GetMessage('param_boarder_offset'), 0.0, 10.0, 0.05);
+    parameter.declareParameterReal('border', 'fDistanceBorderToHatch', LOCALIZER.GetMessage('param_distance_border_to_hatch'), 0.0, 10.0, 0.05);
+
     parameter.declareParameterChoice('border', 'bBorderOrderOutsideIn', LOCALIZER.GetMessage('param_border_order_outside_in'),
        [LOCALIZER.GetMessage('param_border_order_outside_in_disable'),
        LOCALIZER.GetMessage('param_border_order_outside_in_enable')],
