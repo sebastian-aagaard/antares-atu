@@ -38,8 +38,6 @@ exports.drawTileArray_MT = function(
   if(CONST.bDrawTile) {
     const layerCount = layer_end_nr - layer_start_nr;
     const modelCount = modelData.getModelCount();
-      
-    
     
     for (let layerNr = layer_start_nr; layerNr < layer_end_nr+1; layerNr++){
         
@@ -74,6 +72,7 @@ exports.drawTileArray_MT = function(
            thisTile.addNewPath(pointArray);
            thisTile.setClosed(false); 
            thisModelLayer.addPathSet(thisTile,MODEL.nSubtypeSupport);
+           let tempo = 0;  
 
           })  
         }      
