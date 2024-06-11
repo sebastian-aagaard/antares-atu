@@ -152,10 +152,10 @@ let customJSON = {
               "created_by": process.username
             },
             "nodes": [{
-                    "name": "node2",
+                    "name": "node20",
                     "attributes": {
                         "attribute1": 5,
-                        "attributexxx": "250",
+                        "attributexxx": "250 something",
                     }
                 }
             ]
@@ -187,7 +187,7 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
     let exportData = UTIL.getModelsInLayer(modelData,layerNr)[0]
       .getModelLayerByNr(layerNr)
       .getAttribEx('exporter_3mf')
-      .content;
+      .metadata;
     
     let layerDuration_us = exportData[0]
       .attributes
@@ -223,8 +223,8 @@ const getTransportationDistance_mm = (exportData) => {
       }
    
     let passTarget = new VEC2.Vec2(
-      pass.children[pass.children.length-1].attributes.targetx, 
-      pass.children[pass.children.length-1].attributes.targety);
+      pass.nodes[pass.nodes.length-1].attributes.targetx, 
+      pass.nodes[pass.nodes.length-1].attributes.targety);
       
     if(index < exportData.length-1){ // if not last
      //move to next start
