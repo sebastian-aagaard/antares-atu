@@ -117,8 +117,8 @@ function getBoundaryData(modelData, layerNr) {
             ymin: boundaries[layerNr][2],
             ymax: boundaries[layerNr][3]
         };
-    } catch (err) {
-       throw new Error('Tileing: Failed to access boundaries at layer nr: ' + layerNr);
+    } catch (e) {
+       throw new Error('tileing | getBoundaryData Failed: cannot access boundaries at layer nr: ' + layerNr);
     }
 }
 
