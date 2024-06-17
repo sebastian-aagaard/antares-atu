@@ -86,13 +86,13 @@ function getTilePosition(x_pos, y_pos, overlap_x = 0, overlap_y = 0) {
     let xmin = x_pos;
     let xmax = x_pos + PARAM.getParamReal('scanhead', 'x_scanfield_size_mm');
     let ymin = y_pos;
-    let ymax;
+    let ymax = y_pos + PARAM.getParamReal('tileing', 'tile_size');
 
-    if (PARAM.getParamInt('tileing', 'ScanningMode') === 0) { // moveandshoot
-        ymax = y_pos + PARAM.getParamReal('scanhead', 'y_scanfield_size_mm');
-    } else { // onthefly
-        ymax = y_pos + PARAM.getParamReal('otf', 'tile_size');
-    }
+//     if (PARAM.getParamInt('tileing', 'ScanningMode') === 0) { // moveandshoot
+//         ymax = y_pos + PARAM.getParamReal('scanhead', 'y_scanfield_size_mm');
+//     } else { // onthefly
+//         ymax = y_pos + PARAM.getParamReal('tileing', 'tile_size');
+//     }
 
     return {
         xmin: xmin,
@@ -279,8 +279,8 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
             tileTable.push(tile_obj);
 
             let defaultSpeedY = PARAM.getParamInt('tileing', 'ScanningMode') === 0 ?
-                PARAM.getParamInt('movementSettings', 'sequencetransfer_speed_mms') :
-                PARAM.getParamReal('otf', 'axis_max_speed');
+                PARAM.getParamReal('movementSettings', 'axis_transport_speed') :
+                PARAM.getParamReal('movementSettings', 'axis_max_speed');
 
             let TileEntry3mf = {
                 name: "movement",

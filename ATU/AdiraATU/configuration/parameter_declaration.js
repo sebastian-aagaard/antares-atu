@@ -144,8 +144,9 @@ exports.declareParameters = function(parameter)
   // -------- MOVEMENT SETTINGS -------- //  
   parameter.declareParameterGroup('movementSettings',LOCALIZER.GetMessage('grp_movementSettings'),'Movement Settings',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterInt('movementSettings', 'recoating_time_ms',LOCALIZER.GetMessage('param_recoating_time'),0,100000,26000);
-    parameter.declareParameterInt('movementSettings', 'powderfilling_time_ms',LOCALIZER.GetMessage('param_powderfilling_time_ms'),0,100000,21000);
-    parameter.declareParameterInt('movementSettings', 'sequencetransfer_speed_mms',LOCALIZER.GetMessage('param_sequencetransfer_speed_mms'),0,1000,80);
+    parameter.declareParameterInt('movementSettings', 'powderfilling_time_ms',LOCALIZER.GetMessage('param_powderfilling_time_ms'),0,100000,21000);    
+    parameter.declareParameterReal('movementSettings','axis_max_speed', LOCALIZER.GetMessage('param_axis_max_speed'),0.0,100.0,80.0);
+    parameter.declareParameterReal('movementSettings','axis_transport_speed', LOCALIZER.GetMessage('param_axis_transport_speed'),0.0,100.0,80.0);
     parameter.declareParameterInt('movementSettings', 'recoating_speed_mms',LOCALIZER.GetMessage('param_recoating_speed_mms'),0,1000,120);
     parameter.declareParameterReal('movementSettings', 'head_startpos_x',LOCALIZER.GetMessage('param_head_startpos_x'),0.0,1000.0,0.0);
     parameter.declareParameterReal('movementSettings', 'head_startpos_y',LOCALIZER.GetMessage('param_head_startpos_y'),-500.0,1000.0,0.0);
@@ -214,13 +215,6 @@ exports.declareParameters = function(parameter)
       parameter.declareParameterInt('skywriting','npost', LOCALIZER.GetMessage('param_npost'),0,1000,9);
       parameter.declareParameterReal('skywriting','mode3limit', LOCALIZER.GetMessage('param_mode3limit'),-1.0,1.0,0.9);
     
-
-  // onthefly
-  parameter.declareParameterGroup('otf', LOCALIZER.GetMessage('grp_otf'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterReal('otf','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,160.0,33.0);
-    parameter.declareParameterReal('otf','axis_max_speed', LOCALIZER.GetMessage('param_axis_max_speed'),0.0,100.0,80.0);
-    parameter.declareParameterReal('otf','tile_rest_period', LOCALIZER.GetMessage('param_tile_rest_period'),0.0,120.0,0);
-    
   // group material
   parameter.declareParameterGroup('material',LOCALIZER.GetMessage('grp_material'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
         parameter.declareParameterReal('material','density_g_cc', LOCALIZER.GetMessage('param_material_densitet'),0.0,1000.0,8.19);
@@ -239,13 +233,15 @@ exports.declareParameters = function(parameter)
       [LOCALIZER.GetMessage('param_ScanningMode_MoveAndShoot'),
       LOCALIZER.GetMessage('param_ScanningMode_OnTheFly')],
       LOCALIZER.GetMessage('param_ScanningMode_OnTheFly')
-      );
+      );      
  
     parameter.declareParameterReal('tileing','step_x', LOCALIZER.GetMessage('param_step_x'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,7);
     parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,7); 
-  
+    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,160.0,33.0);
+
+    
   parameter.declareParameterGroup('scanning_priority', LOCALIZER.GetMessage('grp_scanning_priority'));
     parameter.declareParameterInt('scanning_priority','part_hatch_priority', LOCALIZER.GetMessage('param_part_hatch_priority'),0,2000,100);
     parameter.declareParameterInt('scanning_priority','downskin_hatch_priority', LOCALIZER.GetMessage('param_downskin_hatch_priority'),0,2000,200);

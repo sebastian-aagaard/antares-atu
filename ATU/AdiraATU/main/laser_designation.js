@@ -42,17 +42,17 @@ const getScanner = (laserIndex) => {
   let rel_y_min = 0;
   let abs_x_min = x_ref+rel_x_min;
   let abs_x_max = x_ref+rel_x_max;
-  let rel_y_max = undefined;
-  //define rel_y_max from the scanningMode
-  if (PARAM.getParamInt('tileing','ScanningMode') == 0) {
-    
-    rel_y_max = PARAM.getParamReal('scanhead','y_scanfield_size_mm');
-
-  } else {
-    
-    rel_y_max = PARAM.getParamReal('otf','tile_size');
-    
-    }
+  let rel_y_max =  PARAM.getParamReal('tileing','tile_size');
+//   //define rel_y_max from the scanningMode
+//   if (PARAM.getParamInt('tileing','ScanningMode') == 0) {
+//     
+//     rel_y_max = PARAM.getParamReal('scanhead','y_scanfield_size_mm');
+// 
+//   } else {
+//     
+//     rel_y_max = PARAM.getParamReal('tileing','tile_size');
+//     
+//     }
 
   return {
     'laserIndex': laserIndex,

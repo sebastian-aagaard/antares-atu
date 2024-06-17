@@ -25,7 +25,7 @@ let TILE = require('main/tileing.js');
 exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {  
 
  let thisModel = modelData.getModel(0);
- let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
+ let thisLayer = thisModel.getModelLayerByNr(nLayerNr); 
   
    // check if this layer is valid, if not move on
   if(!thisLayer.isValid()) 

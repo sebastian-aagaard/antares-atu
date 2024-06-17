@@ -25,23 +25,38 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
   
   exposureArray.forEach((pass, passIndex) => {
     try {
-      exporter_3mf.metadata[passIndex] = {
-        "name": "mymetadata",
-        "namespace": "http://test.com/test/202305",
-        "attributes": {
-          "uuid": UTIL.generateUUID(),
-          "startx": pass[0].xcoord,
-          "starty": pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + PARAM.getParamReal('otf', 'tile_size'),
-          "direction": pass[0].ProcessHeadFromFront ? "fromfront" : "fromback",
-          "sequencetransferspeed": PARAM.getParamInt('movementSettings', 'sequencetransfer_speed_mms'),
-          "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\s+/g, ''),
-          "requiredPasses": exposureArray.length,
-          "tilesInPass": pass.length,
-          "layerScanningDuration": null,
-          "layerTotalDuration": null
-        },
-        "nodes": []
-      };
+      if(PARAM.getParamInt('tileing','ScanningMode')) {
+        exporter_3mf.metadata[passIndex] = {
+          "name": "onthefly",
+          "namespace": "http://test.com/test/202305",
+          "attributes": {
+            "uuid": UTIL.generateUUID(),
+            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\s+/g, ''),
+            "direction": pass[0].ProcessHeadFromFront ? "fromfront" : "fromback",
+            "startx": pass[0].xcoord.toFixed(3),
+            "starty": pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + PARAM.getParamReal('otf', 'tile_size').toFixed(3),
+            "sequencetransferspeed": PARAM.getParamReal('movementSettings', 'axis_transport_speed'),
+            "requiredPasses": exposureArray.length,
+            "tilesInPass": pass.length
+            //"layerScanningDuration": null,
+            //"layerTotalDuration": null
+          },
+          "nodes": []
+        };
+        
+      } else { // moveandshoot
+    
+        exporter_3mf.metadata[passIndex] = {
+          "name": "moveandshoot",
+          "namespace": "http://test.com/test/202305",
+          "attributes": {
+            "uuid": UTIL.generateUUID(),
+            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\s+/g, '')
+          },
+          "nodes": []
+        };
+        
+    }
     } catch (e) {
       throw new Error('failed at pass ' + passIndex + ', layer ' + layerNr);
     }
@@ -51,12 +66,12 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
 
       // Determine tile size and y speed
       if (PARAM.getParamInt('tileing', 'ScanningMode')) {
-        tileSize = PARAM.getParamReal('otf', 'tile_size');
-        speedY = tile.exposureTime > 0 ? tileSize / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('otf', 'axis_max_speed');
-        speedY = speedY > PARAM.getParamReal('otf', 'axis_max_speed') ? PARAM.getParamReal('otf', 'axis_max_speed') : speedY;
+        tileSize = PARAM.getParamReal('tileing', 'tile_size');
+        speedY = tile.exposureTime > 0 ? tileSize / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('movementSettings', 'axis_max_speed');
+        speedY = speedY > PARAM.getParamReal('movementSettings', 'axis_max_speed') ? PARAM.getParamReal('movementSettings', 'axis_max_speed') : speedY;
       } else { // point and shoot
-        tileSize = PARAM.getParamReal('scanhead', 'y_scanfield_size_mm');
-        speedY = PARAM.getParamReal('movementSettings', 'sequencetransfer_speed_mms');
+        tileSize = PARAM.getParamReal('tileing', 'tile_size');
+        speedY = PARAM.getParamReal('movementSettings', 'axis_transport_speed');
       }
 
       const tileMovementDuration = (tileSize / speedY) * 1000 * 1000;
@@ -75,21 +90,40 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
         throw new Error('failed to get next tile coord, at pass ' + passIndex + ', tile ' + tileIndex);
       }
 
+      
+      if(PARAM.getParamInt('tileing','ScanningMode')) {
+      
+
       // Create node object
-      exporter_3mf.metadata[passIndex].nodes[tileIndex] = {
-        "name": "movement",
-        "attributes": {
-          "tileID": tile.tileID,
-          "targetx": nextTileXCoord,
-          "targety": nextTileYCoord,
-          "positiony": tile.ycoord,
-          "speedx": 0,
-          "speedy": speedY,
-          "tileExposureTime": tile.exposureTime,
-          "tileTotalTime": tileMovementDuration
+        exporter_3mf.metadata[passIndex].nodes[tileIndex] = {
+          "namespace" : "http://tile.com/moveandshoot/202305",
+          "name": "movement",
+          "attributes": {
+            "tileID": tile.tileID,
+            "targetx": nextTileXCoord.toFixed(3),
+            "targety": nextTileYCoord.toFixed(3),
+            "positiony": tile.ycoord.toFixed(3),
+            "speedx": 0,
+            "speedy": speedY.toFixed(3),
+            "tileExposureTime": tile.exposureTime,
+            "tileTotalTime": tileMovementDuration
+          }
+        };
+    } else {
+     // Create node object
+        exporter_3mf.metadata[passIndex].nodes[tileIndex] = {
+          "name": "movement",
+          "attributes": {
+            "tileID": tile.tileID,
+            "startx": tile.xcoord.toFixed(3),
+            "starty": tile.ycoord.toFixed(3),
+            "speed": PARAM.getParamReal('movementSettings', 'axis_transport_speed')
+          }
+        };
         }
-      };
-    });
+
+
+      });
   });
 
   assignLayerTotals(exporter_3mf);

@@ -32,11 +32,11 @@ exports.getStatistics = function(
   const partMassKg = getPartMassKg(modelData,progress,layer_start_nr,layer_end_nr);
   const buildTime_us = getBuildTime_us(modelData,progress,layer_start_nr,layer_end_nr);
     
-  const totalPowder = layer_end_nr 
+  const totalPowder = (layer_end_nr 
       * modelData.getLayerThickness() 
       * PARAM.getParamInt('workarea','x_workarea_max_mm') 
       * PARAM.getParamInt('workarea','y_workarea_max_mm')
-      * PARAM.getParamReal('material','density_g_cc') / (1000*1000*1000);
+      * PARAM.getParamReal('material','density_g_cc') ) / (1000*1000*1000);
    
   process.print('buildtime_us: ' + buildTime_us);
   process.print('buildtime_s: ' + buildTime_us/(1000*1000));
@@ -131,7 +131,11 @@ let customJSON = {
       },
       {
        "schema": "http://test.com/test/202305",
-        "prefix": "tp"
+       "prefix": "tiles"
+      },
+      {
+       "schema": "http://tile.com/moveandshoot/202305",
+       "prefix": "tile"
       }
     ],
 
@@ -139,9 +143,9 @@ let customJSON = {
             "name": "totals",
             "namespace": "http://nikonslm.com/statistics/202305",
             "attributes": {
-                "build_time": buildTime_us,
-                "total_mass": partMassKg,
-                "total_packed_powder": totalPowder
+                "build_time_hours": buildTime_us.toFixed(0)/(3600*1000*1000),
+                "part_mass_kg": partMassKg.toFixed(3),
+                "powderbed_kg": totalPowder.toFixed(3),
               }
             },
             {
@@ -194,7 +198,7 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
       .layerTotalDuration;
     
     let transport_mm = getTransportationDistance_mm(exportData);
-    let transportTime_us = (transport_mm/PARAM.getParamInt('movementSettings', 'sequencetransfer_speed_mms'))*1000*1000;
+    let transportTime_us = (transport_mm/PARAM.getParamReal('movementSettings', 'axis_transport_speed'))*1000*1000;
               
     buildTime_us += transportTime_us;  
     buildTime_us += (layerDuration_us<powderFillingTime_us) ? powderFillingTime_us : layerDuration_us ;
