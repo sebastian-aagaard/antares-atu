@@ -110,6 +110,11 @@ exports.getStatistics = function(
 // 
 //     ]};
 
+  let myConfiguration = {
+    "data": "test",
+    "writtenat": "XXX"
+  };
+
 let customJSON = {
 
     "namespaces": [
@@ -123,22 +128,45 @@ let customJSON = {
       },
       {
         "schema": "http://nikonslm.com/tilinginformation/202305",
-        "prefix": "tiling"
+        "prefix": "tile"
       },
       {
         "schema": "http://nikonslm.com/statistics/202305",
-        "prefix": "statistics"
+        "prefix": "stats"
       },
       {
        "schema": "http://test.com/test/202305",
        "prefix": "tiles"
-      },
-      {
-       "schema": "http://tile.com/moveandshoot/202305",
-       "prefix": "tile"
       }
     ],
-
+        
+    "attachments": [
+        {
+          "path": "/ATU/configuration.json",
+          "encoding": "string",
+          "relationship": "http://test.com/configurationjson/202305",
+          "data": JSON.stringify (myConfiguration)
+        },
+        {
+          "path": "/ATU/configuration2.txt",
+          "encoding": "string",
+          "relationship": "http://test.com/configurationjson/202305",
+          "data": "TEST"
+        }
+        
+    ],
+        
+        
+    "segmentattributes": [
+          {
+           "segmenttype": "hatch",
+           "datatype": "int32",
+           "name_3mf": "tileid",
+           "name_atu": "tileID_3mf",
+           "namespace": "http://nikonslm.com/tilinginformation/202305"
+           }
+    ],
+           
     "metadata": [{
             "name": "totals",
             "namespace": "http://nikonslm.com/statistics/202305",
@@ -193,9 +221,9 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
       .getAttribEx('exporter_3mf')
       .metadata;
     
-    let layerDuration_us = exportData[0]
+    let layerDuration_us = exportData[1]
       .attributes
-      .layerTotalDuration;
+      .layerTotalDuration_us;
     
     let transport_mm = getTransportationDistance_mm(exportData);
     let transportTime_us = (transport_mm/PARAM.getParamReal('movementSettings', 'axis_transport_speed'))*1000*1000;
@@ -217,8 +245,10 @@ const getTransportationDistance_mm = (exportData) => {
     
   exportData.forEach((pass, index) => {
     
+    if(index == 0) return;
     
-    if (index == 0) { // if first
+    
+    if (index == 1) { // if first
       //from park
       let parkPos = new VEC2.Vec2(CONST.parkingPosition.x,CONST.parkingPosition.y);
       let startPos = new VEC2.Vec2(pass.attributes.startx,pass.attributes.starty);
@@ -266,17 +296,21 @@ const getPartMassKg = (modelData,progress,layer_start_nr,layer_end_nr) => {
   
   let surface_area_mm2 = 0;
   
+  let thisModel = modelData.getModel(0);
+//     var thisLayer = thisModel.getModelLayerByNr(layerNr);
+//    thisLayer.setAttribEx('exporter_3mf', exporter_3mf);  
+  
   while(layerIt.isValid() && !progress.cancelled())
   {
     let layerNr = layerIt.getLayerNr();
-    let islandIt = modelData.getFirstIsland(layerNr);
+    let islandIt = modelData.getFirstIsland(layerNr);  
     
     while(islandIt.isValid() && !progress.cancelled())
     {
       let thisIsland = islandIt.getIsland();
       surface_area_mm2 += thisIsland.getSurfaceArea();
       islandIt.next();
-    }
+    }    
     
     progress.step(1);
     layerIt.next();

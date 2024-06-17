@@ -8,38 +8,31 @@
 
 const PARAM = requireBuiltin('bsParam');
 const UTIL = require('main/utility_functions.js');
+const CONST = require('main/constants.js');
 
 exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
+  
   let exporter_3mf = {    
-    "segmentattributes": [
-      {
-        "segmenttype": "hatch",
-        "datatype": "uint32",
-        "attribute_name": "tileid",
-        "attribute_value": "tileid",
-        "namespace": "http://test.com/test/202305"
-      }
-    ],
     "metadata": []
   };
   
   exposureArray.forEach((pass, passIndex) => {
     try {
-      if(PARAM.getParamInt('tileing','ScanningMode')) {
-        exporter_3mf.metadata[passIndex] = {
+      if(PARAM.getParamInt('tileing','ScanningMode')) { // on the fly
+         exporter_3mf.metadata[passIndex] = {
           "name": "onthefly",
-          "namespace": "http://test.com/test/202305",
+          "namespace": "http://nikonslm.com/tilinginformation/202305",
           "attributes": {
             "uuid": UTIL.generateUUID(),
             "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\s+/g, ''),
             "direction": pass[0].ProcessHeadFromFront ? "fromfront" : "fromback",
             "startx": pass[0].xcoord.toFixed(3),
-            "starty": pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + PARAM.getParamReal('otf', 'tile_size').toFixed(3),
+            "starty": (pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + PARAM.getParamReal('tileing', 'tile_size')).toFixed(3),
             "sequencetransferspeed": PARAM.getParamReal('movementSettings', 'axis_transport_speed'),
             "requiredPasses": exposureArray.length,
-            "tilesInPass": pass.length
-            //"layerScanningDuration": null,
-            //"layerTotalDuration": null
+            "tilesInPass": pass.length,
+            "layerScanningDuration_us": null,
+            "layerTotalDuration_us": null
           },
           "nodes": []
         };
@@ -48,7 +41,7 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
     
         exporter_3mf.metadata[passIndex] = {
           "name": "moveandshoot",
-          "namespace": "http://test.com/test/202305",
+          "namespace": "http://nikonslm.com/tilinginformation/202305",
           "attributes": {
             "uuid": UTIL.generateUUID(),
             "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\s+/g, '')
@@ -91,49 +84,62 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
       }
 
       
-      if(PARAM.getParamInt('tileing','ScanningMode')) {
+      if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
       
 
       // Create node object
         exporter_3mf.metadata[passIndex].nodes[tileIndex] = {
-          "namespace" : "http://tile.com/moveandshoot/202305",
           "name": "movement",
           "attributes": {
-            "tileID": tile.tileID,
+            "tileid": tile.tileID,
             "targetx": nextTileXCoord.toFixed(3),
             "targety": nextTileYCoord.toFixed(3),
-            "positiony": tile.ycoord.toFixed(3),
-            "speedx": 0,
             "speedy": speedY.toFixed(3),
-            "tileExposureTime": tile.exposureTime,
-            "tileTotalTime": tileMovementDuration
+            "tileExposureTime_us": tile.exposureTime.toFixed(0),
+            "tileTotalTime_us": tileMovementDuration.toFixed(0)
           }
         };
-    } else {
+    } else { // moveandshoot
      // Create node object
         exporter_3mf.metadata[passIndex].nodes[tileIndex] = {
           "name": "movement",
           "attributes": {
-            "tileID": tile.tileID,
+            "tileid": tile.tileID,
             "startx": tile.xcoord.toFixed(3),
             "starty": tile.ycoord.toFixed(3),
-            "speed": PARAM.getParamReal('movementSettings', 'axis_transport_speed')
+            "speed": PARAM.getParamReal('movementSettings', 'axis_transport_speed'),
+            "tileExposureTime_us": tile.exposureTime.toFixed(0)
           }
         };
         }
-
-
       });
   });
 
-  assignLayerTotals(exporter_3mf);
+  let layerData =  {
+        "name": "layertotals",
+        "namespace": "http://nikonslm.com/statistics/202305",
+         "attributes" : {
+           "tilebuffer" : CONST.nBufferduration,
+           "layerScanningDuration" : null,
+           "layerTotalDuration" : null           
+           }
+    };
+    
+  exporter_3mf.metadata.unshift(layerData);
+    
+  assignLayerTotals(exporter_3mf);  
 
-  // Set the exporter_3mf for all models in this layer
+  //Set the exporter_3mf for all models in this layer
   const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
 
   arrayOfModels.forEach(m => {
     m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf);
   });
+    
+//     let thisModel = modelData.getModel(0);
+//     var thisLayer = thisModel.getModelLayerByNr(layerNr);
+//    thisLayer.setAttribEx('exporter_3mf', exporter_3mf);  
+  
 };
 
 const assignLayerTotals = (exporter_3mf) => {
@@ -141,15 +147,19 @@ const assignLayerTotals = (exporter_3mf) => {
   let layerScanningDuration = 0;
   let layerTotalDuration = 0;
 
-  exporter_3mf.metadata.forEach(pass => {
+  exporter_3mf.metadata.forEach((pass,index) => {
+    
+    if(index == 0) return;
+    
     let passScanningDuration = 0;
     let passTotalDuration = 0;
 
     pass.nodes.forEach(tile => {
-      let tileExposureDuration = tile.attributes.tileExposureTime;
+      let tileExposureDuration = Number(tile.attributes.tileExposureTime_us);
+      let tileTotalTime = Number(tile.attributes.tileTotalTime_us);
 
       passScanningDuration += tileExposureDuration;
-      passTotalDuration += tile.attributes.tileTotalTime;
+      passTotalDuration += tileTotalTime;
     });
 
     // Assign the calculated durations to the respective pass
@@ -160,8 +170,9 @@ const assignLayerTotals = (exporter_3mf) => {
     layerTotalDuration += passTotalDuration;
   });
 
-  exporter_3mf.metadata.forEach(pass => {
-    pass.attributes.layerScanningDuration = layerScanningDuration;
-    pass.attributes.layerTotalDuration = layerTotalDuration;
-  });
-};
+  exporter_3mf.metadata[0].attributes.layerScanningDuration = layerScanningDuration;
+  exporter_3mf.metadata[0].attributes.layerTotalDuration = layerTotalDuration;  
+}; //
+  
+
+
