@@ -182,152 +182,151 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
 
 exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
-    if(!modelData) {
-      throw new Error ("modelData could not be obtained for layer " + layerNr);
-      }
+  if(!modelData) {
+    throw new Error ("modelData could not be obtained for layer " + layerNr);
+  }
       
-       if(!modelLayer) {
-      throw new Error ("modelLayer could not be obtained for layer " + layerNr);
-      }  
+  if(!modelLayer) {
+    throw new Error ("modelLayer could not be obtained for layer " + layerNr);
+  }  
       
-    // Calculate shifts
-    const shiftX = getShiftX(layerNr);
-    const shiftY = getShiftY(layerNr);
+  // Calculate shifts
+  const shiftX = getShiftX(layerNr);
+  const shiftY = getShiftY(layerNr);
 
-    // Max distance shifted
-    const maxShiftX = (PARAM.getParamInt('tileing', 'number_x') - 1) * PARAM.getParamReal('tileing', 'step_x');
-    const maxShiftY = (PARAM.getParamInt('tileing', 'number_y') - 1) * PARAM.getParamReal('tileing', 'step_y');
+  // Max distance shifted
+  const maxShiftX = (PARAM.getParamInt('tileing', 'number_x') - 1) * PARAM.getParamReal('tileing', 'step_x');
+  const maxShiftY = (PARAM.getParamInt('tileing', 'number_y') - 1) * PARAM.getParamReal('tileing', 'step_y');
 
-    // Get boundary data
-    const modelBoundaries = getBoundaryData(modelData, layerNr);
-    
-    // Calculate scene size
-    const sceneSize = calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY);
+  // Get boundary data
+  const modelBoundaries = getBoundaryData(modelData, layerNr);
+  
+  // Calculate scene size
+  const sceneSize = calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY);
 
-    // Get tile layout information
-    const tileOutlineOrigin = getTilePosition(0, 0);
-    let { required_passes_x, required_passes_y } = calculateRequiredPasses(
-        sceneSize, tileOutlineOrigin.tile_width, tileOutlineOrigin.tile_height,
-        PARAM.getParamReal('scanhead', 'tile_overlap_x'), PARAM.getParamReal('scanhead', 'tile_overlap_y')
-    );
-    
-    const workAreaLimits = modelData.getTrayAttribEx('workAreaLimits');
-    //process.print('scanhead_startPos 1: ' + scanhead_x_starting_pos);    
-    // Adjust starting positions
-    let { startingPos: scanhead_x_starting_pos, overlap: overlap_x, requiredPasses: required_passes_x_new } = adjustTileLayout(
-        modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
-        required_passes_x, PARAM.getParamReal('scanhead', 'tile_overlap_x'),shiftX
-    );
+  // Get tile layout information
+  const tileOutlineOrigin = getTilePosition(0, 0);
+  let { required_passes_x, required_passes_y } = calculateRequiredPasses(
+      sceneSize, tileOutlineOrigin.tile_width, tileOutlineOrigin.tile_height,
+      PARAM.getParamReal('scanhead', 'tile_overlap_x'), PARAM.getParamReal('scanhead', 'tile_overlap_y')
+  );
+  
+  const workAreaLimits = modelData.getTrayAttribEx('workAreaLimits');
+  //process.print('scanhead_startPos 1: ' + scanhead_x_starting_pos);    
+  // Adjust starting positions
+  let { startingPos: scanhead_x_starting_pos, overlap: overlap_x, requiredPasses: required_passes_x_new } = adjustTileLayout(
+      modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
+      required_passes_x, PARAM.getParamReal('scanhead', 'tile_overlap_x'),shiftX
+  );
 
   required_passes_x = required_passes_x_new; 
 
-    let { startingPos: scanhead_y_starting_pos, overlap: overlap_y, requiredPasses: required_passes_y_new  } = adjustTileLayout(
-        modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
-        required_passes_y, PARAM.getParamReal('scanhead', 'tile_overlap_y'),shiftY
-    );
+  let { startingPos: scanhead_y_starting_pos, overlap: overlap_y, requiredPasses: required_passes_y_new  } = adjustTileLayout(
+      modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
+      required_passes_y, PARAM.getParamReal('scanhead', 'tile_overlap_y'),shiftY
+  );
+  
+  required_passes_y = required_passes_y_new; 
+  
+  // Offset starting position for shifts
+  scanhead_x_starting_pos += shiftX - maxShiftX / 2;
+  scanhead_y_starting_pos += shiftY - maxShiftY / 2;
+  //process.print('shiftXtot: ' + (shiftX - maxShiftX / 2));
+  //process.print('scanhead_startPos 2: ' + scanhead_x_starting_pos);
+  
+  // Initialize tile tables
+  let tileTable = [];
+  let tileTable3mf = [];
+
+  // Generate tiles
+  let cur_tile_coord_x = scanhead_x_starting_pos;
+  let cur_tile_coord_y = scanhead_y_starting_pos;
+  
+  if (!cur_tile_coord_x || !cur_tile_coord_y)
+    throw new Error ("current tile coordinate not defined, layer nr: " + layerNr);
     
-    required_passes_y = required_passes_y_new; 
-    
-    // Offset starting position for shifts
-    scanhead_x_starting_pos += shiftX - maxShiftX / 2;
-    scanhead_y_starting_pos += shiftY - maxShiftY / 2;
-    //process.print('shiftXtot: ' + (shiftX - maxShiftX / 2));
-    //process.print('scanhead_startPos 2: ' + scanhead_x_starting_pos);
-    
-    // Initialize tile tables
-    let tileTable = [];
-    let tileTable3mf = [];
+  if (!required_passes_x || !required_passes_y)
+    throw new Error ("no passes defined, layer nr: " + layerNr);
 
-    // Generate tiles
-    let cur_tile_coord_x = scanhead_x_starting_pos;
-    let cur_tile_coord_y = scanhead_y_starting_pos;
-    
-    if (!cur_tile_coord_x || !cur_tile_coord_y)
-      throw new Error ("current tile coordinate not defined, layer nr: " + layerNr);
-      
-    if (!required_passes_x || !required_passes_y)
-      throw new Error ("no passes defined, layer nr: " + layerNr);
+  for (let passnumber_x = 0; passnumber_x < required_passes_x; passnumber_x++) {
+      let cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y, overlap_x, overlap_y);
+      let next_tile_coord_x = cur_tile.next_x_coord;
 
-    for (let passnumber_x = 0; passnumber_x < required_passes_x; passnumber_x++) {
-        let cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y, overlap_x, overlap_y);
-        let next_tile_coord_x = cur_tile.next_x_coord;
+      for (let j = 0; j < required_passes_y; j++) {
+          cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y, overlap_x, overlap_y);
 
-        for (let j = 0; j < required_passes_y; j++) {
-            cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y, overlap_x, overlap_y);
+          let scanhead_outlines = [
+              new VEC2.Vec2(cur_tile.xmin, cur_tile.ymin),
+              new VEC2.Vec2(cur_tile.xmin, cur_tile.ymax),
+              new VEC2.Vec2(cur_tile.xmax, cur_tile.ymax),
+              new VEC2.Vec2(cur_tile.xmax, cur_tile.ymin),
+              new VEC2.Vec2(cur_tile.xmin, cur_tile.ymin)
+          ];
 
-            let scanhead_outlines = [
-                new VEC2.Vec2(cur_tile.xmin, cur_tile.ymin),
-                new VEC2.Vec2(cur_tile.xmin, cur_tile.ymax),
-                new VEC2.Vec2(cur_tile.xmax, cur_tile.ymax),
-                new VEC2.Vec2(cur_tile.xmax, cur_tile.ymin),
-                new VEC2.Vec2(cur_tile.xmin, cur_tile.ymin)
-            ];
+          let tile_obj = {
+              passNumber: passnumber_x + 1,
+              tile_number: j + 1,
+              scanhead_outline: scanhead_outlines,
+              scanhead_x_coord: cur_tile_coord_x,
+              scanhead_y_coord: cur_tile_coord_y,
+              tile_height: cur_tile.tile_height,
+              overlapX: overlap_x,
+              overlapY: overlap_y,
+              shiftX: shiftX,
+              shiftY: shiftY,
+              layer: layerNr
+          };
+          tileTable.push(tile_obj);
 
-            let tile_obj = {
-                passNumber: passnumber_x + 1,
-                tile_number: j + 1,
-                scanhead_outline: scanhead_outlines,
-                scanhead_x_coord: cur_tile_coord_x,
-                scanhead_y_coord: cur_tile_coord_y,
-                tile_height: cur_tile.tile_height,
-                overlapX: overlap_x,
-                overlapY: overlap_y,
-                shiftX: shiftX,
-                shiftY: shiftY,
-                layer: layerNr
-            };
-            tileTable.push(tile_obj);
+          let defaultSpeedY = PARAM.getParamInt('tileing', 'ScanningMode') === 0 ?
+              PARAM.getParamReal('movementSettings', 'axis_transport_speed') :
+              PARAM.getParamReal('movementSettings', 'axis_max_speed');
 
-            let defaultSpeedY = PARAM.getParamInt('tileing', 'ScanningMode') === 0 ?
-                PARAM.getParamReal('movementSettings', 'axis_transport_speed') :
-                PARAM.getParamReal('movementSettings', 'axis_max_speed');
+          let TileEntry3mf = {
+              name: "movement",
+              attributes: {
+                  tileID: j + 1 + (passnumber_x + 1) * 1000,
+                  xcoord: cur_tile_coord_x,
+                  ycoord: cur_tile_coord_y,
+                  targetx: 0,
+                  targety: 0,
+                  positiony: cur_tile_coord_y,
+                  speedx: 0,
+                  speedy: defaultSpeedY,
+                  tileExposureTime: 0
+              }
+          };
 
-            let TileEntry3mf = {
-                name: "movement",
-                attributes: {
-                    tileID: j + 1 + (passnumber_x + 1) * 1000,
-                    xcoord: cur_tile_coord_x,
-                    ycoord: cur_tile_coord_y,
-                    targetx: 0,
-                    targety: 0,
-                    positiony: cur_tile_coord_y,
-                    speedx: 0,
-                    speedy: defaultSpeedY,
-                    tileExposureTime: 0
-                }
-            };
+          if (!tileTable3mf[passnumber_x]) tileTable3mf[passnumber_x] = [];
+          tileTable3mf[passnumber_x].push(TileEntry3mf);
 
-            if (!tileTable3mf[passnumber_x]) tileTable3mf[passnumber_x] = [];
-            tileTable3mf[passnumber_x].push(TileEntry3mf);
-
-            cur_tile_coord_y = cur_tile.next_y_coord;
-        }
-
-        cur_tile_coord_y = scanhead_y_starting_pos; // reset y coord
-        cur_tile_coord_x = next_tile_coord_x; // set next stripe pass
-    }
-    
-    modelLayer.setAttribEx('tileTable', tileTable);
-    modelLayer.setAttribEx('tileTable_3mf', tileTable3mf); //<-- 
-    
-    
-    
-    
-    if(!modelLayer.getAttribEx('tileTable') || !modelLayer.getAttribEx('tileTable_3mf')){
-      
-      if(!attemptCounter) {
-        let attemptCounter = 0 ;
+          cur_tile_coord_y = cur_tile.next_y_coord;
       }
-      
-      attemptCounter++;
-      
-      if(attemptCounter>10) throw new Error("Tileing | Tilearray : Failed to retrieve tileArray at layer: " + layerNr);
-      
-      process.printWarning("re-attempt to get tileArray, layer nr " + layerNr + " attempt nr: " + attemptCounter);
-      exports.getTileArray(modelLayer, layerNr, modelData);
-      }
-       
-//     if(!modelLayer.getAttribEx('tileTable')) throw new Error('failed to access tiletable, layernr ' + layerNr);
-//     if(!modelLayer.getAttribEx('tileTable_3mf')) throw new Error('failed to access tileTable_3mf, layernr ' + layerNr);
-//     
+
+      cur_tile_coord_y = scanhead_y_starting_pos; // reset y coord
+      cur_tile_coord_x = next_tile_coord_x; // set next stripe pass
+  }
+  
+  storeTileTable(modelLayer,tileTable,tileTable3mf);
+  
 };
+
+const storeTileTable = (modelLayer,tileTable,tileTable3mf) => {
+  
+  modelLayer.setAttribEx('tileTable', tileTable);
+  modelLayer.setAttribEx('tileTable_3mf', tileTable3mf);
+  
+  if(!modelLayer.getAttribEx('tileTable') || !modelLayer.getAttribEx('tileTable_3mf')){
+  
+    if(!attemptCounter) {
+      let attemptCounter = 0
+    }
+  
+  attemptCounter++;
+  
+  if(attemptCounter>10) throw new Error("Tileing | Tilearray : Failed to retrieve tileArray at layer: " + layerNr);
+  
+  process.printWarning("re-attempt to get tileArray, layer nr " + layerNr + " attempt nr: " + attemptCounter);
+    storeTileTable(modelLayer,tileTable,tileTable3mf);
+  }
+}
