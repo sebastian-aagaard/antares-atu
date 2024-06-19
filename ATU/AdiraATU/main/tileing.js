@@ -311,9 +311,19 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     modelLayer.setAttribEx('tileTable_3mf', tileTable3mf); //<-- 
     
     
+    
+    
     if(!modelLayer.getAttribEx('tileTable') || !modelLayer.getAttribEx('tileTable_3mf')){
-  
-      process.printWarning("re-attempt to get tileArray, layer nr " + layerNr);
+      
+      if(!attemptCounter) {
+        let attemptCounter = 0 ;
+      }
+      
+      attemptCounter++;
+      
+      if(attemptCounter>10) throw new Error("Tileing | Tilearray : Failed to retrieve tileArray at layer: " + layerNr);
+      
+      process.printWarning("re-attempt to get tileArray, layer nr " + layerNr + " attempt nr: " + attemptCounter);
       exports.getTileArray(modelLayer, layerNr, modelData);
       }
        
