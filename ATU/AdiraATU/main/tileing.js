@@ -307,19 +307,21 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
       cur_tile_coord_x = next_tile_coord_x; // set next stripe pass
   }
   
-  storeTileTable(modelLayer,tileTable,tileTable3mf);
+  let attemptCounter;
+  
+  storeTileTable(modelLayer,tileTable,tileTable3mf,attemptCounter);
   
 };
 
-const storeTileTable = (modelLayer,tileTable,tileTable3mf) => {
+const storeTileTable = (modelLayer,tileTable,tileTable3mf,attemptCounter) => {
   
   modelLayer.setAttribEx('tileTable', tileTable);
   modelLayer.setAttribEx('tileTable_3mf', tileTable3mf);
   
   if(!modelLayer.getAttribEx('tileTable') || !modelLayer.getAttribEx('tileTable_3mf')){
   
-    if(!attemptCounter) {
-      let attemptCounter = 0
+    if(typeof attemptCounter === 'undefined') {
+      attemptCounter = 0
     }
   
   attemptCounter++;
