@@ -113,3 +113,13 @@ exports.mergeBlocks = function(unmergedHatchBlocks) {
 	let blockcount = mergedblock.getHatchBlockCount();
 	return mergedblock;
 }
+
+exports.getTileTable = (modelData,layerNr) => {
+
+  const tiletable_3mf = exports.getModelsInLayer(modelData,layerNr)[0].getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
+
+  if(!tiletable_3mf) return false;
+    
+  return tiletable_3mf;
+
+}
