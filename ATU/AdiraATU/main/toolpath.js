@@ -7,33 +7,29 @@
 'use strict';
 
 // --------  INCLUDES -------- //
-//var PARAM = requireBuiltin('bsParam');
 const ISLAND = requireBuiltin('bsIsland');
 const HATCH = requireBuiltin('bsHatch');
-//var MODEL = requireBuiltin('bsModel');
 const CONST = require('main/constants.js');
 const TPGEN = require('main/toolpath_generation.js');
 const TP2TILE = require('main/toolpath_to_tile.js');
 const TP2PASS = require('main/tile_to_passnumbergroup.js')
-//var SEG2D = requireBuiltin('seg2d');
-//var UTIL = require('main/utility_functions.js');
 const LASER = require('main/laser_designation.js');
-//var PATH_SET = requireBuiltin('bsPathSet');
-//var EXPOSURETIME = requireBuiltin('bsExposureTime');
 let TILE = require('main/tileing.js');
 
 exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {  
 
  let thisModel = modelData.getModel(0);
- let thisLayer = thisModel.getModelLayerByNr(nLayerNr); 
+ let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
+ let modelName = thisModel.getAttrib('ModelName');  
   
+ //let scannerArray = modelData.getTrayAttribEx('scanhead_array');
    // check if this layer is valid, if not move on
   if(!thisLayer.isValid()) 
   {
-    throw new Error("Invalid Layer " + nLayerNr);
+    throw new Error("Make ExposureLayer: Invalid Layer " + nLayerNr + ' in: ' + modelName);
   }
   
- TILE.getTileArray(thisLayer,nLayerNr,modelData);
+  TILE.getTileArray(thisLayer,nLayerNr,modelData);
   
   let island_it = modelData.getFirstIsland(nLayerNr); // get island Iterator
 
