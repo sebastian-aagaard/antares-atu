@@ -37,13 +37,14 @@ exports.getStatistics = function(
       * PARAM.getParamInt('workarea','x_workarea_max_mm') 
       * PARAM.getParamInt('workarea','y_workarea_max_mm')
       * PARAM.getParamReal('material','density_g_cc') ) / (1000*1000*1000);
-   
-  process.print('buildtime_us: ' + buildTime_us);
-  process.print('buildtime_s: ' + buildTime_us/(1000*1000));
-  process.print('buildtime_min: ' + buildTime_us/(1000*1000)/60);
-  process.print('buildtime_hours: ' + buildTime_us/(3600*1000*1000));
-  process.print('buildtime_days: ' + buildTime_us/(3600*1000*1000)/24);
   
+   if(CONST.bVERBOSE){ 
+    process.print('buildtime_us: ' + buildTime_us);
+    process.print('buildtime_s: ' + buildTime_us/(1000*1000));
+    process.print('buildtime_min: ' + buildTime_us/(1000*1000)/60);
+    process.print('buildtime_hours: ' + buildTime_us/(3600*1000*1000));
+    process.print('buildtime_days: ' + buildTime_us/(3600*1000*1000)/24);
+   }
     
 //   let customJSON = {
 //     
@@ -148,10 +149,10 @@ let customJSON = {
           "data": JSON.stringify (myConfiguration)
         },
         {
-          "path": "/ATU/configuration2.txt",
+          "path": "/ATU/toolpath.log",
           "encoding": "string",
           "relationship": "http://test.com/configurationjson/202305",
-          "data": "TEST"
+          "data": "log"
         }
         
     ],
@@ -207,6 +208,10 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
       layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
   
+  //OBS
+  //if (layerIt.getLayerNr() == 1) layerIt.next();
+
+  
   let buildTime_us = 0;
   let dayCounter = 0;
   while(layerIt.isValid() && !progress.cancelled())
@@ -215,6 +220,15 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
     
     const recoatingTime_us = PARAM.getParamInt('movementSettings','recoating_time_ms') * 1000;
     const powderFillingTime_us = PARAM.getParamInt('movementSettings', 'powderfilling_time_ms') * 1000;
+    
+    if (!UTIL.getTileTable(modelData,layerNr)){
+    
+      layerIt.next();
+      progress.step(1);
+      if (CONST.bVERBOSE) process.printWarning("Nothing to postprocess in layer " + layerNr);
+      continue;
+      
+      }
     
     let exportData = UTIL.getModelsInLayer(modelData,layerNr)[0]
       .getModelLayerByNr(layerNr)

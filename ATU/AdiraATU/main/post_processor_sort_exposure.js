@@ -38,12 +38,27 @@ exports.postprocessSortExposure_MT = function(
 
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
      layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
+  
+    
+   //OBS
+   //if (layerIt.getLayerNr() == 1) layerIt.next();
+    
+     
 
    while(layerIt.isValid() && !progress.cancelled()) {
      
     const layerNr = layerIt.getLayerNr();
 
-    const tileExposureData = mapTileExposureData(modelData,layerNr);
+    const tileTable_3mf = UTIL.getTileTable(modelData,layerNr);
+     
+    if (!tileTable_3mf) {
+      layerIt.next();
+      progress.step(1);
+      if (CONST.bVERBOSE) process.printWarning("Nothing to postprocess in layer " + layerNr);
+      continue;
+      }
+
+    const tileExposureData = mapTileExposureData(modelData,layerNr,tileTable_3mf);
      
     let exposureArray = createExposureArray(tileExposureData);
      
@@ -309,12 +324,10 @@ const getSkywritingCountForPolyline = (points,skyWritingParamters) => {
     return count; 
 }  
 
-const mapTileExposureData = (modelData, layerNr) => {
+const mapTileExposureData = (modelData, layerNr,tileTable_3mf) => {
   let exposurePolylineIt = modelData.getFirstLayerPolyline(layerNr, POLY_IT.nLayerExposure, 'rw');
   let tileExposureObj = {};
-  
-  const tileTable_3mf = UTIL.getModelsInLayer(modelData,layerNr)[0].getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
-
+    
   // front load tileExposureObj
   tileTable_3mf.forEach(pass => {
     pass.forEach(tile => {
