@@ -8,9 +8,11 @@
 
 // --------  INCLUDES -------- //
 const PARAM = requireBuiltin('bsParam');
+const LAYER = requireBuiltin('bsModelLayer');
 const TILE = require('main/tileing.js');
 const CONST = require('main/constants.js');
 const LASER = require('main/laser_designation.js');
+
 
 // -------- TOC -------- //
 
@@ -26,7 +28,6 @@ const LASER = require('main/laser_designation.js');
    */
 exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {  
   
-  const modelLayerCount = modelDataSrc.getLayerCount(); //get layer count
   
  //process.print('modelLayerCount: ' + modelLayerCount);
 
@@ -36,7 +37,6 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
   
   LASER.defineScannerArray(modelDataTarget);
   LASER.setLaserDisplayColor(modelDataTarget);
-  
   
   //////////////////////////////////////////////////
   // Get Boundaries of Work Area / build Envelope //
@@ -50,44 +50,57 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
     
     modelDataTarget.setTrayAttribEx('workAreaLimits',workAreaLimits);
   
-  
   /////////////////////////////////////////
   // Caclulate Scene Boundaries pr Layer //
   /////////////////////////////////////////
  
   let srcModel = modelDataSrc.getModel(0);      
   modelDataTarget.addModelCopy(srcModel);
- 
+    
+  const modelLayerCount = modelDataSrc.getLayerCount(); //get layer count
   progress.initSteps(modelLayerCount+1);
   
-
+  let modelMinMax =  {};  
     
 // run trough all layers and all models to get all boundaries
-  for ( let layerIt = 1; layerIt < modelLayerCount+1 && !progress.cancelled() ; layerIt++ )
-    { 
-
-       // retrieve current model layer
-       let modelLayer =  srcModel.getModelLayerByNr(layerIt);
-        
-        if (modelLayer.isValid() && modelLayer.tryGetBounds2D()) {          
-          // get this model layer boundaries      
-          let thisModelLayerBounds = modelLayer.tryGetBounds2D();
-                   
-          // check if this boundary exceeds the previous and store it
-          addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,workAreaLimits,layerIt)                 
-               
-          } else {
-            
-            throw new Error('failed to access layer ' + layerIt + ', in ' + srcModel.getAttribEx('ModelName'));     
-            
-            }
-                      
-     progress.step(1);
-          
+  for ( let layerNumber = 1; layerNumber < modelLayerCount+1 && !progress.cancelled() ; layerNumber++ ){
+    
+    // retrieve current model layer
+    let modelLayer =  srcModel.maybeGetModelLayerByNr(layerNumber);
+    
+    if (CONST.bLOGGING) process.printLogFile("Layer " + layerNumber + " of Model " + srcModel.getAttribEx('ModelName') + " added to target"); 
+    if (CONST.bVERBOSE) process.printInfo("Layer " + layerNumber + "/" + modelLayer.getLayerZ() + " of Model " + srcModel.getAttribEx('ModelName') + " added to target"); 
+    
+    if (!isLayerProcessable(modelLayer)) {       
+        throw new Error('PreprocessLayerStack | failed to access layer ' + layerNumber + ', in ' + srcModel.getAttribEx('ModelName'));
+    }
+                  
+    // get this model layer boundaries      
+    let thisModelLayerBounds = modelLayer.tryGetBounds2D();
+             
+    // check if this boundary exceeds the previous and store it
+    addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,workAreaLimits,layerNumber)                            
+                    
+    progress.step(1);     
+  
   } //layer iterator
 }; //preprocessLayerStack
 
 //---------------------------------------------------------------------------------------------//
+
+
+const isLayerProcessable = (modelLayer) => {
+    return (
+        modelLayer.isValid() &&
+        modelLayer.tryGetBounds2D() &&
+        modelLayer.hasData(
+            LAYER.nLayerDataTypeIsland |
+            LAYER.nLayerDataTypeOpenPolyline |
+            LAYER.nLayerDataTypeExposurePolyline
+        )
+    );
+};
+
 
 const isModelOutsideWorkArea = (boundsArray,limits,layerNr) => {
   
@@ -102,7 +115,7 @@ const isModelOutsideWorkArea = (boundsArray,limits,layerNr) => {
 if(bounds.xmin < limits.xmin || bounds.xmax > limits.xmax ||
    bounds.ymin < limits.ymin || bounds.ymax > limits.ymax){
    
-     throw new Error ("model outside workarea limits, breach found in layer: " + layerNr);
+     throw new Error ("Preprocessor: model outside workarea limits, breach found in layer: " + layerNr);
      
      }
 };
@@ -139,10 +152,8 @@ const addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,wo
     
     allLayerBoundaries = [];
     allLayerBoundaries.push(undefined); // add empty layer for layer 0
-    //allLayerBoundaries.push(undefined); // add empty layer for layer 0
     }
   
-    
   // if there is nothing yet for this layer, push this boundary 
   if (allLayerBoundaries[layerNr] == undefined) {
     
