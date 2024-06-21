@@ -51,7 +51,7 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
         
     }
     } catch (e) {
-      throw new Error('failed at pass ' + passIndex + ', layer ' + layerNr);
+      throw new Error('PostProcess | createExporter3mf: failed at pass ' + passIndex + ', layer ' + layerNr);
     }
     
     pass.forEach((tile, tileIndex) => {
