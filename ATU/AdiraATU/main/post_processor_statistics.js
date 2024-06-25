@@ -310,10 +310,6 @@ const getPartMassKg = (modelData,progress,layer_start_nr,layer_end_nr) => {
   
   let surface_area_mm2 = 0;
   
-  let thisModel = modelData.getModel(0);
-//     var thisLayer = thisModel.getModelLayerByNr(layerNr);
-//    thisLayer.setAttribEx('exporter_3mf', exporter_3mf);  
-  
   while(layerIt.isValid() && !progress.cancelled())
   {
     let layerNr = layerIt.getLayerNr();
@@ -324,8 +320,8 @@ const getPartMassKg = (modelData,progress,layer_start_nr,layer_end_nr) => {
       let thisIsland = islandIt.getIsland();
       surface_area_mm2 += thisIsland.getSurfaceArea();
       islandIt.next();
-    }    
-    
+    }
+
     progress.step(1);
     layerIt.next();
   }

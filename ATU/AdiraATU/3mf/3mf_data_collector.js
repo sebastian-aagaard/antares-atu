@@ -7,14 +7,25 @@
 'use strict';
 
 const PARAM = requireBuiltin('bsParam');
+const ISLAND = requireBuiltin('bsIsland');
 const UTIL = require('main/utility_functions.js');
 const CONST = require('main/constants.js');
 
 exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
   
+  const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
+  
+  const layerPart_kg = getPartLayerMass(arrayOfModels,layerNr);
+  const powderbed_kg = (modelData.getLayerThickness() 
+    * PARAM.getParamInt('workarea','x_workarea_max_mm') 
+    * PARAM.getParamInt('workarea','y_workarea_max_mm')
+    * PARAM.getParamReal('material','density_g_cc') ) / (1000*1000*1000); 
+
+  
   let exporter_3mf = {    
     "metadata": []
   };
+ 
   
   exposureArray.forEach((pass, passIndex) => {
     try {
@@ -44,7 +55,8 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
           "namespace": "http://nikonslm.com/tilinginformation/202305",
           "attributes": {
             "uuid": UTIL.generateUUID(),
-            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\s+/g, '')
+            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\s+/g, ''),
+            "speed": PARAM.getParamReal('movementSettings', 'axis_transport_speed')
           },
           "nodes": []
         };
@@ -107,7 +119,6 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
             "tileid": tile.tileID,
             "startx": tile.xcoord.toFixed(3),
             "starty": tile.ycoord.toFixed(3),
-            "speed": PARAM.getParamReal('movementSettings', 'axis_transport_speed'),
             "tileExposureTime_us": tile.exposureTime.toFixed(0)
           }
         };
@@ -120,17 +131,20 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
         "namespace": "http://nikonslm.com/statistics/202305",
          "attributes" : {
            "tilebuffer" : CONST.nBufferduration,
-           "layerScanningDuration" : null,
-           "layerTotalDuration" : null           
+           "layerScanningDuration_s" : null,
+           "layerTotalDuration_s" : null,
+           "ConsolidatedPowderInLayer_kg" : layerPart_kg.toFixed(3),
+           "FullPowderLayer_kg" : powderbed_kg.toFixed(3) 
            }
     };
+    
     
   exporter_3mf.metadata.unshift(layerData);
     
   assignLayerTotals(exporter_3mf);  
 
   //Set the exporter_3mf for all models in this layer
-  const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
+  //const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
 
   arrayOfModels.forEach(m => {
     m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf);
@@ -141,6 +155,26 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
 //    thisLayer.setAttribEx('exporter_3mf', exporter_3mf);  
   
 };
+
+const getPartLayerMass = (models,layerNr) => {
+
+  const surface_area_mm2 = models.reduce((acc, model) => {
+    const islandArray = new ISLAND.bsIsland();
+    const layer = model.getModelLayerByNr(layerNr);
+    islandArray.addPathSet(layer.getAllIslandsPathSet());
+    const surface = islandArray.getSurfaceArea();
+    
+    return acc + surface;
+  },0);
+  
+  const height_cm = models[0].getLayerThickness() / 1000;
+  const surface_area_cm2 = surface_area_mm2 / 100;
+  const volume_cc = surface_area_cm2 * height_cm ;
+  const mass_grams = volume_cc * PARAM.getParamReal('material','density_g_cc') ;
+  const mass_kilograms = mass_grams / 1000 ; 
+    
+  return mass_kilograms;
+}
 
 const assignLayerTotals = (exporter_3mf) => {
   // Initialize total durations
