@@ -12,6 +12,7 @@ const PARAM = requireBuiltin('bsParam');
 const PATH_SET = requireBuiltin('bsPathSet');
 const VEC2 = requireBuiltin('vec2');
 const MODEL = requireBuiltin('bsModel');
+const UTIL = require('main/utility_functions.js');
 
 // -------- FUNCTIONS -------- //
 
@@ -78,10 +79,10 @@ function getShiftY(layerNr) {
 ////////////////////////////////
 
 // get all relevant information for the tiling providing the origin of the scanhead
-function getTilePosition(x_pos, y_pos, overlap_x = 0, overlap_y = 0) {
+function getTilePosition(x_pos, y_pos, overlap_x = undefined, overlap_y = undefined) {
     // Retrieve overlap values if they are the default zero, meaning they weren't explicitly passed
-    if (overlap_x === 0) overlap_x = PARAM.getParamReal('scanhead', 'tile_overlap_x');
-    if (overlap_y === 0) overlap_y = PARAM.getParamReal('scanhead', 'tile_overlap_y');
+    if (overlap_x === undefined) overlap_x = PARAM.getParamReal('scanhead', 'tile_overlap_x');
+    if (overlap_y === undefined) overlap_y = PARAM.getParamReal('scanhead', 'tile_overlap_y');
 
     let xmin = x_pos;
     let xmax = x_pos + PARAM.getParamReal('scanhead', 'x_scanfield_size_mm');
@@ -109,18 +110,27 @@ function getTilePosition(x_pos, y_pos, overlap_x = 0, overlap_y = 0) {
 
 function getBoundaryData(modelData, layerNr) {
     try {
-        let boundaries = modelData.getTrayAttribEx('allLayerBoundaries');
-        //process.printInfo(layerNr);
+        const layerPosZ = modelData.getLayerPosZ(layerNr); 
+        const allBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
+        const boundaries = allBoundaries[layerPosZ];
+        
+        if (!boundaries) {
+            throw new Error("No boundaries found for layer position Z: " + layerPosZ);
+        }
+        
+        // Return the boundary data
         return {
-            xmin: boundaries[layerNr][0],
-            xmax: boundaries[layerNr][1],
-            ymin: boundaries[layerNr][2],
-            ymax: boundaries[layerNr][3]
+            xmin: boundaries[0],
+            xmax: boundaries[1],
+            ymin: boundaries[2],
+            ymax: boundaries[3]
         };
     } catch (e) {
-       throw new Error('tileing | getBoundaryData Failed: cannot access boundaries at layer nr: ' + layerNr);
+        process.printWarning('tiling | getBoundaryData Failed: cannot access boundaries at layer nr: ' + layerNr + ' - ' + e.message);
+        return null; 
     }
 }
+
 
 function calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY) {
     return {
@@ -200,7 +210,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
 
   // Get boundary data
   const modelBoundaries = getBoundaryData(modelData, layerNr);
-  
+    
   // Calculate scene size
   const sceneSize = calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY);
 
@@ -211,7 +221,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
       PARAM.getParamReal('scanhead', 'tile_overlap_x'), PARAM.getParamReal('scanhead', 'tile_overlap_y')
   );
   
-  const workAreaLimits = modelData.getTrayAttribEx('workAreaLimits');
+  const workAreaLimits = UTIL.getWorkAreaLimits();
   //process.print('scanhead_startPos 1: ' + scanhead_x_starting_pos);    
   // Adjust starting positions
   let { startingPos: scanhead_x_starting_pos, overlap: overlap_x, requiredPasses: required_passes_x_new } = adjustTileLayout(
@@ -298,6 +308,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
           };
 
           if (!tileTable3mf[passnumber_x]) tileTable3mf[passnumber_x] = [];
+            
           tileTable3mf[passnumber_x].push(TileEntry3mf);
 
           cur_tile_coord_y = cur_tile.next_y_coord;
@@ -309,20 +320,23 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
   let attemptCounter;
   
-  storeTileTable(modelLayer,tileTable,tileTable3mf,attemptCounter);
+  storeTileTable(modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr);
   
 };
 
-const storeTileTable = (modelLayer,tileTable,tileTable3mf,attemptCounter) => {
+const storeTileTable = (modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr) => {
   
   modelLayer.setAttribEx('tileTable', tileTable);
   modelLayer.setAttribEx('tileTable_3mf', tileTable3mf);
   
   if(!modelLayer.getAttribEx('tileTable') || !modelLayer.getAttribEx('tileTable_3mf')){
   
+    if (!modelLayer.getAttribEx('tileTable')) process.printWarning("failed to access tileTable, in model layer: " + layerNr);
+    if (!modelLayer.getAttribEx('tileTable_3mf')) process.printWarning("failed to access tileTable_3mf, in model layer: " + layerNr);  
+    
     if(typeof attemptCounter === 'undefined') {
       attemptCounter = 0
-    }
+    };
   
   attemptCounter++;
   
@@ -330,5 +344,5 @@ const storeTileTable = (modelLayer,tileTable,tileTable3mf,attemptCounter) => {
   
   process.printWarning("re-attempt to get tileArray, layer nr " + layerNr + " attempt nr: " + attemptCounter);
     storeTileTable(modelLayer,tileTable,tileTable3mf);
-  }
+  };
 }

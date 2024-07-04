@@ -39,10 +39,17 @@ exports.drawTileArray_MT = function(
     
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
      layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
+  
     
   while(layerIt.isValid() && !progress.cancelled()){
     
     const layerNr = layerIt.getLayerNr();
+    
+//     if (layerNr == 1) {
+//       layerIt.next();
+//       continue;
+//       };
+    
       
     const arrayOfModels = UTIL.getModelsInLayer(modelData,layerNr);  
     
@@ -51,14 +58,14 @@ exports.drawTileArray_MT = function(
       let thisModelLayer = model.getModelLayerByNr(layerNr);
          
       if(!thisModelLayer) {           
-       throw new Error('postProcessor | drawTileArray_MT: modelLayer ' + layerNr + ' , in model ' +  modelData.getModel(modelIt).getAttribEx('ModelName'));
+       throw new Error('postProcessor | drawTileArray_MT: modelLayer ' + layerNr + ' , in model ' +  model.getAttribEx('ModelName'));
       }
             
       let tileTable = thisModelLayer
       .getAttribEx('tileTable');
            
       if (!tileTable) {               
-        throw new Error('postProcessor | drawTileArray_MT: tile table at layer ' + layerNr + ' , in model ' +  modelData.getModel(modelIt).getAttribEx('ModelName') + 'not defined');
+        throw new Error('postProcessor | drawTileArray_MT: tile table at layer ' + layerNr + ' , in model ' +  model.getAttribEx('ModelName') + 'not defined');
       }  
          
       tileTable.forEach(tile => {

@@ -11,6 +11,7 @@
 var HATCH = requireBuiltin('bsHatch');
 var PATH_SET = requireBuiltin('bsPathSet');
 var ISLAND = requireBuiltin('bsIsland');
+const PARAM = requireBuiltin('bsParam');
 
 var CONST = require('main/constants.js');
 
@@ -29,12 +30,14 @@ exports.getModelsInLayer = (modelData,layerNr) => {
   let arrayofModels = [];
   
   for (let modelIt = 0; modelIt < modelCount; modelIt++){
-  
+    
     if (modelData.getModelMaxLayerNr(modelIt) >= layerNr 
       && modelData.getModelMinLayerNr(modelIt) <= layerNr)
       arrayofModels.push(modelData.getModel(modelIt))
-    }
+  };
     
+    if(!arrayofModels) return false;
+      
     return arrayofModels;
 }
 
@@ -122,4 +125,13 @@ exports.getTileTable = (modelData,layerNr) => {
     
   return tiletable_3mf;
 
+}
+
+exports.getWorkAreaLimits = function() {
+return {  
+      xmin: PARAM.getParamInt('workarea', 'x_workarea_min_mm'),
+      ymin: PARAM.getParamInt('workarea', 'y_workarea_min_mm'),
+      xmax: PARAM.getParamInt('workarea', 'x_workarea_max_mm'),
+      ymax: PARAM.getParamInt('workarea', 'y_workarea_max_mm')
+  };
 }

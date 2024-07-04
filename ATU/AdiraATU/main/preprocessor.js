@@ -12,6 +12,7 @@ const LAYER = requireBuiltin('bsModelLayer');
 const TILE = require('main/tileing.js');
 const CONST = require('main/constants.js');
 const LASER = require('main/laser_designation.js');
+const UTIL = require('main/utility_functions.js');
 
 
 // -------- TOC -------- //
@@ -41,15 +42,8 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
   //////////////////////////////////////////////////
   // Get Boundaries of Work Area / build Envelope //
   /////////////////////////////////////////////////
-    const workAreaLimits = {
-      xmin: PARAM.getParamInt('workarea', 'x_workarea_min_mm'),
-      ymin: PARAM.getParamInt('workarea', 'y_workarea_min_mm'),
-      xmax: PARAM.getParamInt('workarea', 'x_workarea_max_mm'),
-      ymax: PARAM.getParamInt('workarea', 'y_workarea_max_mm')
-    }
-    
-    modelDataTarget.setTrayAttribEx('workAreaLimits',workAreaLimits);
-  
+  const workAreaLimits = UTIL.getWorkAreaLimits();
+   
   /////////////////////////////////////////
   // Caclulate Scene Boundaries pr Layer //
   /////////////////////////////////////////
@@ -57,33 +51,73 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
   let srcModel = modelDataSrc.getModel(0);      
   modelDataTarget.addModelCopy(srcModel);
     
-  const modelLayerCount = modelDataSrc.getLayerCount(); //get layer count
-  progress.initSteps(modelLayerCount+1);
+  const modelLayerCount = modelDataSrc.getLayerCount()+1; //get layer count
+  progress.initSteps(modelLayerCount);
   
-  let modelMinMax =  {};  
-    
-// run trough all layers and all models to get all boundaries
-  for ( let layerNumber = 1; layerNumber < modelLayerCount+1 && !progress.cancelled() ; layerNumber++ ){
+  let srcModelMinMaxZValue = {};
+  srcModel.getMinMaxLayerIntZ(srcModelMinMaxZValue);  
+  const layerHeight = modelDataSrc.getLayerThickness();  
+  const minZValue = modelDataSrc.getZeroPosZ() + layerHeight;
+  const maxZValue = srcModelMinMaxZValue.max_layer_z;
+  
+  let layerNumber = 1;
+  let thisLayerHeight = minZValue;
+      
+  
+  while (thisLayerHeight <= maxZValue && !progress.cancelled()) {
     
     // retrieve current model layer
-    let modelLayer =  srcModel.maybeGetModelLayerByNr(layerNumber);
+    let modelLayer =  srcModel.getModelLayer(thisLayerHeight);
     
-    if (CONST.bLOGGING) process.printLogFile("Layer " + layerNumber + " of Model " + srcModel.getAttribEx('ModelName') + " added to target"); 
-    if (CONST.bVERBOSE) process.printInfo("Layer " + layerNumber + "/" + modelLayer.getLayerZ() + " of Model " + srcModel.getAttribEx('ModelName') + " added to target"); 
+    if (modelLayer==undefined){
+      process.printError(layerNumber + " undefined");
+      continue;
+      };
     
     if (!isLayerProcessable(modelLayer)) {       
-        throw new Error('PreprocessLayerStack | failed to access layer ' + layerNumber + ', in ' + srcModel.getAttribEx('ModelName'));
+        process.printWarning('PreprocessLayerStack | failed to access layer ' + layerNumber +"/"+ thisLayerHeight + ', in ' + srcModel.getAttribEx('ModelName') + " min layer is at: " + minZValue);
     }
                   
     // get this model layer boundaries      
     let thisModelLayerBounds = modelLayer.tryGetBounds2D();
              
     // check if this boundary exceeds the previous and store it
-    addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,workAreaLimits,layerNumber)                            
+    addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,workAreaLimits,thisLayerHeight,srcModel);                            
                     
+    layerNumber++;
+    thisLayerHeight += layerHeight;
+    
     progress.step(1);     
-  
-  } //layer iterator
+
+  } //layer iterator  
+    
+// run trough all layers and all models to get all boundaries
+//   for ( let layerNumber = 1; layerNumber < modelLayerCount && !progress.cancelled() ; layerNumber++ ){
+//       
+//     // retrieve current model layer
+//     let modelLayer =  srcModel.maybeGetModelLayerByNr(layerNumber);
+//     
+//     if (modelLayer==undefined){
+//       process.printError(layerNumber + " undefined");
+//       continue;
+//       };
+//     
+//     if (CONST.bLOGGING) process.printLogFile("Layer " + layerNumber + " of Model " + srcModel.getAttribEx('ModelName') + " added to target"); 
+//     if (CONST.bVERBOSE) process.printInfo("Layer " + layerNumber + "/" + modelLayer.getLayerZ() + " of Model " + srcModel.getAttribEx('ModelName') + " added to target"); 
+//     
+//     if (!isLayerProcessable(modelLayer)) {       
+//         throw new Error('PreprocessLayerStack | failed to access layer ' + layerNumber + ', in ' + srcModel.getAttribEx('ModelName'));
+//     }
+//                   
+//     // get this model layer boundaries      
+//     let thisModelLayerBounds = modelLayer.tryGetBounds2D();
+//              
+//     // check if this boundary exceeds the previous and store it
+//     addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,workAreaLimits,layerNumber)                            
+//                     
+//     progress.step(1);     
+//   
+//   } //layer iterator
 }; //preprocessLayerStack
 
 //---------------------------------------------------------------------------------------------//
@@ -102,7 +136,7 @@ const isLayerProcessable = (modelLayer) => {
 };
 
 
-const isModelOutsideWorkArea = (boundsArray,limits,layerNr) => {
+const isModelOutsideWorkArea = (boundsArray,limits,layerNr,model) => {
   
   const bounds = {
     xmin: boundsArray[0],
@@ -115,62 +149,107 @@ const isModelOutsideWorkArea = (boundsArray,limits,layerNr) => {
 if(bounds.xmin < limits.xmin || bounds.xmax > limits.xmax ||
    bounds.ymin < limits.ymin || bounds.ymax > limits.ymax){
    
-     throw new Error ("Preprocessor: model outside workarea limits, breach found in layer: " + layerNr);
+     process.printError("Preprocessor: model outside workarea limits, breach found at layerheigt: " + layerNr + "model " + model.getAttribEx('ModelName') + 
+     " b" + bounds.xmin +"/"+ bounds.xmax +";"+ bounds.ymin +"/"+ bounds.ymax + " l" + limits.xmin +"/"+ limits.xmax +";"+ limits.ymin +"/"+ limits.ymax);
      
      }
 };
 
 // ADD LAYER BOUNDARIES
-
-const addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,workAreaLimits,layerNr) => {
-  
+const addLayerBoundariesToAllLayerBoundaries = (modelData, thisLayerBoundaries, workAreaLimits, layerHeight,srcModel) => {
   let boundsArray = [
-        undefined,  // xmin
-        undefined,  // xmax
-        undefined,  // ymin
-        undefined]; // ymax 
-    
-  if(thisLayerBoundaries){
-     boundsArray = [
-        thisLayerBoundaries.m_min.m_coord[0],   // xmin
-        thisLayerBoundaries.m_max.m_coord[0],   // xmax
-        thisLayerBoundaries.m_min.m_coord[1],   // ymin
-        thisLayerBoundaries.m_max.m_coord[1]];  // ymax
-    
-    }
-    
- 
-  //check if model is outside boundaries 
-    
-  //check if boundaries lies outside the allowed area
-  isModelOutsideWorkArea(boundsArray,workAreaLimits,layerNr);
-    
-  let allLayerBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
-  
-  // if allLayerBoundaries has nothing this is first layer
-  if (allLayerBoundaries == undefined) {
-    
-    allLayerBoundaries = [];
-    allLayerBoundaries.push(undefined); // add empty layer for layer 0
-    }
-  
-  // if there is nothing yet for this layer, push this boundary 
-  if (allLayerBoundaries[layerNr] == undefined) {
-    
-    allLayerBoundaries.push(boundsArray);
-    
-  } else { // check 
-    
-    // check if this layer boundaries exceeds the already stored, if true update the boundary
-    if (boundsArray[0] < allLayerBoundaries[layerNr][0]) allLayerBoundaries[layerNr][0] = boundsArray[0]; //xmin
-    if (boundsArray[1] > allLayerBoundaries[layerNr][1]) allLayerBoundaries[layerNr][1] = boundsArray[1]; //xmax
-    if (boundsArray[2] < allLayerBoundaries[layerNr][2]) allLayerBoundaries[layerNr][2] = boundsArray[2]; //ymin
-    if (boundsArray[3] > allLayerBoundaries[layerNr][3]) allLayerBoundaries[layerNr][3] = boundsArray[3]; //ymax
-  
+    undefined, // xmin
+    undefined, // xmax
+    undefined, // ymin
+    undefined  // ymax
+  ];
+
+  if (thisLayerBoundaries) {
+    boundsArray = [
+      thisLayerBoundaries.m_min.m_coord[0], // xmin
+      thisLayerBoundaries.m_max.m_coord[0], // xmax
+      thisLayerBoundaries.m_min.m_coord[1], // ymin
+      thisLayerBoundaries.m_max.m_coord[1]  // ymax
+    ];
   }
-  
-  // store boundaries in modelData tray
-  modelData.setTrayAttribEx('allLayerBoundaries',allLayerBoundaries);
-} // addLayerBoundariesToAllLayerBoundaries
+
+  // Check if boundaries lie outside the allowed area
+  isModelOutsideWorkArea(boundsArray, workAreaLimits, layerHeight,srcModel);
+
+  // Retrieve allLayerBoundaries from modelData
+  let allLayerBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
+
+  // If allLayerBoundaries is undefined, initialize it as an empty object
+  if (allLayerBoundaries == undefined) {
+    allLayerBoundaries = {};
+  }
+
+  // If there is nothing yet for this layer height, assign this boundary
+  if (allLayerBoundaries[layerHeight] == undefined) {
+    allLayerBoundaries[layerHeight] = boundsArray;
+  } else {
+    // Check if this layer boundaries exceed the already stored boundaries, if true update the boundary
+    if (boundsArray[0] < allLayerBoundaries[layerHeight][0]) allLayerBoundaries[layerHeight][0] = boundsArray[0]; // xmin
+    if (boundsArray[1] > allLayerBoundaries[layerHeight][1]) allLayerBoundaries[layerHeight][1] = boundsArray[1]; // xmax
+    if (boundsArray[2] < allLayerBoundaries[layerHeight][2]) allLayerBoundaries[layerHeight][2] = boundsArray[2]; // ymin
+    if (boundsArray[3] > allLayerBoundaries[layerHeight][3]) allLayerBoundaries[layerHeight][3] = boundsArray[3]; // ymax
+  }
+
+  // Store boundaries in modelData tray
+  modelData.setTrayAttribEx('allLayerBoundaries', allLayerBoundaries);
+};
+
+// const addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,workAreaLimits,layerNr) => {
+//   
+//   let boundsArray = [
+//         undefined,  // xmin
+//         undefined,  // xmax
+//         undefined,  // ymin
+//         undefined]; // ymax 
+//     
+//   if(thisLayerBoundaries){
+//      boundsArray = [
+//         thisLayerBoundaries.m_min.m_coord[0],   // xmin
+//         thisLayerBoundaries.m_max.m_coord[0],   // xmax
+//         thisLayerBoundaries.m_min.m_coord[1],   // ymin
+//         thisLayerBoundaries.m_max.m_coord[1]];  // ymax
+//     
+//     }
+//     
+//  
+//   //check if model is outside boundaries 
+//     
+//   //check if boundaries lies outside the allowed area
+//   isModelOutsideWorkArea(boundsArray,workAreaLimits,layerNr);
+//     
+//   let allLayerBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
+//   
+//   // if allLayerBoundaries has nothing this is first layer
+//   if (allLayerBoundaries == undefined) {
+//     
+//     allLayerBoundaries = [];
+//     allLayerBoundaries[0] = undefined; // add empty layer for layer 0
+//     }
+//   
+//   // if there is nothing yet for this layer, push this boundary 
+//   if (allLayerBoundaries[layerNr] == undefined) {
+//     
+//     allLayerBoundaries[layerNr] = (boundsArray);
+//     
+// 
+//     
+//   } else { // check 
+//     
+//     // check if this layer boundaries exceeds the already stored, if true update the boundary
+//     if (boundsArray[0] < allLayerBoundaries[layerNr][0]) allLayerBoundaries[layerNr][0] = boundsArray[0]; //xmin
+//     if (boundsArray[1] > allLayerBoundaries[layerNr][1]) allLayerBoundaries[layerNr][1] = boundsArray[1]; //xmax
+//     if (boundsArray[2] < allLayerBoundaries[layerNr][2]) allLayerBoundaries[layerNr][2] = boundsArray[2]; //ymin
+//     if (boundsArray[3] > allLayerBoundaries[layerNr][3]) allLayerBoundaries[layerNr][3] = boundsArray[3]; //ymax
+//   
+//   }
+//   
+//   // store boundaries in modelData tray
+//   modelData.setTrayAttribEx('allLayerBoundaries',allLayerBoundaries);
+// } // addLayerBoundariesToAllLayerBoundaries
 
 //---------------------------------------------------------------------------------------------//

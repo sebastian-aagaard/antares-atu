@@ -38,12 +38,9 @@ exports.postprocessSortExposure_MT = function(
 
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
      layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
-  
-    
+
    //OBS
    //if (layerIt.getLayerNr() == 1) layerIt.next();
-    
-     
 
    while(layerIt.isValid() && !progress.cancelled()) {
      
@@ -54,7 +51,7 @@ exports.postprocessSortExposure_MT = function(
     if (!tileTable_3mf) {
       layerIt.next();
       progress.step(1);
-      if (CONST.bVERBOSE) process.printWarning("Nothing to postprocess in layer " + layerNr);
+      process.printError("Nothing to postprocess in layer " + layerNr);
       continue;
       }
 
@@ -62,7 +59,7 @@ exports.postprocessSortExposure_MT = function(
      
     let exposureArray = createExposureArray(tileExposureData);
      
-   fillVoidsinExposureArray(exposureArray);
+    fillVoidsinExposureArray(exposureArray);
    
     let sortedExposureArray = sortMovementDirectionOfTiles(exposureArray);
      
@@ -76,9 +73,7 @@ exports.postprocessSortExposure_MT = function(
     
     layerIt.next();
     progress.step(1);
-    
-   }
-   
+   };
 } // postprocessSortExposure_MT
  
 
@@ -324,7 +319,7 @@ const getSkywritingCountForPolyline = (points,skyWritingParamters) => {
     return count; 
 }  
 
-const mapTileExposureData = (modelData, layerNr,tileTable_3mf) => {
+const mapTileExposureData = (modelData, layerNr, tileTable_3mf) => {
   let exposurePolylineIt = modelData.getFirstLayerPolyline(layerNr, POLY_IT.nLayerExposure, 'rw');
   let tileExposureObj = {};
     
@@ -336,10 +331,9 @@ const mapTileExposureData = (modelData, layerNr,tileTable_3mf) => {
         xcoord: tile.attributes.xcoord,
         ycoord: tile.attributes.ycoord,
         exposure: []
-        
         }
-      })
-    })
+      });
+    });
 
   while (exposurePolylineIt.isValid()) {
     const thisExposurePolyline = exposurePolylineIt.clone();

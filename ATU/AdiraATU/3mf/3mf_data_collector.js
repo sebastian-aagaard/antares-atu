@@ -15,6 +15,8 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
   
   const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
   
+  if(!arrayOfModels) process.printError("no models found in layer" + layerNr);
+  
   const layerPart_kg = getPartLayerMass(arrayOfModels,layerNr);
   const powderbed_kg = (modelData.getLayerThickness() 
     * PARAM.getParamInt('workarea','x_workarea_max_mm') 
@@ -59,11 +61,11 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
             "speed": PARAM.getParamReal('movementSettings', 'axis_transport_speed')
           },
           "nodes": []
-        };
-        
-    }
+        };       
+      };
+      
     } catch (e) {
-      throw new Error('PostProcess | createExporter3mf: failed at pass ' + passIndex + ', layer ' + layerNr);
+      process.printError('PostProcess | createExporter3mf: failed at pass ' + passIndex + ', layer ' + layerNr + e.message);
     }
     
     pass.forEach((tile, tileIndex) => {
