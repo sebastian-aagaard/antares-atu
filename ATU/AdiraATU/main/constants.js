@@ -16,7 +16,7 @@ exports.nBufferduration = 0;//1500000;//500000;//1000000; //us
 
 //if openpolyline support is required set to false
 //when not in development mode set to false
-exports.bDrawTile = false; // this inversly toggles the ability to handle CAD 
+exports.bDrawTile = true; // this inversly toggles the ability to handle CAD 
                           //generated openpolilines (eg in support)
 
 exports.scanningSchema = 'http://schemas.scanlab.com/scanning/2023/01';

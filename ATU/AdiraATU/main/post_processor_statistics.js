@@ -31,6 +31,7 @@ exports.getStatistics = function(
   
   const partMassKg = getPartMassKg(modelData,progress,layer_start_nr,layer_end_nr);
   const buildTime_us = getBuildTime_us(modelData,progress,layer_start_nr,layer_end_nr);
+  modelData.setTrayAttrib('built_time_estimation_ms', (buildTime_us*1000.0).toFixed());
     
   const totalPowder = (layer_end_nr 
       * modelData.getLayerThickness() 
@@ -199,7 +200,7 @@ let customJSON = {
    modelData.setTrayAttribEx('custom', customJSON);
 }
 
-const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
+const getBuildTime_us = function(modelData,progress,layer_start_nr,layer_end_nr){
   
   let layerCount = layer_end_nr-layer_start_nr+1;
  
@@ -207,13 +208,8 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
   
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
       layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
-  
-  //OBS
-  //if (layerIt.getLayerNr() == 1) layerIt.next();
 
-  
   let buildTime_us = 0;
-  let dayCounter = 0;
   while(layerIt.isValid() && !progress.cancelled())
   {
     const layerNr = layerIt.getLayerNr();
@@ -221,36 +217,37 @@ const getBuildTime_us = (modelData,progress,layer_start_nr,layer_end_nr) => {
     const recoatingTime_us = PARAM.getParamInt('movementSettings','recoating_time_ms') * 1000;
     const powderFillingTime_us = PARAM.getParamInt('movementSettings', 'powderfilling_time_ms') * 1000;
     
-    if (!UTIL.getTileTable(modelData,layerNr)){
-    
-      layerIt.next();
-      progress.step(1);
-      if (CONST.bVERBOSE) process.printWarning("Nothing to postprocess in layer " + layerNr);
-      continue;
-      
-      }
+//     if (!UTIL.getTileTable(modelData,layerNr)){
+//     
+//       layerIt.next();
+//       progress.step(1);
+//       if (CONST.bVERBOSE) process.printWarning("Nothing to postprocess in layer " + layerNr);
+//       continue;
+
+//       }
     
     let exportData = UTIL.getModelsInLayer(modelData,layerNr)[0]
       .getModelLayerByNr(layerNr)
       .getAttribEx('exporter_3mf')
       .metadata;
-    
-    let layerDuration_us = exportData[1]
+
+    let layerDuration_us = exportData[0]
       .attributes
-      .layerTotalDuration_us;
-    
+      .layerTotalDuration;
+//     
     let transport_mm = getTransportationDistance_mm(exportData);
     let transportTime_us = (transport_mm/PARAM.getParamReal('movementSettings', 'axis_transport_speed'))*1000*1000;
               
     buildTime_us += transportTime_us;  
-    buildTime_us += (layerDuration_us<powderFillingTime_us) ? powderFillingTime_us : layerDuration_us ;
+    buildTime_us += (layerDuration_us<powderFillingTime_us) ? powderFillingTime_us : layerDuration_us;
     buildTime_us += recoatingTime_us;
     
+//     
     progress.step(1);
     layerIt.next();
-  }
+  };
   
-  return buildTime_us
+  return buildTime_us;
 } 
 
 const getTransportationDistance_mm = (exportData) => {

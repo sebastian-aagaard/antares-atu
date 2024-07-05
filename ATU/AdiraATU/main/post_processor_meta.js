@@ -21,32 +21,35 @@ const CONST = require('main/constants.js');
  */
  
  
-exports.postprocessMeta_MT = function( 
+exports.postprocessMeta = function( 
   modelData, 
   progress, 
   layer_start_nr, 
   layer_end_nr){
   
-  removeCustomTableScanningSchema(modelData);
+  removeCustomTableScanningSchema(modelData,progress);
 
 } // postprocessSortExposure_MT
 
- const removeCustomTableScanningSchema = (modelData) => {
+const removeCustomTableScanningSchema = function(modelData,progress){
+  
+  const modelCount = modelData.getModelCount();
+  progress.initSteps(modelCount-1);
        
-  for(let modelId = 0; modelId < modelData.getModelCount(); modelId++){
+  for(let modelId = 0; modelId < modelCount; modelId++){
     let customTable = modelData
     .getModel(modelId)
-    .getAttribEx('customTable')
+    .getAttribEx('customTable');
 
     customTable.forEach(entry => {
      entry.attributes = entry.attributes.filter(attr =>
         attr.schema !==CONST.scanningSchema)
      });
 
-     modelData
-     .getModel(modelId)
-     .setAttribEx('customTable',customTable);
+    modelData
+    .getModel(modelId)
+    .setAttribEx('customTable',customTable);
 
-  }
-  
+    progress.step(1);    
+  };
 }

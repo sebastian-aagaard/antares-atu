@@ -226,7 +226,7 @@ const getTileExposureDuration = (exposureArray,modelData) => {
               ? tile.laserExposureTime[key] : tile.exposureTime);
             
           }); // for each laser object
-        } // if
+        }; // if
       }); // forEach .exposure
     }); // forEach .tile
   }); // forEach .pass
