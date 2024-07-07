@@ -21,7 +21,7 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
  let thisModel = modelData.getModel(0);
  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
  let modelName = thisModel.getAttrib('ModelName');  
-  
+
  //let scannerArray = modelData.getTrayAttribEx('scanhead_array');
    // check if this layer is valid, if not move on
   if(!thisLayer.isValid()) 
@@ -86,7 +86,7 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
 
   //merge shortlines within same pass and delete remaining short lines
   allHatches = TP2TILE.handleShortLines(passNumberGroups,thisModel,modelData); 
-
+  
     
   //POST PROCESS TOOLPATH
   // toolpath to tiles and passnumber

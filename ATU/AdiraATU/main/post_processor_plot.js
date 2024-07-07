@@ -40,16 +40,9 @@ exports.drawTileArray_MT = function(
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
      layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
   
-    
   while(layerIt.isValid() && !progress.cancelled()){
     
     const layerNr = layerIt.getLayerNr();
-    
-//     if (layerNr == 1) {
-//       layerIt.next();
-//       continue;
-//       };
-    
       
     const arrayOfModels = UTIL.getModelsInLayer(modelData,layerNr);  
     

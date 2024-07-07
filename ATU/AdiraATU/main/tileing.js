@@ -218,23 +218,20 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   const tileOutlineOrigin = getTilePosition(0, 0);
   let { required_passes_x, required_passes_y } = calculateRequiredPasses(
       sceneSize, tileOutlineOrigin.tile_width, tileOutlineOrigin.tile_height,
-      PARAM.getParamReal('scanhead', 'tile_overlap_x'), PARAM.getParamReal('scanhead', 'tile_overlap_y')
-  );
+      PARAM.getParamReal('scanhead', 'tile_overlap_x'), PARAM.getParamReal('scanhead', 'tile_overlap_y'));
   
   const workAreaLimits = UTIL.getWorkAreaLimits();
   //process.print('scanhead_startPos 1: ' + scanhead_x_starting_pos);    
   // Adjust starting positions
   let { startingPos: scanhead_x_starting_pos, overlap: overlap_x, requiredPasses: required_passes_x_new } = adjustTileLayout(
       modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
-      required_passes_x, PARAM.getParamReal('scanhead', 'tile_overlap_x'),shiftX
-  );
+      required_passes_x, PARAM.getParamReal('scanhead', 'tile_overlap_x'),shiftX);
 
   required_passes_x = required_passes_x_new; 
 
   let { startingPos: scanhead_y_starting_pos, overlap: overlap_y, requiredPasses: required_passes_y_new  } = adjustTileLayout(
       modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
-      required_passes_y, PARAM.getParamReal('scanhead', 'tile_overlap_y'),shiftY
-  );
+      required_passes_y, PARAM.getParamReal('scanhead', 'tile_overlap_y'),shiftY);
   
   required_passes_y = required_passes_y_new; 
   

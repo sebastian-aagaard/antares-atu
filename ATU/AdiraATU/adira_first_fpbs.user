@@ -2,9 +2,9 @@
 upr=false
 lowr=false
 p_orig=false
-p_pp=false
+p_pp=true
 f_orig=false
-f_pp=false
+f_pp=true
 hatch=true
 hatch_auto=true
 skip_empty=false
@@ -24,25 +24,80 @@ data="@ByteArray(\x84\x14\0\0\xf4Iqbjs\x1\0\0\0|\x14\0\0\x3\0\0\0x\x14\0\0\x94\x
 [previewModels]
 1\modelName=model 1
 1\parameterProfile=66f66722-ccc4-4d57-95ec-056e5a92c998
-1\enabled=false
+1\enabled=true
 size=1
 
 [PlatformParameter]
 PlatformParameterProfile=08ad944c-16ef-4bfb-9a28-4228cc25731f
 
 [previewFiles]
-1\path=C:/Program Files/Autodesk/Netfabb Ultimate 2025/PartLibrary/Examples/CartoonCar - Lyall Randell.3mf
+1\path=C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/software testing/20240624_moveandshoot/geometries/test1.3mf
 1\support=false
 1\solid=true
-1\objName=CartoonCar - Lyall Randell
-1\fileObjNr=1
+1\objName=Body1
+1\fileObjNr=6
 1\scale=1
 1\shiftX=0
 1\shiftY=0
 1\shiftZ=0
-1\thickness=10
+1\thickness=90
 1\modelIndex=0
-size=1
+size=6
+2\path=C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/software testing/20240624_moveandshoot/geometries/test1.3mf
+2\support=false
+2\solid=true
+2\objName=Box_c1
+2\fileObjNr=5
+2\scale=1
+2\shiftX=0
+2\shiftY=0
+2\shiftZ=0
+2\thickness=90
+2\modelIndex=0
+3\path=C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/software testing/20240624_moveandshoot/geometries/test1.3mf
+3\support=false
+3\solid=true
+3\objName=Box_c1
+3\fileObjNr=4
+3\scale=1
+3\shiftX=0
+3\shiftY=0
+3\shiftZ=0
+3\thickness=90
+3\modelIndex=0
+4\path=C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/software testing/20240624_moveandshoot/geometries/test1.3mf
+4\support=false
+4\solid=true
+4\objName=Box_c1
+4\fileObjNr=3
+4\scale=1
+4\shiftX=0
+4\shiftY=0
+4\shiftZ=0
+4\thickness=90
+4\modelIndex=0
+5\path=C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/software testing/20240624_moveandshoot/geometries/test1.3mf
+5\support=false
+5\solid=true
+5\objName=Box
+5\fileObjNr=2
+5\scale=1
+5\shiftX=0
+5\shiftY=0
+5\shiftZ=0
+5\thickness=90
+5\modelIndex=0
+6\path=C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/software testing/20240624_moveandshoot/geometries/test1.3mf
+6\support=false
+6\solid=true
+6\objName=Body1
+6\fileObjNr=1
+6\scale=1
+6\shiftX=0
+6\shiftY=0
+6\shiftZ=0
+6\thickness=90
+6\modelIndex=0
 
 [defaults]
 slicing_thickness=100
@@ -205,3 +260,7 @@ size=1
 
 [DlgCfgPartLabel]
 background_color=@Variant(\0\0\0\x43\x1\xff\xff\xff\xff\xff\xff\xff\xff\0\0)
+
+[ExternalExporterLibrary]
+exporter_list=GBgAAPMLWwogIHsKICAgICJleHBvcnRlcl9pbmZvIjoXAMUgICJ0b29scGF0aF8iAJF0eXBlIjogMSw6ADAgICIfAPMrIjogIkM6L1VzZXJzL3NlYmFzL09uZURyaXZlIC0gQWFnYWFyZCBBTS9BVFUvMjAyNDA2MTRfM01GRXkAEFM0APUQdGlhbi9uZXRmYWJiUG9zdHByb2Nlc3NvcnMuZGxsInIAlGJpbmFyaWVzX3sABhsAgWRsbF9maWxlGwD1B19hZGRfZXh0ZW5zaW9uIjogZmFsc2VHALBkaXNwbGF5X25hbdIAIiJOegAaIHsABlwADygAFTB1aWQQAfYVNERFNUJFMkMtMEY1MS00MzE2LUI5MDUtNDA4MDFCNjRFNjg4XQCAZ2l0X2hhc2g6AKZpbnRlZ3JhdGVkIAAzdmVyxQATIiIBxjE2LjEuMCA2NGJpdCgAWW1ham9yoAExbWluEgAVMPkAQ3JldmlNAAYVAEBidWlsuAAGEgDEaXNfcGVybWFuZW50PQEB9QESfUoAAzYC8AFfZm9ybWF0X2FycmF5IjogVwIAAgACWwIAAgAFOgFQQWRkaXQUAmBJbmR1c3TEARQgAgJ1ICguemlwKcoAAWAABrsBSCJ6aXAcAANlAfgVNzQzMzg4NkQtQzg0OC00MzQzLUIzREItNzNEMkJBQjI2MTRFNwBgc2NoZW1hZQEIFgDwA2N1c3RvbV9qc29uX29ial9zdEMBCSMADVgBD1oBAQI1AVFtdWx0aYYCCTYBBTgBDxsBAjhJTFQLAT9pbHQLAQcmaWzxAQYLAfgVNEJCMTRFOUItNTBCMC00NTFGLUE4OTctQUE0MjA0Q0NFMTUz0gAPCwGG2E9uZUNsaWNrTWV0YWwVAV9nY29kZRcBBwEfAAjiAAMkAvgVRDI3RjQ2NkMtMDU3MS00QzMyLUEyM0ItRDlBNDIyMDE1NTU2NwAPGQGGUzNNRiBUkQUIGAE/M21mFgEHODNtZt0AAxQB+BU4N0M1NDJEMy1BOUE1LTRDN0MtQjdGMy0yOTg2Qzc2OTE3RkY3AA8UAS4SMjQEAAIADpIEDzgDKDhMTUkLAQEEAg8NAQcBHwAI2AADDwH4FTU0NjlDODZBLUIwMEMtNEQyRi1CNUY5LTlEMDk5RjI1NThBOTcADw8BLgU/Bw8PATy4RU9TIE9wZW5Kb2IXAW9vcGVuanoYAQcCIAAI4gADGQH4FUNDOUQ5OUZDLTc5QkMtNEI2Ny1CNjJBLUZFNjJEMTM3QzlCMTcADxkBhl1YYWN0IFIEP2NsaRUBBzhjbGnbAAMSAfgVMDkwNjlDMjAtQUU1RC00OUMwLUFCRjEtQTkzMTNDMEM1MzgyNwAPEgFCCD8CD3IGJThDTFMjAg99ByD/FDQyNzZFNTIwLTgxOTktNDRBNS05Nzg4LTJGOUY2RkQwNUY4WQWTKVNMRQQfcxYCCR9zFgIC/xQ5M0IwRERBOS0wM0NDLTQ5RkQtQUZCQi05QzNBQzZBM0U5NEEEeAHGCSNdCpIIAqkJA84JDwQMWxA3BAwJcAv/A19TZWdtZW50QXR0cmlidXRlcxIM//////////////9kUCAgfQpd
+language=en
