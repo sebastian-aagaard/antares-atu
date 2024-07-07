@@ -48,76 +48,70 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
   // Caclulate Scene Boundaries pr Layer //
   /////////////////////////////////////////
  
-  let srcModel = modelDataSrc.getModel(0);      
-  modelDataTarget.addModelCopy(srcModel);
-    
-  const modelLayerCount = modelDataSrc.getLayerCount()+1; //get layer count
-  progress.initSteps(modelLayerCount);
-  
-  let srcModelMinMaxZValue = {};
-  srcModel.getMinMaxLayerIntZ(srcModelMinMaxZValue);  
-  const layerHeight = modelDataSrc.getLayerThickness();  
-  const minZValue = modelDataSrc.getZeroPosZ() + layerHeight;
-  const maxZValue = srcModelMinMaxZValue.max_layer_z;
-  
-  let layerNumber = 1;
-  let thisLayerHeight = minZValue;
-      
-  
-  while (thisLayerHeight <= maxZValue && !progress.cancelled()) {
-    
-    // retrieve current model layer
-    let modelLayer =  srcModel.getModelLayer(thisLayerHeight);
-    
-    if (modelLayer==undefined){
-      process.printError(layerNumber + " undefined");
-      continue;
-      };
-    
-    if (!isLayerProcessable(modelLayer)) {       
-        process.printWarning('PreprocessLayerStack | failed to access layer ' + layerNumber +"/"+ thisLayerHeight + ', in ' + srcModel.getAttribEx('ModelName') + " min layer is at: " + minZValue);
-    }
-                  
-    // get this model layer boundaries      
-    let thisModelLayerBounds = modelLayer.tryGetBounds2D();
-             
-    // check if this boundary exceeds the previous and store it
-    addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,workAreaLimits,thisLayerHeight,srcModel);                            
-                    
-    layerNumber++;
-    thisLayerHeight += layerHeight;
-    
-    progress.step(1);     
-
-  } //layer iterator  
-    
-// run trough all layers and all models to get all boundaries
-//   for ( let layerNumber = 1; layerNumber < modelLayerCount && !progress.cancelled() ; layerNumber++ ){
-//       
-//     // retrieve current model layer
-//     let modelLayer =  srcModel.maybeGetModelLayerByNr(layerNumber);
-//     
-//     if (modelLayer==undefined){
-//       process.printError(layerNumber + " undefined");
-//       continue;
-//       };
-//     
-//     if (CONST.bLOGGING) process.printLogFile("Layer " + layerNumber + " of Model " + srcModel.getAttribEx('ModelName') + " added to target"); 
-//     if (CONST.bVERBOSE) process.printInfo("Layer " + layerNumber + "/" + modelLayer.getLayerZ() + " of Model " + srcModel.getAttribEx('ModelName') + " added to target"); 
-//     
-//     if (!isLayerProcessable(modelLayer)) {       
-//         throw new Error('PreprocessLayerStack | failed to access layer ' + layerNumber + ', in ' + srcModel.getAttribEx('ModelName'));
-//     }
-//                   
-//     // get this model layer boundaries      
-//     let thisModelLayerBounds = modelLayer.tryGetBounds2D();
-//              
-//     // check if this boundary exceeds the previous and store it
-//     addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,workAreaLimits,layerNumber)                            
-//                     
-//     progress.step(1);     
+//   let srcModel = modelDataSrc.getModel(0);
 //   
-//   } //layer iterator
+//   modelDataTarget.addEmptyModel();
+//     
+//   modelDataTarget.addModelCopy(srcModel);
+      
+  const modelCount = modelDataSrc.getModelCount();
+  
+   for(let modelIndex=0; modelIndex < modelCount && !progress.cancelled(); ++modelIndex)
+  {  
+    // Gets the source model.
+    let sourceModel = modelDataSrc.getModel(modelIndex);
+    modelDataTarget.addModelCopy(sourceModel);
+
+    //progress.step(1);
+  }    
+      
+      
+  for( let modelIndex=0; modelIndex < modelDataTarget.getModelCount() && !progress.cancelled(); modelIndex++ ){
+    
+    let currentModel = modelDataTarget.getModel(modelIndex);
+  
+    const modelLayerCount = modelDataSrc.getLayerCount()+1; //get layer count
+    progress.initSteps(modelLayerCount);
+    
+    let minMaxZValue = {};
+    currentModel.getMinMaxLayerIntZ(minMaxZValue);  
+    const layerHeight = modelDataTarget.getLayerThickness();
+    const minZValue = minMaxZValue.min_layer_z;
+    const maxZValue = minMaxZValue.max_layer_z;
+    
+    let layerNumber = 1;
+    let thisLayerHeight = minZValue;
+    
+    while (thisLayerHeight <= maxZValue && !progress.cancelled()) {
+          
+      // retrieve current model layer
+      let modelLayer =  currentModel.getModelLayer(thisLayerHeight);
+      
+      if (modelLayer==undefined){
+        process.printError(layerNumber + " undefined");
+        continue;
+        };
+      
+      if (!isLayerProcessable(modelLayer)) {       
+          process.printWarning('PreprocessLayerStack | failed to access layer ' + layerNumber +"/"+ thisLayerHeight + ', in ' + currentModel.getAttribEx('ModelName') + " min layer is at: " + minZValue);
+      }
+                    
+      // get this model layer boundaries      
+      let thisModelLayerBounds = modelLayer.tryGetBounds2D();
+               
+      // check if this boundary exceeds the previous and store it
+      addLayerBoundariesToAllLayerBoundaries(modelDataTarget,thisModelLayerBounds,workAreaLimits,thisLayerHeight,currentModel);                            
+
+      layerNumber++;
+      thisLayerHeight += layerHeight;
+      
+      progress.step(1);     
+
+    } //layer iterator 
+      progress.update(100);
+
+  }
+  
 }; //preprocessLayerStack
 
 //---------------------------------------------------------------------------------------------//
