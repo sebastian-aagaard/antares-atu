@@ -18,9 +18,48 @@ let TILE = require('main/tileing.js');
 
 exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {  
 
+// try{
+//  const allBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
+//  } catch(e) {
+//  
+//    const layerZ = modelData.getLayerPosZ(nLayerNr);
+//    modelData.setTrayAttrib('layerOffsetZ',layerZ);
+//    modelData.setTrayAttrib('layerOffsetNumber',nLayerNr);
+// 
+//    process.printWarning("allLayerBoundaries unavailable");
+//  
+//    return;
+//    }
+// 
+// const layerOffsetNumber =  modelData.getTrayAttrib('layerOffsetNumber');
+// if(layerOffsetNumber) nLayerNr -= layerOffsetNumber;
+
+  //nLayerNr += 1;
+
  let thisModel = modelData.getModel(0);
  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
  let modelName = thisModel.getAttrib('ModelName');  
+
+try{
+  
+ const layerZ = modelData.getLayerPosZ(nLayerNr);
+    if (!layerZ) throw new Error ("failed getting layerZ");
+ const allBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
+    if (!allBoundaries) throw new Error ("failed getting allLayerBoundaries");
+ const layerZBoundary = allBoundaries[layerZ];
+    if (!layerZBoundary) throw new Error ("failed getting layerZBoundary");
+
+} catch(e) {
+  //const names = modelData.getTrayAttribEx('allLayerBoundaries').map(obj => obj.name).join(', ');
+  process.printError('makeExposureLayer | getBoundaryData Failed: cannot access boundaries at layer nr: ' + nLayerNr + "/" + layerZ + ' - ' + e.message);
+
+  };
+  
+//   if(!layerZBoundary) {
+//    process.printError("no Boundary for layer " + nlayerNr + "at z " + layerZ);
+//    return;
+//    };
+  
 
  //let scannerArray = modelData.getTrayAttribEx('scanhead_array');
    // check if this layer is valid, if not move on
@@ -35,8 +74,7 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
 
   //CREATE CONTAINERS
   let allHatches = new HATCH.bsHatch();
-
-
+  
   // RUN THROUGH ISLANDS
   let islandId = 1; 
 

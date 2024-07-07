@@ -193,11 +193,11 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
 exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
   if(!modelData) {
-    throw new Error ("modelData could not be obtained for layer " + layerNr);
+    throw new Error ("getTileArray: modelData could not be obtained for layer " + layerNr);
   }
       
   if(!modelLayer) {
-    throw new Error ("modelLayer could not be obtained for layer " + layerNr);
+    throw new Error ("getTileArray: modelLayer could not be obtained for layer " + layerNr);
   }  
       
   // Calculate shifts
@@ -250,7 +250,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   let cur_tile_coord_y = scanhead_y_starting_pos;
   
   if (!cur_tile_coord_x || !cur_tile_coord_y)
-    throw new Error ("current tile coordinate not defined, layer nr: " + layerNr);
+    throw new Error ("current tile coordinate not defined, layer nr: " + layerNr + ' at z: ' + modelLayer.getLayerZ());
     
   if (!required_passes_x || !required_passes_y)
     throw new Error ("no passes defined, layer nr: " + layerNr);
