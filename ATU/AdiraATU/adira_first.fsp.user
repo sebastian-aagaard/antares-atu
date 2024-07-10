@@ -1,24 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Root>
   <LastOpened>
-    <File TabIndex="3" TabGroupIndex="1">3mf/3mf_data_collector.js</File>
-    <File TabIndex="4" TabGroupIndex="1">main/constants.js</File>
-    <File TabIndex="0" TabGroupIndex="0">main/laser_designation.js</File>
-    <File TabIndex="1" TabGroupIndex="1">main/main.js</File>
-    <File TabIndex="2" TabGroupIndex="0">main/post_processor_meta.js</File>
-    <File TabIndex="3" TabGroupIndex="0">main/post_processor_plot.js</File>
-    <File TabIndex="2" TabGroupIndex="1">main/post_processor_sort_exposure.js</File>
-    <File TabIndex="4" TabGroupIndex="0">main/post_processor_statistics.js</File>
-    <File TabIndex="0" TabGroupIndex="1">main/preprocessor.js</File>
-    <File TabIndex="1" TabGroupIndex="0">main/tileing.js</File>
-    <File TabIndex="6" TabGroupIndex="0">main/toolpath.js</File>
-    <File TabIndex="7" TabGroupIndex="0">main/toolpath_to_tile.js</File>
-    <File TabIndex="5" TabGroupIndex="0">main/utility_functions.js</File>
-    <Active>main/tileing.js</Active>
+    <File TabGroupIndex="1" TabIndex="4">configuration/attribute_declaration.js</File>
+    <File TabGroupIndex="1" TabIndex="0">main/constants.js</File>
+    <File TabGroupIndex="1" TabIndex="3">main/laser_designation.js</File>
+    <File TabGroupIndex="1" TabIndex="1">main/tileing.js</File>
+    <File TabGroupIndex="0" TabIndex="1">main/toolpath.js</File>
+    <File TabGroupIndex="1" TabIndex="2">main/toolpath_to_tile.js</File>
+    <File TabGroupIndex="0" TabIndex="0">main/utility_functions.js</File>
+    <Active>main/toolpath.js</Active>
   </LastOpened>
   <LastBreakpoints>
     <Breakpoint>
-      <Line>310</Line>
+      <Line>224</Line>
       <Filepath>C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/atu/atu_nikon_slm_2/first-rep/ATU/AdiraATU/main/toolpath_to_tile.js</Filepath>
     </Breakpoint>
   </LastBreakpoints>
@@ -50,10 +44,6 @@
     <Bookmark>
       <Line>148</Line>
       <Filepath>C:/Users/sebas/OneDrive/Work/ADIRA6/first-rep/ATU/AdiraATU/main/tileing.js</Filepath>
-    </Bookmark>
-    <Bookmark>
-      <Line>311</Line>
-      <Filepath>C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/atu/atu_nikon_slm_2/first-rep/ATU/AdiraATU/main/toolpath_to_tile.js</Filepath>
     </Bookmark>
   </LastBookmarks>
 </Root>

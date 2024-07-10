@@ -29,5 +29,14 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('islandId');
   buildAttrib.declareAttributeInt('stripeID');
   buildAttrib.declareAttributeInt('bMoveFromFront');
-
+  buildAttrib.declareAttributeInt('numberofOverlappingTiles')
+  buildAttrib.declareAttributeInt('overlappingTile_1');
+  buildAttrib.declareAttributeInt('overlappingTile_2');
+  buildAttrib.declareAttributeInt('overlappingTile_3');
+  buildAttrib.declareAttributeInt('overlappingTile_4');
+  buildAttrib.declareAttributeInt('overlappingTile_5');
+  buildAttrib.declareAttributeInt('overlappingTile_6');
+  buildAttrib.declareAttributeInt('overlappingTile_7');
+  buildAttrib.declareAttributeInt('overlappingTile_8');
+  buildAttrib.declareAttributeInt('overlappingTile_9');
 };

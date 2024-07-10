@@ -145,7 +145,7 @@ exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
     let currentTileNr = tileArray[tileIndex].tile_number;
     let currentPassNr = tileArray[tileIndex].passNumber;
        
-    let tileOverlap = PARAM.getParamReal('scanhead', 'tile_overlap_x');
+    let tileOverlap = PARAM.getParamReal('scanhead', 'tile_overlap_x'); // used twicxe
    
     for(let laserIndex = 0; laserIndex<xDiv.length-1; laserIndex++){ // run trough all laser dedication zones
       

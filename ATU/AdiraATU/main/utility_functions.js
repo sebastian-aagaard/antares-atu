@@ -135,3 +135,17 @@ return {
       ymax: PARAM.getParamInt('workarea', 'y_workarea_max_mm')
   };
 }
+
+exports.appendInteger = function(currentInt, newInt) {
+    // Convert the current integer and new integer to strings
+    let currentStr = currentInt.toString();
+    let newStr = newInt.toString();
+
+    // Concatenate the strings
+    let concatenatedStr = currentStr + newStr;
+
+    // Convert the concatenated string back to an integer
+    let resultInt = parseInt(concatenatedStr, 10);
+
+    return resultInt;
+}
