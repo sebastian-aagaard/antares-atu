@@ -9,7 +9,7 @@
 // -------- INCLUDES -------- //
 const PARAM = requireBuiltin('bsParam');
 // var MODEL = requireBuiltin('bsModel');
-// var ISLAND = requireBuiltin('bsIsland');
+const ISLAND = requireBuiltin('bsIsland');
 const HATCH = requireBuiltin('bsHatch');
 const CONST = require('main/constants.js');
 // var POLY_IT = requireBuiltin('bsPolylineIterator');
@@ -130,8 +130,8 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       //tileHatch.setAttributeInt('passNumber_3mf', (tileArray[j].passNumber)*1000);
       //tileHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
       tileHatch.setAttributeInt('tileID_3mf',tileID_3mf);
-      //tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
-      //tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
+      tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
+      tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
 
       assignedHatch.moveDataFrom(tileHatch);
       assignedHatch.moveDataFrom(tileHatch_outside);
@@ -143,7 +143,7 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
           
     } //for
     
-    thisLayer.setAttribEx('tileSegmentArray',tileSegmentArray);
+    //thisLayer.setAttribEx('tileSegmentArray',tileSegmentArray);
     
     return assignedHatch;
     
@@ -204,44 +204,44 @@ exports.adjustInterfaceVectors = function(bsModel,nLayerNr,allHatches){
 
   let hatchBlockIterator = allHatches.getHatchBlockIterator();
   let adjustedHatch = new HATCH.bsHatch();
+  let nonAdjustedHatch = new HATCH.bsHatch();
+
 
   while (hatchBlockIterator.isValid()) {   
     let thisHatchBlock = hatchBlockIterator.get();
     let overlapNumber = thisHatchBlock.getAttributeInt('numberofOverlappingTiles');
-    if(overlapNumber > 0){
+    
+    if(overlapNumber === 0) {
       
-               
-      let mode = thisHatchBlock.getPolylineMode();
+        nonAdjustedHatch.addHatchBlock(thisHatchBlock);
       
-      if (mode === 1) { // 1 = open polyline
-        
-      //what do we do with open polylines / borders?
-        
+      } else {
+       
+        let mode = thisHatchBlock.getPolylineMode();
+
+        if (mode === 1) { // 1 = open polyline
+
+        //what do we do with open polylines / borders?
+
         adjustedHatch.addHatchBlock(thisHatchBlock);
-        
-        
-      };
                
-      if(mode === 2){ // 2 = hatch
-        
+        };
+              
+        if(mode === 2){ // 2 = hatch
+
         //splitOverlappingExposure(thisHatchBlock);
         adjustedHatch.moveDataFrom(applyZipperInterface(thisHatchBlock));
- 
-      };
-             
-      thisHatchBlock.makeEmpty();
-
+        };
     };
-      
-    hatchBlockIterator.next();
+    
+  hatchBlockIterator.next();
   };
     
-
-    
-    
-    allHatches.moveDataFrom(adjustedHatch);
-    
-    return allHatches;
+  allHatches.makeEmpty();
+  allHatches.moveDataFrom(nonAdjustedHatch);
+  allHatches.moveDataFrom(adjustedHatch);
+  
+  return allHatches;
 }
 
 
@@ -251,6 +251,7 @@ const applyZipperInterface = function(hatchBlock){
   let secondTileId = hatchBlock.getAttributeInt('overlappingTile_2');
   let hatchType = hatchBlock.getAttributeInt('type');
   let islandId = hatchBlock.getAttributeInt('islandId');
+  
   
   let overlappingHatch = new HATCH.bsHatch();
   overlappingHatch.addHatchBlock(hatchBlock);
@@ -266,11 +267,11 @@ const applyZipperInterface = function(hatchBlock){
   
   for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
   
-    if (pathNumber % 2 !== 0) {
+    if (pathNumber % 2 !== 0 || PARAM.getParamInt('interface','tileInterface')==0) {
       firstOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
       };
       
-    if (pathNumber % 2 === 0) {
+    if (pathNumber % 2 === 0 || PARAM.getParamInt('interface','tileInterface')==0) {
       secondOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
       
     };
@@ -293,9 +294,8 @@ const applyZipperInterface = function(hatchBlock){
   adjustedHatch.setAttributeInt('type',hatchType);
   adjustedHatch.setAttributeInt('islandId',islandId);
   
-  return adjustedHatch;
-    
-  }; 
+  return adjustedHatch; 
+}; 
 
 
 
@@ -353,7 +353,7 @@ exports.handleShortLines = (passNumberGroups,thisModel,bsModelData) => {
   
 } //handleShortLines
 
-exports.groupHatchblocksByTileID = function(hatch){
+exports.mergeInterfaceVectors = function(hatch,thisLayer){
   
   let hatchBlocksArray = hatch.getHatchBlockArray();
   
@@ -374,13 +374,46 @@ exports.groupHatchblocksByTileID = function(hatch){
         groupedHatchblocks[tileID].addHatchBlock(hatchblock);
     });
     
-    let mergedHatch = new HATCH.bsHatch();
+    let mergedHatchAll = new HATCH.bsHatch();
     Object.values(groupedHatchblocks).forEach(tileHatch => {
-      let temp = 0;
-      tileHatch.mergeShortLines(mergedHatch,1,3,0);
-      });
 
-    // Convert the groupedHatchblocks object to a nested array
-    //return Object.values(groupedHatchblocks);
-    return mergedHatch;
-  }
+      let mergeHatch = new HATCH.bsHatch();
+      let mergecount = tileHatch.mergeShortLines(mergeHatch,0.2,0.01,0);
+
+      mergedHatchAll.moveDataFrom(mergeHatch);
+      });
+      
+    //merge remaining short lines
+    let blockingIslands = getBlockingGeometry(thisLayer);   
+    //mergedHatchAll.mergeShortLines(mergedHatchAll,0.2,0.01,0,blockingIslands.getIslandArray());
+
+    return mergedHatchAll;
+  };
+  
+const getBlockingGeometry = function (modelLayer){
+  
+  let tileTable = modelLayer
+  .getAttribEx('tileTable');
+  
+  let allBlockingPaths = new PATH_SET.bsPathSet();
+  let blockingIslands = new ISLAND.bsIsland();
+  
+  tileTable.forEach(tile => {
+    let thisTile = new PATH_SET.bsPathSet();
+    let pointArray = [];
+
+    tile.scanhead_outline.forEach (point => {
+      pointArray.push(new VEC2.Vec2(point.m_coord[0] , point.m_coord[1]));      
+    });
+    
+    thisTile.addNewPath(pointArray);
+    thisTile.setClosed(true); 
+    thisTile.createOffset(2*PARAM.getParamReal('scanhead', 'tile_overlap_x'));
+    
+    blockingIslands.addPathSet(thisTile);
+  });  
+
+  return blockingIslands;
+};
+ 
+  

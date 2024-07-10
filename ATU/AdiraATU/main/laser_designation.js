@@ -168,8 +168,11 @@ exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
        {
          let currHatcBlock = hatchIterator.get();
           
-         if(currHatcBlock.getAttributeInt('passNumber') == currentPassNr &&
-           currHatcBlock.getAttributeInt('tile_index') == currentTileNr){      
+         let tileID = currHatcBlock.getAttributeInt('tileID_3mf');
+         
+         let curTileID = currentPassNr*1000 + currentTileNr;
+         
+         if(tileID === curTileID){      
                 
            let type = currHatcBlock.getAttributeInt('type');
            currHatcBlock.setAttributeInt('_disp_color',laser_color[laserIndex]);

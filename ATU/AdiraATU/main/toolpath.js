@@ -72,52 +72,25 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
   let polyLineHatch = TPGEN.getOpenPolyLinesHatch(modelData,nLayerNr);
   allHatches.moveDataFrom(polyLineHatch);
     
-    
   TILE.getTileArray(thisLayer,nLayerNr,modelData);
     
   // --- TILE OPERATIONS --- //
   allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
+  
+  
   allHatches = TP2TILE.adjustInterfaceVectors(thisModel,nLayerNr,allHatches);
+     
+  allHatches = TP2TILE.mergeInterfaceVectors(allHatches,thisLayer);
 
-  let hatchBlockArray = TP2TILE.groupHatchblocksByTileID(allHatches);
-    
-    
-    
-  allHatches.makeEmpty();
-//      
-// allHatchesArray.sort((a, b) => {
-//     // Compare by IslandID first
-//     let islandA = a.getAttributeInt('islandId');
-//     let islandB = b.getAttributeInt('islandId');
-//     if (islandA !== islandB) {
-//         return islandA - islandB;
-//     }
-// 
-//     // If IslandID is the same, then compare by minY
-//     let minYA = a.getBounds2D().minY;
-//     let minYB = b.getBounds2D().minY;
-//     return minYA - minYB;
-// });
-//     
+  allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
 
-// allHatchesArray.forEach(hatchBlock => {
-//   
-//   allHatches.addHatchBlock(hatchBlock);
-//   
-//   });
-// 
-//     let mergedAllHatch = new HATCH.bsHatch();
-//     allHatches.mergeShortLines(mergedAllHatch,1,1,0);
 
-    //adjust interface hatchblocks!
-    
     //allHatches = TP2TILE.sortHatchBlocks(thisModel,nLayerNr,allHatches);
     
     
     
- //  allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
 //   
-//   LASER.assignProcessParameters(allHatches,thisModel);
+   LASER.assignProcessParameters(allHatches,thisModel);
 //   //  LASER.sortPriority(allHatches);
 //   // --- PASS OPERATIONS --- //
 //   let passNumberGroups = TP2PASS.generatePassNumberGroup(allHatches);

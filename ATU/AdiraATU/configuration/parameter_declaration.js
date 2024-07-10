@@ -51,7 +51,19 @@ exports.declareParameters = function(parameter)
        [LOCALIZER.GetMessage('param_border_order_outside_in_disable'),
        LOCALIZER.GetMessage('param_border_order_outside_in_enable')],
        LOCALIZER.GetMessage('param_border_order_outside_in_enable'));
-    
+   
+ parameter.declareParameterGroup('interface', LOCALIZER.GetMessage('grp_interface'));
+      parameter.declareParameterChoice('interface', 'tileInterface', LOCALIZER.GetMessage('param_tileInterface'),
+       [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
+       LOCALIZER.GetMessage('param_tileIntefrace_zipper'),
+       LOCALIZER.GetMessage('param_tileIntefrace_seamless')],
+       LOCALIZER.GetMessage('param_tileIntefrace_zipper'));
+       
+  parameter.declareParameterChoice('interface', 'laserInterface', LOCALIZER.GetMessage('param_laserInterface'),
+    [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
+    LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
+    LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
+    LOCALIZER.GetMessage('param_laserIntefrace_zipper'));
   
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
