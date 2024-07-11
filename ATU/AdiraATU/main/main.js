@@ -138,8 +138,8 @@ exports.configurePostProcessingSteps = (postprocessing_config) => {
     {bMultithread: false, nProgressWeight: 1});
   if(CONST.bDrawTile) postprocessing_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,
     {bMultithread: false, nProgressWeight: 1});
-//   postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
-//     {bMultithread: false, nProgressWeight: 2});
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
+    {bMultithread: false, nProgressWeight: 2});
   
 };
 
