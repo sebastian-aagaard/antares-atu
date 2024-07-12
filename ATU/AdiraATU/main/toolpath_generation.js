@@ -356,7 +356,6 @@ exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){
   var polyline_it = modelData.getFirstLayerPolyline(
     nLayerNr, POLY_IT.nLayerOpenPolylines);
   
-  //if (!CONST.bDrawTile){
     while(polyline_it.isValid()) // check if exists
     {         
       let is_part = MODEL.nSubtypePart == polyline_it.getModelSubtype(); // is it a part
@@ -374,7 +373,7 @@ exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){
       else
       {
         // support/fixtures
-        polyline_hatch_paths.setAttributeInt("type", CONST.typeDesignations.support_hatch.value);
+        polyline_hatch_paths.setAttributeInt("type", CONST.typeDesignations.support_open_polyline.value);
       }
       
       
@@ -382,7 +381,6 @@ exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){
       
       polyline_it.next(); // looks at next polyline
     }
-  //}
   
   //process.print(HATCH.nSortFlagShortestPath,HATCH.nSortFlagUseHotSpot,HATCH.nSortFlagFlipOrientation);  
     

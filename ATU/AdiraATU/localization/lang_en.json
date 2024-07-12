@@ -65,6 +65,9 @@
      "param_support_contour_power" : "Support Contour: Power [W]",
      "param_support_contour_markspeed" : "Support Contour: Marking Speed [mm/s]",
      "param_support_contour_defocus" : "Support Contour: Defocus [mm]",
+     "param_support_open_polyline_power" : "Support Open Polyline: Power [W]",
+     "param_support_open_polyline_markspeed" : "Support Open Polyline: Marking Speed [mm/s]",
+     "param_support_open_polyline_defocus" : "Support Open Polyline: Defocus [mm]",
      "param_open_polyline_power" : "Open Polyline: Power [W]",
      "param_open_polyline_markspeed" : "Open Polyline: Marking Speed [mm/s]",
      "param_open_polyline_defocus" : "Open Polyline: Defocus [mm]",
@@ -154,6 +157,7 @@
      "param_part_contour_priority" : "Contour",
      "param_downskin_contour_priority" : "Downskin Contour",
      "param_support_contour_priority" : "Support Contour",
+     "param_support_open_polyline_priority" : "Support Open Polyline",
      "param_openPolyline_priority" : "Open Polylines"
 
 }

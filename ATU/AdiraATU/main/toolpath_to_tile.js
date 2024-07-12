@@ -78,31 +78,6 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       let tile_y_cen = (tile_y_min+tile_y_max)/2;
       let tile_x_cen = (tile_x_min+tile_x_max)/2;
       
-      
-      // SPECIAL CASE - move to tileing!
-      // if tileoverlap is greater than requested
-//       if(tileArray[j].overlapX < PARAM.getParamReal('scanhead','tile_overlap_x')){
-//       
-//         let halfOverlap = Math.abs(tileArray[j].overlapX/2);
-//         let overLapCompensation = halfOverlap + PARAM.getParamReal('scanhead','tile_overlap_x');
-//            
-//         switch(tileArray[j].passNumber) {
-//           case 1:
-//             tile_x_max -= overLapCompensation;//
-//             break;
-//           case 2:
-//             tile_x_min += overLapCompensation;
-//             // if there is 3 passes
-//             if(thisLayer.getAttribEx('requiredPassesX')>2){
-//               tile_x_max -= overLapCompensation;
-//               }           
-//             break;
-//           case 3:
-//             tile_x_min += overLapCompensation;
-//             break;
-//           };  
-//         };
-      
       // CREATE CLIPPING MASK
         
       // add the corrdinates to vector pointset
@@ -221,16 +196,15 @@ exports.adjustInterfaceVectors = function(bsModel,nLayerNr,allHatches){
 
         if (mode === 1) { // 1 = open polyline
 
-        //what do we do with open polylines / borders?
+          adjustedHatch.addHatchBlock(thisHatchBlock);
 
-        adjustedHatch.addHatchBlock(thisHatchBlock);
-               
         };
               
         if(mode === 2){ // 2 = hatch
 
         //splitOverlappingExposure(thisHatchBlock);
-        adjustedHatch.moveDataFrom(applyZipperInterface(thisHatchBlock));
+        
+        adjustedHatch.moveDataFrom(applyZipperInterface(thisHatchBlock, PARAM.getParamInt('interface','tileInterface')===0));
         };
     };
     
@@ -245,7 +219,7 @@ exports.adjustInterfaceVectors = function(bsModel,nLayerNr,allHatches){
 }
 
 
-const applyZipperInterface = function(hatchBlock){
+const applyZipperInterface = function(hatchBlock,bOverlap){
             
   let firstTileId = hatchBlock.getAttributeInt('overlappingTile_1');
   let secondTileId = hatchBlock.getAttributeInt('overlappingTile_2');
@@ -267,11 +241,11 @@ const applyZipperInterface = function(hatchBlock){
   
   for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
   
-    if (pathNumber % 2 !== 0 || PARAM.getParamInt('interface','tileInterface')==0) {
+    if (pathNumber % 2 !== 0 || bOverlap) {
       firstOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
       };
       
-    if (pathNumber % 2 === 0 || PARAM.getParamInt('interface','tileInterface')==0) {
+    if (pathNumber % 2 === 0 || bOverlap) {
       secondOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
       
     };
@@ -297,61 +271,110 @@ const applyZipperInterface = function(hatchBlock){
   return adjustedHatch; 
 }; 
 
-
-
-exports.handleShortLines = (passNumberGroups,thisModel,bsModelData) => {
+exports.handleShortLines = (hatch,thisLayer) => {
   
-  const scanheadArray = bsModelData.getTrayAttribEx('scanhead_array');  
-  const returnHatch = new HATCH.bsHatch();
   const mergedHatch = new HATCH.bsHatch();
+  const resultHatch = new HATCH.bsHatch();
+  const collectorHatch = new HATCH.bsHatch();
+
   
   const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
   const maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
   
-  for (let passNumber in passNumberGroups){
-    
-    const thisPassHatch = new HATCH.bsHatch();
-    const thisPassHatchArray = passNumberGroups[passNumber].blocks;
-    const passYCoord = [];
-    let passXCoord = 0;
-    
-    for(let i = 0; i<thisPassHatchArray.length;i++){ // store blocks into hatch container
-      
-      passXCoord = thisPassHatchArray[i].getAttributeReal('xcoord');
-      passYCoord[i] = thisPassHatchArray[i].getAttributeReal('ycoord');
-      thisPassHatch.addHatchBlock(thisPassHatchArray[i]);
-      
-    }
-    
-    //find merge blocking geometry
-    const blocking_min_x = passXCoord;
-    const blocking_max_x = passXCoord+scanheadArray[4].abs_x_max;
-    const blocking_min_y = Math.min(passYCoord);
-    const blocking_max_y = Math.max(passYCoord)+scanheadArray[0].rel_y_max;
-
-    const firstBlock2Dvec = new Array();
-    firstBlock2Dvec[0] = new VEC2.Vec2(blocking_min_x, blocking_min_y); //min,min
-    firstBlock2Dvec[1] = new VEC2.Vec2(blocking_min_x, blocking_max_y); //min,max
-    firstBlock2Dvec[2] = new VEC2.Vec2(blocking_max_x, blocking_min_y); // max,min
-    firstBlock2Dvec[3] = new VEC2.Vec2(blocking_max_x, blocking_max_y); // max,max
-      
-    const blocking_pathset = new PATH_SET.bsPathSet();
-    blocking_pathset.addNewPath(firstBlock2Dvec);
-
-    let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,
-    maxMergeDistance,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode,blocking_pathset);
-     
-    mergedHatch.deleteShortLines(minVectorLenght); // remove small vectors
-      
-    passNumberGroups[passNumber].blocks = mergedHatch.getHatchBlockArray();
-
-    returnHatch.moveDataFrom(mergedHatch);
-
-  }
+  let hatchBlockIterator = hatch.getHatchBlockIterator();
   
-  return returnHatch;
+  
+  let tileTable3mf = thisLayer.getAttribEx('tileTable_3mf');
+  let currentTileID = tileTable3mf[0][0].attributes.tileID; 
+  
+  while(hatchBlockIterator.isValid()){
+        
+    let hatchBlock = hatchBlockIterator.get();
+    let thisTileID = hatchBlock.getAttributeInt('tileID_3mf');
+    
+    hatchBlockIterator.next();
+    
+    let nextIsValid = hatchBlockIterator.isValid();
+    
+    hatchBlockIterator.prev();
+    
+    if(thisTileID !== currentTileID || !nextIsValid) {
+      
+      collectorHatch.mergeShortLines(mergedHatch,minVectorLenght,
+      maxMergeDistance,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
+      
+      mergedHatch.deleteShortLines(minVectorLenght)
+      
+      resultHatch.moveDataFrom(mergedHatch);
+      collectorHatch.makeEmpty();
+      
+      currentTileID = thisTileID; 
+      
+      }
+      
+      collectorHatch.addHatchBlock(hatchBlock);
+    
+    hatchBlockIterator.next();
+    };
+  
+
+  return resultHatch;
   
 } //handleShortLines
+
+// exports.handleShortLines = (passNumberGroups,thisModel,bsModelData) => {
+//   
+//   const scanheadArray = bsModelData.getTrayAttribEx('scanhead_array');  
+//   const returnHatch = new HATCH.bsHatch();
+//   const mergedHatch = new HATCH.bsHatch();
+//   
+//   const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
+//   const maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
+//   
+//   for (let passNumber in passNumberGroups){
+//     
+//     const thisPassHatch = new HATCH.bsHatch();
+//     const thisPassHatchArray = passNumberGroups[passNumber].blocks;
+//     const passYCoord = [];
+//     let passXCoord = 0;
+//     
+//     for(let i = 0; i<thisPassHatchArray.length;i++){ // store blocks into hatch container
+//       
+//       passXCoord = thisPassHatchArray[i].getAttributeReal('xcoord');
+//       passYCoord[i] = thisPassHatchArray[i].getAttributeReal('ycoord');
+//       thisPassHatch.addHatchBlock(thisPassHatchArray[i]);
+//       
+//     }
+//     
+//     //find merge blocking geometry
+//     const blocking_min_x = passXCoord;
+//     const blocking_max_x = passXCoord+scanheadArray[4].abs_x_max;
+//     const blocking_min_y = Math.min(passYCoord);
+//     const blocking_max_y = Math.max(passYCoord)+scanheadArray[0].rel_y_max;
+// 
+//     const firstBlock2Dvec = new Array();
+//     firstBlock2Dvec[0] = new VEC2.Vec2(blocking_min_x, blocking_min_y); //min,min
+//     firstBlock2Dvec[1] = new VEC2.Vec2(blocking_min_x, blocking_max_y); //min,max
+//     firstBlock2Dvec[2] = new VEC2.Vec2(blocking_max_x, blocking_min_y); // max,min
+//     firstBlock2Dvec[3] = new VEC2.Vec2(blocking_max_x, blocking_max_y); // max,max
+//       
+//     const blocking_pathset = new PATH_SET.bsPathSet();
+//     blocking_pathset.addNewPath(firstBlock2Dvec);
+// 
+// //     let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,
+// //     maxMergeDistance,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode,blocking_pathset);
+//      
+//     mergedHatch.deleteShortLines(minVectorLenght); // remove small vectors
+//       
+//     passNumberGroups[passNumber].blocks = mergedHatch.getHatchBlockArray();
+// 
+//     returnHatch.moveDataFrom(mergedHatch);
+// 
+//   }
+//   
+//   return returnHatch;
+//   
+// } //handleShortLines
 
 exports.mergeInterfaceVectors = function(hatch,thisLayer){
   

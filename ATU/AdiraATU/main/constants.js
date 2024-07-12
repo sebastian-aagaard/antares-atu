@@ -55,5 +55,9 @@ exports.typeDesignations = {
   support_contour: {
     value: 6,
     name: "support_contour"
+  },
+  support_open_polyline: {
+    value: 7,
+    name: "support_open_polyline"
   }
 };

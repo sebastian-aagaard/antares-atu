@@ -7,6 +7,7 @@
 'use strict';
 
 // --------  INCLUDES -------- //
+const PARAM = requireBuiltin('bsParam');
 const ISLAND = requireBuiltin('bsIsland');
 const HATCH = requireBuiltin('bsHatch');
 const CONST = require('main/constants.js');
@@ -78,32 +79,25 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
     
   // --- TILE OPERATIONS --- //
   allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
-  
-  
+   
   allHatches = TP2TILE.adjustInterfaceVectors(thisModel,nLayerNr,allHatches);
-     
-  allHatches = TP2TILE.mergeInterfaceVectors(allHatches,thisLayer);
+    
+  allHatches = TP2TILE.mergeInterfaceVectors(allHatches,thisLayer);  
 
   allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
-
-
-    //allHatches = TP2TILE.sortHatchBlocks(thisModel,nLayerNr,allHatches);
+  
+  LASER.assignProcessParameters(allHatches,thisModel);
+  
+  allHatches = TP2TILE.handleShortLines(allHatches,thisLayer);
+  
+  allHatches.mergeHatchBlocks({
+    "bConvertToHatchMode": true,
+    "nConvertToHatchMaxPointCount": 2,
+    //"nMaxBlockSize": 512,
+    "bCheckAttributes": true
+  }
+);  
     
-    
-    
-//   
-   LASER.assignProcessParameters(allHatches,thisModel);
-//   //  LASER.sortPriority(allHatches);
-//   // --- PASS OPERATIONS --- //
-//   let passNumberGroups = TP2PASS.generatePassNumberGroup(allHatches);
-// 
-//   //merge shortlines within same pass and delete remaining short lines
-//   allHatches = TP2TILE.handleShortLines(passNumberGroups,thisModel,modelData); 
-
-   
   hatchResult.moveDataFrom(allHatches);
   
-  
 }; // makeExposureLayer
-
-
