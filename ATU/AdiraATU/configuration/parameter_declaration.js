@@ -57,13 +57,13 @@ exports.declareParameters = function(parameter)
        [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
        LOCALIZER.GetMessage('param_tileIntefrace_zipper'),
        LOCALIZER.GetMessage('param_tileIntefrace_seamless')],
-       LOCALIZER.GetMessage('param_tileIntefrace_zipper'));
+       LOCALIZER.GetMessage('param_tileIntefrace_overlap'));
        
   parameter.declareParameterChoice('interface', 'laserInterface', LOCALIZER.GetMessage('param_laserInterface'),
     [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
     LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
     LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
-    LOCALIZER.GetMessage('param_laserIntefrace_zipper'));
+    LOCALIZER.GetMessage('param_laserIntefrace_overlap'));
   
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);

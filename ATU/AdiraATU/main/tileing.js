@@ -328,8 +328,8 @@ const storeTileTable = (modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr
   
   if(!modelLayer.getAttribEx('tileTable') || !modelLayer.getAttribEx('tileTable_3mf')){
   
-    if (!modelLayer.getAttribEx('tileTable')) process.printWarning("failed to access tileTable, in model layer: " + layerNr);
-    if (!modelLayer.getAttribEx('tileTable_3mf')) process.printWarning("failed to access tileTable_3mf, in model layer: " + layerNr);  
+    //if (!modelLayer.getAttribEx('tileTable')) process.printWarning("failed to access tileTable, in model layer: " + layerNr);
+    //if (!modelLayer.getAttribEx('tileTable_3mf')) process.printWarning("failed to access tileTable_3mf, in model layer: " + layerNr);  
     
     if(typeof attemptCounter === 'undefined') {
       attemptCounter = 0
@@ -339,7 +339,7 @@ const storeTileTable = (modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr
   
   if(attemptCounter>10) throw new Error("Tileing | Tilearray : Failed to retrieve tileArray at layer: " + layerNr);
   
-  process.printWarning("re-attempt to get tileArray, layer nr " + layerNr + " attempt nr: " + attemptCounter);
+  // process.printWarning("re-attempt to get tileArray, layer nr " + layerNr + " attempt nr: " + attemptCounter);
     storeTileTable(modelLayer,tileTable,tileTable3mf);
   };
 }

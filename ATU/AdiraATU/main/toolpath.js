@@ -18,6 +18,7 @@ let TILE = require('main/tileing.js');
 
 exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {  
 
+
  let thisModel = modelData.getModel(0);
  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
  let modelName = thisModel.getAttrib('ModelName');  
@@ -26,7 +27,8 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
    // check if this layer is valid, if not move on
   if(!thisLayer.isValid()) 
   {
-    throw new Error("Make ExposureLayer: Invalid Layer " + nLayerNr + ' in: ' + modelName);
+    return;
+    //throw new Error("Make ExposureLayer: Invalid Layer " + nLayerNr + ' in: ' + modelName);
   }
   
   let island_it = modelData.getFirstIsland(nLayerNr); // get island Iterator

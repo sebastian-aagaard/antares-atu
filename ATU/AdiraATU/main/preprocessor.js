@@ -87,10 +87,10 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
       // retrieve current model layer
       let modelLayer =  currentModel.getModelLayer(thisLayerHeight);
       
-      if (modelLayer==undefined){
-        process.printError(layerNumber + " undefined");
-        continue;
-        };
+//       if (modelLayer==undefined){
+//         process.printError(layerNumber + " undefined");
+//         continue;
+//         };
       
       if (!isLayerProcessable(modelLayer)) {       
           process.printWarning('PreprocessLayerStack | failed to access layer ' + layerNumber +"/"+ thisLayerHeight + ', in ' + currentModel.getAttribEx('ModelName') + " min layer is at: " + minZValue);
