@@ -325,6 +325,9 @@ exports.handleShortLines = (hatch,thisLayer) => {
     
     if(thisTileID !== currentTileID || !nextIsValid) {
       
+      collectorHatch.mergeShortLines(collectorHatch,5,
+      0.01,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
+      
       collectorHatch.mergeShortLines(mergedHatch,minVectorLenght,
       maxMergeDistance,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
       

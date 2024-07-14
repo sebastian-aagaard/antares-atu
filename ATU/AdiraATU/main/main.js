@@ -132,14 +132,14 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
 exports.configurePostProcessingSteps = (postprocessing_config) => {
 
   // Postprocessing the toolpaths using the given function:
-//   postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
-//     {bMultithread: true, nProgressWeight: 10});
-//   postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
-//     {bMultithread: false, nProgressWeight: 1});
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
+    {bMultithread: true, nProgressWeight: 10});
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
+    {bMultithread: false, nProgressWeight: 1});
   if(CONST.bDrawTile) postprocessing_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,
     {bMultithread: false, nProgressWeight: 1});
-//   postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
-//     {bMultithread: false, nProgressWeight: 2});
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
+    {bMultithread: false, nProgressWeight: 2});
   
 };
 
