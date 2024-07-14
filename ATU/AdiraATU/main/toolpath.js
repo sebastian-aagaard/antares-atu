@@ -80,7 +80,7 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
   // --- TILE OPERATIONS --- //
   allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
    
-  allHatches = TP2TILE.adjustInterfaceVectors(thisModel,nLayerNr,allHatches);
+   allHatches = TP2TILE.adjustInterfaceVectors(thisModel,nLayerNr,allHatches);
     
   allHatches = TP2TILE.mergeInterfaceVectors(allHatches,thisLayer);  
 

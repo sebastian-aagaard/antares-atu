@@ -78,7 +78,33 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       let tile_y_cen = (tile_y_min+tile_y_max)/2;
       let tile_x_cen = (tile_x_min+tile_x_max)/2;
       
+      
+            // SPECIAL CASE - move to tileing!
+  //    if tileoverlap is greater than requested
+      if(tileArray[j].overlapX < PARAM.getParamReal('scanhead','tile_overlap_x')){
+      
+        let halfOverlap = Math.abs(tileArray[j].overlapX/2);
+        let overLapCompensation = halfOverlap + PARAM.getParamReal('scanhead','tile_overlap_x');
+           
+        switch(tileArray[j].passNumber) {
+          case 1:
+            tile_x_max -= overLapCompensation;//
+            break;
+          case 2:
+            tile_x_min += overLapCompensation;
+            //if there is 3 passes
+            if(tileArray[j].requiredPassesX>2){
+              tile_x_max -= overLapCompensation;
+              }           
+            break;
+          case 3:
+            tile_x_min += overLapCompensation;
+            break;
+          };  
+         };
       // CREATE CLIPPING MASK
+      
+      
         
       // add the corrdinates to vector pointset
       let tile_points = new Array(4);
@@ -192,20 +218,20 @@ exports.adjustInterfaceVectors = function(bsModel,nLayerNr,allHatches){
       
       } else {
        
-        let mode = thisHatchBlock.getPolylineMode();
+       // let mode = thisHatchBlock.getPolylineMode();
 
-        if (mode === 1) { // 1 = open polyline
+        //if (mode === 1) { // 1 = open polyline
 
-          adjustedHatch.addHatchBlock(thisHatchBlock);
+          //adjustedHatch.addHatchBlock(thisHatchBlock);
 
-        };
+        //};
               
-        if(mode === 2){ // 2 = hatch
+        //if(mode === 2){ // 2 = hatch
 
         //splitOverlappingExposure(thisHatchBlock);
         
         adjustedHatch.moveDataFrom(applyZipperInterface(thisHatchBlock, PARAM.getParamInt('interface','tileInterface')===0));
-        };
+        //};
     };
     
   hatchBlockIterator.next();
@@ -225,7 +251,6 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   let secondTileId = hatchBlock.getAttributeInt('overlappingTile_2');
   let hatchType = hatchBlock.getAttributeInt('type');
   let islandId = hatchBlock.getAttributeInt('islandId');
-  
   
   let overlappingHatch = new HATCH.bsHatch();
   overlappingHatch.addHatchBlock(hatchBlock);

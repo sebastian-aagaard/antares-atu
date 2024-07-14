@@ -277,6 +277,8 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
               scanhead_x_coord: cur_tile_coord_x,
               scanhead_y_coord: cur_tile_coord_y,
               tile_height: cur_tile.tile_height,
+              requiredPassesX: required_passes_x,
+              requiredPassesY:required_passes_y,
               overlapX: overlap_x,
               overlapY: overlap_y,
               shiftX: shiftX,
