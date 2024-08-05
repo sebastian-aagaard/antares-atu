@@ -80,7 +80,7 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
   // --- TILE OPERATIONS --- //
   allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
    
-   allHatches = TP2TILE.adjustInterfaceVectors(thisModel,nLayerNr,allHatches);
+  allHatches = TP2TILE.adjustInterfaceVectors(thisModel,nLayerNr,allHatches);
     
   allHatches = TP2TILE.mergeInterfaceVectors(allHatches,thisLayer);  
 
@@ -88,14 +88,18 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
   
   LASER.assignProcessParameters(allHatches,thisModel);
   
-  allHatches = TP2TILE.handleShortLines(allHatches,thisLayer);
-  
+  allHatches = TP2TILE.mergeShortLines(allHatches,thisLayer);
+    
+  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
+ 
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
     "nConvertToHatchMaxPointCount": 2,
     //"nMaxBlockSize": 512,
     "bCheckAttributes": true
   }
+  
+  
 );  
     
   hatchResult.moveDataFrom(allHatches);

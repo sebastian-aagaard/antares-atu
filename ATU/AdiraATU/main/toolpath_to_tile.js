@@ -296,18 +296,16 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   return adjustedHatch; 
 }; 
 
-exports.handleShortLines = (hatch,thisLayer) => {
+exports.mergeShortLines = (hatch,thisLayer) => {
   
   const mergedHatch = new HATCH.bsHatch();
   const resultHatch = new HATCH.bsHatch();
   const collectorHatch = new HATCH.bsHatch();
 
-  
   const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
   const maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
   
   let hatchBlockIterator = hatch.getHatchBlockIterator();
-  
   
   let tileTable3mf = thisLayer.getAttribEx('tileTable_3mf');
   let currentTileID = tileTable3mf[0][0].attributes.tileID; 
@@ -331,8 +329,6 @@ exports.handleShortLines = (hatch,thisLayer) => {
       collectorHatch.mergeShortLines(mergedHatch,minVectorLenght,
       maxMergeDistance,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
       
-      mergedHatch.deleteShortLines(minVectorLenght)
-      
       resultHatch.moveDataFrom(mergedHatch);
       collectorHatch.makeEmpty();
       
@@ -340,7 +336,7 @@ exports.handleShortLines = (hatch,thisLayer) => {
       
       }
       
-      collectorHatch.addHatchBlock(hatchBlock);
+    collectorHatch.addHatchBlock(hatchBlock);
     
     hatchBlockIterator.next();
     };
@@ -350,59 +346,34 @@ exports.handleShortLines = (hatch,thisLayer) => {
   
 } //handleShortLines
 
-// exports.handleShortLines = (passNumberGroups,thisModel,bsModelData) => {
-//   
-//   const scanheadArray = bsModelData.getTrayAttribEx('scanhead_array');  
-//   const returnHatch = new HATCH.bsHatch();
-//   const mergedHatch = new HATCH.bsHatch();
-//   
-//   const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
-//   const maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
-//   
-//   for (let passNumber in passNumberGroups){
-//     
-//     const thisPassHatch = new HATCH.bsHatch();
-//     const thisPassHatchArray = passNumberGroups[passNumber].blocks;
-//     const passYCoord = [];
-//     let passXCoord = 0;
-//     
-//     for(let i = 0; i<thisPassHatchArray.length;i++){ // store blocks into hatch container
-//       
-//       passXCoord = thisPassHatchArray[i].getAttributeReal('xcoord');
-//       passYCoord[i] = thisPassHatchArray[i].getAttributeReal('ycoord');
-//       thisPassHatch.addHatchBlock(thisPassHatchArray[i]);
-//       
-//     }
-//     
-//     //find merge blocking geometry
-//     const blocking_min_x = passXCoord;
-//     const blocking_max_x = passXCoord+scanheadArray[4].abs_x_max;
-//     const blocking_min_y = Math.min(passYCoord);
-//     const blocking_max_y = Math.max(passYCoord)+scanheadArray[0].rel_y_max;
-// 
-//     const firstBlock2Dvec = new Array();
-//     firstBlock2Dvec[0] = new VEC2.Vec2(blocking_min_x, blocking_min_y); //min,min
-//     firstBlock2Dvec[1] = new VEC2.Vec2(blocking_min_x, blocking_max_y); //min,max
-//     firstBlock2Dvec[2] = new VEC2.Vec2(blocking_max_x, blocking_min_y); // max,min
-//     firstBlock2Dvec[3] = new VEC2.Vec2(blocking_max_x, blocking_max_y); // max,max
-//       
-//     const blocking_pathset = new PATH_SET.bsPathSet();
-//     blocking_pathset.addNewPath(firstBlock2Dvec);
-// 
-// //     let mergecount = thisPassHatch.mergeShortLines(mergedHatch,minVectorLenght,
-// //     maxMergeDistance,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagPreferHatchMode,blocking_pathset);
-//      
-//     mergedHatch.deleteShortLines(minVectorLenght); // remove small vectors
-//       
-//     passNumberGroups[passNumber].blocks = mergedHatch.getHatchBlockArray();
-// 
-//     returnHatch.moveDataFrom(mergedHatch);
-// 
-//   }
-//   
-//   return returnHatch;
-//   
-// } //handleShortLines
+exports.deleteShortHatchLines = function (hatch) {
+  
+  const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
+  
+  let resultHatch = new HATCH.bsHatch();
+  let hatchBlockIterator = hatch.getHatchBlockIterator();
+  
+  while(hatchBlockIterator.isValid()){
+        
+    let hatchBlock = hatchBlockIterator.get();
+    let type = hatchBlock.getAttributeInt('type');
+    
+    if (type === 1 || type === 3 || type === 5) {
+        hatchBlock.deleteShortLines(minVectorLenght);
+        
+      };    
+    
+    if(!hatchBlock.isEmpty()){
+      
+      resultHatch.addHatchBlock(hatchBlock);
+      
+      };
+      
+    hatchBlockIterator.next();
+  };
+  
+  return resultHatch;
+  };
 
 exports.mergeInterfaceVectors = function(hatch,thisLayer){
   
