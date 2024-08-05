@@ -202,78 +202,6 @@ exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
 
 //---------------------------------------------------------------------------------------------//
 
-// exports.assignLasersToHatchesInTiles = (thisModel,nLayerNr,allHatches) => {
-//   
-//   let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
-//   let passesInX = thisLayer.getAttribEx('requiredPassesX');
-//   let passesInY = thisLayer.getAttribEx('requiredPassesY');
-//   
-//   let tileArray = thisLayer.getAttribEx('tileTable');
-//   let scanheadArray = thisModel.getAttribEx('scanhead_array');  
-//   
-//   let laserAssignedHatches = new HATCH.bsHatch();
-//   
-//   for (let i = 0; i< passesInX*passesInY;i++) // run through all tiles
-//   {
-//       
-//     let scanheadXCoord = tileArray[i].scanhead_x_coord;
-//     let scanheadYCoord = tileArray[i].scanhead_y_coord;
-// 
-//     for (let j=0;j<CONST.nLaserCount;j++) // run through the available lasers
-//       {
-//       // get information about the lasing zone in X
-//         let curLaserId = scanheadArray[j].laserIndex; // get laser ID
-//         let curXref = scanheadArray[j].x_ref; 
-//         let curRelXmin = scanheadArray[j].rel_x_min;
-//         let curRelXmax = scanheadArray[j].rel_x_max;
-//         
-//         let curLaserXmin = curXref + curRelXmin + scanheadXCoord;
-//         let curLaserXmax = curXref + curRelXmax + scanheadXCoord;
-//         
-//         let curYref = scanheadArray[j].y_ref;
-//         let curRelYmin = scanheadArray[j].rel_y_min;
-//         let curRelYmax = scanheadArray[j].rel_y_max;
-//         
-//         let curLaserYmin = curYref + curRelYmin + scanheadYCoord;
-//         let curLaserYmax = curYref + curRelYmax + scanheadYCoord;
-//          
-//        // add the corrdinates to vector pointset
-//        let laserZonePoints = new Array(4);
-//        laserZonePoints[0] = new VEC2.Vec2(curLaserXmin, curLaserYmin); //min,min
-//        laserZonePoints[1] = new VEC2.Vec2(curLaserXmin, curLaserYmax); //min,max
-//        laserZonePoints[2] = new VEC2.Vec2(curLaserXmax, curLaserYmax); // max,max
-//        laserZonePoints[3] = new VEC2.Vec2(curLaserXmax, curLaserYmin); // max,min
-//               
-//        let laserZone_pathset = new PATH_SET.bsPathSet(); // generate pathset object
-//        laserZone_pathset.addNewPath(laserZonePoints); // add tiles zones to pathset  
-//        laserZone_pathset.setClosed(true); // set the zones to closed polygons
-//        
-//        let laserZone_clipping_island = new ISLAND.bsIsland(); // generate island object
-//        laserZone_clipping_island.addPathSet(laserZone_pathset); // add pathset as new island
-//        
-//        let laserZoneHatch = allHatches.clone(); // clone overall hatching
-//        let laserZoneHatchOutside = allHatches.clone(); // clone overall hatching
-//        //tempTileHatch.makeEmpty(); // empty the container to refill it later
-//         
-//        laserZoneHatch.clip(laserZone_clipping_island,true); // clip the hatching with the tile_islands
-//        laserZoneHatchOutside.clip(laserZone_clipping_island,false); // get outside of currentzone
-//         
-// //       let clippingHatch = tempTileHatch.clone();                    
-// //       laserZoneHatch = ClipHatchByRect(clippingHatch,laserZonePoints);
-// //       laserZoneHatchOutside = ClipHatchByRect(clippingHatch,laserZonePoints,false);
-// //       tempTileHatch.clear();
-//             
-//       //laserZoneHatchOutside=ClipHatchByRect(clippingHatch,laserZonePoints,false);
-//       //assign laser index
-//       laserZoneHatch.setAttributeInt('laser_index_' + (curLaserId), 1);
-//        
-// 
-//         laserAssignedHatches = laserZoneHatch.clone();
-//         laserAssignedHatches.moveDataFrom(laserZoneHatchOutside);      
-//       } // for laser count       
-//   }   // all tiles
-// 
-// }
 
 exports.assignProcessParameters = (bsHatch,bsModel) => {
 
@@ -285,6 +213,8 @@ exports.assignProcessParameters = (bsHatch,bsModel) => {
     
     let thisHatchBlock = hatchIterator.get();
     let bsid = thisHatchBlock.getAttributeInt('bsid');
+    let laserId = Math.floor(bsid/10);
+    let type = thisHatchBlock.getAttributeInt('type');
     
     let thisProcessParameters = bsidTable.find(function (item) {
         return item.bsid === bsid;
@@ -294,9 +224,26 @@ exports.assignProcessParameters = (bsHatch,bsModel) => {
     thisHatchBlock.setAttributeReal('power',thisProcessParameters.power);
     thisHatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
     
+    const displayMode = PARAM.getParamInt('display','displayColors');
+    
+    if (displayMode == 1){
+      thisHatchBlock.setAttributeInt('_disp_color',UTIL.findColorAndAlphaFromType(type).color.rgba());  
+      };
+    
+    if (displayMode == 2){
+      
+     let color = UTIL.findColorAndAlphaFromType(type).color;
+     color.a((255*(laserId/CONST.nLaserCount)));
+     thisHatchBlock.setAttributeInt('_disp_color',color.rgba());  
+      
+      };  
+    
+    
     hatchIterator.next();
   }
 }
+
+
 
 //---------------------------------------------------------------------------------------------//
   

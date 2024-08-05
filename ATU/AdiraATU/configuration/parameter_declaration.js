@@ -52,6 +52,13 @@ exports.declareParameters = function(parameter)
        LOCALIZER.GetMessage('param_border_order_outside_in_enable')],
        LOCALIZER.GetMessage('param_border_order_outside_in_enable'));
    
+ parameter.declareParameterGroup('display', LOCALIZER.GetMessage('grp_display'));
+      parameter.declareParameterChoice('display', 'displayColors', LOCALIZER.GetMessage('param_displayColors'),
+       [LOCALIZER.GetMessage('param_displayColors_lasers'),
+       LOCALIZER.GetMessage('param_displayColors_types'),
+       LOCALIZER.GetMessage('param_displayColors_both')],
+       LOCALIZER.GetMessage('param_displayColors_both'));  
+   
  parameter.declareParameterGroup('interface', LOCALIZER.GetMessage('grp_interface'));
       parameter.declareParameterChoice('interface', 'tileInterface', LOCALIZER.GetMessage('param_tileInterface'),
        [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),

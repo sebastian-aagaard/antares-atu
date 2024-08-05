@@ -149,3 +149,17 @@ exports.appendInteger = function(currentInt, newInt) {
 
     return resultInt;
 }
+
+// Function to find the color and alpha based on value
+exports.findColorAndAlphaFromType = function (value) {
+  for (let key in CONST.typeDesignations) {
+    if (CONST.typeDesignations[key].value === value) {
+      return {
+        color: CONST.typeDesignations[key].color,
+        alpha: CONST.typeDesignations[key].alpha
+      };
+    }
+  }
+  return null; // Return null if value is not found
+}
+
