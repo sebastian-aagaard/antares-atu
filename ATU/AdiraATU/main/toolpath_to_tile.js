@@ -322,10 +322,7 @@ exports.mergeShortLines = (hatch,thisLayer) => {
     hatchBlockIterator.prev();
     
     if(thisTileID !== currentTileID || !nextIsValid) {
-      
-      collectorHatch.mergeShortLines(collectorHatch,1,
-      0.01,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
-      
+     
       collectorHatch.mergeShortLines(mergedHatch,minVectorLenght,
       maxMergeDistance,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
       
@@ -400,15 +397,11 @@ exports.mergeInterfaceVectors = function(hatch,thisLayer){
     Object.values(groupedHatchblocks).forEach(tileHatch => {
 
       let mergeHatch = new HATCH.bsHatch();
-      let mergecount = tileHatch.mergeShortLines(mergeHatch,0.2,0.01,0);
+      let mergecount = tileHatch.mergeShortLines(mergeHatch,0.2,0.01,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
 
       mergedHatchAll.moveDataFrom(mergeHatch);
       });
       
-    //merge remaining short lines
-    let blockingIslands = getBlockingGeometry(thisLayer);   
-    //mergedHatchAll.mergeShortLines(mergedHatchAll,0.2,0.01,0,blockingIslands.getIslandArray());
-
     return mergedHatchAll;
   };
   

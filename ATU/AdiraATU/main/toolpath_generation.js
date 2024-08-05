@@ -198,7 +198,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
          "blocksortVec" : {x: 0.0, y: -1.0},
          "nFlags" : HATCH.nHatchFlagAlternating | 
           HATCH.nHatchFlagBlocksortEnhanced |
-          HATCH.nHatchFlagFlexDensity
+          HATCH.nHatchFlagFixedOrigin
         }; 
        
         let downSkinBulkIsland = bulkIsland.clone();
@@ -382,9 +382,8 @@ exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){
       polyline_it.next(); // looks at next polyline
     }
   
-  //process.print(HATCH.nSortFlagShortestPath,HATCH.nSortFlagUseHotSpot,HATCH.nSortFlagFlipOrientation);  
     
-  allPolyLineHatch.pathReordering(new VEC2.Vec2(1000,1000),HATCH.nSortFlagShortestPath|HATCH.nSortFlagFlipOrientation|HATCH.nSortFlagUseHotSpot  );
+  allPolyLineHatch.pathReordering(new VEC2.Vec2(1000,1000),HATCH.nSortFlagShortestPath|HATCH.nSortFlagFlipOrientation|HATCH.nSortFlagUseHotSpot);
 
   return allPolyLineHatch;
 }  
