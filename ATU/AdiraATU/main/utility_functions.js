@@ -151,12 +151,12 @@ exports.appendInteger = function(currentInt, newInt) {
 }
 
 // Function to find the color and alpha based on value
-exports.findColorAndAlphaFromType = function (value) {
+exports.findColorFromType = function (value) {
   for (let key in CONST.typeDesignations) {
     if (CONST.typeDesignations[key].value === value) {
       return {
-        color: CONST.typeDesignations[key].color,
-        alpha: CONST.typeDesignations[key].alpha
+        color1: CONST.typeDesignations[key].color1,
+        color2: CONST.typeDesignations[key].color2
       };
     }
   }

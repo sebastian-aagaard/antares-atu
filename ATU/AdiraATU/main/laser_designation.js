@@ -215,6 +215,7 @@ exports.assignProcessParameters = (bsHatch,bsModel) => {
     let bsid = thisHatchBlock.getAttributeInt('bsid');
     let laserId = Math.floor(bsid/10);
     let type = thisHatchBlock.getAttributeInt('type');
+    let tileNumber = thisHatchBlock.getAttributeInt('tileID_3mf') % 1000;
     
     let thisProcessParameters = bsidTable.find(function (item) {
         return item.bsid === bsid;
@@ -227,17 +228,18 @@ exports.assignProcessParameters = (bsHatch,bsModel) => {
     const displayMode = PARAM.getParamInt('display','displayColors');
     
     if (displayMode == 1){
-      thisHatchBlock.setAttributeInt('_disp_color',UTIL.findColorAndAlphaFromType(type).color.rgba());  
+      thisHatchBlock.setAttributeInt('_disp_color',UTIL.findColorFromType(type).color1.rgba());  
       };
     
     if (displayMode == 2){
-      
-     let color = UTIL.findColorAndAlphaFromType(type).color;
-     color.a((255*(laserId/CONST.nLaserCount)));
-     thisHatchBlock.setAttributeInt('_disp_color',color.rgba());  
-      
+      let color = UTIL.findColorFromType(type).color1;
+      if(tileNumber % 2 === 0) {
+        color = UTIL.findColorFromType(type).color2;
+        };
+
+      color.a((255*(laserId/CONST.nLaserCount)));
+      thisHatchBlock.setAttributeInt('_disp_color',color.rgba());  
       };  
-    
     
     hatchIterator.next();
   }

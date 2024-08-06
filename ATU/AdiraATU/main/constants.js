@@ -8,7 +8,6 @@
 
 const RGBA = requireBuiltin('bsColRGBAi');
 
-
 // -------- GLOBAL CONSTANTS -------- //
 
 exports.bLOGGING = false;
@@ -17,10 +16,8 @@ exports.nLaserCount = 5;
 exports.bIncludeScanningAttributes = true;
 exports.nBufferduration = 0;//1500000;//500000;//1000000; //us
 
-//if openpolyline support is required set to false
-//when not in development mode set to false
-exports.bDrawTile = true; // this inversly toggles the ability to handle CAD 
-                          //generated openpolilines (eg in support)
+//when not in development/ATU mode set to false
+exports.bDrawTile = false; 
 
 exports.scanningSchema = 'http://schemas.scanlab.com/scanning/2023/01';
 exports.skywritingSchema = 'http://schemas.scanlab.com/skywriting/2023/01';
@@ -34,50 +31,50 @@ exports.typeDesignations = {
   open_polyline: {
     value: 0,
     name: "open_polyline",
-    color: new RGBA.bsColRGBAi(255, 0, 0, 255), // red
-    alpha: 255 // 100%
+    color1: new RGBA.bsColRGBAi(255, 0, 0, 255), // red
+    color2: new RGBA.bsColRGBAi(200, 0, 0, 255)  // dark red
   },
   part_hatch: {
     value: 1,
     name: "part_hatch",
-    color: new RGBA.bsColRGBAi(0, 255, 0, 255), // green
-    alpha: 229.5 // 90%
+    color1: new RGBA.bsColRGBAi(0, 255, 0, 255), // green
+    color2: new RGBA.bsColRGBAi(0, 200, 0, 255)  // dark green
   },
   part_contour: {
     value: 2,
     name: "part_contour",
-    color: new RGBA.bsColRGBAi(0, 0, 255, 255), // blue
-    alpha: 204 // 80%
+    color1: new RGBA.bsColRGBAi(0, 0, 255, 255), // blue
+    color2: new RGBA.bsColRGBAi(0, 0, 200, 255)  // dark blue
   },
   downskin_hatch: {
     value: 3,
     name: "downskin_hatch",
-    color: new RGBA.bsColRGBAi(255, 0, 255, 255), // magenta
-    alpha: 178.5 // 70%
+    color1: new RGBA.bsColRGBAi(255, 0, 255, 255), // magenta
+    color2: new RGBA.bsColRGBAi(200, 0, 200, 255)  // dark magenta
   },
   downskin_contour: {
     value: 4,
     name: "downskin_contour",
-    color: new RGBA.bsColRGBAi(255, 165, 0, 255), // orange
-    alpha: 153 // 60%
+    color1: new RGBA.bsColRGBAi(255, 165, 0, 255), // orange
+    color2: new RGBA.bsColRGBAi(200, 130, 0, 255) // dark orange
   },
   support_hatch: {
     value: 5,
     name: "support_hatch",
-    color: new RGBA.bsColRGBAi(0, 255, 255, 255), // cyan
-    alpha: 127.5 // 50%
+    color1: new RGBA.bsColRGBAi(0, 255, 255, 255), // cyan
+    color2: new RGBA.bsColRGBAi(0, 200, 200, 255)  // dark cyan
   },
   support_contour: {
     value: 6,
     name: "support_contour",
-    color: new RGBA.bsColRGBAi(128, 0, 128, 255), // purple
-    alpha: 102 // 40%
+    color1: new RGBA.bsColRGBAi(128, 0, 128, 255), // purple
+    color2: new RGBA.bsColRGBAi(100, 0, 100, 255)  // dark purple
   },
   support_open_polyline: {
     value: 7,
     name: "support_open_polyline",
-    color: new RGBA.bsColRGBAi(0, 0, 139, 255), // dark blue
-    alpha: 76.5 // 30%
+    color1: new RGBA.bsColRGBAi(0, 0, 139, 255), // dark blue
+    color2: new RGBA.bsColRGBAi(0, 0, 100, 255)  // darker blue
   }
 };
 
