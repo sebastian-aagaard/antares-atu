@@ -41,7 +41,7 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
     }
   );
  
-   /////////////////////////////////////
+  /////////////////////////////////////
   /// sort tilearray by tile number  ///
   //////////////////////////////////////
     
@@ -57,7 +57,6 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
   
   let vec2_tile_array = new Array();
   let tileSegmentArray = new Array();
-  //let assignedHatch = new HATCH.bsHatch();
   let assignedHatch = allHatches.clone(); 
 
 
@@ -79,8 +78,7 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       let tile_x_cen = (tile_x_min+tile_x_max)/2;
       
       
-            // SPECIAL CASE - move to tileing!
-  //    if tileoverlap is greater than requested
+      //if tileoverlap is greater than requested
       if(tileArray[j].overlapX < PARAM.getParamReal('scanhead','tile_overlap_x')){
       
         let halfOverlap = Math.abs(tileArray[j].overlapX/2);
@@ -103,8 +101,6 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
           };  
          };
       // CREATE CLIPPING MASK
-      
-      
         
       // add the corrdinates to vector pointset
       let tile_points = new Array(4);
@@ -120,16 +116,11 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       let tileHatch_outside = UTIL.ClipHatchByRect(assignedHatch,vec2_tile_array[j],false);
         
       assignedHatch.makeEmpty();
-                        
-
+      
       let tileID_3mf = tileArray[j].tile_number+(tileArray[j].passNumber)*1000;
-      anotateIntefaceHatchblocks(tileHatch,tileID_3mf);
-  
+      anotateTileIntefaceHatchblocks(tileHatch,tileID_3mf);
         
       // assign attributes to hatches within tile
-      //tileHatch.setAttributeInt('passNumber', tileArray[j].passNumber);
-      //tileHatch.setAttributeInt('passNumber_3mf', (tileArray[j].passNumber)*1000);
-      //tileHatch.setAttributeInt('tile_index',tileArray[j].tile_number);
       tileHatch.setAttributeInt('tileID_3mf',tileID_3mf);
       tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
       tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
@@ -151,7 +142,7 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
 } //assignToolpathToTiles
 
 
-const anotateIntefaceHatchblocks = function(hatch,tileID) {
+const anotateTileIntefaceHatchblocks = function(hatch,tileID) {
 
   let hatchBlockIterator = hatch.getHatchBlockIterator();
 
@@ -171,8 +162,7 @@ const anotateIntefaceHatchblocks = function(hatch,tileID) {
           
           overlapNumber++;
                              
-          let sOverLapNumber = overlapNumber.toString();          
-          let overlapping_designation = 'overlappingTile_' + sOverLapNumber;
+          let overlapping_designation = 'overlappingTile_' + overlapNumber.toString();
           
           thisHatchBlock.setAttributeInt(overlapping_designation,tileID);
           thisHatchBlock.setAttributeInt('numberofOverlappingTiles',overlapNumber);
@@ -217,21 +207,8 @@ exports.adjustInterfaceVectors = function(bsModel,nLayerNr,allHatches){
         nonAdjustedHatch.addHatchBlock(thisHatchBlock);
       
       } else {
-       
-       // let mode = thisHatchBlock.getPolylineMode();
-
-        //if (mode === 1) { // 1 = open polyline
-
-          //adjustedHatch.addHatchBlock(thisHatchBlock);
-
-        //};
-              
-        //if(mode === 2){ // 2 = hatch
-
-        //splitOverlappingExposure(thisHatchBlock);
         
         adjustedHatch.moveDataFrom(applyZipperInterface(thisHatchBlock, PARAM.getParamInt('interface','tileInterface')===0));
-        //};
     };
     
   hatchBlockIterator.next();
@@ -404,31 +381,3 @@ exports.mergeInterfaceVectors = function(hatch,thisLayer){
       
     return mergedHatchAll;
   };
-  
-const getBlockingGeometry = function (modelLayer){
-  
-  let tileTable = modelLayer
-  .getAttribEx('tileTable');
-  
-  let allBlockingPaths = new PATH_SET.bsPathSet();
-  let blockingIslands = new ISLAND.bsIsland();
-  
-  tileTable.forEach(tile => {
-    let thisTile = new PATH_SET.bsPathSet();
-    let pointArray = [];
-
-    tile.scanhead_outline.forEach (point => {
-      pointArray.push(new VEC2.Vec2(point.m_coord[0] , point.m_coord[1]));      
-    });
-    
-    thisTile.addNewPath(pointArray);
-    thisTile.setClosed(true); 
-    thisTile.createOffset(2*PARAM.getParamReal('scanhead', 'tile_overlap_x'));
-    
-    blockingIslands.addPathSet(thisTile);
-  });  
-
-  return blockingIslands;
-};
- 
-  
