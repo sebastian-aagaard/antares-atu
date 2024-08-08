@@ -273,6 +273,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
           let tile_obj = {
               passNumber: passnumber_x + 1,
               tile_number: j + 1,
+              tileID: j + 1 + (passnumber_x + 1) * 1000,
               scanhead_outline: scanhead_outlines,
               scanhead_x_coord: cur_tile_coord_x,
               scanhead_y_coord: cur_tile_coord_y,
