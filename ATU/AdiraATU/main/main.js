@@ -40,7 +40,7 @@ exports.unitTesting = function( testInfo ){
 // -------- GENERAL INFORMATION -------- //
 /** @param  aboutInfo  bsAboutInfo */
 
-exports.about = (aboutInfo) => {
+exports.about = function(aboutInfo){
   
    aboutInfo.addCommentLine('AddCreator');
    aboutInfo.addCommentLine('Adira');
@@ -53,9 +53,8 @@ exports.about = (aboutInfo) => {
 // -------- MACHINE CONFIGURATION -------- //
 /** @param  machineConfig   bsMachineConfig */
 
-exports.declareMachine = (machineConfig) => {
+exports.declareMachine = function(machineConfig){
   MACHINE_CONFIG.declareMachine(machineConfig);
-  
 };
 
 //----------------------------------------------------------------------------//
@@ -63,7 +62,7 @@ exports.declareMachine = (machineConfig) => {
 // -------- PARAMETER CONFIGURATION -------- //
 /** @param  parameter   bsBuildParam */
 
-exports.declareParameters = (parameter) => {
+exports.declareParameters = function(parameter){
     
     PARAM_CONFIG.declareParameters(parameter)
   
@@ -74,7 +73,7 @@ exports.declareParameters = (parameter) => {
 // -------- ATTRIBUTE CONFIGURATION -------- //
 /** @param  buildAttrib   bsBuildAttribute */
 
-exports.declareBuildAttributes = (buildAttrib) => {
+exports.declareBuildAttributes = function(buildAttrib){
 
   ATTRIB_CONFIG.declareBuildAttributes(buildAttrib);
     
@@ -92,7 +91,7 @@ exports.declareBuildAttributes = (buildAttrib) => {
 * @param  modelDataTarget  bsModelData
 * @param  progress         bsProgress
 */
-exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
+exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress){
   PREPROCESSOR.preprocessLayerStack(modelDataSrc, modelDataTarget, progress);
   
 }; //preprocessLayerStack
@@ -105,7 +104,7 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
 * @param  model   bsModel
 */
 
-exports.prepareModelExposure = (model) => {
+exports.prepareModelExposure = function(model){
   
   PREP_MODEL.prepareModelExposure(model);
     
@@ -117,7 +116,7 @@ exports.prepareModelExposure = (model) => {
 * @param  hatchResult  bsHatch
 * @param  nLayerNr      int*/
 
-exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => { 
+exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){ 
 
   //if(nLayerNr==1) { return }; 
   TOOLPATH.makeExposureLayer(modelData, hatchResult, nLayerNr);
@@ -129,7 +128,7 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
 // -------- CONFIGURE POST PROCESSING -------- //
 /** @param  postprocessing_config    bsPostProcessingConfig */
 
-exports.configurePostProcessingSteps = (postprocessing_config) => {
+exports.configurePostProcessingSteps = function(postprocessing_config){
 
   // Postprocessing the toolpaths using the given function:
   postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
@@ -150,7 +149,7 @@ exports.configurePostProcessingSteps = (postprocessing_config) => {
 *
 * @param  exportFilter  bsExportFilter
 */
-exports.declareExportFilter = (exportFilter) => {    
+exports.declareExportFilter = function(exportFilter){    
   exportFilter.declareFilterEx({
     'sFilterId' : 'CLI-C108C8EC-70C4-40AE-94D2-75B778311531',
     'sFilterName' : LOCALIZER.GetMessage('cli_format'),
@@ -168,7 +167,7 @@ exports.declareExportFilter = (exportFilter) => {
 * @param  modelData      bsModelData
 * @param  progress       bsProgress
 */
-exports.exportToFile = (exportFile, sFilter, modelData, progress) => {
+exports.exportToFile = function(exportFile, sFilter, modelData, progress) {
   if('CLI-C108C8EC-70C4-40AE-94D2-75B778311531' != sFilter){
     throw new Error('Unsupported export filter');
   }

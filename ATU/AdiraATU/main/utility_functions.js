@@ -24,7 +24,7 @@ var CONST = require('main/constants.js');
 
 // -------- FUNCTIONS -------- //
 
-exports.getModelsInLayer = (modelData,layerNr) => {
+exports.getModelsInLayer = function(modelData,layerNr){
  
   let modelCount = modelData.getModelCount(); 
   let arrayofModels = [];
@@ -117,15 +117,14 @@ exports.mergeBlocks = function(unmergedHatchBlocks) {
 	return mergedblock;
 }
 
-exports.getTileTable = (modelData,layerNr) => {
+exports.getTileTable = function(modelData,layerNr){
 
   const tiletable_3mf = exports.getModelsInLayer(modelData,layerNr)[0].getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
 
   if(!tiletable_3mf) return false;
     
   return tiletable_3mf;
-
-}
+};
 
 exports.getWorkAreaLimits = function() {
 return {  

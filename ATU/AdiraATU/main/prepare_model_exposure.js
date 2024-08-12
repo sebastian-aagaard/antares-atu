@@ -12,7 +12,7 @@ let PARAM = requireBuiltin('bsParam');
 // -------- SCRIPTS INCLUDES -------- //
 let CONST = require('main/constants.js');
 
-exports.prepareModelExposure = (model) => {
+exports.prepareModelExposure = function(model){
   
   //Create custom table
   //generates a custom table containing different parameters depending on laser number
@@ -51,23 +51,26 @@ exports.prepareModelExposure = (model) => {
   // Array to store laser objects
   let customTable = [];
 
-  for (let l_laser_nr = 1; l_laser_nr <= CONST.nLaserCount; ++l_laser_nr) {
-    for (let type of Object.keys(typeDesignations)) {
-      let typeObj = typeDesignations[type];
-      let bsid_obj = {};
+for (let l_laser_nr = 1; l_laser_nr <= CONST.nLaserCount; ++l_laser_nr) {
+    let keys = Object.keys(typeDesignations);
+    for (let i = 0; i < keys.length; i++) {
+        let type = keys[i];
+        let typeObj = typeDesignations[type];
+        let bsid_obj = {};
 
-      bsid_obj.bsid = 10 * l_laser_nr + typeObj.value;
-      bsid_obj.laserIndex = l_laser_nr;
-      bsid_obj.name = `laser${l_laser_nr}_${typeObj.name}`;
-      bsid_obj.power = PARAM.getParamReal('ScanningParameters', `${typeObj.name}_power`);
-      bsid_obj.focus = PARAM.getParamReal('ScanningParameters', `${typeObj.name}_defocus`);
-      bsid_obj.speed = PARAM.getParamReal('ScanningParameters', `${typeObj.name}_markspeed`);
-      bsid_obj.priority = PARAM.getParamInt('scanning_priority', `${typeObj.name}_priority`);
-      bsid_obj.attributes = additionalAttributes;
+        bsid_obj.bsid = 10 * l_laser_nr + typeObj.value;
+        bsid_obj.laserIndex = l_laser_nr;
+        bsid_obj.name = 'laser' + l_laser_nr + '_' + typeObj.name;
+        bsid_obj.power = PARAM.getParamReal('ScanningParameters', typeObj.name + '_power');
+        bsid_obj.focus = PARAM.getParamReal('ScanningParameters', typeObj.name + '_defocus');
+        bsid_obj.speed = PARAM.getParamReal('ScanningParameters', typeObj.name + '_markspeed');
+        bsid_obj.priority = PARAM.getParamInt('scanning_priority', typeObj.name + '_priority');
+        bsid_obj.attributes = additionalAttributes;
 
-      customTable.push(bsid_obj);
+        customTable.push(bsid_obj);
     }
-  }
+}
+
 
   model.setAttribEx('customTable', customTable);
  

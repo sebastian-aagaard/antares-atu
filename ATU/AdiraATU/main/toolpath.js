@@ -17,8 +17,7 @@ const TP2PASS = require('main/tile_to_passnumbergroup.js')
 const LASER = require('main/laser_designation.js');
 let TILE = require('main/tileing.js');
 
-exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {  
-
+exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){  
 
  let thisModel = modelData.getModel(0);
  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
@@ -45,32 +44,25 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
     // --- CREATE TOOLPATH --- //
         
     // process islands
-    let { partHatch,
-          downSkinHatch,
-          downSkinContourHatch,
-          contourHatch,
-          supportHatch,
-          supportContourHatch  } = 
-      TPGEN.processIslands(thisModel,island_it,nLayerNr,islandId);
+     allHatches = TPGEN.processIslands(thisModel,island_it,nLayerNr,islandId);
     
     // get blocked path hatches
     let blockedPathHatch = TPGEN.getBlockedPathHatch(thisModel,island_it,islandId);
 
-    // store hatch from processed islands  (TODO move everythning to same hatch initially)
-    allHatches.moveDataFrom(supportHatch);
-    allHatches.moveDataFrom(supportContourHatch);      
-    allHatches.moveDataFrom(partHatch);
-    allHatches.moveDataFrom(downSkinHatch);
-    allHatches.moveDataFrom(contourHatch);
-    allHatches.moveDataFrom(downSkinContourHatch);
+    // store hatch from processed islands  
+//     allHatches.moveDataFrom(supportHatch);
+//     allHatches.moveDataFrom(supportContourHatch);      
+//     allHatches.moveDataFrom(partHatch);
+//     allHatches.moveDataFrom(downSkinHatch);
+//     allHatches.moveDataFrom(contourHatch);
+//     allHatches.moveDataFrom(downSkinContourHatch);
     allHatches.moveDataFrom(blockedPathHatch);
     
     TPGEN.sortHatchByPriority(allHatches);             
           
     island_it.next();
     islandId++;
-    }
-    
+  };
   // process open poly lines
   let polyLineHatch = TPGEN.getOpenPolyLinesHatch(modelData,nLayerNr);
   allHatches.moveDataFrom(polyLineHatch);
@@ -80,27 +72,24 @@ exports.makeExposureLayer = (modelData, hatchResult, nLayerNr) => {
   // --- TILE OPERATIONS --- //
   allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
    
-  allHatches = TP2TILE.adjustInterfaceVectors(thisModel,nLayerNr,allHatches);
-    
-  allHatches = TP2TILE.mergeInterfaceVectors(allHatches,thisLayer);  
-
-  allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
-  
-  LASER.assignProcessParameters(allHatches,thisModel);
-  
-  allHatches = TP2TILE.mergeShortLines(allHatches,thisLayer);
-    
-  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
+   allHatches = TP2TILE.adjustInterfaceVectors(thisModel,nLayerNr,allHatches);
+//     
+//   allHatches = TP2TILE.mergeInterfaceVectors(allHatches,thisLayer);  
+// 
+//   allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
+//   
+//   LASER.assignProcessParameters(allHatches,thisModel);
+//   
+//   allHatches = TP2TILE.mergeShortLines(allHatches,thisLayer);
+//     
+//   allHatches = TP2TILE.deleteShortHatchLines(allHatches);
  
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
     "nConvertToHatchMaxPointCount": 2,
     //"nMaxBlockSize": 512,
     "bCheckAttributes": true
-  }
-  
-  
-);  
+  });  
     
   hatchResult.moveDataFrom(allHatches);
   

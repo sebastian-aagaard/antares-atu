@@ -53,14 +53,14 @@ const generateOffset = function (islandObj,offset) {
         'offsetIsland' : offsetIsland,
         'borderHatch' : borderHatch
       };
-}
+};
 
-/** --- Get Blocked Path --- //
-   thisModel @bsModel 
-   island @bsIsland
-   islandId @integer
-
-   returns blockedPath @bsHatch() **/
+// /** --- Get Blocked Path --- //
+//    thisModel @bsModel 
+//    island @bsIsland
+//    islandId @integer
+// 
+//    returns blockedPath @bsHatch() **//
 
 exports.getBlockedPathHatch = function(thisModel, island_it, islandId) {
   
@@ -148,10 +148,12 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     
      part_island.copyFrom(thisIsland);
   
-  }
+  };
      
   // create borders, and decrease size of bulkIsland
-  let { allBorderHatch , bulkIsland } = makeBorders(thisIsland);
+  let makeBordersContainer = makeBorders(thisIsland);
+  let allBorderHatch = makeBordersContainer.allBorderHatch;
+  let bulkIsland = makeBordersContainer.bulkIsland;
   
   // sort borders
   
@@ -298,18 +300,21 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     allSupportHatch.moveDataFrom(support_hatch);       
   }
   
-  return {
-        'partHatch' : allHatch,
-        'downSkinHatch' :  allDownSkinHatch,
-        'downSkinContourHatch' :  allDownSkinContourHatch,
-        'contourHatch': allContourHatch,
-        'supportHatch': allSupportHatch,
-        'supportContourHatch':allSupportContourHatch
-      };
-}
+  
+  let resultHatch = new HATCH.bsHatch();
+  
+  resultHatch.moveDataFrom(allSupportHatch);
+  resultHatch.moveDataFrom(allSupportContourHatch);
+  resultHatch.moveDataFrom(allHatch);
+  resultHatch.moveDataFrom(allDownSkinHatch);
+  resultHatch.moveDataFrom(allContourHatch);
+  resultHatch.moveDataFrom(allDownSkinContourHatch);
+ 
+  return resultHatch;
+};
 
 
-const sortBorders = (hatchObj) => {
+const sortBorders = function(hatchObj){
 
  if (!PARAM.getParamInt('border','bBorderOrderOutsideIn')){
   
@@ -318,7 +323,7 @@ const sortBorders = (hatchObj) => {
    };
 }
 
-const makeBorders = (islandObj) => {
+const makeBorders = function(islandObj){
   
   const numberOfBorders = PARAM.getParamInt('border','nNumberOfBorders');
   const distanceBetweenBorders = PARAM.getParamReal('border','fDistanceBetweenBorders');
@@ -346,7 +351,7 @@ return {'allBorderHatch' : allBorderHatch,
         'bulkIsland' : island}
 }
 
-exports.getOpenPolyLinesHatch = function (modelData,nLayerNr){
+exports.getOpenPolyLinesHatch = function(modelData,nLayerNr){
   
   // process all open polylines on the layer
   // open polylines are usually support/fixtures
@@ -413,7 +418,7 @@ function createStripes(islandObj,nLayerNr) {
 
 //============================================================================
 
-exports.sortHatchByPriority = (allHatches) => {
+exports.sortHatchByPriority = function(allHatches){
 
   const typePriorityMap = new Map([
   [CONST.typeDesignations.open_polyline.value, PARAM.getParamInt('scanning_priority','open_polyline_priority')],
@@ -426,16 +431,15 @@ exports.sortHatchByPriority = (allHatches) => {
   ]);
 
   let sortedHatches = allHatches.getHatchBlockArray()
-                .sort((a,b) => {
+                .sort(function(a,b) {
                   let prioA = typePriorityMap.get(a.getAttributeInt('type'));
                   let prioB = typePriorityMap.get(b.getAttributeInt('type'));
                   return prioA - prioB;
                 });
                 
   allHatches.makeEmpty();
-          
-  sortedHatches.forEach(hatchBlock => allHatches.addHatchBlock(hatchBlock));             
+                
+  sortedHatches.forEach(function(hatchBlock) {
+  allHatches.addHatchBlock(hatchBlock)});
 
-} //sortHatchByPriority
-
-//============================================================================
+}; //sortHatchByPriority

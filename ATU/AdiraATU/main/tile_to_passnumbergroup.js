@@ -12,7 +12,7 @@ const VEC2 = requireBuiltin('vec2');
 const PATH_SET = requireBuiltin('bsPathSet');
 const PARAM = requireBuiltin('bsParam');
 
-exports.generatePassNumberGroup = (hatchObj) => {
+exports.generatePassNumberGroup = function(hatchObj){
   
   let passNumberGroups = {};
 
@@ -31,8 +31,8 @@ exports.generatePassNumberGroup = (hatchObj) => {
         } else {
           passNumberGroups[passNumber].blocks.push(hatchArray[i]);
         }
-  }
+  };
  
 return passNumberGroups;
   
-} //generatePassNumberGroup
+}; //generatePassNumberGroup

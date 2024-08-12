@@ -184,7 +184,6 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
         startingPos,
         overlap,
         requiredPasses
-      
     };
 }
 
@@ -215,25 +214,33 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   const sceneSize = calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY);
 
   // Get tile layout information
-  const tileOutlineOrigin = getTilePosition(0, 0);
-  let { required_passes_x, required_passes_y } = calculateRequiredPasses(
+  let tileOutlineOrigin = getTilePosition(0, 0);
+  let returnPassContainer = calculateRequiredPasses(
       sceneSize, tileOutlineOrigin.tile_width, tileOutlineOrigin.tile_height,
       PARAM.getParamReal('scanhead', 'tile_overlap_x'), PARAM.getParamReal('scanhead', 'tile_overlap_y'));
+  
+  let required_passes_x = returnPassContainer.required_passes_x
+  let required_passes_y = returnPassContainer.required_passes_y
   
   const workAreaLimits = UTIL.getWorkAreaLimits();
   //process.print('scanhead_startPos 1: ' + scanhead_x_starting_pos);    
   // Adjust starting positions
-  let { startingPos: scanhead_x_starting_pos, overlap: overlap_x, requiredPasses: required_passes_x_new } = adjustTileLayout(
+  
+  let adjustedTileLayoutX = adjustTileLayout(
       modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
       required_passes_x, PARAM.getParamReal('scanhead', 'tile_overlap_x'),shiftX);
-
-  required_passes_x = required_passes_x_new; 
-
-  let { startingPos: scanhead_y_starting_pos, overlap: overlap_y, requiredPasses: required_passes_y_new  } = adjustTileLayout(
+  
+  let scanhead_x_starting_pos = adjustedTileLayoutX.startingPos;
+  let overlap_x = adjustedTileLayoutX.overlap;
+  required_passes_x = adjustedTileLayoutX.requiredPasses;
+  
+   let adjustedTileLayoutY = adjustTileLayout(
       modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
       required_passes_y, PARAM.getParamReal('scanhead', 'tile_overlap_y'),shiftY);
   
-  required_passes_y = required_passes_y_new; 
+  let scanhead_y_starting_pos = adjustedTileLayoutY.startingPos;
+  let overlap_y = adjustedTileLayoutY.overlap;
+  required_passes_y = adjustedTileLayoutY.requiredPasses;
   
   // Offset starting position for shifts
   scanhead_x_starting_pos += shiftX - maxShiftX / 2;
@@ -324,7 +331,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
 };
 
-const storeTileTable = (modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr) => {
+const storeTileTable = function(modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr){
   
   modelLayer.setAttribEx('tileTable', tileTable);
   modelLayer.setAttribEx('tileTable_3mf', tileTable3mf);

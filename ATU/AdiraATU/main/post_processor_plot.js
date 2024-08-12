@@ -46,26 +46,26 @@ exports.drawTileArray_MT = function(
       
     const arrayOfModels = UTIL.getModelsInLayer(modelData,layerNr);  
     
-    arrayOfModels.forEach(model => {
+    arrayOfModels.forEach(function(model){
  
       let thisModelLayer = model.getModelLayerByNr(layerNr);
          
       if(!thisModelLayer) {           
        throw new Error('postProcessor | drawTileArray_MT: modelLayer ' + layerNr + ' , in model ' +  model.getAttribEx('ModelName'));
-      }
+      };
             
       let tileTable = thisModelLayer
       .getAttribEx('tileTable');
            
       if (!tileTable) {               
         throw new Error('postProcessor | drawTileArray_MT: tile table at layer ' + layerNr + ' , in model ' +  model.getAttribEx('ModelName') + 'not defined');
-      }  
+      };
          
-      tileTable.forEach(tile => {
+      tileTable.forEach(function(tile) {
         let thisTile = new PATH_SET.bsPathSet();
         let pointArray = [];
 
-        tile.scanhead_outline.forEach (point => {
+        tile.scanhead_outline.forEach (function(point){
           pointArray.push(new VEC2.Vec2(point.m_coord[0] , point.m_coord[1]));      
         });
         
@@ -77,5 +77,5 @@ exports.drawTileArray_MT = function(
 
     layerIt.next();
     progress.step(1);      
-  } 
-}
+  };
+};

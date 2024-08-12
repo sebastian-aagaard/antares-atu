@@ -33,7 +33,7 @@ var CONST = require('main/constants.js');
  //   generate scan head objects       //
  ///////////////////////////////////////
     
-const getScanner = (laserIndex) => {
+const getScanner = function(laserIndex){
     
   let x_ref = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) + '_ref_mm');
   //let y_ref
@@ -62,16 +62,16 @@ const getScanner = (laserIndex) => {
   //  Define and store scanner array   //
   ///////////////////////////////////////
   
-exports.defineScannerArray = (bsModelData) => {
+exports.defineScannerArray = function(bsModelData) {
 
   let scannerArray = [];
   
   for (let i = 0; i < CONST.nLaserCount; i++) {
   scannerArray[i] = getScanner(i+1);
-    }
+    };
     
   bsModelData.setTrayAttribEx('scanhead_array',scannerArray);  
-  }
+  };
 
 //---------------------------------------------------------------------------------------------//
     
@@ -79,7 +79,7 @@ exports.defineScannerArray = (bsModelData) => {
   //  Laser display color def   //
   ////////////////////////////////
 
-exports.setLaserDisplayColor = (bsModelData) => {
+exports.setLaserDisplayColor = function(bsModelData){
   
   const l_rnd_gen = new RND.Rand(239803);
   let laser_color = [];
@@ -109,7 +109,7 @@ exports.setLaserDisplayColor = (bsModelData) => {
 
 // static distributing the lasing zone by 
 // finding the midway point of the scanner reach
-exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
+exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
     
   let laserAssignedHatches = new HATCH.bsHatch(); // to be returned
     
@@ -132,13 +132,12 @@ exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
             xDiv[i] = scanheadArray[i-1].abs_x_max;
       } else {      
       xDiv[i] = (scanheadArray[i-1].x_ref + scanheadArray[i].x_ref)/2;// + shiftX;
-        } //if else       
+        } //if else
     } // for
 
  // first get each tile, x laser seperation with overlap.
   
- for (let tileIndex = 0; tileIndex < tileArray.length ; tileIndex++){
-   
+ for (let tileIndex = 0; tileIndex < tileArray.length; tileIndex++){
     let clip_min_y = tileArray[tileIndex].scanhead_outline[0].m_coord[1];
     let clip_max_y = tileArray[tileIndex].scanhead_outline[2].m_coord[1];
     
@@ -183,15 +182,19 @@ exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
          hatchIterator.next();
        }
              
-       if (laserIndex > CONST.nLaserCount-1) laserIndex = 0;
+       if (laserIndex > CONST.nLaserCount-1){
+         laserIndex = 0;
+       };
    
-       // gethatchBlockArray
-       let hatchBlockArray = tileHatch.getHatchBlockArray();
-       // remove empty hatches
-       let nonEmptyHatches = hatchBlockArray.reduce((reducedArray,currentHatch) => {         
-         if(!currentHatch.isEmpty()) reducedArray.addHatchBlock(currentHatch);           
-         return reducedArray;         
-       },new HATCH.bsHatch());
+       // getHatchBlockArray
+        let hatchBlockArray = tileHatch.getHatchBlockArray();
+        // remove empty hatches
+        let nonEmptyHatches = hatchBlockArray.reduce(function(reducedArray, currentHatch) {         
+            if (!currentHatch.isEmpty()) {
+                reducedArray.addHatchBlock(currentHatch);           
+            }
+            return reducedArray;         
+        }, new HATCH.bsHatch());
 
        laserAssignedHatches.moveDataFrom(nonEmptyHatches);
      }   
@@ -203,7 +206,7 @@ exports.staticDistribution = (thisModel,bsModelData,nLayerNr,hatchObj) => {
 //---------------------------------------------------------------------------------------------//
 
 
-exports.assignProcessParameters = (bsHatch,bsModel) => {
+exports.assignProcessParameters = function(bsHatch,bsModel){
 
   const bsidTable = bsModel.getAttribEx('customTable');
   
@@ -249,7 +252,7 @@ exports.assignProcessParameters = (bsHatch,bsModel) => {
 
 //---------------------------------------------------------------------------------------------//
   
-exports.defineSharedZones = (bsHatch) => {
+exports.defineSharedZones = function(bsHatch){
 
 /////////////////////////////////////
   /// Define zones shared by lasers /// 

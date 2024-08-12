@@ -11,7 +11,7 @@ const ISLAND = requireBuiltin('bsIsland');
 const UTIL = require('main/utility_functions.js');
 const CONST = require('main/constants.js');
 
-exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
+exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr){
   
   const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
   
@@ -29,7 +29,7 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
   };
  
   
-  exposureArray.forEach((pass, passIndex) => {
+  exposureArray.forEach(function(pass, passIndex) {
     try {
       if(PARAM.getParamInt('tileing','ScanningMode')) { // on the fly
          exporter_3mf.metadata[passIndex] = {
@@ -37,7 +37,7 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
           "namespace": "http://nikonslm.com/tilinginformation/202305",
           "attributes": {
             "uuid": UTIL.generateUUID(),
-            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\s+/g, ''),
+            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\\s+/g, ''),
             "direction": pass[0].ProcessHeadFromFront ? "fromfront" : "fromback",
             "startx": pass[0].xcoord.toFixed(3),
             "starty": (pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + PARAM.getParamReal('tileing', 'tile_size')).toFixed(3),
@@ -57,18 +57,18 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
           "namespace": "http://nikonslm.com/tilinginformation/202305",
           "attributes": {
             "uuid": UTIL.generateUUID(),
-            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\s+/g, ''),
+            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\\s+/g, ''),
             "speed": PARAM.getParamReal('movementSettings', 'axis_transport_speed')
           },
           "nodes": []
-        };       
+        };
       };
       
     } catch (e) {
       process.printError('PostProcess | createExporter3mf: failed at pass ' + passIndex + ', layer ' + layerNr + e.message);
     }
     
-    pass.forEach((tile, tileIndex) => {
+    pass.forEach(function(tile, tileIndex){
       let speedY, tileSize;
 
       // Determine tile size and y speed
@@ -148,7 +148,7 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
   //Set the exporter_3mf for all models in this layer
   //const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
 
-  arrayOfModels.forEach(m => {
+  arrayOfModels.forEach(function(m){
     m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf);
   });
     
@@ -158,9 +158,9 @@ exports.createExporter3mf = (exposureArray, layerIt, modelData, layerNr) => {
   
 };
 
-const getPartLayerMass = (models,layerNr) => {
+const getPartLayerMass = function(models,layerNr){
 
-  const surface_area_mm2 = models.reduce((acc, model) => {
+  const surface_area_mm2 = models.reduce(function(acc, model){
     const islandArray = new ISLAND.bsIsland();
     const layer = model.getModelLayerByNr(layerNr);
     islandArray.addPathSet(layer.getAllIslandsPathSet());
@@ -178,19 +178,19 @@ const getPartLayerMass = (models,layerNr) => {
   return mass_kilograms;
 }
 
-const assignLayerTotals = (exporter_3mf) => {
+const assignLayerTotals = function(exporter_3mf){
   // Initialize total durations
   let layerScanningDuration = 0;
   let layerTotalDuration = 0;
 
-  exporter_3mf.metadata.forEach((pass,index) => {
+  exporter_3mf.metadata.forEach(function(pass,index){
     
     if(index == 0) return;
     
     let passScanningDuration = 0;
     let passTotalDuration = 0;
 
-    pass.nodes.forEach(tile => {
+    pass.nodes.forEach(function(tile){
       let tileExposureDuration = Number(tile.attributes.tileExposureTime_us);
       let tileTotalTime = Number(tile.attributes.tileTotalTime_us);
 

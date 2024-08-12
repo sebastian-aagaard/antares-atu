@@ -27,7 +27,7 @@ const UTIL = require('main/utility_functions.js');
    *  finds the boundaries of all models for each layer
    *  sets up the tile layout based on all layer boundaries for each layers
    */
-exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {  
+exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress){  
   
   
  //process.print('modelLayerCount: ' + modelLayerCount);
@@ -112,14 +112,14 @@ exports.preprocessLayerStack = (modelDataSrc, modelDataTarget, progress) => {
     } //layer iterator 
       progress.update(100);
 
-  }
+  };
   
 }; //preprocessLayerStack
 
 //---------------------------------------------------------------------------------------------//
 
 
-const isLayerProcessable = (modelLayer) => {
+const isLayerProcessable = function(modelLayer){
     return (
         modelLayer.isValid() &&
         modelLayer.tryGetBounds2D() &&
@@ -132,7 +132,7 @@ const isLayerProcessable = (modelLayer) => {
 };
 
 
-const isModelOutsideWorkArea = (boundsArray,limits,layerNr,model) => {
+const isModelOutsideWorkArea = function(boundsArray,limits,layerNr,model){
   
   const bounds = {
     xmin: boundsArray[0],
@@ -152,7 +152,7 @@ if(bounds.xmin < limits.xmin || bounds.xmax > limits.xmax ||
 };
 
 // ADD LAYER BOUNDARIES
-const addLayerBoundariesToAllLayerBoundaries = (modelData, thisLayerBoundaries, workAreaLimits, layerHeight,srcModel) => {
+const addLayerBoundariesToAllLayerBoundaries = function(modelData, thisLayerBoundaries, workAreaLimits, layerHeight,srcModel){
   let boundsArray = [
     undefined, // xmin
     undefined, // xmax

@@ -79,7 +79,7 @@ exports.postprocessSortExposure_MT = function(
 
 const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray){
   
-    exposureArray.forEach(pass => {
+    exposureArray.forEach(function(pass){
     // Remove leading zeroes
     while (pass.length > 0 && pass[0].exposureTime === 0) {
       pass.shift();
@@ -88,25 +88,34 @@ const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray){
     // Remove trailing zeroes
     while (pass.length > 0 && pass[pass.length - 1].exposureTime === 0) {
       pass.pop();
-    }
+    };
   });
-}
+};
 
 
-const fillVoidsinExposureArray = (exposureArray) => {
+const fillVoidsinExposureArray = function(exposureArray) {
   
-    exposureArray.forEach(pass => {
+    exposureArray.forEach(function(pass) {
         if (pass.length > 0) {
             // Find the minimum and maximum tileID in this pass
-            const minTileID = Math.min(...pass.map(tile => tile.tileID));
-            const maxTileID = Math.max(...pass.map(tile => tile.tileID));
+            const minTileID = Math.min.apply(null, pass.map(function(tile) {
+                return tile.tileID;
+            }));
+            const maxTileID = Math.max.apply(null, pass.map(function(tile) {
+                return tile.tileID;
+            }));
 
             // Ensure every tileID from min to max is present
             for (let tileID = minTileID; tileID <= maxTileID; tileID++) {
-                if (!pass.some(tile => tile.tileID === tileID)) {
+              
+                let isTileIdMissing = !pass.some(function(tile) {
+                    return tile.tileID === tileID;
+                });
+
+                if (isTileIdMissing) {
                     // If tileID is missing, append it with default structure
                     
-                    throw new Error ("error in function fillVoidsinExposureArray");
+                    throw new Error("error in function fillVoidsinExposureArray");
                   
                     pass.push({
                         tileID: tileID,
@@ -119,17 +128,21 @@ const fillVoidsinExposureArray = (exposureArray) => {
         }
     });
 
-    exposureArray.forEach(pass => pass.sort((a, b) => a.tileID - b.tileID));
-} // fillVoidsinExposureArray
+    exposureArray.forEach(function(pass) {
+        pass.sort(function(a, b) {
+            return a.tileID - b.tileID;
+        });
+    });
+}; // fillVoidsinExposureArray
 
-const createExposureArray = (tileObj) => {
-  
+
+const createExposureArray = function(tileObj) {
     let exposureArray = [];
 
     // Iterate over each tile in the tileObj
-    Object.keys(tileObj).forEach(tileID => {
+    Object.keys(tileObj).forEach(function(tileID) {
         const tile = tileObj[tileID];
-        const passNumber =  Math.floor(tileID / 1000); // Use tileID to determine the pass
+        const passNumber = Math.floor(tileID / 1000); // Use tileID to determine the pass
 
         // Ensure there is an array to hold the current pass's tiles
         if (!exposureArray[passNumber]) {
@@ -141,14 +154,17 @@ const createExposureArray = (tileObj) => {
     });
 
     // Filter out any empty entries if passes are not sequential
-    return exposureArray.filter(pass => pass !== undefined);
-}
+    return exposureArray.filter(function(pass) {
+        return pass !== undefined;
+    });
+};
 
 
-const getTileExposureDuration = (exposureArray,modelData) => {
+
+const getTileExposureDuration = function(exposureArray, modelData) {
   
-  exposureArray.forEach(pass => {
-    pass.forEach(tile => {
+  exposureArray.forEach(function(pass) {
+    pass.forEach(function(tile) {
       // Initialize an object to store exposure durations for each laser
       let exposureTimeObj = {};
       let skywritingTime = {};
@@ -157,24 +173,31 @@ const getTileExposureDuration = (exposureArray,modelData) => {
       tile.laserExposureTime = {};
       tile.exposureTime = 0;
 
-      tile.exposure.forEach((cur,curIndex) => {
+      tile.exposure.forEach(function(cur, curIndex) {
         const cur_bsid = cur.getAttributeInt('bsid');
         const laserID = Math.floor(cur_bsid / 10); // Calculate the laser ID
         
         const scanParamters = modelData
           .getModel(cur.getModelIndex())
           .getAttribEx('customTable')
-          .find(profile => profile.bsid === cur_bsid)
+          .find(function(profile) {
+            return profile.bsid === cur_bsid;
+          })
           .attributes
-          .find(attr => attr.schema === CONST.scanningSchema);
+          .find(function(attr) {
+            return attr.schema === CONST.scanningSchema;
+          });
         
         const scanner = JSON.parse(modelData
           .getTrayAttrib('scanhead_array'))
-          .find(scn => scn.laserIndex === laserID);
+          .find(function(scn) {
+            return scn.laserIndex === laserID;
+          });
         
         const laserStartPos = {
           'x': cur.getAttributeReal('xcoord') + scanner.x_ref,
-          'y': cur.getAttributeReal('ycoord') + scanner.rel_y_max }; 
+          'y': cur.getAttributeReal('ycoord') + scanner.rel_y_max 
+        }; 
          
         const exposureSettings = {
           'fJumpSpeed': scanParamters.jumpSpeed,
@@ -185,11 +208,13 @@ const getTileExposureDuration = (exposureArray,modelData) => {
           'nMarkDelay': scanParamters.markDelay,
           'nPolygonDelay': scanParamters.polygonDelay,
           'polygonDelayMode': scanParamters.polygonDelayMode,
-          'laserPos' : laserStartPos };  
+          'laserPos': laserStartPos
+        };  
           
         nextLaserStartPos[laserID] = {
           'x': laserStartPos.x,
-          'y': laserStartPos.y + (cur.getAttributeInt('bMoveFromFront') ? scanner.rel_y_max : -scanner.rel_y_max)};
+          'y': laserStartPos.y + (cur.getAttributeInt('bMoveFromFront') ? scanner.rel_y_max : -scanner.rel_y_max)
+        };
  
         // If the laser ID doesn't exist in tile.laserDuration, create a new entry
         if (tile.laserExposureTime[laserID] === undefined) {
@@ -198,50 +223,44 @@ const getTileExposureDuration = (exposureArray,modelData) => {
           
           skywritingTime[laserID] = 0;
           tile.laserExposureTime[laserID] = 0;
-        };
+        }
 
         // Add polyline to the corresponding laser exposure time
         exposureTimeObj[laserID].addPolyline(cur, exposureSettings);
         // Get the added duration caused by skywriting
-        skywritingTime[laserID] += getSkywritingDuration(cur,modelData);
+        skywritingTime[laserID] += getSkywritingDuration(cur, modelData);
         
         // At last exposure polyline add position jump to next start pos plus added duration from skywriting
         if (curIndex === tile.exposure.length - 1) {
-          
-          Object.keys(exposureTimeObj).forEach( key => {
-                        
+          Object.keys(exposureTimeObj).forEach(function(key) {
             exposureTimeObj[key].setLaserPosition(
               nextLaserStartPos[key].x,
               nextLaserStartPos[key].y,
-              'jump');
+              'jump'
+            );
 
-            //get exposuretime of each laser in tile
-            tile.laserExposureTime[key] = exposureTimeObj[key]
-              .getExposureTimeMicroSeconds();
-            
+            // Get exposure time of each laser in tile
+            tile.laserExposureTime[key] = exposureTimeObj[key].getExposureTimeMicroSeconds();
             tile.laserExposureTime[key] += skywritingTime[key];
             tile.laserExposureTime[key] += CONST.nBufferduration;
-            
-            tile.exposureTime = ((tile.exposureTime < tile.laserExposureTime[key]) 
-              ? tile.laserExposureTime[key] : tile.exposureTime);
-            
-          }); // for each laser object
-        }; // if
-      }); // forEach .exposure
-    }); // forEach .tile
-  }); // forEach .pass
-  
-} //getTileExposureDuration
 
+            // Update the maximum exposure time for the tile
+            tile.exposureTime = Math.max(tile.exposureTime, tile.laserExposureTime[key]);
+          });
+        }
+      });
+    });
+  });
+};
 
-const getSkywritingDuration = (cur,modelData) => {
+const getSkywritingDuration = function(cur,modelData){
   
   const skyWritingParamters = modelData
           .getModel(cur.getModelIndex())
           .getAttribEx('customTable')
-          .find(profile => profile.bsid === cur.getAttributeInt('bsid'))
+          .find(function(profile){return profile.bsid === cur.getAttributeInt('bsid')})
           .attributes
-          .find(attr => attr.schema === CONST.skywritingSchema);
+          .find(function(attr){return attr.schema === CONST.skywritingSchema});
 
   let skywritingPostConst,skywritingPrevConst;
 
@@ -301,7 +320,7 @@ const getSkywritingDuration = (cur,modelData) => {
   return (npostDur + nprevDur)*skywritingOccurances;
 }
 
-const getSkywritingCountForPolyline = (points,skyWritingParamters) => {
+const getSkywritingCountForPolyline = function(points,skyWritingParamters){
   
   let count = 0;
   
@@ -319,13 +338,13 @@ const getSkywritingCountForPolyline = (points,skyWritingParamters) => {
     return count; 
 }  
 
-const mapTileExposureData = (modelData, layerNr, tileTable_3mf) => {
+const mapTileExposureData = function(modelData, layerNr, tileTable_3mf){
   let exposurePolylineIt = modelData.getFirstLayerPolyline(layerNr, POLY_IT.nLayerExposure, 'rw');
   let tileExposureObj = {};
     
   // front load tileExposureObj
-  tileTable_3mf.forEach(pass => {
-    pass.forEach(tile => {
+  tileTable_3mf.forEach(function(pass){
+    pass.forEach(function(tile){
       tileExposureObj[tile.attributes.tileID] = {        
         tileID: tile.attributes.tileID,
         xcoord: tile.attributes.xcoord,
@@ -340,7 +359,7 @@ const mapTileExposureData = (modelData, layerNr, tileTable_3mf) => {
     const tileID = thisExposurePolyline.getAttributeInt('tileID_3mf');
     
     const passNumber =  Math.floor(tileID / 1000);
-    const thisTile = tileTable_3mf[passNumber-1].find(obj => obj.attributes.tileID === tileID);
+    const thisTile = tileTable_3mf[passNumber-1].find(function(obj){obj.attributes.tileID === tileID});
     
     // Add the polyline to the exposures array for this tileID
     tileExposureObj[tileID].exposure.push(thisExposurePolyline);
@@ -354,30 +373,30 @@ const mapTileExposureData = (modelData, layerNr, tileTable_3mf) => {
 }; //mapTileExposureData
 
 
-const updateProcessingOrder = (sortedExposureArray ) => {
+const updateProcessingOrder = function(sortedExposureArray ){
 
   let processingOrder = 0;
   
-  sortedExposureArray.forEach(innerArray => 
-      innerArray.forEach(entry => 
-          entry.exposure.forEach(obj => 
+  sortedExposureArray.forEach(function(innerArray){ 
+      innerArray.forEach(function(entry){ 
+          entry.exposure.forEach(function(obj){ 
               obj.setAttributeInt('_processing_order',processingOrder++)
-          )
-      )
-  );
+          })
+      })
+  });
 } //updateProcessingOrder
 
-const sortMovementDirectionOfTiles = (tileExposureArray) => {
+const sortMovementDirectionOfTiles = function(tileExposureArray){
 
   const isFirstPassFrontToBack = PARAM.getParamInt('movementSettings','isFirstPassFrontToBack'); 
   const isPassDirectionAlternating = PARAM.getParamInt('movementSettings','isPassDirectionAlternating'); 
     
-  const filteredExposureArray =  tileExposureArray.filter (entry => {
+  const filteredExposureArray =  tileExposureArray.filter(function(entry){
     return entry;
   });
     
   
-  filteredExposureArray.forEach((entry, index) => {
+  filteredExposureArray.forEach(function(entry, index){
     
     let bFromFront = true;
     
@@ -386,7 +405,7 @@ const sortMovementDirectionOfTiles = (tileExposureArray) => {
       bFromFront = false;
     };
     
-    entry.forEach(obj => obj.ProcessHeadFromFront = bFromFront);        
+    entry.forEach(function(obj){obj.ProcessHeadFromFront = bFromFront});        
     
   });
   

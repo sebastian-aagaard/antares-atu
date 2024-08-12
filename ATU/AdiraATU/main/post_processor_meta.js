@@ -35,22 +35,23 @@ const removeCustomTableScanningSchema = function(modelData,progress){
   
   const modelCount = modelData.getModelCount();
   progress.initSteps(modelCount-1);
-       
-  for(let modelId = 0; modelId < modelCount; modelId++)
-    {
+  
+  for(let modelId = 0; modelId < modelCount; modelId++){ 
+    
     let customTable = modelData
     .getModel(modelId)
     .getAttribEx('customTable');
-
-    customTable.forEach(entry => {
-     entry.attributes = entry.attributes.filter(attr =>
-        attr.schema !==CONST.scanningSchema)
+// 
+    customTable.forEach(function(entry){
+     entry.attributes = entry.attributes.filter(function(attr){
+      attr.schema !==CONST.scanningSchema
+       });
      });
 
     modelData
     .getModel(modelId)
     .setAttribEx('customTable',customTable);
 
-    progress.step(1);    
-  };
-}
+    progress.step(1);
+ };
+};

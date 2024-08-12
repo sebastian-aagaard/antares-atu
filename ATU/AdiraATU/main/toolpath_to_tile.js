@@ -173,7 +173,7 @@ const anotateTileIntefaceHatchblocks = function(hatch,tileID) {
     };
   };
 
-exports.sortHatchBlocks = (thisModel,nLayerNr,allHatches) => {
+exports.sortHatchBlocks = function(thisModel,nLayerNr,allHatches){
  
   const thisLayer = thisModel.getModelLayerByNr(nLayerNr);
   const tileSegmentArray = thisLayer.getAttribEx('tileSegmentArray');
@@ -188,8 +188,7 @@ exports.sortHatchBlocks = (thisModel,nLayerNr,allHatches) => {
     allHatches.sortHatchBlocksForMinDistToSegments(tileSegmentArray,0,sortingArguments);
       
     return allHatches;
-
-}
+};
 
 exports.adjustInterfaceVectors = function(bsModel,nLayerNr,allHatches){
 
@@ -273,7 +272,7 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   return adjustedHatch; 
 }; 
 
-exports.mergeShortLines = (hatch,thisLayer) => {
+exports.mergeShortLines = function(hatch,thisLayer){
   
   const mergedHatch = new HATCH.bsHatch();
   const resultHatch = new HATCH.bsHatch();
@@ -314,7 +313,6 @@ exports.mergeShortLines = (hatch,thisLayer) => {
     
     hatchBlockIterator.next();
     };
-  
 
   return resultHatch;
   
@@ -357,7 +355,7 @@ exports.mergeInterfaceVectors = function(hatch,thisLayer){
     const groupedHatchblocks = {};
 
     // Iterate through each hatchblock
-    hatchBlocksArray.forEach(hatchblock => {
+    hatchBlocksArray.forEach(function(hatchblock){
         // Get the tileID of the current hatchblock
         const tileID = hatchblock.getAttributeInt('tileID_3mf');
         
@@ -371,10 +369,10 @@ exports.mergeInterfaceVectors = function(hatch,thisLayer){
     });
     
     let mergedHatchAll = new HATCH.bsHatch();
-    Object.values(groupedHatchblocks).forEach(tileHatch => {
+    Object.values(groupedHatchblocks).forEach(function(tileHatch){
 
       let mergeHatch = new HATCH.bsHatch();
-      let mergecount = tileHatch.mergeShortLines(mergeHatch,2,0.01,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
+      let mergecount = tileHatch.mergeShortLines(mergeHatch,2,0.01,0);
 
       mergedHatchAll.moveDataFrom(mergeHatch);
       });

@@ -250,11 +250,11 @@ const getBuildTime_us = function(modelData,progress,layer_start_nr,layer_end_nr)
   return buildTime_us;
 } 
 
-const getTransportationDistance_mm = (exportData) => {
+const getTransportationDistance_mm = function(exportData){
   
   let transport_mm = 0;
     
-  exportData.forEach((pass, index) => {
+  exportData.forEach(function(pass, index){
     
     if(index == 0) return;
     
@@ -280,7 +280,7 @@ const getTransportationDistance_mm = (exportData) => {
      transport_mm += passTarget.distance(nextPassStart); 
       
       //process.print('from pass to pass ' + passTarget.distance(nextPassStart))
-     }
+     };
       
     if (index == exportData.length-1) { // if last
       //back to park
@@ -290,13 +290,13 @@ const getTransportationDistance_mm = (exportData) => {
       
       //process.print('back to park ' + passTarget.distance(parkPos))
       // do we move back to park?
-      }
+      };
   });
 
   return transport_mm;
 };
 
-const getPartMassKg = (modelData,progress,layer_start_nr,layer_end_nr) => {
+const getPartMassKg = function(modelData,progress,layer_start_nr,layer_end_nr){
   
   let layerCount = layer_end_nr-layer_start_nr+1;
  
