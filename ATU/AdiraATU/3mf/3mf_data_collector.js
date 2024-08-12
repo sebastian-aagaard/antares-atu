@@ -86,7 +86,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
       // Determine next y-coordinate
       let nextTileYCoord, nextTileXCoord;
       if (tileIndex === pass.length - 1) { // if last tile
-        nextTileYCoord = tile.ycoord + (tile.ProcessHeadFromFront ? tileSize : -tileSize);
+        nextTileYCoord = tile.ycoord + (tile.ProcessHeadFromFront ? tileSize : 0);
         nextTileXCoord = tile.xcoord;
       } else {
         nextTileXCoord = pass[tileIndex + 1].xcoord;        

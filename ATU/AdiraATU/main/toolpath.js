@@ -82,7 +82,7 @@ allHatches = TP2TILE.adjustInterfaceVectors(allHatches);
   
  allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
 
- LASER.assignProcessParameters(allHatches,thisModel);
+ LASER.assignProcessParameters(allHatches,thisModel,nLayerNr);
     
  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
  

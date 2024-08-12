@@ -206,7 +206,7 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
 //---------------------------------------------------------------------------------------------//
 
 
-exports.assignProcessParameters = function(bsHatch,bsModel){
+exports.assignProcessParameters = function(bsHatch,bsModel,nLayerNr){
 
   const bsidTable = bsModel.getAttribEx('customTable');
   
@@ -224,9 +224,22 @@ exports.assignProcessParameters = function(bsHatch,bsModel){
         return item.bsid === bsid;
     });
     
+    let thisLayer = bsModel.getModelLayerByNr(nLayerNr);
+    let tileArray = thisLayer.getAttribEx('tileTable');
+    let tileID = thisHatchBlock.getAttributeInt('tileID_3mf');
+    let xcoord, ycoord;
+    tileArray.forEach(function(tileObj) {
+      if (tileObj.tileID == tileID) {
+          xcoord = tileObj.scanhead_x_coord;
+          ycoord = tileObj.scanhead_y_coord;
+      };
+    });
+    
     thisHatchBlock.setAttributeReal('speed',thisProcessParameters.speed);
     thisHatchBlock.setAttributeReal('power',thisProcessParameters.power);
     thisHatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
+    thisHatchBlock.setAttributeReal('xcoord',xcoord);
+    thisHatchBlock.setAttributeReal('ycoord',ycoord);
     
     const displayMode = PARAM.getParamInt('display','displayColors');
     
