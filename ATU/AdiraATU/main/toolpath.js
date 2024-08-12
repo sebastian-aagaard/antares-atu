@@ -44,7 +44,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     // --- CREATE TOOLPATH --- //
         
     // process islands
-     allHatches = TPGEN.processIslands(thisModel,island_it,nLayerNr,islandId);
+     allHatches.moveDataFrom(TPGEN.processIslands(thisModel,island_it,nLayerNr,islandId));
     
     // get blocked path hatches
     let blockedPathHatch = TPGEN.getBlockedPathHatch(thisModel,island_it,islandId);
@@ -58,31 +58,33 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
 //     allHatches.moveDataFrom(downSkinContourHatch);
     allHatches.moveDataFrom(blockedPathHatch);
     
-    TPGEN.sortHatchByPriority(allHatches);             
+    //TPGEN.sortHatchByPriority(allHatches);             
           
     island_it.next();
     islandId++;
   };
   // process open poly lines
-  let polyLineHatch = TPGEN.getOpenPolyLinesHatch(modelData,nLayerNr);
-  allHatches.moveDataFrom(polyLineHatch);
+ let polyLineHatch = TPGEN.getOpenPolyLinesHatch(modelData,nLayerNr);
+ allHatches.moveDataFrom(polyLineHatch);
     
-  TILE.getTileArray(thisLayer,nLayerNr,modelData);
+ TILE.getTileArray(thisLayer,nLayerNr,modelData);
     
-  // --- TILE OPERATIONS --- //
-  allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
-   
-   allHatches = TP2TILE.adjustInterfaceVectors(thisModel,nLayerNr,allHatches);
-//     
-//   allHatches = TP2TILE.mergeInterfaceVectors(allHatches,thisLayer);  
-// 
-//   allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
-//   
-//   LASER.assignProcessParameters(allHatches,thisModel);
-//   
-//   allHatches = TP2TILE.mergeShortLines(allHatches,thisLayer);
-//     
-//   allHatches = TP2TILE.deleteShortHatchLines(allHatches);
+ allHatches = TP2TILE.mergeShortLines(allHatches);
+  
+ allHatches.deleteShortLines(PARAM.getParamReal("exposure", "min_vector_lenght"));
+  
+//  --- TILE OPERATIONS --- //
+allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
+    
+allHatches = TP2TILE.adjustInterfaceVectors(allHatches);
+    
+ allHatches = TP2TILE.mergeInterfaceVectors(allHatches); 
+  
+ allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
+
+ LASER.assignProcessParameters(allHatches,thisModel);
+    
+ allHatches = TP2TILE.deleteShortHatchLines(allHatches);
  
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
@@ -91,6 +93,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     "bCheckAttributes": true
   });  
     
+  allHatches = TP2TILE.sortHatchByPriorityInTiles(allHatches);
+  
   hatchResult.moveDataFrom(allHatches);
   
 }; // makeExposureLayer

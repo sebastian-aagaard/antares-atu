@@ -156,7 +156,6 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let bulkIsland = makeBordersContainer.bulkIsland;
   
   // sort borders
-  
   sortBorders(allBorderHatch);
   
   
@@ -331,7 +330,6 @@ const makeBorders = function(islandObj){
   let allBorderHatch = new HATCH.bsHatch();
   let island = islandObj.clone();
   let offsetIsland = new ISLAND.bsIsland();
-  
   
   for (let borderIndex = 1; borderIndex < numberOfBorders+1 ; borderIndex++){
     

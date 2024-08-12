@@ -8,7 +8,7 @@
 
 // -------- INCLUDES -------- //
 const PARAM = requireBuiltin('bsParam');
-// var MODEL = requireBuiltin('bsModel');
+const MODEL = requireBuiltin('bsModel');
 const ISLAND = requireBuiltin('bsIsland');
 const HATCH = requireBuiltin('bsHatch');
 const CONST = require('main/constants.js');
@@ -58,7 +58,6 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
   let vec2_tile_array = new Array();
   let tileSegmentArray = new Array();
   let assignedHatch = allHatches.clone(); 
-
 
   /////////////////////////////////////////////////////////////
   ///                 Index hatces to tiles                 ///
@@ -120,10 +119,10 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       let tileID_3mf = tileArray[j].tile_number+(tileArray[j].passNumber)*1000;
       anotateTileIntefaceHatchblocks(tileHatch,tileID_3mf);
         
-      // assign attributes to hatches within tile
+      // assign tileID to hatches within tile
       tileHatch.setAttributeInt('tileID_3mf',tileID_3mf);
-      tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
-      tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
+//       tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
+//       tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
 
       assignedHatch.moveDataFrom(tileHatch);
       assignedHatch.moveDataFrom(tileHatch_outside);
@@ -134,9 +133,7 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       tileSegmentArray[j] = new SEG2D.Seg2d(startVec2,endVec2).toString();  
           
     } //for
-    
-    //thisLayer.setAttribEx('tileSegmentArray',tileSegmentArray);
-    
+        
     return assignedHatch;
     
 } //assignToolpathToTiles
@@ -190,12 +187,12 @@ exports.sortHatchBlocks = function(thisModel,nLayerNr,allHatches){
     return allHatches;
 };
 
-exports.adjustInterfaceVectors = function(bsModel,nLayerNr,allHatches){
+exports.adjustInterfaceVectors = function(allHatches){
 
   let hatchBlockIterator = allHatches.getHatchBlockIterator();
   let adjustedHatch = new HATCH.bsHatch();
   let nonAdjustedHatch = new HATCH.bsHatch();
-
+  let resultHatch = new HATCH.bsHatch();
 
   while (hatchBlockIterator.isValid()) {   
     let thisHatchBlock = hatchBlockIterator.get();
@@ -203,23 +200,23 @@ exports.adjustInterfaceVectors = function(bsModel,nLayerNr,allHatches){
     
     if(overlapNumber === 0) {
       
-        nonAdjustedHatch.addHatchBlock(thisHatchBlock);
+        resultHatch.addHatchBlock(thisHatchBlock);
       
       } else {
         
-        adjustedHatch.moveDataFrom(applyZipperInterface(thisHatchBlock, PARAM.getParamInt('interface','tileInterface')===0));
+        resultHatch.moveDataFrom(applyZipperInterface(thisHatchBlock, PARAM.getParamInt('interface','tileInterface')===0));
     };
+    
     
   hatchBlockIterator.next();
   };
     
-  allHatches.makeEmpty();
-  allHatches.moveDataFrom(nonAdjustedHatch);
-  allHatches.moveDataFrom(adjustedHatch);
+//   allHatches.makeEmpty();
+//   allHatches.moveDataFrom(nonAdjustedHatch);
+//   allHatches.moveDataFrom(adjustedHatch);
   
-  return allHatches;
+  return resultHatch;
 }
-
 
 const applyZipperInterface = function(hatchBlock,bOverlap){
             
@@ -269,52 +266,25 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   adjustedHatch.setAttributeInt('type',hatchType);
   adjustedHatch.setAttributeInt('islandId',islandId);
   
+  adjustedHatch.mergeHatchBlocks({
+    "bConvertToHatchMode": true,
+    "nConvertToHatchMaxPointCount": 2,
+    //"nMaxBlockSize": 512,
+    "bCheckAttributes": true
+  });
+  
   return adjustedHatch; 
 }; 
 
-exports.mergeShortLines = function(hatch,thisLayer){
-  
-  const mergedHatch = new HATCH.bsHatch();
-  const resultHatch = new HATCH.bsHatch();
-  const collectorHatch = new HATCH.bsHatch();
+exports.mergeShortLines = function(hatch){
 
   const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
   const maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
   
-  let hatchBlockIterator = hatch.getHatchBlockIterator();
-  
-  let tileTable3mf = thisLayer.getAttribEx('tileTable_3mf');
-  let currentTileID = tileTable3mf[0][0].attributes.tileID; 
-  
-  while(hatchBlockIterator.isValid()){
-        
-    let hatchBlock = hatchBlockIterator.get();
-    let thisTileID = hatchBlock.getAttributeInt('tileID_3mf');
-    
-    hatchBlockIterator.next();
-    
-    let nextIsValid = hatchBlockIterator.isValid();
-    
-    hatchBlockIterator.prev();
-    
-    if(thisTileID !== currentTileID || !nextIsValid) {
-     
-      collectorHatch.mergeShortLines(mergedHatch,minVectorLenght,
-      maxMergeDistance,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
-      
-      resultHatch.moveDataFrom(mergedHatch);
-      collectorHatch.makeEmpty();
-      
-      currentTileID = thisTileID; 
-      
-      }
-      
-    collectorHatch.addHatchBlock(hatchBlock);
-    
-    hatchBlockIterator.next();
-    };
+  hatch.mergeShortLines(hatch,minVectorLenght,maxMergeDistance,
+    HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
 
-  return resultHatch;
+  return hatch;
   
 } //handleShortLines
 
@@ -331,6 +301,7 @@ exports.deleteShortHatchLines = function (hatch) {
     let type = hatchBlock.getAttributeInt('type');
     
     if (type === 1 || type === 3 || type === 5) {
+      
         hatchBlock.deleteShortLines(minVectorLenght);
         
       };    
@@ -347,35 +318,117 @@ exports.deleteShortHatchLines = function (hatch) {
   return resultHatch;
   };
 
-exports.mergeInterfaceVectors = function(hatch,thisLayer){
-  
-  let hatchBlocksArray = hatch.getHatchBlockArray();
-  
-  // Create an object to hold arrays of hatchBlocksArray grouped by tileID
-    const groupedHatchblocks = {};
+exports.mergeInterfaceVectors = function(hatch) {
+    let hatchBlocksArray = hatch.getHatchBlockArray();
+    
+    // Create objects to hold arrays of hatchBlocksArray grouped by tileID and type
+    let groupedHatchblocksByType = {
+        1: {},
+        3: {},
+        5: {}
+    };
+    let groupedHatchblocksContour = {};
 
     // Iterate through each hatchblock
-    hatchBlocksArray.forEach(function(hatchblock){
+    hatchBlocksArray.forEach(function(hatchblock) {
         // Get the tileID of the current hatchblock
         const tileID = hatchblock.getAttributeInt('tileID_3mf');
+        const type = hatchblock.getAttributeInt('type');
         
-        // If the tileID does not exist in the groupedHatchblocks object, create a new array for it
-        if (!groupedHatchblocks[tileID]) {
-            groupedHatchblocks[tileID] = new HATCH.bsHatch();
+        // Initialize tileID arrays for the specific types if they don't exist
+        if (type === 1 || type === 3 || type === 5) {
+            if (!groupedHatchblocksByType[type][tileID]) {
+                groupedHatchblocksByType[type][tileID] = new HATCH.bsHatch();
+            }
+            groupedHatchblocksByType[type][tileID].addHatchBlock(hatchblock);
+        } else {
+            if (!groupedHatchblocksContour[tileID]) {
+                groupedHatchblocksContour[tileID] = new HATCH.bsHatch();
+            }
+            groupedHatchblocksContour[tileID].addHatchBlock(hatchblock);
         }
-
-        // Add the hatchblock to the appropriate array based on its tileID
-        groupedHatchblocks[tileID].addHatchBlock(hatchblock);
     });
     
     let mergedHatchAll = new HATCH.bsHatch();
-    Object.values(groupedHatchblocks).forEach(function(tileHatch){
 
-      let mergeHatch = new HATCH.bsHatch();
-      let mergecount = tileHatch.mergeShortLines(mergeHatch,2,0.01,0);
+    // Merge hatch blocks for each type (1, 3, 5) separately
+    Object.keys(groupedHatchblocksByType).forEach(function(type) {
+        Object.entries(groupedHatchblocksByType[type]).forEach(function(entry) {
+            let tileId = +entry[0];
+            let tileHatch = entry[1];
+            
+            let mergeHatch = new HATCH.bsHatch();
+            
+            let mergecount = tileHatch.mergeShortLines(
+                mergeHatch,
+                2,
+                0.001,
+                HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
+            );
+            
+            mergedHatchAll.moveDataFrom(mergeHatch);
+        });
+    });
 
-      mergedHatchAll.moveDataFrom(mergeHatch);
-      });
-      
+    // Merge contour hatch blocks
+    Object.entries(groupedHatchblocksContour).forEach(function(entry) {
+        let tileId = +entry[0];
+        let tileHatch = entry[1];
+        mergedHatchAll.moveDataFrom(tileHatch);
+    });
+    
     return mergedHatchAll;
-  };
+}; // mergeInterfaceVectors
+
+  
+exports.sortHatchByPriorityInTiles = function(hatch) {
+    let returnHatch = new HATCH.bsHatch();
+    let hatchBlocksArray = hatch.getHatchBlockArray();
+  
+    // Create an object to hold arrays of hatchBlocksArray grouped by tileID
+    let groupedHatchblocks = {};
+  
+    // Iterate through each hatchblock
+    hatchBlocksArray.forEach(function(hatchblock) {
+        // Get the tileID of the current hatchblock
+        let tileID = hatchblock.getAttributeInt('tileID_3mf');
+      
+        // If the tileID does not exist in the groupedHatchblocks object, create a new array for it
+        if (!groupedHatchblocks[tileID]) {
+            groupedHatchblocks[tileID] = [];
+        }
+      
+        // Add the hatchblock to the appropriate array based on its tileID
+        groupedHatchblocks[tileID].push(hatchblock);
+    });
+  
+    // Define the priority map for different hatch types
+    const typePriorityMap = new Map([
+        [CONST.typeDesignations.open_polyline.value, PARAM.getParamInt('scanning_priority', 'open_polyline_priority')],
+        [CONST.typeDesignations.part_hatch.value, PARAM.getParamInt('scanning_priority', 'part_hatch_priority')],
+        [CONST.typeDesignations.part_contour.value, PARAM.getParamInt('scanning_priority', 'part_contour_priority')],
+        [CONST.typeDesignations.downskin_hatch.value, PARAM.getParamInt('scanning_priority', 'downskin_hatch_priority')],
+        [CONST.typeDesignations.downskin_contour.value, PARAM.getParamInt('scanning_priority', 'downskin_contour_priority')],
+        [CONST.typeDesignations.support_hatch.value, PARAM.getParamInt('scanning_priority', 'support_hatch_priority')],
+        [CONST.typeDesignations.support_contour.value, PARAM.getParamInt('scanning_priority', 'support_contour_priority')],
+    ]);
+  
+    // Sort each tile's hatchblocks by priority and add them to the returnHatch
+    Object.keys(groupedHatchblocks).forEach(function(tileID) {
+        let hatchInTileArray = groupedHatchblocks[tileID];
+
+        hatchInTileArray.sort(function(a, b) {
+            let prioA = typePriorityMap.get(a.getAttributeInt('type'));
+            let prioB = typePriorityMap.get(b.getAttributeInt('type'));
+            return prioA - prioB;
+        });
+
+        hatchInTileArray.forEach(function(hatchBlock) {
+            returnHatch.addHatchBlock(hatchBlock);
+        });
+    });
+  
+    return returnHatch;
+}; // sortHatchByPriorityInTiles
+
+  
