@@ -86,21 +86,21 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
            
         switch(tileArray[j].passNumber) {
           case 1:
-            tile_x_max -= overLapCompensation;//
+            tile_x_max -= overLapCompensation-PARAM.getParamReal('stripeOverlapAllocation','firstOverlapShift');//
             break;
           case 2:
-            tile_x_min += overLapCompensation;
+            tile_x_min += overLapCompensation+PARAM.getParamReal('stripeOverlapAllocation','firstOverlapShift');
             //if there is 3 passes
             if(tileArray[j].requiredPassesX>2){
-              tile_x_max -= overLapCompensation;
+              tile_x_max -= overLapCompensation-PARAM.getParamReal('stripeOverlapAllocation','secondOverlapShift');
               }           
             break;
           case 3:
-            tile_x_min += overLapCompensation;
+            tile_x_min += overLapCompensation+PARAM.getParamReal('stripeOverlapAllocation','secondOverlapShift');
             break;
           };  
          };
-      // CREATE CLIPPING MASK
+//       // CREATE CLIPPING MASK
         
       // add the corrdinates to vector pointset
       let tile_points = new Array(4);
@@ -374,7 +374,7 @@ exports.mergeInterfaceVectors = function(hatch,thisLayer){
     Object.values(groupedHatchblocks).forEach(tileHatch => {
 
       let mergeHatch = new HATCH.bsHatch();
-      let mergecount = tileHatch.mergeShortLines(mergeHatch,0.2,0.01,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
+      let mergecount = tileHatch.mergeShortLines(mergeHatch,2,0.01,HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
 
       mergedHatchAll.moveDataFrom(mergeHatch);
       });

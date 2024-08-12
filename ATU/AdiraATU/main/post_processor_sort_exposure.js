@@ -77,7 +77,7 @@ exports.postprocessSortExposure_MT = function(
 } // postprocessSortExposure_MT
  
 
-const trimAwayEmptyLeadingAndTrailingTiles = (exposureArray) => {
+const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray){
   
     exposureArray.forEach(pass => {
     // Remove leading zeroes

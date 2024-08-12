@@ -249,7 +249,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   let cur_tile_coord_x = scanhead_x_starting_pos;
   let cur_tile_coord_y = scanhead_y_starting_pos;
   
-  if (!cur_tile_coord_x || !cur_tile_coord_y)
+  if (cur_tile_coord_x === undefined || cur_tile_coord_y === undefined)
     throw new Error ("current tile coordinate not defined, layer nr: " + layerNr + ' at z: ' + modelLayer.getLayerZ());
     
   if (!required_passes_x || !required_passes_y)

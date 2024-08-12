@@ -36,7 +36,8 @@ const removeCustomTableScanningSchema = function(modelData,progress){
   const modelCount = modelData.getModelCount();
   progress.initSteps(modelCount-1);
        
-  for(let modelId = 0; modelId < modelCount; modelId++){
+  for(let modelId = 0; modelId < modelCount; modelId++)
+    {
     let customTable = modelData
     .getModel(modelId)
     .getAttribEx('customTable');

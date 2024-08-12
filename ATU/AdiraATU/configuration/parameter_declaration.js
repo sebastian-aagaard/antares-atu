@@ -71,6 +71,12 @@ exports.declareParameters = function(parameter)
     LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
     LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
     LOCALIZER.GetMessage('param_laserIntefrace_overlap'));
+    
+  parameter.declareParameterGroup('stripeOverlapAllocation', LOCALIZER.GetMessage('grp_stripeOverlapAllocation'));
+    parameter.declareParameterReal('stripeOverlapAllocation', 'firstOverlapShift', LOCALIZER.GetMessage('param_firstOverlapShift'), -430.0, 430.0, 0.0);
+    parameter.declareParameterReal('stripeOverlapAllocation', 'secondOverlapShift', LOCALIZER.GetMessage('param_secondOverlapShift'), -430.0, 430.0, 0.0);
+
+   
   
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);

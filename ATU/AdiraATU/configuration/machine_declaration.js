@@ -42,6 +42,8 @@ exports.declareMachine = function(machineConfig)
   machineConfig.addLayerThickness(80);
   machineConfig.addLayerThickness(90);
   machineConfig.addLayerThickness(100);
+  machineConfig.addLayerThickness(1000);
+
 // 
 //   machineConfig.addLayerThicknessToMaterial('unspecified', 50);
 //   machineConfig.addLayerThicknessToMaterial('unspecified', 100);
