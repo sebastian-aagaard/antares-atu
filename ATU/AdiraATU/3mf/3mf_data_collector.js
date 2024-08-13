@@ -65,7 +65,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
       };
       
     } catch (e) {
-      process.printError('PostProcess | createExporter3mf: failed at pass ' + passIndex + ', layer ' + layerNr + e.message);
+      process.printWarning('PostProcess | createExporter3mf: failed at pass ' + passIndex + ', layer ' + layerNr +" "+ e.message);
     }
     
     pass.forEach(function(tile, tileIndex){

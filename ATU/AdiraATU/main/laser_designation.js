@@ -172,11 +172,14 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
          let curTileID = currentPassNr*1000 + currentTileNr;
          
          if(tileID === curTileID){      
-                
-           let type = currHatcBlock.getAttributeInt('type');
-           currHatcBlock.setAttributeInt('_disp_color',laser_color[laserIndex]);
-           currHatcBlock.setAttributeInt('bsid', (10 * (laserIndex+1))+type); // set attributes
            
+           if(PARAM.getParamInt('laserAllocation','laserAssignedToModel') === 0 
+             || PARAM.getParamInt('laserAllocation','laserAssignedToModel') == laserIndex+1){
+             
+                 let type = currHatcBlock.getAttributeInt('type');
+                 currHatcBlock.setAttributeInt('_disp_color',laser_color[laserIndex]);
+                 currHatcBlock.setAttributeInt('bsid', (10 * (laserIndex+1))+type); // set attributes                
+             };
            }  else currHatcBlock.makeEmpty();
                    
          hatchIterator.next();
@@ -190,7 +193,7 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
         let hatchBlockArray = tileHatch.getHatchBlockArray();
         // remove empty hatches
         let nonEmptyHatches = hatchBlockArray.reduce(function(reducedArray, currentHatch) {         
-            if (!currentHatch.isEmpty()) {
+            if (!currentHatch.isEmpty() && !currentHatch.getAttributeInt('bsid')==0) {
                 reducedArray.addHatchBlock(currentHatch);           
             }
             return reducedArray;         
@@ -235,9 +238,16 @@ exports.assignProcessParameters = function(bsHatch,bsModel,nLayerNr){
       };
     });
     
-    thisHatchBlock.setAttributeReal('speed',thisProcessParameters.speed);
-    thisHatchBlock.setAttributeReal('power',thisProcessParameters.power);
-    thisHatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
+//     if(!bsid){
+//       thisHatchBlock.setAttributeReal('speed',0);
+//       thisHatchBlock.setAttributeReal('power',0);
+//       thisHatchBlock.setAttributeInt('priority',0);
+//       } else {
+      thisHatchBlock.setAttributeReal('speed',thisProcessParameters.speed);
+      thisHatchBlock.setAttributeReal('power',thisProcessParameters.power);
+      thisHatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
+/*    };*/
+        
     thisHatchBlock.setAttributeReal('xcoord',xcoord);
     thisHatchBlock.setAttributeReal('ycoord',ycoord);
     
