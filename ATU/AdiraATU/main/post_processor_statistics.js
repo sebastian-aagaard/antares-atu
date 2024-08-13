@@ -46,159 +46,94 @@ exports.getStatistics = function(
     process.print('buildtime_hours: ' + buildTime_us/(3600*1000*1000));
     process.print('buildtime_days: ' + buildTime_us/(3600*1000*1000)/24);
    }
-    
-//   let customJSON = {
-//     
-//     "namespaces": [
-//       {
-//         "schema": "http://schemas.scanlab.com/skywriting/2023/01",
-//         "prefix": "skywriting"
-//       },      
-//       {
-//         "schema": "http://adira.com/addcreator/202305",
-//         "prefix": "adira"
-//       },
-//       {
-//         "schema": "http://adira.com/tilinginformation/202305",
-//         "prefix": "tiling"
-//       }    
-//     ],
-//       
-//     metadata: [ 
-//       {
-//         "name": "statistics",
-//         "schema": "http://adira.com/addcreator/202305",
-//         attributes: {
-//           "build_time": buildTime_us,
-//           "total_mass": partMassKg,
-//           "total_packed_powder":totalPowder,// totalPackedPowder                
-//         }        
-//       },
-//       
-//       {
-//         "name": "generation",
-//         "schema": "http://adira.com/addcreator/202305",
-//         attributes: {
-//           "created_at": new Date().toISOString(),
-//           "created_by": "engineer"
-//         }        
-//       },
-// 
-//       {
-//         "name": "material",
-//         "schema": "http://adira.com/addcreator/202305",
-//         att/ributes: {
-//           "layerthickness": modelData.getLayerThickness(),
-//           "identifier": null,//model.getMaterialID(),
-//           "density": PARAM.getParamReal('material','density_g_cc'),//,
-//           "gas": totalPowder,//         
-//         }        
-//       },
-//       
-//       {
-//         "name": "process",
-//         "schema": "http://adira.com/addcreator/202305",
-//         "children": [
-//           {
-//             "name": "recoating",
-//             attributes: {
-//               "speed": PARAM.getParamInt('movementSettings','recoating_speed_mms')
-//             }        
-//           
-//           }
-//         ]
-//                 
-//       }
-// 
-//     ]};
 
   let myConfiguration = {
     "data": "test",
     "writtenat": "XXX"
   };
 
-let customJSON = {
-
-    "namespaces": [
-      {
-        "schema": "http://schemas.scanlab.com/skywriting/2023/01",
-        "prefix": "skywriting"
-      },      
-      {
-        "schema": "http://nikonslm.com/origin/202305",
-        "prefix": "origin"
-      },
-      {
-        "schema": "http://nikonslm.com/tilinginformation/202305",
-        "prefix": "tile"
-      },
-      {
-        "schema": "http://nikonslm.com/statistics/202305",
-        "prefix": "stats"
-      },
-      {
-       "schema": "http://test.com/test/202305",
-       "prefix": "tiles"
-      }
-    ],
-        
-    "attachments": [
-        {
-          "path": "/ATU/configuration.json",
-          "encoding": "string",
-          "relationship": "http://test.com/configurationjson/202305",
-          "data": JSON.stringify (myConfiguration)
-        },
-        {
-          "path": "/ATU/toolpath.log",
-          "encoding": "string",
-          "relationship": "http://test.com/configurationjson/202305",
-          "data": "log"
-        }
-        
-    ],
-        
-        
-    "segmentattributes": [
+// Initialize the customJSON object with static data
+  let customJSON = {
+      "namespaces": [
           {
-           "segmenttype": "hatch",
-           "datatype": "int32",
-           "name_3mf": "tileid",
-           "name_atu": "tileID_3mf",
-           "namespace": "http://nikonslm.com/tilinginformation/202305"
-           }
-    ],
-           
-    "metadata": [{
-            "name": "totals",
-            "namespace": "http://nikonslm.com/statistics/202305",
-            "attributes": {
-                "build_time_hours": buildTime_us.toFixed(0)/(3600*1000*1000),
-                "part_mass_kg": partMassKg.toFixed(3),
-                "powderbed_kg": totalPowder.toFixed(3),
-              }
-            },
-            {
-            "name":"origin",
-            "namespace": "http://nikonslm.com/origin/202305",
-            "attributes": {
+              "schema": "http://schemas.scanlab.com/skywriting/2023/01",
+              "prefix": "skywriting"
+          },      
+          {
+              "schema": "http://nikonslm.com/origin/202305",
+              "prefix": "origin"
+          },
+          {
+              "schema": "http://nikonslm.com/tilinginformation/202305",
+              "prefix": "tile"
+          },
+          {
+              "schema": "http://nikonslm.com/statistics/202305",
+              "prefix": "stats"
+          },
+          {
+              "schema": "http://test.com/test/202305",
+              "prefix": "tiles"
+          }
+      ],
+      "attachments": [], // This will be filled dynamically
+      "segmentattributes": [
+          {
+              "segmenttype": "hatch",
+              "datatype": "int32",
+              "name_3mf": "tileid",
+              "name_atu": "tileID_3mf",
+              "namespace": "http://nikonslm.com/tilinginformation/202305"
+          }
+      ],
+      "metadata": [{
+          "name": "totals",
+          "namespace": "http://nikonslm.com/statistics/202305",
+          "attributes": {
+              "build_time_hours": (buildTime_us / (3600 * 1000 * 1000)).toFixed(0),
+              "part_mass_kg": partMassKg.toFixed(3),
+              "powderbed_kg": totalPowder.toFixed(3)
+          }
+      },
+      {
+          "name": "origin",
+          "namespace": "http://nikonslm.com/origin/202305",
+          "attributes": {
               "created_at": new Date().toISOString(),
               "created_by": process.username
-            },
-            "nodes": [{
-                    "name": "node20",
-                    "attributes": {
-                        "attribute1": 5,
-                        "attributexxx": "250 something",
-                    }
-                }
-            ]
-        }
-    ]
+          },
+          "nodes": [{
+              "name": "node20",
+              "attributes": {
+                  "attribute1": 5,
+                  "attributexxx": "250 something"
+              }
+          }]
+      }]
+  };
+
+  // Dynamically add the attachments based on the model data
+  let modelCount = modelData.getModelCount();
+  for (let modelId = 0; modelId < modelCount; modelId++) {
+      let model = modelData.getModel(modelId);
+      customJSON.attachments.push({
+          "path": "/ATU/configuration_" + model.getAttribEx("ModelName") + ".json",
+          "encoding": "string",
+          "relationship": "http://test.com/configurationjson/202305",
+          "data": model.getAttribEx("parameterJSON")
+      });
+  }
+
+  customJSON.attachments.push({
+      "path": "/ATU/toolpath.log",
+      "encoding": "string",
+      "relationship": "http://test.com/configurationjson/202305",
+      "data": "log"
+  });
+
+  modelData.setTrayAttribEx('custom', customJSON);
+
 };
-          
-   modelData.setTrayAttribEx('custom', customJSON);
-}
 
 const getBuildTime_us = function(modelData,progress,layer_start_nr,layer_end_nr){
   

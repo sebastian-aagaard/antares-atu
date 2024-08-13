@@ -14,6 +14,21 @@ let CONST = require('main/constants.js');
 
 exports.prepareModelExposure = function(model){
   
+  
+  // Save Parameter JSON string
+
+  let parameterConfiguration =
+    {
+     "bIncludePlatformParameters" : true,
+     "bIncludePartParameters" : true,
+     "bFullDetail" : false
+
+    };
+
+  let parameterConfiguration_json = PARAM.getParametersExportData(parameterConfiguration);
+
+  model.setAttrib("parameterJSON", JSON.stringify(parameterConfiguration_json));
+  
   //Create custom table
   //generates a custom table containing different parameters depending on laser number
   
@@ -70,8 +85,6 @@ for (let l_laser_nr = 1; l_laser_nr <= CONST.nLaserCount; ++l_laser_nr) {
         customTable.push(bsid_obj);
     }
 }
-
-
   model.setAttribEx('customTable', customTable);
  
 };
