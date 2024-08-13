@@ -194,7 +194,7 @@ const getTileExposureDuration = function(exposureArray, modelData) {
             return scn.laserIndex === laserID;
           });
         
-        const laserStartPos = { //todo
+        const laserStartPos = {
           'x': cur.getAttributeReal('xcoord') + scanner.x_ref,
           'y': cur.getAttributeReal('ycoord') + scanner.rel_y_max 
         }; 
