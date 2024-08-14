@@ -78,10 +78,6 @@ exports.declareParameters = function(parameter)
 
   parameter.declareParameterGroup('laserAllocation', LOCALIZER.GetMessage('grp_laserAllocation'));
     parameter.declareParameterInt('laserAllocation', 'laserAssignedToModel', LOCALIZER.GetMessage('param_laserAssignedToModel'), 0, 5, 0);
- 
-  parameter.declareParameterGroup('modelShift', LOCALIZER.GetMessage('grp_modelShift'));
-    parameter.declareParameterReal('modelShift', 'shiftModelInX', LOCALIZER.GetMessage('param_shiftModelInX'), 0, 430, 0);
-    parameter.declareParameterReal('modelShift', 'shiftModelInY', LOCALIZER.GetMessage('param_shiftModelInY'), 0, 430, 0);
   
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
@@ -167,6 +163,11 @@ exports.declareParameters = function(parameter)
         LOCALIZER.GetMessage('param_PolygonDelayMode_Fixed')],
         LOCALIZER.GetMessage('param_PolygonDelayMode_Fixed')
         );
+   
+ 
+  parameter.declareParameterGroup('tileShift', LOCALIZER.GetMessage('grp_tileShift'),"Tile Shift",BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+    parameter.declareParameterReal('tileShift', 'shiftTileInX', LOCALIZER.GetMessage('param_shiftTileInX'), 0, 430, 0);
+    parameter.declareParameterReal('tileShift', 'shiftTileInY', LOCALIZER.GetMessage('param_shiftTileInY'), 0, 430, 0);
    
   // -------- WORK AREA -------- //
   parameter.declareParameterGroup('workarea',LOCALIZER.GetMessage('grp_workarea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
