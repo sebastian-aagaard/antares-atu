@@ -131,7 +131,7 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
       }else if (i == scanheadArray.length) { // if arraylength is reached
             xDiv[i] = scanheadArray[i-1].abs_x_max;
       } else {      
-      xDiv[i] = (scanheadArray[i-1].x_ref+scanheadArray[i-1].rel_x_max + scanheadArray[i].x_ref + scanheadArray[i].rel_x_min)/2;// + shiftX;
+      xDiv[i] = (scanheadArray[i-1].x_ref+scanheadArray[i-1].rel_x_max + scanheadArray[i].x_ref + scanheadArray[i].rel_x_min)/2;;
         } //if else
     } // for
 
