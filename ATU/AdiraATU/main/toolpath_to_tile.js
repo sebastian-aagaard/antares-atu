@@ -12,7 +12,7 @@ const MODEL = requireBuiltin('bsModel');
 const ISLAND = requireBuiltin('bsIsland');
 const HATCH = requireBuiltin('bsHatch');
 const CONST = require('main/constants.js');
-// var POLY_IT = requireBuiltin('bsPolylineIterator');
+const POLY_IT = requireBuiltin('bsPolylineIterator');
 const VEC2 = requireBuiltin('vec2');
 const SEG2D = requireBuiltin('seg2d');
 const UTIL = require('main/utility_functions.js');
@@ -33,13 +33,13 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
   /// Merge Hatch Blocks with Same Attributes  ///
   ////////////////////////////////////////////////
    
-  allHatches.mergeHatchBlocks({
-      "bConvertToHatchMode": true,
-      "nConvertToHatchMaxPointCount": 2,
-      //"nMaxBlockSize": 512,
-      "bCheckAttributes": true
-    }
-  );
+//   allHatches.mergeHatchBlocks({
+//       "bConvertToHatchMode": true,
+//       "nConvertToHatchMaxPointCount": 2,
+//       //"nMaxBlockSize": 512,
+//       "bCheckAttributes": true
+//     }
+//   );
  
   /////////////////////////////////////
   /// sort tilearray by tile number  ///
@@ -78,10 +78,10 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       
       
       //if tileoverlap is greater than requested
-      if(tileArray[j].overlapX < PARAM.getParamReal('scanhead','tile_overlap_x')){
+      if(tileArray[j].overlapX < PARAM.getParamReal('tileing','tile_overlap_x')){
       
         let halfOverlap = Math.abs(tileArray[j].overlapX/2);
-        let overLapCompensation = halfOverlap + PARAM.getParamReal('scanhead','tile_overlap_x');
+        let overLapCompensation = halfOverlap + PARAM.getParamReal('tileing','tile_overlap_x');
            
         switch(tileArray[j].passNumber) {
           case 1:
@@ -121,17 +121,15 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
         
       // assign tileID to hatches within tile
       tileHatch.setAttributeInt('tileID_3mf',tileID_3mf);
-//       tileHatch.setAttributeReal('xcoord', tileArray[j].scanhead_x_coord);
-//       tileHatch.setAttributeReal('ycoord', tileArray[j].scanhead_y_coord);
 
-      assignedHatch.moveDataFrom(tileHatch);
-      assignedHatch.moveDataFrom(tileHatch_outside);
-      
       // generate Segment obejct containing the tiles to 
       let startVec2 = new VEC2.Vec2(tile_x_cen,tile_y_max);
       let endVec2 = new VEC2.Vec2(tile_x_cen,tile_y_min);
       tileSegmentArray[j] = new SEG2D.Seg2d(startVec2,endVec2).toString();  
           
+      assignedHatch.moveDataFrom(tileHatch);
+      assignedHatch.moveDataFrom(tileHatch_outside);
+        
     } //for
         
     return assignedHatch;
@@ -224,6 +222,8 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   let secondTileId = hatchBlock.getAttributeInt('overlappingTile_2');
   let hatchType = hatchBlock.getAttributeInt('type');
   let islandId = hatchBlock.getAttributeInt('islandId');
+  let subType = hatchBlock.getModelSubtype();
+  let polylineMode = hatchBlock.getPolylineMode();
   
   let overlappingHatch = new HATCH.bsHatch();
   overlappingHatch.addHatchBlock(hatchBlock);
@@ -252,8 +252,17 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   let firstHatch = new HATCH.bsHatch();
   let secondHatch = new HATCH.bsHatch();
 
-  firstHatch.addPaths(firstOverlapPathsSet);
-  secondHatch.addPaths(secondOverlapPathsSet);
+  let addPathArgs = {
+     nModelSubtype : subType,
+     nOpenPathPolylineMode : polylineMode,
+     nOpenPathTryPolyClosedPolylineModeTol : 0.0,
+     nClosedPathPolylineMode : POLY_IT.nPolyClosed,
+     bMergePolyHatch : true,
+     bTwoPointsPathAsPolyHatch : false
+  };
+
+  firstHatch.addPathsExt(firstOverlapPathsSet,addPathArgs);
+  secondHatch.addPathsExt(secondOverlapPathsSet,addPathArgs);
   
   firstHatch.setAttributeInt('tileID_3mf', firstTileId);
   secondHatch.setAttributeInt('tileID_3mf', secondTileId);
@@ -266,12 +275,12 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   adjustedHatch.setAttributeInt('type',hatchType);
   adjustedHatch.setAttributeInt('islandId',islandId);
   
-  adjustedHatch.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "nConvertToHatchMaxPointCount": 2,
-    //"nMaxBlockSize": 512,
-    "bCheckAttributes": true
-  });
+//   adjustedHatch.mergeHatchBlocks({
+//     "bConvertToHatchMode": false,
+//     "nConvertToHatchMaxPointCount": 2,
+//     //"nMaxBlockSize": 512,
+//     "bCheckAttributes": true
+//   });
   
   return adjustedHatch; 
 }; 
@@ -359,10 +368,8 @@ exports.mergeInterfaceVectors = function(hatch) {
             
             let mergeHatch = new HATCH.bsHatch();
             
-            let mergecount = tileHatch.mergeShortLines(
-                mergeHatch,
-                2,
-                0.001,
+            tileHatch.mergeShortLines(
+                mergeHatch,2, 0.001,
                 HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
             );
             
@@ -373,14 +380,73 @@ exports.mergeInterfaceVectors = function(hatch) {
     // Merge contour hatch blocks
     Object.entries(groupedHatchblocksContour).forEach(function(entry) {
         let tileId = +entry[0];
-        let tileHatch = entry[1];
-        mergedHatchAll.moveDataFrom(tileHatch);
+        let contourHatch = entry[1];
+        
+    contourHatch.mergeShortLines(
+          contourHatch,3, 0.001,
+          HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
+      );  
+        
+        mergedHatchAll.moveDataFrom(contourHatch);
     });
     
     return mergedHatchAll;
 }; // mergeInterfaceVectors
 
   
+exports.rearrangeHatchblocks = function(hatch) {
+    let returnHatch = new HATCH.bsHatch();
+    let hatchBlocksArray = hatch.getHatchBlockArray();
+  
+    // Create an object to hold arrays of hatchBlocksArray grouped by tileID
+    let groupedHatchblocks = {};
+  
+    // Iterate through each hatchblock
+    hatchBlocksArray.forEach(function(hatchblock) {
+        // Get the tileID of the current hatchblock
+        let tileID = hatchblock.getAttributeInt('tileID_3mf');
+      
+        // If the tileID does not exist in the groupedHatchblocks object, create a new array for it
+        if (!groupedHatchblocks[tileID]) {
+            groupedHatchblocks[tileID] = [];
+        }
+      
+        // Add the hatchblock to the appropriate array based on its tileID
+        groupedHatchblocks[tileID].push(hatchblock);
+    });
+
+    Object.values(groupedHatchblocks).forEach(function(groupOfHatchBlocksIntile) {
+      
+      let tileHatch = new HATCH.bsHatch();
+      
+      Object.values(groupOfHatchBlocksIntile).forEach(function(hatchBlock) {
+        
+        tileHatch.addHatchBlock(hatchBlock);
+        
+        });
+        
+        let hatchBlockArray = tileHatch.getHatchBlockArray();
+        let xcoord = hatchBlockArray[0].getAttributeReal('xcoord');
+        let ycoord = hatchBlockArray[0].getAttributeReal('ycoord');
+        
+        xcoord += 1000;
+        ycoord += PARAM.getParamReal('tileing','tile_size');
+        
+       let bounds = tileHatch.getBounds2D();
+       let center = bounds.getCenter(); 
+        
+        
+        let hotspot = new VEC2.Vec2(center.maxX,bounds.maxY);
+        
+        tileHatch.pathReordering(hotspot,HATCH.nSortFlagShortestPath | HATCH.nSortFlagUseHotSpot | HATCH.nSortFlagFlipOrientation);    
+
+        returnHatch.moveDataFrom(tileHatch);
+
+  });
+    
+    return returnHatch;
+}; // sortHatchByPriorityInTiles
+
 exports.sortHatchByPriorityInTiles = function(hatch) {
     let returnHatch = new HATCH.bsHatch();
     let hatchBlocksArray = hatch.getHatchBlockArray();

@@ -75,14 +75,16 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   
 //  --- TILE OPERATIONS --- //
 allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
-    
+      
 allHatches = TP2TILE.adjustInterfaceVectors(allHatches);
     
- allHatches = TP2TILE.mergeInterfaceVectors(allHatches); 
-  
+allHatches = TP2TILE.mergeInterfaceVectors(allHatches); 
+//   
  allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
 
  LASER.assignProcessParameters(allHatches,thisModel,nLayerNr);
+
+ //allHatches = TP2TILE.rearrangeHatchblocks(allHatches);
     
  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
  

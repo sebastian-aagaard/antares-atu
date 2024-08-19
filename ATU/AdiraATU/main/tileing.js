@@ -43,7 +43,7 @@ function getShiftX(layerNr) {
   // Compute the shift value based on the distance from the middle layer
   let shiftValue = distanceFromMiddle * shiftIncrement;
   
-  if (!shiftValue) {
+  if (!shiftValue || shiftIncrement == 0) {
     shiftValue = 0;
   }
       
@@ -68,7 +68,7 @@ function getShiftY(layerNr) {
   // Compute the shift value based on the distance from the middle layer
   let shiftValue = distanceFromMiddle * shiftIncrement;
   
-  if (!shiftValue) {
+  if (!shiftValue || shiftIncrement == 0) {
     shiftValue = 0;
   }
   return shiftValue;
@@ -81,8 +81,8 @@ function getShiftY(layerNr) {
 // get all relevant information for the tiling providing the origin of the scanhead
 function getTilePosition(x_pos, y_pos, overlap_x = undefined, overlap_y = undefined) {
     // Retrieve overlap values if they are the default zero, meaning they weren't explicitly passed
-    if (overlap_x === undefined) overlap_x = PARAM.getParamReal('scanhead', 'tile_overlap_x');
-    if (overlap_y === undefined) overlap_y = PARAM.getParamReal('scanhead', 'tile_overlap_y');
+    if (overlap_x === undefined) overlap_x = PARAM.getParamReal('tileing', 'tile_overlap_x');
+    if (overlap_y === undefined) overlap_y = PARAM.getParamReal('tileing', 'tile_overlap_y');
 
     let xmin = x_pos;
     let xmax = x_pos + PARAM.getParamReal('scanhead', 'x_scanfield_size_mm');
@@ -224,7 +224,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   let tileOutlineOrigin = getTilePosition(0, 0);
   let returnPassContainer = calculateRequiredPasses(
       sceneSize, tileOutlineOrigin.tile_width, tileOutlineOrigin.tile_height,
-      PARAM.getParamReal('scanhead', 'tile_overlap_x'), PARAM.getParamReal('scanhead', 'tile_overlap_y'));
+      PARAM.getParamReal('tileing', 'tile_overlap_x'), PARAM.getParamReal('tileing', 'tile_overlap_y'));
   
   let required_passes_x = returnPassContainer.required_passes_x;
   let required_passes_y = returnPassContainer.required_passes_y;
@@ -235,7 +235,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
   let adjustedTileLayoutX = adjustTileLayout(
       modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
-      required_passes_x, PARAM.getParamReal('scanhead', 'tile_overlap_x'),shiftX,PARAM.getParamReal('tileShift', 'shiftTileInX'));
+      required_passes_x, PARAM.getParamReal('tileing', 'tile_overlap_x'),shiftX,PARAM.getParamReal('tileShift', 'shiftTileInX'));
   
   let scanhead_x_starting_pos = adjustedTileLayoutX.startingPos;
   let overlap_x = adjustedTileLayoutX.overlap;
@@ -243,7 +243,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
    let adjustedTileLayoutY = adjustTileLayout(
       modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
-      required_passes_y, PARAM.getParamReal('scanhead', 'tile_overlap_y'),shiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'));
+      required_passes_y, PARAM.getParamReal('tileing', 'tile_overlap_y'),shiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'));
   
   let scanhead_y_starting_pos = adjustedTileLayoutY.startingPos;
   let overlap_y = adjustedTileLayoutY.overlap;

@@ -198,7 +198,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
          "hatchOrigin" : {x: 0.0, y: 0.0},
          "blocksortVec" : {x: 0.0, y: -1.0},
          "nFlags" : HATCH.nHatchFlagAlternating | 
-          HATCH.nHatchFlagBlocksortEnhanced |
+          //HATCH.nHatchFlagBlocksortEnhanced |
           HATCH.nHatchFlagFixedOrigin
         }; 
        
@@ -251,7 +251,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
          "fBlocksortRunAheadLimit": 2.0,
          "hatchOrigin" : {x: 0.0, y: 0.0},
          "blocksortVec" : {x: 0.0, y: -1.0},
-         "nFlags" : HATCH.nHatchFlagAlternating | 
+         "nFlags" : HATCH.nHatchFlagAlternating |
           HATCH.nHatchFlagBlocksortEnhanced |
           HATCH.nHatchFlagFixedOrigin
         };             
