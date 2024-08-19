@@ -201,12 +201,11 @@ exports.declareParameters = function(parameter)
 
   // -------- SCANNER HEAD -------- //
   parameter.declareParameterGroup('scanhead',LOCALIZER.GetMessage('grp_scanhead'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-       
-    parameter.declareParameterReal('scanhead', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-0.1); //-5
-    parameter.declareParameterReal('scanhead', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-0.1); //-5
     
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);//110;
+    
+    parameter.declareParameterReal('scanhead', 'y_scanfield_ref_mm',LOCALIZER.GetMessage('param_y_scanfield_ref_mm'),0,110,60);//110;
     
     parameter.declareParameterReal('scanhead', 'x_scanner1_max_mm',LOCALIZER.GetMessage('param_x_scanner1_max_mm'),0,100,80);
     parameter.declareParameterReal('scanhead', 'x_scanner1_min_mm',LOCALIZER.GetMessage('param_x_scanner1_min_mm'),-100,0,-40);
@@ -275,16 +274,19 @@ exports.declareParameters = function(parameter)
       "Alignment of the process head center (origo of laser 3) relative to the tile (bottom left corner)." 
       +"\nDefault - On The Fly: tile is located opposite the process head center in the process head moving direction (front to back / back to front)." 
      +"\nDefault - Move And Shoot: the tile center is placed at the process head center." +
-     "\nCustom: define the process head offset specifically."); 
+     "\nCustom: define the process head offsets specifically."); 
   
     parameter.declareParameterReal('tileing', 'processHeadCustomOffset_x',LOCALIZER.GetMessage('param_processHeadCustomOffset_x'),-210,220,0);   
     parameter.declareParameterReal('tileing', 'processHeadCustomOffset_y',LOCALIZER.GetMessage('param_processHeadCustomOffset_y'),-60,50,0);    
+ 
+    parameter.declareParameterReal('tileing', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-0.1); //-5
+    parameter.declareParameterReal('tileing', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-0.1); //-5
  
     parameter.declareParameterReal('tileing','step_x', LOCALIZER.GetMessage('param_step_x'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,7);
     parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,7); 
-    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,100.0,33.0);
+    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,110.0,33.0);
     
   parameter.declareParameterGroup('scanning_priority', LOCALIZER.GetMessage('grp_scanning_priority'));
     parameter.declareParameterInt('scanning_priority','part_hatch_priority', LOCALIZER.GetMessage('param_part_hatch_priority'),0,2000,100);

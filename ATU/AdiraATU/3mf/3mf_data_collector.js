@@ -31,15 +31,18 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
   let processHeadOffsetX, processHeadOffsetY;
   
   let scanfieldCenterXOffset = PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2-PARAM.getParamReal('scanhead','x_scanner3_ref_mm');
+  scanfieldCenterXOffset = scanfieldCenterXOffset < 0 ? 0 : scanfieldCenterXOffset;
+  
+  let scanfieldCenterYOffset = PARAM.getParamReal('tileing','tile_size')/2-(PARAM.getParamReal('scanhead','y_scanfield_size_mm')-PARAM.getParamReal('scanhead','y_scanfield_ref_mm'));
+  scanfieldCenterYOffset = scanfieldCenterYOffset < 0 ? 0 : scanfieldCenterYOffset;
      
   exposureArray.forEach(function(pass, passIndex) {
     try {
       if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
         
         if(PARAM.getParamInt('tileing','processHeadAlignment') == 0) { //default / automatic
-          
-          processHeadOffsetX = -PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2 + scanfieldCenterXOffset;
-          processHeadOffsetY = pass[0].ProcessHeadFromFront ? 0 : -PARAM.getParamReal('tileing', 'tile_size');
+          processHeadOffsetX = PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2 - scanfieldCenterXOffset; // center arround origo laser 3
+          processHeadOffsetY = pass[0].ProcessHeadFromFront ? 0 : PARAM.getParamReal('tileing', 'tile_size'); // offset along the movement direction
           
           } else { // custom
             
@@ -72,8 +75,8 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
          if(PARAM.getParamInt('tileing','processHeadAlignment') == 0) { //default / automatic
           
            
-          processHeadOffsetX = -PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2+scanfieldCenterXOffset;
-          processHeadOffsetY = -PARAM.getParamReal('tileing', 'tile_size')/2;
+          processHeadOffsetX = PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2-scanfieldCenterXOffset;
+          processHeadOffsetY = PARAM.getParamReal('tileing', 'tile_size')/2+scanfieldCenterYOffset;
   
           
           } else { // custom
