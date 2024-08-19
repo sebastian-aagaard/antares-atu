@@ -28,20 +28,36 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
     "metadata": []
   };
  
+  let processHeadOffsetX, processHeadOffsetY;
   
+  let scanfieldCenterXOffset = PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2-PARAM.getParamReal('scanhead','x_scanner3_ref_mm');
+     
   exposureArray.forEach(function(pass, passIndex) {
     try {
-      if(PARAM.getParamInt('tileing','ScanningMode')) { // on the fly
+      if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
+        
+        if(PARAM.getParamInt('tileing','processHeadAlignment') == 0) { //default / automatic
+          
+          processHeadOffsetX = -PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2 + scanfieldCenterXOffset;
+          processHeadOffsetY = pass[0].ProcessHeadFromFront ? 0 : -PARAM.getParamReal('tileing', 'tile_size');
+          
+          } else { // custom
+            
+          processHeadOffsetX = PARAM.getParamReal('tileing','processHeadCustomOffset_x');
+          processHeadOffsetY = PARAM.getParamReal('tileing','processHeadCustomOffset_y');
+            
+            };
+        
          exporter_3mf.metadata[passIndex] = {
           "name": "onthefly",
           "namespace": "http://nikonslm.com/tilinginformation/202305",
           "attributes": {
             "uuid": UTIL.generateUUID(),
-            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\\s+/g, ''),
-            "direction": pass[0].ProcessHeadFromFront ? "fromfront" : "fromback",
             "startx": pass[0].xcoord.toFixed(3),
             "starty": (pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + PARAM.getParamReal('tileing', 'tile_size')).toFixed(3),
             "sequencetransferspeed": PARAM.getParamReal('movementSettings', 'axis_transport_speed'),
+            "processHeadOffsetX" : processHeadOffsetX.toFixed(3),
+            "processHeadOffsetY" : processHeadOffsetY.toFixed(3),
             "requiredPasses": exposureArray.length,
             "tilesInPass": pass.length,
             "layerScanningDuration_us": null,
@@ -52,13 +68,29 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         
       } else { // moveandshoot
     
+        
+         if(PARAM.getParamInt('tileing','processHeadAlignment') == 0) { //default / automatic
+          
+           
+          processHeadOffsetX = -PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2+scanfieldCenterXOffset;
+          processHeadOffsetY = -PARAM.getParamReal('tileing', 'tile_size')/2;
+  
+          
+          } else { // custom
+            
+          processHeadOffsetX = PARAM.getParamReal('tileing','processHeadCustomOffset_x');
+          processHeadOffsetY = PARAM.getParamReal('tileing','processHeadCustomOffset_y');
+            
+          };
+        
         exporter_3mf.metadata[passIndex] = {
           "name": "moveandshoot",
           "namespace": "http://nikonslm.com/tilinginformation/202305",
           "attributes": {
             "uuid": UTIL.generateUUID(),
-            "type": PARAM.getParamStr('tileing', 'ScanningMode').toLowerCase().replace(/\\s+/g, ''),
-            "speed": PARAM.getParamReal('movementSettings', 'axis_transport_speed')
+            "speed": PARAM.getParamReal('movementSettings', 'axis_transport_speed'),
+            "processHeadOffsetX" : processHeadOffsetX.toFixed(3),
+            "processHeadOffsetY" : processHeadOffsetY.toFixed(3),
           },
           "nodes": []
         };
