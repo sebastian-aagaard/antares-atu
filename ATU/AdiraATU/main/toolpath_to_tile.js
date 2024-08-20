@@ -99,8 +99,28 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
             break;
           };  
          };
-//       // CREATE CLIPPING MASK
+     // CREATE CLIPPING MASK
+       
+     if(tileArray[j].overlapY < PARAM.getParamReal('tileing','tile_overlap_y')){
+      
+        let overLapCompensationY = (Math.abs(tileArray[j].overlapY) + PARAM.getParamReal('tileing','tile_overlap_y'))/2;
         
+        if(tileArray[j].tile_number !== 1 || tileArray[j].tile_number !== tileArray[j].requiredPassesY) {
+           
+           tile_y_min += overLapCompensationY;
+           tile_y_max -= overLapCompensationY;
+           
+           } else if(tileArray[j].tile_number === 1) {
+           
+           tile_y_max -= overLapCompensationY;
+           
+        } else if(tileArray[j].tile_number === tileArray[j].requiredPassesY) {
+           
+             tile_y_min += overLapCompensationY;
+           
+        };
+      };   
+         
       // add the corrdinates to vector pointset
       let tile_points = new Array(4);
       tile_points[0] = new VEC2.Vec2(tile_x_min, tile_y_min); //min,min
