@@ -86,7 +86,10 @@ allHatches = TP2TILE.mergeInterfaceVectors(allHatches);
     
  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
  
+//allHatches = TP2TILE.sortPartHatchByPositionInTiles(allHatches);
+
 //allHatches = TP2TILE.sortDownSkinByPositionInTiles(allHatches);
+ 
  
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,

@@ -277,7 +277,7 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
      nOpenPathPolylineMode : polylineMode,
      nOpenPathTryPolyClosedPolylineModeTol : 0.0,
      nClosedPathPolylineMode : POLY_IT.nPolyClosed,
-     bMergePolyHatch : true,
+     bMergePolyHatch : false,
      bTwoPointsPathAsPolyHatch : false
   };
 
@@ -519,56 +519,102 @@ exports.sortHatchByPriorityInTiles = function(hatch) {
     return returnHatch;
 }; // sortDownSkinByPosition
 
-// exports.sortHatchByPriorityInTiles = function(hatch) {
-//     let returnHatch = new HATCH.bsHatch();
-//     let hatchBlocksArray = hatch.getHatchBlockArray();
-//   
-//     // Create an object to hold arrays of hatchBlocksArray grouped by tileID
-//     let groupedHatchblocks = {};
-//   
-//     // Iterate through each hatchblock
-//     hatchBlocksArray.forEach(function(hatchblock) {
-//       
-//         // Get the tileID of the current hatchblock
-//         let tileID = hatchblock.getAttributeInt('tileID_3mf');
-//       
-//         // If the tileID does not exist in the groupedHatchblocks object, create a new array for it
-//         if (!groupedHatchblocks[tileID]) {
-//             groupedHatchblocks[tileID] = [];
-//         }
-//       
-//         // Add the hatchblock to the appropriate array based on its tileID
-//         groupedHatchblocks[tileID].push(hatchblock);
-//     });
-//          
-//   
-//     // Sort each tile's hatchblocks by priority and add them to the returnHatch
-//     Object.keys(groupedHatchblocks).forEach(function(tileID) {
-//       
-//       let hatchInTileArray = groupedHatchblocks[tileID];
-//       
-//       let nonDownSkin = hatchInTileArray.filter(function(obj) {
-//           return obj.getAttributeInt('type')!==CONST.typeDesignations.downskin_hatch.value;
-//       });
-//       
-//       let sortedDownSkin = hatchInTileArray
-//         .filter(function(obj) {
-//           return obj.getAttributeInt('type')==CONST.typeDesignations.downskin_hatch.value;
-//       })
-//       .sort(function(a, b) {
-//         return a.getBounds2D().maxY - b.getBounds2D().maxY;
-//     });
-//       
-//     
-//     
-//     let returnArray = nonDownSkin.concat(sortedDownSkin);
-//     
-//         returnArray.forEach(function(hatchBlock) {
-//             returnHatch.addHatchBlock(hatchBlock);
-//         });
-//     });
-//   
-//     return returnHatch;
-// }; // sortHatchByPriorityInTiles
-
+exports.sortPartHatchByPositionInTiles = function(hatch) {
+    let returnHatch = new HATCH.bsHatch();
+    let hatchBlocksArray = hatch.getHatchBlockArray();
   
+    // Create an object to hold arrays of hatchBlocksArray grouped by tileID
+    let groupedHatchblocks = {};
+  
+    // Iterate through each hatchblock
+    hatchBlocksArray.forEach(function(hatchblock) {
+      
+        // Get the tileID of the current hatchblock
+        let tileID = hatchblock.getAttributeInt('tileID_3mf');
+      
+        // If the tileID does not exist in the groupedHatchblocks object, create a new array for it
+        if (!groupedHatchblocks[tileID]) {
+            groupedHatchblocks[tileID] = [];
+        }
+      
+        // Add the hatchblock to the appropriate array based on its tileID
+        groupedHatchblocks[tileID].push(hatchblock);
+    });
+         
+  
+    // Sort each tile's hatchblocks by priority and add them to the returnHatch
+    Object.keys(groupedHatchblocks).forEach(function(tileID) {
+      
+      let hatchInTileArray = groupedHatchblocks[tileID];
+      
+      let nonDownSkin = hatchInTileArray.filter(function(obj) {
+          return obj.getAttributeInt('type')!==CONST.typeDesignations.part_hatch.value;
+      });
+      
+      let sortedDownSkin = hatchInTileArray
+        .filter(function(obj) {
+          return obj.getAttributeInt('type')==CONST.typeDesignations.part_hatch.value;
+      })
+      .sort(function(a, b) {
+        return b.getBounds2D().maxY - a.getBounds2D().maxY;
+    });
+      
+    let returnArray = nonDownSkin.concat(sortedDownSkin);
+    
+        returnArray.forEach(function(hatchBlock) {
+            returnHatch.addHatchBlock(hatchBlock);
+        });
+    });
+  
+    return returnHatch;
+}; // sortPartHatchByPositionInTiles
+
+ exports.sortDownSkinByPositionInTiles = function(hatch) {
+    let returnHatch = new HATCH.bsHatch();
+    let hatchBlocksArray = hatch.getHatchBlockArray();
+  
+    // Create an object to hold arrays of hatchBlocksArray grouped by tileID
+    let groupedHatchblocks = {};
+  
+    // Iterate through each hatchblock
+    hatchBlocksArray.forEach(function(hatchblock) {
+      
+        // Get the tileID of the current hatchblock
+        let tileID = hatchblock.getAttributeInt('tileID_3mf');
+      
+        // If the tileID does not exist in the groupedHatchblocks object, create a new array for it
+        if (!groupedHatchblocks[tileID]) {
+            groupedHatchblocks[tileID] = [];
+        }
+      
+        // Add the hatchblock to the appropriate array based on its tileID
+        groupedHatchblocks[tileID].push(hatchblock);
+    });
+         
+  
+    // Sort each tile's hatchblocks by priority and add them to the returnHatch
+    Object.keys(groupedHatchblocks).forEach(function(tileID) {
+      
+      let hatchInTileArray = groupedHatchblocks[tileID];
+      
+      let nonDownSkin = hatchInTileArray.filter(function(obj) {
+          return obj.getAttributeInt('type')!==CONST.typeDesignations.part_hatch.value;
+      });
+      
+      let sortedDownSkin = hatchInTileArray
+        .filter(function(obj) {
+          return obj.getAttributeInt('type')==CONST.typeDesignations.part_hatch.value;
+      })
+      .sort(function(a, b) {
+        return b.getBounds2D().maxY - a.getBounds2D().maxY;
+    });
+      
+    let returnArray = nonDownSkin.concat(sortedDownSkin);
+    
+        returnArray.forEach(function(hatchBlock) {
+            returnHatch.addHatchBlock(hatchBlock);
+        });
+    });
+  
+    return returnHatch;
+}; // sortDownSkinByPositionInTiles 
