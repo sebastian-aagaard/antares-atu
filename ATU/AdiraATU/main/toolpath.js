@@ -83,10 +83,10 @@ allHatches = TP2TILE.mergeInterfaceVectors(allHatches);
  allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
 
  LASER.assignProcessParameters(allHatches,thisModel,nLayerNr);
-
- //allHatches = TP2TILE.rearrangeHatchblocks(allHatches);
     
  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
+ 
+//allHatches = TP2TILE.sortDownSkinByPositionInTiles(allHatches);
  
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
@@ -94,7 +94,7 @@ allHatches = TP2TILE.mergeInterfaceVectors(allHatches);
     //"nMaxBlockSize": 512,
     "bCheckAttributes": true
   });  
-    
+//     
   allHatches = TP2TILE.sortHatchByPriorityInTiles(allHatches);
   
   hatchResult.moveDataFrom(allHatches);
