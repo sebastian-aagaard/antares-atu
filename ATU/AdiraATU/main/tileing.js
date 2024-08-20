@@ -13,7 +13,7 @@ const PATH_SET = requireBuiltin('bsPathSet');
 const VEC2 = requireBuiltin('vec2');
 const MODEL = requireBuiltin('bsModel');
 const UTIL = require('main/utility_functions.js');
-
+const CONST = require('main/constants.js');
 // -------- FUNCTIONS -------- //
 
 // local
@@ -159,13 +159,14 @@ function calculateRequiredPasses(sceneSize, tileWidth, tileHeight, overlapX, ove
     };
 }
 
-function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize, requiredPasses, overlap,shift, modelCenterLocation) {
+function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize,
+  requiredPasses, overlap,shift, modelCenterLocation) {
   
-    let tileReach = tileSize * requiredPasses + overlap * (requiredPasses - 1);
+    let tileReach = tileSize*requiredPasses + overlap* (requiredPasses - 1);
           
     let startingPos = minCoord;
   
-    if(true){
+    if(modelCenterLocation!==0){
       
       startingPos -= modelCenterLocation;
       
@@ -175,11 +176,6 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
     if (startingPos + tileReach > workareaMax) { // if outside of workarea
         startingPos = workareaMax + shift - tileReach;
     }
-
-//     if(startingPos + tileReach + shift <= maxCoord) {
-//       process.print("adjusted passes in layer");
-//       requiredPasses++;
-//     }
 
     if (startingPos < workareaMin) {
         overlap = (startingPos - workareaMin) / (requiredPasses - 1);
@@ -192,9 +188,7 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
         overlap,
         requiredPasses
     };
-}
-
-
+};
 
 exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
@@ -232,11 +226,10 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   const workAreaLimits = UTIL.getWorkAreaLimits();
   //process.print('scanhead_startPos 1: ' + scanhead_x_starting_pos);    
   // Adjust starting positions
-  
+    
   let adjustedTileLayoutX = adjustTileLayout(
       modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
       required_passes_x, PARAM.getParamReal('tileing', 'tile_overlap_x'),shiftX,PARAM.getParamReal('tileShift', 'shiftTileInX'));
-  
   let scanhead_x_starting_pos = adjustedTileLayoutX.startingPos;
   let overlap_x = adjustedTileLayoutX.overlap;
   required_passes_x = adjustedTileLayoutX.requiredPasses;
@@ -244,7 +237,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
    let adjustedTileLayoutY = adjustTileLayout(
       modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
       required_passes_y, PARAM.getParamReal('tileing', 'tile_overlap_y'),shiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'));
-  
+      
   let scanhead_y_starting_pos = adjustedTileLayoutY.startingPos;
   let overlap_y = adjustedTileLayoutY.overlap;
   required_passes_y = adjustedTileLayoutY.requiredPasses;
