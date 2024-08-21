@@ -94,7 +94,7 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       
         let overLapCompensationY = (Math.abs(tileArray[j].overlapY) + PARAM.getParamReal('tileing','tile_overlap_y'))/2;
         
-        if(tileArray[j].tile_number !== 1 || tileArray[j].tile_number !== tileArray[j].requiredPassesY) {
+        if(tileArray[j].tile_number !== 1 && tileArray[j].tile_number !== tileArray[j].requiredPassesY) {
            
            tile_y_min += overLapCompensationY;
            tile_y_max -= overLapCompensationY;
