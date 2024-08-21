@@ -90,7 +90,7 @@ exports.getStatistics = function(
           "name": "totals",
           "namespace": "http://nikonslm.com/statistics/202305",
           "attributes": {
-              "build_time_hours": (buildTime_us / (3600 * 1000 * 1000)).toFixed(0),
+              "build_time_hours": (buildTime_us / (3600 * 1000 * 1000)).toFixed(3),
               "part_mass_kg": partMassKg.toFixed(3),
               "powderbed_kg": totalPowder.toFixed(3)
           }
