@@ -39,9 +39,6 @@ exports.postprocessSortExposure_MT = function(
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
      layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
 
-   //OBS
-   //if (layerIt.getLayerNr() == 1) layerIt.next();
-
    while(layerIt.isValid() && !progress.cancelled()) {
      
     const layerNr = layerIt.getLayerNr();
@@ -169,9 +166,11 @@ const getTileExposureDuration = function(exposureArray, modelData) {
       let exposureTimeObj = {};
       let skywritingTime = {};
       let nextLaserStartPos = {};
+      let tileHeight = tile.tileHeight;
       
       tile.laserExposureTime = {};
       tile.exposureTime = 0;
+      
 
       tile.exposure.forEach(function(cur, curIndex) {
         const cur_bsid = cur.getAttributeInt('bsid');
@@ -196,7 +195,7 @@ const getTileExposureDuration = function(exposureArray, modelData) {
         
         const laserStartPos = {
           'x': cur.getAttributeReal('xcoord') + scanner.x_ref,
-          'y': cur.getAttributeReal('ycoord') + scanner.rel_y_max 
+          'y': cur.getAttributeReal('ycoord') + tileHeight 
         }; 
          
         const exposureSettings = {
@@ -213,7 +212,7 @@ const getTileExposureDuration = function(exposureArray, modelData) {
           
         nextLaserStartPos[laserID] = {
           'x': laserStartPos.x,
-          'y': laserStartPos.y + (cur.getAttributeInt('bMoveFromFront') ? scanner.rel_y_max : -scanner.rel_y_max)
+          'y': laserStartPos.y + (cur.getAttributeInt('bMoveFromFront') ? tileHeight : -tileHeight)
         };
  
         // If the laser ID doesn't exist in tile.laserDuration, create a new entry
@@ -349,6 +348,7 @@ const mapTileExposureData = function(modelData, layerNr, tileTable_3mf){
         tileID: tile.attributes.tileID,
         xcoord: tile.attributes.xcoord,
         ycoord: tile.attributes.ycoord,
+        tileHeight: tile.attributes.tileHeight,
         exposure: []
         }
       });

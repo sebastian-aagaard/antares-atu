@@ -313,6 +313,7 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
                   tileID: j + 1 + (passnumber_x + 1) * 1000,
                   xcoord: cur_tile_coord_x,
                   ycoord: cur_tile_coord_y,
+                  tileHeight: tileSize_y,
                   targetx: 0,
                   targety: 0,
                   positiony: cur_tile_coord_y,
