@@ -79,31 +79,22 @@ function getShiftY(layerNr) {
 ////////////////////////////////
 
 // get all relevant information for the tiling providing the origin of the scanhead
-function getTilePosition(x_pos, y_pos, overlap_x = undefined, overlap_y = undefined) {
+function getTilePosition(x_pos, y_pos,tileSize_x = undefined, tileSize_y = undefined, overlap_x = undefined, overlap_y = undefined) {
     // Retrieve overlap values if they are the default zero, meaning they weren't explicitly passed
     if (overlap_x === undefined) overlap_x = PARAM.getParamReal('tileing', 'tile_overlap_x');
     if (overlap_y === undefined) overlap_y = PARAM.getParamReal('tileing', 'tile_overlap_y');
-
-    let xmin = x_pos;
-    let xmax = x_pos + PARAM.getParamReal('scanhead', 'x_scanfield_size_mm');
-    let ymin = y_pos;
-    let ymax = y_pos + PARAM.getParamReal('tileing', 'tile_size');
-
-//     if (PARAM.getParamInt('tileing', 'ScanningMode') === 0) { // moveandshoot
-//         ymax = y_pos + PARAM.getParamReal('scanhead', 'y_scanfield_size_mm');
-//     } else { // onthefly
-//         ymax = y_pos + PARAM.getParamReal('tileing', 'tile_size');
-//     }
-
+    if (tileSize_x === undefined) tileSize_x = PARAM.getParamReal('scanhead', 'x_scanfield_size_mm');
+    if (tileSize_y === undefined) tileSize_y = PARAM.getParamReal('tileing', 'tile_size');
+      
     return {
-        xmin: xmin,
-        xmax: xmax,
-        ymin: ymin,
-        ymax: ymax,
-        tile_height: ymax - ymin,
-        tile_width: xmax - xmin,
-        next_x_coord: x_pos + (xmax - xmin) + overlap_x,
-        next_y_coord: y_pos + (ymax - ymin) + overlap_y
+        xmin: x_pos,
+        xmax: x_pos + tileSize_x,
+        ymin: y_pos,
+        ymax:  y_pos + tileSize_y,
+        tile_height: tileSize_y,
+        tile_width: tileSize_x,
+        next_x_coord: x_pos + tileSize_x + overlap_x,
+        next_y_coord: y_pos + tileSize_y + overlap_y
     };
 }
 
@@ -163,8 +154,9 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
   requiredPasses, overlap, shift, maxshift, modelCenterLocation) {
   
     let adjustedOverlap = overlap;
+    let adjustedTileSize = tileSize;
     
-    let tileReach = tileSize*requiredPasses + adjustedOverlap* (requiredPasses - 1);
+    let tileReach = tileSize*requiredPasses + overlap * (requiredPasses - 1);
           
     let startingPos = minCoord;
   
@@ -183,15 +175,18 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
         //overlap = (startingPos - workareaMin) / (requiredPasses - 1);
         //startingPos = workareaMin;
         adjustedOverlap = ( (maxCoord - minCoord) - tileReach + maxshift) / (requiredPasses - 1);
-        let adjustedTileSize = (tileReach+adjustedOverlap)/requiredPasses;
-        startingPos = minCoord;
+        adjustedTileSize = (tileReach+adjustedOverlap)/requiredPasses;
+        let adjustedTileReach = tileSize*requiredPasses + adjustedOverlap * (requiredPasses - 1);
+        
+        startingPos = maxCoord-adjustedTileReach+maxshift;
     }
     
 
     return {
         startingPos,
         adjustedOverlap,
-        requiredPasses
+        requiredPasses,
+        adjustedTileSize
     };
 };
 
@@ -229,23 +224,27 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   let required_passes_y = returnPassContainer.required_passes_y;
   
   const workAreaLimits = UTIL.getWorkAreaLimits();
-  //process.print('scanhead_startPos 1: ' + scanhead_x_starting_pos);    
+  
   // Adjust starting positions
-    
+
   let adjustedTileLayoutX = adjustTileLayout(
       modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
       required_passes_x, PARAM.getParamReal('tileing', 'tile_overlap_x'),shiftX,maxShiftX,PARAM.getParamReal('tileShift', 'shiftTileInX'));
+      
   let scanhead_x_starting_pos = adjustedTileLayoutX.startingPos;
   let overlap_x = adjustedTileLayoutX.adjustedOverlap;
   required_passes_x = adjustedTileLayoutX.requiredPasses;
-  
-   let adjustedTileLayoutY = adjustTileLayout(
-      modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
-      required_passes_y, PARAM.getParamReal('tileing', 'tile_overlap_y'),shiftY,maxShiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'));
+  let tileSize_x = adjustedTileLayoutX.adjustedTileSize;
+
+
+  let adjustedTileLayoutY = adjustTileLayout(
+    modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
+    required_passes_y, PARAM.getParamReal('tileing', 'tile_overlap_y'),shiftY,maxShiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'));
       
   let scanhead_y_starting_pos = adjustedTileLayoutY.startingPos;
   let overlap_y = adjustedTileLayoutY.adjustedOverlap;
   required_passes_y = adjustedTileLayoutY.requiredPasses;
+  let tileSize_y = adjustedTileLayoutY.adjustedTileSize;
   
   // Offset starting position for shifts
   scanhead_x_starting_pos += shiftX - maxShiftX / 2;
@@ -268,11 +267,15 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     throw new Error ("no passes defined, layer nr: " + layerNr);
 
   for (let passnumber_x = 0; passnumber_x < required_passes_x; passnumber_x++) {
-      let cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y, overlap_x, overlap_y);
+      //let cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y,tileSize_x,tileSize_y, overlap_x, overlap_y);
+      let cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y,undefined,undefined, overlap_x, overlap_y);
+
       let next_tile_coord_x = cur_tile.next_x_coord;
 
       for (let j = 0; j < required_passes_y; j++) {
-          cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y, overlap_x, overlap_y);
+          //cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y,tileSize_x,tileSize_y, overlap_x, overlap_y);
+          cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y,undefined,undefined, overlap_x, overlap_y);
+
 
           let scanhead_outlines = [
               new VEC2.Vec2(cur_tile.xmin, cur_tile.ymin),
