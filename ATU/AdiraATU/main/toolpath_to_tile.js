@@ -1,7 +1,7 @@
 /************************************************************
  * Toolpath Indexing
  *
- * @author []
+ * @author Sebasitan Aagaard
  * Copyright (c). All rights reserved.
  *********************************************************** */
 'use strict';
@@ -29,17 +29,6 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
   
   if(!tileArray) throw new Error("tileArray empty, layer: " + nLayerNr + ", model: " + bsModel.getAttribEx("ModelName"));
 
-  ////////////////////////////////////////////////
-  /// Merge Hatch Blocks with Same Attributes  ///
-  ////////////////////////////////////////////////
-   
-//   allHatches.mergeHatchBlocks({
-//       "bConvertToHatchMode": true,
-//       "nConvertToHatchMaxPointCount": 2,
-//       //"nMaxBlockSize": 512,
-//       "bCheckAttributes": true
-//     }
-//   );
  
   /////////////////////////////////////
   /// sort tilearray by tile number  ///
@@ -81,7 +70,7 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       if(tileArray[j].overlapX < PARAM.getParamReal('tileing','tile_overlap_x')){
       
         let halfOverlap = Math.abs(tileArray[j].overlapX/2);
-        let overLapCompensation = halfOverlap + PARAM.getParamReal('tileing','tile_overlap_x');
+        let overLapCompensation = halfOverlap + PARAM.getParamReal('tileing','tile_overlap_x')/2;
            
         switch(tileArray[j].passNumber) {
           case 1:
@@ -294,13 +283,6 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
 
   adjustedHatch.setAttributeInt('type',hatchType);
   adjustedHatch.setAttributeInt('islandId',islandId);
-  
-//   adjustedHatch.mergeHatchBlocks({
-//     "bConvertToHatchMode": false,
-//     "nConvertToHatchMaxPointCount": 2,
-//     //"nMaxBlockSize": 512,
-//     "bCheckAttributes": true
-//   });
   
   return adjustedHatch; 
 }; 
