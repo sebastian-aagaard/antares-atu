@@ -160,9 +160,11 @@ function calculateRequiredPasses(sceneSize, tileWidth, tileHeight, overlapX, ove
 }
 
 function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize,
-  requiredPasses, overlap,shift, modelCenterLocation) {
+  requiredPasses, overlap, shift, maxshift, modelCenterLocation) {
   
-    let tileReach = tileSize*requiredPasses + overlap* (requiredPasses - 1);
+    let adjustedOverlap = overlap;
+    
+    let tileReach = tileSize*requiredPasses + adjustedOverlap* (requiredPasses - 1);
           
     let startingPos = minCoord;
   
@@ -178,14 +180,17 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
     }
 
     if (startingPos < workareaMin) {
-        overlap = (startingPos - workareaMin) / (requiredPasses - 1);
-        startingPos = workareaMin;
+        //overlap = (startingPos - workareaMin) / (requiredPasses - 1);
+        //startingPos = workareaMin;
+        adjustedOverlap = ( (maxCoord - minCoord) - tileReach + maxshift) / (requiredPasses - 1);
+        let adjustedTileSize = (tileReach+adjustedOverlap)/requiredPasses;
+        startingPos = minCoord;
     }
     
 
     return {
         startingPos,
-        overlap,
+        adjustedOverlap,
         requiredPasses
     };
 };
@@ -229,17 +234,17 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
     
   let adjustedTileLayoutX = adjustTileLayout(
       modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
-      required_passes_x, PARAM.getParamReal('tileing', 'tile_overlap_x'),shiftX,PARAM.getParamReal('tileShift', 'shiftTileInX'));
+      required_passes_x, PARAM.getParamReal('tileing', 'tile_overlap_x'),shiftX,maxShiftX,PARAM.getParamReal('tileShift', 'shiftTileInX'));
   let scanhead_x_starting_pos = adjustedTileLayoutX.startingPos;
-  let overlap_x = adjustedTileLayoutX.overlap;
+  let overlap_x = adjustedTileLayoutX.adjustedOverlap;
   required_passes_x = adjustedTileLayoutX.requiredPasses;
   
    let adjustedTileLayoutY = adjustTileLayout(
       modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
-      required_passes_y, PARAM.getParamReal('tileing', 'tile_overlap_y'),shiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'));
+      required_passes_y, PARAM.getParamReal('tileing', 'tile_overlap_y'),shiftY,maxShiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'));
       
   let scanhead_y_starting_pos = adjustedTileLayoutY.startingPos;
-  let overlap_y = adjustedTileLayoutY.overlap;
+  let overlap_y = adjustedTileLayoutY.adjustedOverlap;
   required_passes_y = adjustedTileLayoutY.requiredPasses;
   
   // Offset starting position for shifts
