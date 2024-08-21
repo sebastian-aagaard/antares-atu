@@ -161,6 +161,7 @@
      "param_processHeadAlignment_custom": "Custom",
      "param_processHeadCustomOffset_x":"Custom Process Head Position Relative to Tile X [mm]",
      "param_processHeadCustomOffset_y":"Custom Process Head Position Relative to Tile Y [mm]",
+     "param_processheadRampOffset":"Process Head Ramp Offset [mm]",
      "param_tile_size": "Tile Height [mm]",
      "param_step_x" : "Tile Shift Size: X Step [mm]",
      "param_number_x" : "Number of Shifts: X Count [integer]",
