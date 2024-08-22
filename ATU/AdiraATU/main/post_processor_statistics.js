@@ -30,8 +30,8 @@ exports.getStatistics = function(
 
   
   const partMassKg = getPartMassKg(modelData,progress,layer_start_nr,layer_end_nr);
-  const buildTime_us = getBuildTime_us(modelData,progress,layer_start_nr,layer_end_nr);
-  modelData.setTrayAttrib('built_time_estimation_ms', (buildTime_us*1000.0).toFixed());
+  const buildTime_ms = getBuildTime_ms(modelData,progress,layer_start_nr,layer_end_nr);
+  modelData.setTrayAttrib('built_time_estimation_ms', (buildTime_ms).toFixed(0));
     
   const totalPowder = (layer_end_nr 
       * modelData.getLayerThickness() 
@@ -39,13 +39,13 @@ exports.getStatistics = function(
       * PARAM.getParamInt('workarea','y_workarea_max_mm')
       * PARAM.getParamReal('material','density_g_cc') ) / (1000*1000*1000);
   
-   if(CONST.bVERBOSE){ 
-    process.print('buildtime_us: ' + buildTime_us);
-    process.print('buildtime_s: ' + buildTime_us/(1000*1000));
-    process.print('buildtime_min: ' + buildTime_us/(1000*1000)/60);
-    process.print('buildtime_hours: ' + buildTime_us/(3600*1000*1000));
-    process.print('buildtime_days: ' + buildTime_us/(3600*1000*1000)/24);
-   }
+   //if(CONST.bVERBOSE){ 
+    //process.print('buildtime_us: ' + buildTime_us);
+    process.print('buildtime_s: ' + buildTime_ms/(1000));
+    process.print('buildtime_min: ' + buildTime_ms/(1000)/60);
+    process.print('buildtime_hours: ' + buildTime_ms/(3600*1000));
+    process.print('buildtime_days: ' + buildTime_ms/(3600*1000)/24);
+   //}
 
   let myConfiguration = {
     "data": "test",
@@ -90,7 +90,7 @@ exports.getStatistics = function(
           "name": "totals",
           "namespace": "http://nikonslm.com/statistics/202305",
           "attributes": {
-              "build_time_hours": (buildTime_us / (3600 * 1000 * 1000)).toFixed(3),
+              "build_time_hours": (buildTime_ms / (3600 * 1000)).toFixed(3),
               "part_mass_kg": partMassKg.toFixed(3),
               "powderbed_kg": totalPowder.toFixed(3)
           }
@@ -135,7 +135,7 @@ exports.getStatistics = function(
 
 };
 
-const getBuildTime_us = function(modelData,progress,layer_start_nr,layer_end_nr){
+const getBuildTime_ms = function(modelData,progress,layer_start_nr,layer_end_nr){
   
   let layerCount = layer_end_nr-layer_start_nr+1;
  
@@ -144,45 +144,40 @@ const getBuildTime_us = function(modelData,progress,layer_start_nr,layer_end_nr)
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
       layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
 
-  let buildTime_us = 0;
+  let buildTime_ms = 0;
   while(layerIt.isValid() && !progress.cancelled())
   {
     const layerNr = layerIt.getLayerNr();
     
-    const recoatingTime_us = PARAM.getParamInt('movementSettings','recoating_time_ms') * 1000;
-    const powderFillingTime_us = PARAM.getParamInt('movementSettings', 'powderfilling_time_ms') * 1000;
-    
-//     if (!UTIL.getTileTable(modelData,layerNr)){
-//     
-//       layerIt.next();
-//       progress.step(1);
-//       if (CONST.bVERBOSE) process.printWarning("Nothing to postprocess in layer " + layerNr);
-//       continue;
-
-//       }
+    const recoatingTime_ms = PARAM.getParamInt('buildTimeEstimation','recoatingDuration_ms');
+    const powderFillingTime_ms = PARAM.getParamInt('buildTimeEstimation', 'powderfillingDuration_ms');
+    const minimumLayerTime_ms = PARAM.getParamInt('buildTimeEstimation', 'minimumLayerDuration_ms');
     
     let exportData = UTIL.getModelsInLayer(modelData,layerNr)[0]
       .getModelLayerByNr(layerNr)
       .getAttribEx('exporter_3mf')
       .metadata;
 
-    let layerDuration_us = exportData[0]
+    let layerDuration_ms = exportData[0]
       .attributes
-      .layerTotalDuration;
+      .layerTotalDuration/1000;
 //     
     let transport_mm = getTransportationDistance_mm(exportData);
-    let transportTime_us = (transport_mm/PARAM.getParamReal('movementSettings', 'axis_transport_speed'))*1000*1000;
-              
-    buildTime_us += transportTime_us;  
-    buildTime_us += (layerDuration_us<powderFillingTime_us) ? powderFillingTime_us : layerDuration_us;
-    buildTime_us += recoatingTime_us;
+    let transportTime_ms = (transport_mm/PARAM.getParamReal('movementSettings', 'axis_transport_speed'))*1000;
     
-//     
+    let tempDurationContainer = 0;
+        
+    tempDurationContainer += transportTime_ms;  
+    tempDurationContainer += (layerDuration_ms < powderFillingTime_ms) ? powderFillingTime_ms : layerDuration_ms;
+    tempDurationContainer += recoatingTime_ms; // 26
+    
+    buildTime_ms += (tempDurationContainer < minimumLayerTime_ms) ? minimumLayerTime_ms : tempDurationContainer;
+        
     progress.step(1);
     layerIt.next();
   };
   
-  return buildTime_us;
+  return buildTime_ms;
 } 
 
 const getTransportationDistance_mm = function(exportData){
@@ -214,7 +209,6 @@ const getTransportationDistance_mm = function(exportData){
      
      transport_mm += passTarget.distance(nextPassStart); 
       
-      //process.print('from pass to pass ' + passTarget.distance(nextPassStart))
      };
       
     if (index == exportData.length-1) { // if last
@@ -222,9 +216,6 @@ const getTransportationDistance_mm = function(exportData){
       let parkPos = new VEC2.Vec2(CONST.parkingPosition.x,CONST.parkingPosition.y);
       transport_mm += passTarget.distance(parkPos); 
       
-      
-      //process.print('back to park ' + passTarget.distance(parkPos))
-      // do we move back to park?
       };
   });
 

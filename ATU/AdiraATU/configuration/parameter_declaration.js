@@ -178,8 +178,6 @@ exports.declareParameters = function(parameter)
     
   // -------- MOVEMENT SETTINGS -------- //  
   parameter.declareParameterGroup('movementSettings',LOCALIZER.GetMessage('grp_movementSettings'),'Movement Settings',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterInt('movementSettings', 'recoating_time_ms',LOCALIZER.GetMessage('param_recoating_time'),0,100000,26000);
-    parameter.declareParameterInt('movementSettings', 'powderfilling_time_ms',LOCALIZER.GetMessage('param_powderfilling_time_ms'),0,100000,21000);    
     parameter.declareParameterReal('movementSettings','axis_max_speed', LOCALIZER.GetMessage('param_axis_max_speed'),0.0,100.0,80.0);
     parameter.declareParameterReal('movementSettings','axis_transport_speed', LOCALIZER.GetMessage('param_axis_transport_speed'),0.0,100.0,80.0);
     parameter.declareParameterInt('movementSettings', 'recoating_speed_mms',LOCALIZER.GetMessage('param_recoating_speed_mms'),0,1000,120);
@@ -249,7 +247,11 @@ exports.declareParameters = function(parameter)
   // group material
   parameter.declareParameterGroup('material',LOCALIZER.GetMessage('grp_material'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
         parameter.declareParameterReal('material','density_g_cc', LOCALIZER.GetMessage('param_material_densitet'),0.0,1000.0,8.19);
-
+  
+  parameter.declareParameterGroup('buildTimeEstimation',LOCALIZER.GetMessage('grp_buildTimeEstimation'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+    parameter.declareParameterInt('buildTimeEstimation', 'recoatingDuration_ms',LOCALIZER.GetMessage('param_recoatingDuration_ms'),0,100000,26000);
+    parameter.declareParameterInt('buildTimeEstimation', 'powderfillingDuration_ms',LOCALIZER.GetMessage('param_powderfillingDuration_ms'),0,100000,21000);
+    parameter.declareParameterInt('buildTimeEstimation', 'minimumLayerDuration_ms',LOCALIZER.GetMessage('param_minimumLayerDuration_ms'),0,10000000,47000);
            
    // group tileing
   parameter.declareParameterGroup('tileing',LOCALIZER.GetMessage('grp_tileing'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
