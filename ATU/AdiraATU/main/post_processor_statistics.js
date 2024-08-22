@@ -39,13 +39,13 @@ exports.getStatistics = function(
       * PARAM.getParamInt('workarea','y_workarea_max_mm')
       * PARAM.getParamReal('material','density_g_cc') ) / (1000*1000*1000);
   
-   //if(CONST.bVERBOSE){ 
+   if(CONST.bVERBOSE){ 
     //process.print('buildtime_us: ' + buildTime_us);
     process.print('buildtime_s: ' + buildTime_ms/(1000));
     process.print('buildtime_min: ' + buildTime_ms/(1000)/60);
     process.print('buildtime_hours: ' + buildTime_ms/(3600*1000));
     process.print('buildtime_days: ' + buildTime_ms/(3600*1000)/24);
-   //}
+   }
 
   let myConfiguration = {
     "data": "test",

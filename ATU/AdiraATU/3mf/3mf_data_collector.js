@@ -74,10 +74,10 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         if(startY+processHeadOffsetY > CONST.maxTargetY) {
           
           let processHeadOffsetYAdjustment = startY + processHeadOffsetY + PARAM.getParamReal('tileing','processheadRampOffset') - CONST.maxTargetY;
-          process.print('processHeadOffsetYAdjustment: ' + Math.ceil(processHeadOffsetYAdjustment));
+          //process.print('processHeadOffsetYAdjustment: ' + Math.ceil(processHeadOffsetYAdjustment));
           processHeadOffsetY -= processHeadOffsetYAdjustment;
           processHeadOffsetY -= 0.001;
-          process.print('adjusted: ' + (startY + processHeadOffsetY));
+          //process.print('adjusted: ' + (startY + processHeadOffsetY + PARAM.getParamReal('tileing','processheadRampOffset')));
 
           };
             
