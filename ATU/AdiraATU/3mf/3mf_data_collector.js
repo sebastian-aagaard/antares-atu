@@ -36,10 +36,11 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
   let scanfieldCenterYOffset = PARAM.getParamReal('tileing','tile_size')/2-(PARAM.getParamReal('scanhead','y_scanfield_size_mm')-PARAM.getParamReal('scanhead','y_scanfield_ref_mm'));
   scanfieldCenterYOffset = scanfieldCenterYOffset < 0 ? 0 : scanfieldCenterYOffset;
   
-  let startYOffset;
+  
      
   exposureArray.forEach(function(pass, passIndex) {
     
+    let startYOffset;
     
     try {
       if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
@@ -48,7 +49,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         
         if(PARAM.getParamInt('tileing','processHeadAlignment') == 0) { //default / automatic
           processHeadOffsetX = PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2 - scanfieldCenterXOffset; // center arround origo laser 3
-          processHeadOffsetY = pass[0].ProcessHeadFromFront ? 0 : PARAM.getParamReal('tileing', 'tile_size'); // offset along the movement direction
+          processHeadOffsetY = pass[0].ProcessHeadFromFront ? 0 : pass[0].tileHeight; // offset along the movement direction
           
           } else { // custom
             
@@ -59,12 +60,25 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         
          // find start Y
         
-        let startY = pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + PARAM.getParamReal('tileing', 'tile_size');
+        let startY = pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + pass[0].tileHeight;
         
-        let startYMaxPosition = CONST.maxTargetY - PARAM.getParamReal('tileing','processheadRampOffset');
+        let startYMaxPosition = CONST.maxTargetY - PARAM.getParamReal('tileing','processheadRampOffset') - pass[0].tileHeight;
         if(startY > startYMaxPosition){
-          startYOffset = startY-startYMaxPosition;
-          startY = startYMaxPosition;
+          let targetY = pass[0].ycoord;
+          startY = targetY + PARAM.getParamReal('tileing','processheadRampOffset');
+          startYOffset = true;//startY-startYMaxPosition;
+          //startY = startYMaxPosition;          
+          //process.print('initial: ' + (startY + processHeadOffsetY));
+        };
+        
+        if(startY+processHeadOffsetY > CONST.maxTargetY) {
+          
+          let processHeadOffsetYAdjustment = startY + processHeadOffsetY + PARAM.getParamReal('tileing','processheadRampOffset') - CONST.maxTargetY;
+          process.print('processHeadOffsetYAdjustment: ' + Math.ceil(processHeadOffsetYAdjustment));
+          processHeadOffsetY -= processHeadOffsetYAdjustment;
+          processHeadOffsetY -= 0.001;
+          process.print('adjusted: ' + (startY + processHeadOffsetY));
+
           };
             
             
@@ -128,8 +142,8 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
       // Determine tile size and y speed
       if (PARAM.getParamInt('tileing', 'ScanningMode')) { // onthefly
         //if startY was above limit correct actual travel distance
-        if(startYOffset>0){ 
-          travel -= startYOffset;
+        if(startYOffset){ 
+          travel = PARAM.getParamReal('tileing','processheadRampOffset');//startYOffset;
           startYOffset = 0;
           };
         speedY = tile.exposureTime > 0 ? travel / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('movementSettings', 'axis_max_speed');
