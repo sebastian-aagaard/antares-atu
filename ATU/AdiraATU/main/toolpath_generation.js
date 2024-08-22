@@ -302,6 +302,10 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   
   let resultHatch = new HATCH.bsHatch();
   
+  mergeHatchBlocks(allSupportHatch);
+  mergeHatchBlocks(allHatch);
+  mergeHatchBlocks(allDownSkinHatch);
+  
   resultHatch.moveDataFrom(allSupportHatch);
   resultHatch.moveDataFrom(allSupportContourHatch);
   resultHatch.moveDataFrom(allHatch);
@@ -312,6 +316,16 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   return resultHatch;
 };
 
+const mergeHatchBlocks = function(hatch){
+  
+  hatch.mergeHatchBlocks({
+    "bConvertToHatchMode": true,
+    "nConvertToHatchMaxPointCount": 2,
+    //"nMaxBlockSize": 512,
+    "bCheckAttributes": true
+  });  
+  
+};
 
 const sortBorders = function(hatchObj){
 
