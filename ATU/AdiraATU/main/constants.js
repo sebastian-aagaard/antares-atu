@@ -24,6 +24,7 @@ exports.skywritingSchema = 'http://schemas.scanlab.com/skywriting/2023/01';
 
 exports.parkingPosition = { x: 465 , y: - 560 };
 exports.tilePositionHardLimit = {xmin:-40 , ymin: -60, xmax: 620, ymax: 935};
+exports.maxTargetY = 995;
 
 
 // -------- TYPE DESIGNATION -------- //

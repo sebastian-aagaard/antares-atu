@@ -35,10 +35,16 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
   
   let scanfieldCenterYOffset = PARAM.getParamReal('tileing','tile_size')/2-(PARAM.getParamReal('scanhead','y_scanfield_size_mm')-PARAM.getParamReal('scanhead','y_scanfield_ref_mm'));
   scanfieldCenterYOffset = scanfieldCenterYOffset < 0 ? 0 : scanfieldCenterYOffset;
+  
+  let startYOffset;
      
   exposureArray.forEach(function(pass, passIndex) {
+    
+    
     try {
       if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
+        
+        //set process head offset
         
         if(PARAM.getParamInt('tileing','processHeadAlignment') == 0) { //default / automatic
           processHeadOffsetX = PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2 - scanfieldCenterXOffset; // center arround origo laser 3
@@ -51,17 +57,28 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
             
             };
         
+         // find start Y
+        
+        let startY = pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + PARAM.getParamReal('tileing', 'tile_size');
+        
+        let startYMaxPosition = CONST.maxTargetY - PARAM.getParamReal('tileing','processheadRampOffset');
+        if(startY > startYMaxPosition){
+          startYOffset = startY-startYMaxPosition;
+          startY = startYMaxPosition;
+          };
+            
+            
          exporter_3mf.metadata[passIndex] = {
           "name": "onthefly",
           "namespace": "http://nikonslm.com/tilinginformation/202305",
           "attributes": {
             "uuid": UTIL.generateUUID(),
             "startx": pass[0].xcoord.toFixed(3),
-            "starty": (pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + PARAM.getParamReal('tileing', 'tile_size')).toFixed(3),
+            "starty": startY.toFixed(3),
             "sequencetransferspeed": PARAM.getParamReal('movementSettings', 'axis_transport_speed').toFixed(3),
             "processHeadOffsetX" : processHeadOffsetX.toFixed(3),
             "processHeadOffsetY" : processHeadOffsetY.toFixed(3),
-            "processheadRampOffsetY" : (PARAM.getParamReal('tileing','processheadRampOffset') * (pass[0].ProcessHeadFromFront ? -1 : 1)).toFixed(3),
+            "processHeadRampOffsetY" : (PARAM.getParamReal('tileing','processheadRampOffset') * (pass[0].ProcessHeadFromFront ? -1 : 1)).toFixed(3),
             "requiredPasses": exposureArray.length,
             "tilesInPass": pass.length,
             "layerScanningDuration_us": null,
@@ -105,24 +122,28 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
     }
     
     pass.forEach(function(tile, tileIndex){
-      let speedY, tileSize;
-
+      let speedY;
+      let travel = tile.tileHeight;
+      
       // Determine tile size and y speed
-      if (PARAM.getParamInt('tileing', 'ScanningMode')) {
-        tileSize = PARAM.getParamReal('tileing', 'tile_size');
-        speedY = tile.exposureTime > 0 ? tileSize / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('movementSettings', 'axis_max_speed');
+      if (PARAM.getParamInt('tileing', 'ScanningMode')) { // onthefly
+        //if startY was above limit correct actual travel distance
+        if(startYOffset>0){ 
+          travel -= startYOffset;
+          startYOffset = 0;
+          };
+        speedY = tile.exposureTime > 0 ? travel / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('movementSettings', 'axis_max_speed');
         speedY = speedY > PARAM.getParamReal('movementSettings', 'axis_max_speed') ? PARAM.getParamReal('movementSettings', 'axis_max_speed') : speedY;
-      } else { // point and shoot
-        tileSize = PARAM.getParamReal('tileing', 'tile_size');
+      } else { // move and shoot
         speedY = PARAM.getParamReal('movementSettings', 'axis_transport_speed');
       }
 
-      const tileMovementDuration = (tileSize / speedY) * 1000 * 1000;
+      const tileMovementDuration = (travel / speedY) * 1000 * 1000;
 
       // Determine next y-coordinate
       let nextTileYCoord, nextTileXCoord;
       if (tileIndex === pass.length - 1) { // if last tile
-        nextTileYCoord = tile.ycoord + (tile.ProcessHeadFromFront ? tileSize : 0);
+        nextTileYCoord = tile.ycoord + (tile.ProcessHeadFromFront ? tile.tileHeight : 0);
         nextTileXCoord = tile.xcoord;
       } else {
         nextTileXCoord = pass[tileIndex + 1].xcoord;        
@@ -245,6 +266,3 @@ const assignLayerTotals = function(exporter_3mf){
   exporter_3mf.metadata[0].attributes.layerScanningDuration = layerScanningDuration;
   exporter_3mf.metadata[0].attributes.layerTotalDuration = layerTotalDuration;  
 }; //
-  
-
-
