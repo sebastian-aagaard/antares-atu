@@ -44,7 +44,7 @@ const removeCustomTableScanningSchema = function(modelData,progress){
 // 
     customTable.forEach(function(entry){
      entry.attributes = entry.attributes.filter(function(attr){
-      attr.schema !==CONST.scanningSchema
+      return attr.schema !==CONST.scanningSchema;
        });
      });
 

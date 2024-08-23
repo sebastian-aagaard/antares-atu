@@ -358,9 +358,6 @@ const mapTileExposureData = function(modelData, layerNr, tileTable_3mf){
     const thisExposurePolyline = exposurePolylineIt.clone();
     const tileID = thisExposurePolyline.getAttributeInt('tileID_3mf');
     
-    const passNumber =  Math.floor(tileID / 1000);
-    const thisTile = tileTable_3mf[passNumber-1].find(function(obj){obj.attributes.tileID === tileID});
-    
     // Add the polyline to the exposures array for this tileID
     tileExposureObj[tileID].exposure.push(thisExposurePolyline);
 
