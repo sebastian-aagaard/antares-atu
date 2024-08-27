@@ -40,7 +40,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
      
   exposureArray.forEach(function(pass, passIndex) {
     
-    let startYOffset;
+    let shouldYOffsetBeCorrected = false;
     
     try {
       if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
@@ -63,12 +63,11 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         let startY = pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + pass[0].tileHeight;
         
         let startYMaxPosition = CONST.maxTargetY - PARAM.getParamReal('tileing','processheadRampOffset') - pass[0].tileHeight;
+            
         if(startY > startYMaxPosition){
           let targetY = pass[0].ycoord;
-          startY = targetY + PARAM.getParamReal('tileing','processheadRampOffset');
-          startYOffset = true;//startY-startYMaxPosition;
-          //startY = startYMaxPosition;          
-          //process.print('initial: ' + (startY + processHeadOffsetY));
+          startY = targetY + PARAM.getParamReal('tileing','tileTravelForBreachingYLimit');
+          shouldYOffsetBeCorrected = true;
         };
         
         if(startY+processHeadOffsetY > CONST.maxTargetY) {
@@ -76,9 +75,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
           let processHeadOffsetYAdjustment = startY + processHeadOffsetY + PARAM.getParamReal('tileing','processheadRampOffset') - CONST.maxTargetY;
           //process.print('processHeadOffsetYAdjustment: ' + Math.ceil(processHeadOffsetYAdjustment));
           processHeadOffsetY -= processHeadOffsetYAdjustment;
-          processHeadOffsetY -= 0.001;
-          //process.print('adjusted: ' + (startY + processHeadOffsetY + PARAM.getParamReal('tileing','processheadRampOffset')));
-
+          processHeadOffsetY -= 0.001; // extra offset to ensure we are within travel if round down to allowed position
           };
             
             
@@ -142,9 +139,9 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
       // Determine tile size and y speed
       if (PARAM.getParamInt('tileing', 'ScanningMode')) { // onthefly
         //if startY was above limit correct actual travel distance
-        if(startYOffset){ 
-          travel = PARAM.getParamReal('tileing','processheadRampOffset');//startYOffset;
-          startYOffset = 0;
+        if(shouldYOffsetBeCorrected){ 
+          travel = PARAM.getParamReal('tileing','tileTravelForBreachingYLimit');
+          shouldYOffsetBeCorrected = false;
           };
         speedY = tile.exposureTime > 0 ? travel / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('movementSettings', 'axis_max_speed');
         speedY = speedY > PARAM.getParamReal('movementSettings', 'axis_max_speed') ? PARAM.getParamReal('movementSettings', 'axis_max_speed') : speedY;

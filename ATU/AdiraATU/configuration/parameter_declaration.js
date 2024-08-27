@@ -281,7 +281,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('tileing', 'processHeadCustomOffset_x',LOCALIZER.GetMessage('param_processHeadCustomOffset_x'),-210,220,0);   
     parameter.declareParameterReal('tileing', 'processHeadCustomOffset_y',LOCALIZER.GetMessage('param_processHeadCustomOffset_y'),-60,50,0);
     parameter.declareParameterReal('tileing', 'processheadRampOffset',LOCALIZER.GetMessage('param_processheadRampOffset'),0,50,0.5);
-    
+    parameter.declareParameterReal('tileing', 'tileTravelForBreachingYLimit',LOCALIZER.GetMessage('param_tileTravelForBreachingYLimit'),0.001,5,0.5);
  
     parameter.declareParameterReal('tileing', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-0.1); //-5
     parameter.declareParameterReal('tileing', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-0.1); //-5
