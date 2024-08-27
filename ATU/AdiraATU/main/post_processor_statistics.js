@@ -47,10 +47,6 @@ exports.getStatistics = function(
     process.print('buildtime_days: ' + buildTime_ms/(3600*1000)/24);
    }
 
-  let myConfiguration = {
-    "data": "test",
-    "writtenat": "XXX"
-  };
 
 // Initialize the customJSON object with static data
   let customJSON = {
