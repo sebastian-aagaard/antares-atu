@@ -23,6 +23,8 @@
       "param_laserIntefrace_overlap": "overlap",
       "param_laserIntefrace_zipper": "zipper",
       "param_laserIntefrace_seamless": "seamless",
+    "param_interfaceOverlap" : "Interface Overlap [mm]",
+    "param_distanceBewteenInterfaceVectors" : "Distance between Interface Vectors [mm]",    
   "grp_stripeOverlapAllocation": "Stripe Overlap Allocation Adjustment",
     "param_firstOverlapShift": "Shift Laser Allocation Window between stripe 1 and 2 [mm]",
     "param_secondOverlapShift": "Shift Laser Allocation Window between stripe 2 and 3 [mm]",

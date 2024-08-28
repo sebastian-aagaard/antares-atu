@@ -67,10 +67,10 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       
       
       //if tileoverlap is greater than requested
-      if(tileArray[j].overlapX < PARAM.getParamReal('tileing','tile_overlap_x')){
+      if(tileArray[j].overlapX < -PARAM.getParamReal('interface', 'interfaceOverlap')){
       
         let halfOverlap = Math.abs(tileArray[j].overlapX/2);
-        let overLapCompensation = halfOverlap + PARAM.getParamReal('tileing','tile_overlap_x')/2;
+        let overLapCompensation = halfOverlap - PARAM.getParamReal('interface', 'interfaceOverlap')/2;
            
         switch(tileArray[j].passNumber) {
           case 1:
@@ -90,9 +90,9 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
          };
      // CREATE CLIPPING MASK
        
-     if(tileArray[j].overlapY < PARAM.getParamReal('tileing','tile_overlap_y')){
+     if(tileArray[j].overlapY < -PARAM.getParamReal('interface', 'interfaceOverlap')){
       
-        let overLapCompensationY = (Math.abs(tileArray[j].overlapY) + PARAM.getParamReal('tileing','tile_overlap_y'))/2;
+        let overLapCompensationY = (Math.abs(tileArray[j].overlapY) - PARAM.getParamReal('interface', 'interfaceOverlap'))/2;
         
         if(tileArray[j].tile_number !== 1 && tileArray[j].tile_number !== tileArray[j].requiredPassesY) {
            
@@ -126,6 +126,7 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       assignedHatch.makeEmpty();
       
       let tileID_3mf = tileArray[j].tile_number+(tileArray[j].passNumber)*1000;
+      
       anotateTileIntefaceHatchblocks(tileHatch,tileID_3mf);
         
       // assign tileID to hatches within tile
@@ -194,7 +195,7 @@ exports.sortHatchBlocks = function(thisModel,nLayerNr,allHatches){
     return allHatches;
 };
 
-exports.adjustInterfaceVectors = function(allHatches){
+exports.adjustInterfaceVectors = function(allHatches,thisLayer){
 
   let hatchBlockIterator = allHatches.getHatchBlockIterator();
   let adjustedHatch = new HATCH.bsHatch();
@@ -211,7 +212,7 @@ exports.adjustInterfaceVectors = function(allHatches){
       
       } else {
         
-        resultHatch.moveDataFrom(applyZipperInterface(thisHatchBlock, PARAM.getParamInt('interface','tileInterface')===0));
+        resultHatch.moveDataFrom(applyZipperInterface(thisHatchBlock,thisLayer, PARAM.getParamInt('interface','tileInterface')===0));
     };
     
     
@@ -225,8 +226,10 @@ exports.adjustInterfaceVectors = function(allHatches){
   return resultHatch;
 }
 
-const applyZipperInterface = function(hatchBlock,bOverlap){
+const applyZipperInterface = function(hatchBlock,thisLayer,bOverlap){
             
+  
+  let tileTable = thisLayer.getAttribEx('tileTable');
   let firstTileId = hatchBlock.getAttributeInt('overlappingTile_1');
   let secondTileId = hatchBlock.getAttributeInt('overlappingTile_2');
   let hatchType = hatchBlock.getAttributeInt('type');
@@ -247,7 +250,7 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   let pathCount = overLappingPathSet.getPathCount();
   
   for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
-  
+    
     if (pathNumber % 2 !== 0 || bOverlap) {
       firstOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
       };
@@ -257,7 +260,9 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
       
     };
   };
-     
+  
+  adjustZipperInterfaceDistance(firstTileId,secondTileId,firstOverlapPathsSet,secondOverlapPathsSet);
+  
   let firstHatch = new HATCH.bsHatch();
   let secondHatch = new HATCH.bsHatch();
 
@@ -275,7 +280,7 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   
   firstHatch.setAttributeInt('tileID_3mf', firstTileId);
   secondHatch.setAttributeInt('tileID_3mf', secondTileId);
-  
+    
   let adjustedHatch = new HATCH.bsHatch();
 
   adjustedHatch.moveDataFrom(firstHatch);
@@ -286,6 +291,41 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
   
   return adjustedHatch; 
 }; 
+
+const adjustZipperInterfaceDistance = function(firstTileId,secondTileId,firstPathset,secondPathset){
+  
+  let boundsArray = firstPathset.getBounds2D().toArray();
+  
+  let firstBounds = firstPathset.getBounds2D();
+  let secondBounds = secondPathset.getBounds2D();
+  
+  if(Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000) ){    //same stripe
+    
+    intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY+PARAM.getParamReal('interface', 'interfaceOverlap'),firstPathset);
+    intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY-PARAM.getParamReal('interface', 'interfaceOverlap'),secondBounds.maxY,secondPathset);
+
+    } else { //different stripe
+      
+    intersectPathset(firstBounds.minX,firstBounds.maxX+PARAM.getParamReal('interface', 'interfaceOverlap'),firstBounds.minY,firstBounds.maxY,firstPathset);
+    intersectPathset(secondBounds.minX-PARAM.getParamReal('interface', 'interfaceOverlap'),secondBounds.maxX,secondBounds.minY,secondBounds.maxY,secondPathset);
+      
+  };
+}; //adjustOverlapBetweenIntefaceHatch
+
+const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
+  
+  let intersecArrayVec2D = new Array(4);
+  intersecArrayVec2D[0] = new VEC2.Vec2(xmin, ymin); //min,min
+  intersecArrayVec2D[1] = new VEC2.Vec2(xmin, ymax); //min,max
+  intersecArrayVec2D[2] = new VEC2.Vec2(xmax, ymax); // max,max
+  intersecArrayVec2D[3] = new VEC2.Vec2(xmax, ymin); // max,min
+
+  let intersectPath = new PATH_SET.bsPathSet();
+  intersectPath.addNewPath(intersecArrayVec2D); // add tiles zones to pathset  
+  intersectPath.setClosed(true); // set the zones to closed polygons
+  
+  pathset.booleanOpIntersect(intersectPath);
+};
 
 exports.mergeShortLines = function(hatch){
 
@@ -371,12 +411,10 @@ exports.mergeInterfaceVectors = function(hatch) {
             let mergeHatch = new HATCH.bsHatch();
             
             tileHatch.mergeShortLines(
-                mergeHatch,2, 0.001,
+                mergeHatch,2, Math.abs(PARAM.getParamReal('interface', 'interfaceOverlap'))+0.001,
                 HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
             );
-            
-          
-          
+  
             mergedHatchAll.moveDataFrom(mergeHatch);
         });
     });
