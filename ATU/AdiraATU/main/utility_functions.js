@@ -8,12 +8,12 @@
 
 
 // -------- INCLUDES -------- //
-var HATCH = requireBuiltin('bsHatch');
-var PATH_SET = requireBuiltin('bsPathSet');
-var ISLAND = requireBuiltin('bsIsland');
+const HATCH = requireBuiltin('bsHatch');
+const PATH_SET = requireBuiltin('bsPathSet');
+const ISLAND = requireBuiltin('bsIsland');
 const PARAM = requireBuiltin('bsParam');
-
-var CONST = require('main/constants.js');
+const VEC2 = requireBuiltin('vec2');
+const CONST = require('main/constants.js');
 
 
 // -------- FUNCTION TOC -------- //
@@ -162,3 +162,17 @@ exports.findColorFromType = function (value) {
   return null; // Return null if value is not found
 }
 
+exports.intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
+  
+  let intersecArrayVec2D = new Array(4);
+  intersecArrayVec2D[0] = new VEC2.Vec2(xmin, ymin); //min,min
+  intersecArrayVec2D[1] = new VEC2.Vec2(xmin, ymax); //min,max
+  intersecArrayVec2D[2] = new VEC2.Vec2(xmax, ymax); // max,max
+  intersecArrayVec2D[3] = new VEC2.Vec2(xmax, ymin); // max,min
+
+  let intersectPath = new PATH_SET.bsPathSet();
+  intersectPath.addNewPath(intersecArrayVec2D); // add tiles zones to pathset  
+  intersectPath.setClosed(true); // set the zones to closed polygons
+  
+  pathset.booleanOpIntersect(intersectPath);
+};

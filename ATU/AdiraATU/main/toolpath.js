@@ -81,8 +81,12 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   allHatches = TP2TILE.mergeInterfaceVectors(allHatches); 
      
   allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
+  
+  allHatches = LASER.adjustInterfaceVectorsBetweenLasers(allHatches);
 
-  LASER.assignProcessParameters(allHatches,thisModel,nLayerNr);
+  allHatches = LASER.mergeLaserInterfaceVectors(allHatches);
+
+  LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
     
   allHatches = TP2TILE.deleteShortHatchLines(allHatches);
  

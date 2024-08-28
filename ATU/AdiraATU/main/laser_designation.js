@@ -7,17 +7,18 @@
 'use strict';
 
 // -------- INCLUDES -------- //
-var ISLAND = requireBuiltin('bsIsland');
-var HATCH = requireBuiltin('bsHatch');
-var PARAM = requireBuiltin('bsParam');
-var VEC2 = requireBuiltin('vec2');
-var PATH_SET = requireBuiltin('bsPathSet');
-var RND = requireBuiltin('random');
-var RGBA = requireBuiltin('bsColRGBAi');
+const ISLAND = requireBuiltin('bsIsland');
+const HATCH = requireBuiltin('bsHatch');
+const PARAM = requireBuiltin('bsParam');
+const VEC2 = requireBuiltin('vec2');
+const PATH_SET = requireBuiltin('bsPathSet');
+const RND = requireBuiltin('random');
+const RGBA = requireBuiltin('bsColRGBAi');
+const POLY_IT = requireBuiltin('bsPolylineIterator');
 
 // -------- SCRIPT INCLUDES -------- //
-var UTIL = require('main/utility_functions.js');
-var CONST = require('main/constants.js');
+const UTIL = require('main/utility_functions.js');
+const CONST = require('main/constants.js');
 
 // -------- TOC -------- //
 /* getScanner (laserIndex)
@@ -260,10 +261,9 @@ exports.assignProcessParameters = function(bsHatch,bsModelData,bsModel,nLayerNr)
         thisHatchBlock.setAttributeInt('_disp_color', colorToSet);
     };
 
-    
     hatchIterator.next();
   }
-};
+}; // assignProcessParameters
 
 const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_color) {
     switch (displayMode) {
@@ -283,4 +283,214 @@ const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_
             process.printWarning('Unexpected displayMode:', displayMode);
             return null;  // or a default color if appropriate
     }
+}; // getDisplayColor
+
+exports.adjustInterfaceVectorsBetweenLasers = function (hatch){
+  
+  let resultHatch = new HATCH.bsHatch();
+  
+  let groupedHatchObjectTileTypeBsid = getGroupedHatchObjectByTileTypeBsid(hatch);
+
+  Object.values(groupedHatchObjectTileTypeBsid).forEach(function(tile){
+    let adjustedInterFaceHatch
+    Object.values(tile).forEach(function(type){
+      
+      let previousLaserIdBlock = undefined;
+      let previousBsid = undefined;
+      
+      const values = Object.values(type); 
+      
+      values.forEach(function(laserIdBlock,index){
+
+        if(index === 0){
+         previousLaserIdBlock = laserIdBlock;
+         previousBsid = laserIdBlock.getHatchBlockArray()[0].getAttributeInt('bsid');
+         return;
+        };
+
+        let previousBounds = previousLaserIdBlock.getBounds2D();
+
+        // get clipping from bounds2D
+        let prevOutline = new Array(4);
+        prevOutline[0] = new VEC2.Vec2(previousBounds.minX, previousBounds.minY); //min,min
+        prevOutline[1] = new VEC2.Vec2(previousBounds.minX, previousBounds.maxY); //min,max
+        prevOutline[2] = new VEC2.Vec2(previousBounds.maxX, previousBounds.maxY); // max,max
+        prevOutline[3] = new VEC2.Vec2(previousBounds.maxX, previousBounds.minY); // max,min
+
+        let interfaceHatch = UTIL.ClipHatchByRect(laserIdBlock,prevOutline,true);
+
+        let nextLaserIdBlock = UTIL.ClipHatchByRect(laserIdBlock,prevOutline,false);
+
+        let adjustedInterfaceHatch = applyLaserInterface(interfaceHatch,laserIdBlock,previousBsid);
+        
+        let currentBounds = laserIdBlock.getBounds2D();
+        
+         // get clipping from bounds2D
+        let currOutline = new Array(4);
+        currOutline[0] = new VEC2.Vec2(currentBounds.minX, currentBounds.minY); //min,min
+        currOutline[1] = new VEC2.Vec2(currentBounds.minX, currentBounds.maxY); //min,max
+        currOutline[2] = new VEC2.Vec2(currentBounds.maxX, currentBounds.maxY); // max,max
+        currOutline[3] = new VEC2.Vec2(currentBounds.maxX, currentBounds.minY); // max,min
+        
+        let previousHatch = UTIL.ClipHatchByRect(previousLaserIdBlock,currOutline,false);
+        
+        resultHatch.moveDataFrom(previousHatch);
+        
+        if(adjustedInterfaceHatch!==undefined){
+          resultHatch.moveDataFrom(adjustedInterfaceHatch);
+        }
+        
+        if(index === values.length-1) {
+          
+          resultHatch.moveDataFrom(nextLaserIdBlock);
+          return;
+          
+          };
+        
+        previousBsid = laserIdBlock.getHatchBlockArray()[0].getAttributeInt('bsid');
+        previousLaserIdBlock = nextLaserIdBlock; 
+         
+      });
+    });
+  });
+  
+  return resultHatch;
+};//adjustInterfaceVectorsBetweenLasers
+
+exports.mergeLaserInterfaceVectors = function(hatch){
+  
+  let returnHatch = new HATCH.bsHatch();
+  let mergedHatchContainer = new HATCH.bsHatch();
+
+  let groupedHatchObjectTileTypeBsid = getGroupedHatchObjectByTileTypeBsid(hatch);
+  
+  Object.values(groupedHatchObjectTileTypeBsid).forEach(function(tile){
+    Object.values(tile).forEach(function(type){    
+      Object.values(type).forEach(function(laserIdBlock,index){
+        
+        laserIdBlock.mergeShortLines(
+                mergedHatchContainer,2, Math.abs(PARAM.getParamReal('interface', 'interfaceOverlap'))+0.001,
+                HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
+            );
+        
+        returnHatch.moveDataFrom(mergedHatchContainer);
+        
+      });
+    });
+  });
+
+  return returnHatch;
 };
+
+const getGroupedHatchObjectByTileTypeBsid = function(hatch) {
+  
+  let hatchBlocksArray = hatch.getHatchBlockArray();
+  let groupedHatchblocksByBsid = {};
+
+  // Iterate over each hatchblock
+  hatchBlocksArray.forEach(function(hatchblock) {
+    // Get the tileID and bsid of the current hatchblock
+    const tileID = hatchblock.getAttributeInt('tileID_3mf');
+    const vectorType = hatchblock.getAttributeInt('type');
+    const laserID = Math.floor(hatchblock.getAttributeInt('bsid')/10);
+
+    if (!groupedHatchblocksByBsid[tileID]) {
+        groupedHatchblocksByBsid[tileID] = {};
+    };
+    
+    if (!groupedHatchblocksByBsid[tileID][vectorType]) {
+        groupedHatchblocksByBsid[tileID][vectorType] = {};
+    };
+
+    if (!groupedHatchblocksByBsid[tileID][vectorType][laserID]) {
+        groupedHatchblocksByBsid[tileID][vectorType][laserID] = new HATCH.bsHatch();
+    };
+
+    groupedHatchblocksByBsid[tileID][vectorType][laserID].addHatchBlock(hatchblock);
+  });
+  
+  return groupedHatchblocksByBsid;
+  
+};
+
+const applyLaserInterface = function(interfaceHatch,laserIdBlock,previousBsid){
+  
+  if(interfaceHatch.isEmpty()) return;
+  
+  let interfaceHatchBlock = interfaceHatch.getHatchBlockArray()[0];
+  
+  let firstBsid = previousBsid;
+  let secondBsid = interfaceHatchBlock.getAttributeInt('bsid');
+  
+  let tileID = interfaceHatchBlock.getAttributeInt('tileID_3mf');
+  let hatchType = interfaceHatchBlock.getAttributeInt('type');
+  let islandId = interfaceHatchBlock.getAttributeInt('islandId');
+  let subType = interfaceHatchBlock.getModelSubtype();
+  let polylineMode = interfaceHatchBlock.getPolylineMode();
+  
+  let overLappingPathSet = new PATH_SET.bsPathSet();
+  
+  let firstOverlapPathsSet = new PATH_SET.bsPathSet();
+  let secondOverlapPathsSet = new PATH_SET.bsPathSet(); 
+
+  overLappingPathSet.addHatches(interfaceHatch);
+  
+  let pathCount = overLappingPathSet.getPathCount();
+  
+  let shouldVectorsOverlap = PARAM.getParamInt('interface','laserInterface') === 0;
+  
+  for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
+    
+    if (pathNumber % 2 !== 0 || shouldVectorsOverlap) {
+      firstOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
+      };
+      
+    if (pathNumber % 2 === 0 || shouldVectorsOverlap) {
+      secondOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
+      
+    };
+    
+    adjustZipperInterfaceDistance(firstOverlapPathsSet,secondOverlapPathsSet);
+
+  };
+  
+  
+  let firstHatch = new HATCH.bsHatch();
+  let secondHatch = new HATCH.bsHatch();
+
+  let addPathArgs = {
+     nModelSubtype : subType,
+     nOpenPathPolylineMode : polylineMode,
+     nOpenPathTryPolyClosedPolylineModeTol : 0.0,
+     nClosedPathPolylineMode : POLY_IT.nPolyClosed,
+     bMergePolyHatch : false,
+     bTwoPointsPathAsPolyHatch : false
+  };
+
+  firstHatch.addPathsExt(firstOverlapPathsSet,addPathArgs);
+  secondHatch.addPathsExt(secondOverlapPathsSet,addPathArgs);
+  
+  firstHatch.setAttributeInt('bsid', firstBsid);
+  secondHatch.setAttributeInt('bsid', secondBsid);
+    
+  let adjustedHatch = new HATCH.bsHatch();
+
+  adjustedHatch.moveDataFrom(firstHatch);
+  adjustedHatch.moveDataFrom(secondHatch);
+  
+  adjustedHatch.setAttributeInt('tileID_3mf',tileID);
+  adjustedHatch.setAttributeInt('type',hatchType);
+  adjustedHatch.setAttributeInt('islandId',islandId);
+  
+  return adjustedHatch; 
+};
+
+const adjustZipperInterfaceDistance = function(firstPathset,secondPathset){
+    
+  let firstBounds = firstPathset.getBounds2D();
+  let secondBounds = secondPathset.getBounds2D();
+  
+  UTIL.intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstPathset);
+  UTIL.intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxY,secondPathset);
+
+}; //adjustOverlapBetweenIntefaceHatch

@@ -117,11 +117,11 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       tile_points[2] = new VEC2.Vec2(tile_x_max, tile_y_max); // max,max
       tile_points[3] = new VEC2.Vec2(tile_x_max, tile_y_min); // max,min
 
-      vec2_tile_array[j] =  tile_points;  
+      //vec2_tile_array[j] =  tile_points;  
       
       // clip allHatches to get hatches within this tile
-      let tileHatch = UTIL.ClipHatchByRect(assignedHatch,vec2_tile_array[j],true);
-      let tileHatch_outside = UTIL.ClipHatchByRect(assignedHatch,vec2_tile_array[j],false);
+      let tileHatch = UTIL.ClipHatchByRect(assignedHatch,tile_points,true);
+      let tileHatch_outside = UTIL.ClipHatchByRect(assignedHatch,tile_points,false);
         
       assignedHatch.makeEmpty();
       
@@ -158,7 +158,7 @@ const anotateTileIntefaceHatchblocks = function(hatch,tileID) {
        
         if (prevTileID > 0 ){
           
-          let overlapNumber = thisHatchBlock.getAttributeInt('numberofOverlappingTiles');
+          let overlapNumber = +thisHatchBlock.getAttributeInt('numberofOverlappingTiles');
           
           if(overlapNumber == 0) {
             thisHatchBlock.setAttributeInt('overlappingTile_1',prevTileID);
@@ -171,7 +171,7 @@ const anotateTileIntefaceHatchblocks = function(hatch,tileID) {
           
           thisHatchBlock.setAttributeInt(overlapping_designation,tileID);
           thisHatchBlock.setAttributeInt('numberofOverlappingTiles',overlapNumber);
-          
+                      
         };  
 
     hatchBlockIterator.next();
@@ -198,11 +198,10 @@ exports.sortHatchBlocks = function(thisModel,nLayerNr,allHatches){
 exports.adjustInterfaceVectors = function(allHatches,thisLayer){
 
   let hatchBlockIterator = allHatches.getHatchBlockIterator();
-  let adjustedHatch = new HATCH.bsHatch();
-  let nonAdjustedHatch = new HATCH.bsHatch();
   let resultHatch = new HATCH.bsHatch();
 
   while (hatchBlockIterator.isValid()) {   
+    
     let thisHatchBlock = hatchBlockIterator.get();
     let overlapNumber = thisHatchBlock.getAttributeInt('numberofOverlappingTiles');
     
@@ -212,19 +211,16 @@ exports.adjustInterfaceVectors = function(allHatches,thisLayer){
       
       } else {
         
-        resultHatch.moveDataFrom(applyZipperInterface(thisHatchBlock,thisLayer, PARAM.getParamInt('interface','tileInterface')===0));
+        let adjustedHatch = applyZipperInterface(thisHatchBlock,thisLayer, PARAM.getParamInt('interface','tileInterface')===0);
+        resultHatch.moveDataFrom(adjustedHatch);
     };
     
-    
   hatchBlockIterator.next();
-  };
     
-//   allHatches.makeEmpty();
-//   allHatches.moveDataFrom(nonAdjustedHatch);
-//   allHatches.moveDataFrom(adjustedHatch);
+  };
   
   return resultHatch;
-}
+}; // adjustInterfaceVectors
 
 const applyZipperInterface = function(hatchBlock,thisLayer,bOverlap){
             
@@ -301,31 +297,18 @@ const adjustZipperInterfaceDistance = function(firstTileId,secondTileId,firstPat
   
   if(Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000) ){    //same stripe
     
-    intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY+PARAM.getParamReal('interface', 'interfaceOverlap'),firstPathset);
-    intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY-PARAM.getParamReal('interface', 'interfaceOverlap'),secondBounds.maxY,secondPathset);
+    UTIL.intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstPathset);
+    UTIL.intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxY,secondPathset);
 
     } else { //different stripe
       
-    intersectPathset(firstBounds.minX,firstBounds.maxX+PARAM.getParamReal('interface', 'interfaceOverlap'),firstBounds.minY,firstBounds.maxY,firstPathset);
-    intersectPathset(secondBounds.minX-PARAM.getParamReal('interface', 'interfaceOverlap'),secondBounds.maxX,secondBounds.minY,secondBounds.maxY,secondPathset);
+    UTIL.intersectPathset(firstBounds.minX,firstBounds.maxX-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstBounds.minY,firstBounds.maxY,firstPathset);
+    UTIL.intersectPathset(secondBounds.minX+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxX,secondBounds.minY,secondBounds.maxY,secondPathset);
       
   };
 }; //adjustOverlapBetweenIntefaceHatch
 
-const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
-  
-  let intersecArrayVec2D = new Array(4);
-  intersecArrayVec2D[0] = new VEC2.Vec2(xmin, ymin); //min,min
-  intersecArrayVec2D[1] = new VEC2.Vec2(xmin, ymax); //min,max
-  intersecArrayVec2D[2] = new VEC2.Vec2(xmax, ymax); // max,max
-  intersecArrayVec2D[3] = new VEC2.Vec2(xmax, ymin); // max,min
 
-  let intersectPath = new PATH_SET.bsPathSet();
-  intersectPath.addNewPath(intersecArrayVec2D); // add tiles zones to pathset  
-  intersectPath.setClosed(true); // set the zones to closed polygons
-  
-  pathset.booleanOpIntersect(intersectPath);
-};
 
 exports.mergeShortLines = function(hatch){
 
