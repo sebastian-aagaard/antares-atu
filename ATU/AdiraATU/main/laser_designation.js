@@ -86,13 +86,13 @@ exports.setLaserDisplayColor = function(bsModelData){
    
   let l_col = new Array(CONST.nLaserCount);
   // using the previously defined color scheme for displaying lasers
-  l_col[0] = new RGBA.bsColRGBAi(247,4,4,255);  // red
-  l_col[1] = new RGBA.bsColRGBAi(72,215,85,255); // green
-  l_col[2] = new RGBA.bsColRGBAi(10,8,167,255); // blue
-  l_col[3] = new RGBA.bsColRGBAi(249,9,254,255); // purple
-  l_col[4] = new RGBA.bsColRGBAi(13,250,249,255); // light blue
+  l_col[1] = new RGBA.bsColRGBAi(247,4,4,255);  // red
+  l_col[2] = new RGBA.bsColRGBAi(72,215,85,255); // green
+  l_col[3] = new RGBA.bsColRGBAi(10,8,167,255); // blue
+  l_col[4] = new RGBA.bsColRGBAi(249,9,254,255); // purple
+  l_col[5] = new RGBA.bsColRGBAi(13,250,249,255); // light blue
 
-  for(let l_laser_nr = 0;l_laser_nr<CONST.nLaserCount;l_laser_nr++)
+  for(let l_laser_nr = 1;l_laser_nr<CONST.nLaserCount+1;l_laser_nr++)
     {
       if (l_laser_nr > 4) {// support for auto generating colors for additional lasers
       l_col[l_laser_nr] = new RGBA.bsColRGBAi(215 - (l_rnd_gen.getNextRandom()*100),
@@ -116,22 +116,26 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
   let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
   let tileArray = thisLayer.getAttribEx('tileTable');
   let scanheadArray = bsModelData.getTrayAttribEx('scanhead_array'); 
-  
-  let laser_color = bsModelData.getTrayAttribEx('laser_color'); // retrive laser_color 
-  
+    
   //get divison of scanfields in x!
   let xDiv = new Array();
 
   // get generic tile division based on laser reach
   // take shift in x into consideration only between lasers, outside is not shifted
-  for (let i = 0; i<scanheadArray.length+1;i++)
-    {
+  for (let i = 0; i<scanheadArray.length+1;i++){
+    
       if (i==0) { // if first elements 
+        
         xDiv[i] = scanheadArray[i].abs_x_min;
+        
       }else if (i == scanheadArray.length) { // if arraylength is reached
+        
             xDiv[i] = scanheadArray[i-1].abs_x_max;
-      } else {      
-      xDiv[i] = (scanheadArray[i-1].x_ref+scanheadArray[i-1].rel_x_max + scanheadArray[i].x_ref + scanheadArray[i].rel_x_min)/2;;
+        
+      } else {
+        
+      xDiv[i] = (scanheadArray[i-1].x_ref+scanheadArray[i-1].rel_x_max + scanheadArray[i].x_ref + scanheadArray[i].rel_x_min)/2;
+        
         } //if else
     } // for
 
@@ -144,13 +148,13 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
     let currentTileNr = tileArray[tileIndex].tile_number;
     let currentPassNr = tileArray[tileIndex].passNumber;
        
-    let tileOverlap = PARAM.getParamReal('tileing', 'tile_overlap_x'); // used twice
+    let vectorOverlap = PARAM.getParamReal('interface', 'interfaceOverlap'); // used twice
    
     for(let laserIndex = 0; laserIndex<xDiv.length-1; laserIndex++){ // run trough all laser dedication zones
       
       let xTileOffset = tileArray[tileIndex].scanhead_x_coord;
-      let clip_min_x = xTileOffset+xDiv[laserIndex]+tileOverlap/2; // laserZoneOverLap
-      let clip_max_x = xTileOffset+xDiv[laserIndex+1]-tileOverlap/2; //laserZoneOverLap
+      let clip_min_x = xTileOffset+xDiv[laserIndex]-vectorOverlap/2; // laserZoneOverLap
+      let clip_max_x = xTileOffset+xDiv[laserIndex+1]+vectorOverlap/2; //laserZoneOverLap
       
        // add the corrdinates to vector pointset
        let clipPoints = new Array(4);
@@ -161,8 +165,9 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
 
        let tileHatch = UTIL.ClipHatchByRect(hatchObj,clipPoints);
        
-       // add display and bsid attributes to hatchblocks
+       // add bsid attribute to hatchblocks
        let hatchIterator = tileHatch.getHatchBlockIterator();
+      
        while(hatchIterator.isValid())
        {
          let currHatcBlock = hatchIterator.get();
@@ -177,8 +182,8 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
              || PARAM.getParamInt('laserAllocation','laserAssignedToModel') == laserIndex+1){
              
                  let type = currHatcBlock.getAttributeInt('type');
-                 currHatcBlock.setAttributeInt('_disp_color',laser_color[laserIndex]);
-                 currHatcBlock.setAttributeInt('bsid', (10 * (laserIndex+1))+type); // set attributes                
+                 let bsid = (10 * (laserIndex+1))+type;
+                 currHatcBlock.setAttributeInt('bsid',bsid); // set attributes                
              };
            }  else currHatcBlock.makeEmpty();
                    
@@ -191,6 +196,7 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
    
        // getHatchBlockArray
         let hatchBlockArray = tileHatch.getHatchBlockArray();
+       
         // remove empty hatches
         let nonEmptyHatches = hatchBlockArray.reduce(function(reducedArray, currentHatch) {         
             if (!currentHatch.isEmpty() && !currentHatch.getAttributeInt('bsid')==0) {
@@ -209,7 +215,9 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
 //---------------------------------------------------------------------------------------------//
 
 
-exports.assignProcessParameters = function(bsHatch,bsModel,nLayerNr){
+exports.assignProcessParameters = function(bsHatch,bsModelData,bsModel,nLayerNr){
+
+  const laser_color = bsModelData.getTrayAttribEx('laser_color'); // retrive laser_color 
 
   const bsidTable = bsModel.getAttribEx('customTable');
   
@@ -238,77 +246,41 @@ exports.assignProcessParameters = function(bsHatch,bsModel,nLayerNr){
       };
     });
     
-//     if(!bsid){
-//       thisHatchBlock.setAttributeReal('speed',0);
-//       thisHatchBlock.setAttributeReal('power',0);
-//       thisHatchBlock.setAttributeInt('priority',0);
-//       } else {
-      thisHatchBlock.setAttributeReal('speed',thisProcessParameters.speed);
-      thisHatchBlock.setAttributeReal('power',thisProcessParameters.power);
-      thisHatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
-/*    };*/
-        
+    thisHatchBlock.setAttributeReal('speed',thisProcessParameters.speed);
+    thisHatchBlock.setAttributeReal('power',thisProcessParameters.power);
+    thisHatchBlock.setAttributeInt('priority',thisProcessParameters.priority);
+    
     thisHatchBlock.setAttributeReal('xcoord',xcoord);
     thisHatchBlock.setAttributeReal('ycoord',ycoord);
     
-    const displayMode = PARAM.getParamInt('display','displayColors');
-    
-    if (displayMode == 1){
-      thisHatchBlock.setAttributeInt('_disp_color',UTIL.findColorFromType(type).color1.rgba());  
-      };
-    
-    if (displayMode == 2){
-      let color = UTIL.findColorFromType(type).color1;
-      if(tileNumber % 2 === 0) {
-        color = UTIL.findColorFromType(type).color2;
-        };
+    const displayMode = PARAM.getParamInt('display', 'displayColors');
+    const colorToSet = getDisplayColor(type, displayMode, laserId, tileNumber,laser_color);
 
-      color.a((255*(laserId/CONST.nLaserCount)));
-      thisHatchBlock.setAttributeInt('_disp_color',color.rgba());  
-      };  
+    if (colorToSet) {
+        thisHatchBlock.setAttributeInt('_disp_color', colorToSet);
+    };
+
     
     hatchIterator.next();
   }
-}
+};
 
-
-
-//---------------------------------------------------------------------------------------------//
-  
-exports.defineSharedZones = function(bsHatch){
-
-/////////////////////////////////////
-  /// Define zones shared by lasers /// 
-  /////////////////////////////////////
-   
-  let hatchblockIt = bsHatch.getHatchBlockIterator();         
-  let allocatedLasers = new Array();
-  let zoneId = 0;
-  
-  while(hatchblockIt.isValid())
-    {
-    let thisHatchBlock = hatchblockIt.get();
-    
-    thisHatchBlock.setAttributeInt('zoneIndex',zoneId++);
-      
-    for(let m = 0; m<CONST.nLaserCount; m++)
-      {     
-        if(hatchblockIt.isValid())
-          {             
-            allocatedLasers[m] = thisHatchBlock.getAttributeInt('laser_index_' + (m+1));
-                   
-          }         
-      }
-      
-    if (UTIL.getArraySum(allocatedLasers)>1)
-      {            
-        thisHatchBlock.setAttributeInt('sharedZone', 1);        
+const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_color) {
+    switch (displayMode) {
+        case 0:
+            return laser_color[laserId];
         
-      } else {       
+        case 1:
+            return UTIL.findColorFromType(type).color1.rgba();
         
-        thisHatchBlock.setAttributeInt('sharedZone', 0);  
+        case 2:
+            const colorData = UTIL.findColorFromType(type);
+            let color = (tileNumber % 2 === 0) ? colorData.color2 : colorData.color1;
+            color.a(255 * (laserId / CONST.nLaserCount));
+            return color.rgba();
         
-      }
-    hatchblockIt.next();
+        default:
+            process.printWarning('Unexpected displayMode:', displayMode);
+            return null;  // or a default color if appropriate
     }
-}
+};
