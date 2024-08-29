@@ -211,7 +211,7 @@ exports.adjustInterfaceVectors = function(allHatches,thisLayer){
       
       } else {
         
-        let adjustedHatch = applyZipperInterface(thisHatchBlock,thisLayer, PARAM.getParamInt('interface','tileInterface')===0);
+        let adjustedHatch = applyZipperInterface(thisHatchBlock);
         resultHatch.moveDataFrom(adjustedHatch);
     };
     
@@ -222,16 +222,15 @@ exports.adjustInterfaceVectors = function(allHatches,thisLayer){
   return resultHatch;
 }; // adjustInterfaceVectors
 
-const applyZipperInterface = function(hatchBlock,thisLayer,bOverlap){
-            
+const applyZipperInterface = function(hatchBlock){
   
-  let tileTable = thisLayer.getAttribEx('tileTable');
+  //if(hatchBlock.isEmpty()) return;  
+  
   let firstTileId = hatchBlock.getAttributeInt('overlappingTile_1');
   let secondTileId = hatchBlock.getAttributeInt('overlappingTile_2');
   let hatchType = hatchBlock.getAttributeInt('type');
   let islandId = hatchBlock.getAttributeInt('islandId');
   let subType = hatchBlock.getModelSubtype();
-  let polylineMode = hatchBlock.getPolylineMode();
   
   let overlappingHatch = new HATCH.bsHatch();
   overlappingHatch.addHatchBlock(hatchBlock);
@@ -245,32 +244,35 @@ const applyZipperInterface = function(hatchBlock,thisLayer,bOverlap){
   
   let pathCount = overLappingPathSet.getPathCount();
   
+  let shouldVectorsOverlap =  PARAM.getParamInt('interface','tileInterface') === 0;
+  
   for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
     
-    if (pathNumber % 2 !== 0 || bOverlap) {
+    if (pathNumber % 2 !== 0 || shouldVectorsOverlap) {
       firstOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
       };
       
-    if (pathNumber % 2 === 0 || bOverlap) {
+    if (pathNumber % 2 === 0 || shouldVectorsOverlap) {
       secondOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
       
     };
   };
   
-  adjustZipperInterfaceDistance(firstTileId,secondTileId,firstOverlapPathsSet,secondOverlapPathsSet);
+  let isSameStripe = Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000);
+  UTIL.adjustZipperInterfaceDistance(isSameStripe,firstOverlapPathsSet,secondOverlapPathsSet);
   
   let firstHatch = new HATCH.bsHatch();
   let secondHatch = new HATCH.bsHatch();
 
   let addPathArgs = {
      nModelSubtype : subType,
-     nOpenPathPolylineMode : polylineMode,
+     nOpenPathPolylineMode : POLY_IT.nPolyOpen,
      nOpenPathTryPolyClosedPolylineModeTol : 0.0,
      nClosedPathPolylineMode : POLY_IT.nPolyClosed,
      bMergePolyHatch : false,
      bTwoPointsPathAsPolyHatch : false
   };
-
+    
   firstHatch.addPathsExt(firstOverlapPathsSet,addPathArgs);
   secondHatch.addPathsExt(secondOverlapPathsSet,addPathArgs);
   
@@ -287,28 +289,6 @@ const applyZipperInterface = function(hatchBlock,thisLayer,bOverlap){
   
   return adjustedHatch; 
 }; 
-
-const adjustZipperInterfaceDistance = function(firstTileId,secondTileId,firstPathset,secondPathset){
-  
-  let boundsArray = firstPathset.getBounds2D().toArray();
-  
-  let firstBounds = firstPathset.getBounds2D();
-  let secondBounds = secondPathset.getBounds2D();
-  
-  if(Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000) ){    //same stripe
-    
-    UTIL.intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstPathset);
-    UTIL.intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxY,secondPathset);
-
-    } else { //different stripe
-      
-    UTIL.intersectPathset(firstBounds.minX,firstBounds.maxX-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstBounds.minY,firstBounds.maxY,firstPathset);
-    UTIL.intersectPathset(secondBounds.minX+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxX,secondBounds.minY,secondBounds.maxY,secondPathset);
-      
-  };
-}; //adjustOverlapBetweenIntefaceHatch
-
-
 
 exports.mergeShortLines = function(hatch){
 

@@ -162,7 +162,7 @@ exports.findColorFromType = function (value) {
   return null; // Return null if value is not found
 }
 
-exports.intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
+const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
   
   let intersecArrayVec2D = new Array(4);
   intersecArrayVec2D[0] = new VEC2.Vec2(xmin, ymin); //min,min
@@ -176,3 +176,21 @@ exports.intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
   
   pathset.booleanOpIntersect(intersectPath);
 };
+
+exports.adjustZipperInterfaceDistance = function(adjustInY,firstPathset,secondPathset){
+    
+  let firstBounds = firstPathset.getBounds2D();
+  let secondBounds = secondPathset.getBounds2D();
+  
+  if(adjustInY){    //inY
+    
+    intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstPathset);
+    intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxY,secondPathset);
+
+    } else { //inX
+      
+    intersectPathset(firstBounds.minX,firstBounds.maxX-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstBounds.minY,firstBounds.maxY,firstPathset);
+    intersectPathset(secondBounds.minX+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxX,secondBounds.minY,secondBounds.maxY,secondPathset);
+      
+  };
+}; //adjustOverlapBetweenIntefaceHatch

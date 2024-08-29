@@ -285,77 +285,73 @@ const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_
     }
 }; // getDisplayColor
 
-exports.adjustInterfaceVectorsBetweenLasers = function (hatch){
-  
+exports.adjustInterfaceVectorsBetweenLasers = function (hatch) {
+
   let resultHatch = new HATCH.bsHatch();
-  
   let groupedHatchObjectTileTypeBsid = getGroupedHatchObjectByTileTypeBsid(hatch);
 
-  Object.values(groupedHatchObjectTileTypeBsid).forEach(function(tile){
-    let adjustedInterFaceHatch
-    Object.values(tile).forEach(function(type){
-      
-      let previousLaserIdBlock = undefined;
-      let previousBsid = undefined;
-      
-      const values = Object.values(type); 
-      
-      values.forEach(function(laserIdBlock,index){
+  Object.values(groupedHatchObjectTileTypeBsid).forEach(function (tile) {
+    Object.values(tile).forEach(function (type) {
 
-        if(index === 0){
-         previousLaserIdBlock = laserIdBlock;
-         previousBsid = laserIdBlock.getHatchBlockArray()[0].getAttributeInt('bsid');
-         return;
-        };
+      let previousLaserWithSameTypeHatch, previousBsid;
 
-        let previousBounds = previousLaserIdBlock.getBounds2D();
+      const types = Object.values(type);
 
-        // get clipping from bounds2D
-        let prevOutline = new Array(4);
-        prevOutline[0] = new VEC2.Vec2(previousBounds.minX, previousBounds.minY); //min,min
-        prevOutline[1] = new VEC2.Vec2(previousBounds.minX, previousBounds.maxY); //min,max
-        prevOutline[2] = new VEC2.Vec2(previousBounds.maxX, previousBounds.maxY); // max,max
-        prevOutline[3] = new VEC2.Vec2(previousBounds.maxX, previousBounds.minY); // max,min
+      types.forEach(function (laserWithSameTypeHatch, index) {
 
-        let interfaceHatch = UTIL.ClipHatchByRect(laserIdBlock,prevOutline,true);
+        if (index === 0) { // if first
+          previousLaserWithSameTypeHatch = laserWithSameTypeHatch;
+          previousBsid = laserWithSameTypeHatch.getHatchBlockArray()[0].getAttributeInt('bsid');
 
-        let nextLaserIdBlock = UTIL.ClipHatchByRect(laserIdBlock,prevOutline,false);
+          if (index === types.length - 1) { // if also last
+            resultHatch.moveDataFrom(previousLaserWithSameTypeHatch);
+          }
+          return;
+        }
 
-        let adjustedInterfaceHatch = applyLaserInterface(interfaceHatch,laserIdBlock,previousBsid);
-        
-        let currentBounds = laserIdBlock.getBounds2D();
-        
-         // get clipping from bounds2D
-        let currOutline = new Array(4);
-        currOutline[0] = new VEC2.Vec2(currentBounds.minX, currentBounds.minY); //min,min
-        currOutline[1] = new VEC2.Vec2(currentBounds.minX, currentBounds.maxY); //min,max
-        currOutline[2] = new VEC2.Vec2(currentBounds.maxX, currentBounds.maxY); // max,max
-        currOutline[3] = new VEC2.Vec2(currentBounds.maxX, currentBounds.minY); // max,min
-        
-        let previousHatch = UTIL.ClipHatchByRect(previousLaserIdBlock,currOutline,false);
-        
-        resultHatch.moveDataFrom(previousHatch);
-        
-        if(adjustedInterfaceHatch!==undefined){
+        let previousBounds = previousLaserWithSameTypeHatch.getBounds2D();
+
+        let previousBlockOutline = [
+          new VEC2.Vec2(previousBounds.minX, previousBounds.minY), //min,min
+          new VEC2.Vec2(previousBounds.minX, previousBounds.maxY), //min,max
+          new VEC2.Vec2(previousBounds.maxX, previousBounds.maxY), // max,max
+          new VEC2.Vec2(previousBounds.maxX, previousBounds.minY)  // max,min
+        ];
+
+        let interfaceHatch = UTIL.ClipHatchByRect(laserWithSameTypeHatch, previousBlockOutline, true);
+        let nextLaserWithSameTypeHatch = UTIL.ClipHatchByRect(laserWithSameTypeHatch, previousBlockOutline, false);
+        let adjustedInterfaceHatch = applyLaserInterface(interfaceHatch, laserWithSameTypeHatch, previousBsid);
+
+        let currentBounds = laserWithSameTypeHatch.getBounds2D();
+
+        let currentBlockOutline = [
+          new VEC2.Vec2(currentBounds.minX, currentBounds.minY), //min,min
+          new VEC2.Vec2(currentBounds.minX, currentBounds.maxY), //min,max
+          new VEC2.Vec2(currentBounds.maxX, currentBounds.maxY), // max,max
+          new VEC2.Vec2(currentBounds.maxX, currentBounds.minY)  // max,min
+        ];
+
+        let clippedPreviousHatch = UTIL.ClipHatchByRect(previousLaserWithSameTypeHatch, currentBlockOutline, false);
+        resultHatch.moveDataFrom(clippedPreviousHatch);
+
+        if (adjustedInterfaceHatch !== undefined) {
           resultHatch.moveDataFrom(adjustedInterfaceHatch);
         }
+
+        previousBsid = laserWithSameTypeHatch.getHatchBlockArray()[0].getAttributeInt('bsid');
+        previousLaserWithSameTypeHatch = nextLaserWithSameTypeHatch;
         
-        if(index === values.length-1) {
-          
-          resultHatch.moveDataFrom(nextLaserIdBlock);
-          return;
-          
-          };
-        
-        previousBsid = laserIdBlock.getHatchBlockArray()[0].getAttributeInt('bsid');
-        previousLaserIdBlock = nextLaserIdBlock; 
-         
+        if (index === types.length - 1) {
+          resultHatch.moveDataFrom(nextLaserWithSameTypeHatch);
+        }
+
       });
     });
   });
-  
+
   return resultHatch;
-};//adjustInterfaceVectorsBetweenLasers
+}; // adjustInterfaceVectorsBetweenLasers
+
 
 exports.mergeLaserInterfaceVectors = function(hatch){
   
@@ -426,8 +422,6 @@ const applyLaserInterface = function(interfaceHatch,laserIdBlock,previousBsid){
   let hatchType = interfaceHatchBlock.getAttributeInt('type');
   let islandId = interfaceHatchBlock.getAttributeInt('islandId');
   let subType = interfaceHatchBlock.getModelSubtype();
-  let polylineMode = interfaceHatchBlock.getPolylineMode();
-  
   let overLappingPathSet = new PATH_SET.bsPathSet();
   
   let firstOverlapPathsSet = new PATH_SET.bsPathSet();
@@ -450,7 +444,7 @@ const applyLaserInterface = function(interfaceHatch,laserIdBlock,previousBsid){
       
     };
     
-    adjustZipperInterfaceDistance(firstOverlapPathsSet,secondOverlapPathsSet);
+    UTIL.adjustZipperInterfaceDistance(false,firstOverlapPathsSet,secondOverlapPathsSet);
 
   };
   
@@ -460,7 +454,7 @@ const applyLaserInterface = function(interfaceHatch,laserIdBlock,previousBsid){
 
   let addPathArgs = {
      nModelSubtype : subType,
-     nOpenPathPolylineMode : polylineMode,
+     nOpenPathPolylineMode : POLY_IT.nPolyOpen,
      nOpenPathTryPolyClosedPolylineModeTol : 0.0,
      nClosedPathPolylineMode : POLY_IT.nPolyClosed,
      bMergePolyHatch : false,
@@ -484,13 +478,3 @@ const applyLaserInterface = function(interfaceHatch,laserIdBlock,previousBsid){
   
   return adjustedHatch; 
 };
-
-const adjustZipperInterfaceDistance = function(firstPathset,secondPathset){
-    
-  let firstBounds = firstPathset.getBounds2D();
-  let secondBounds = secondPathset.getBounds2D();
-  
-  UTIL.intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstPathset);
-  UTIL.intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxY,secondPathset);
-
-}; //adjustOverlapBetweenIntefaceHatch
