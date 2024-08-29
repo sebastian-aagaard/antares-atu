@@ -263,7 +263,7 @@ const applyZipperInterface = function(hatchBlock,bOverlap){
 
   let addPathArgs = {
      nModelSubtype : subType,
-     nOpenPathPolylineMode : polylineMode,
+     nOpenPathPolylineMode : POLY_IT.nPolyOpen,
      nOpenPathTryPolyClosedPolylineModeTol : 0.0,
      nClosedPathPolylineMode : POLY_IT.nPolyClosed,
      bMergePolyHatch : false,
