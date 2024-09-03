@@ -25,9 +25,7 @@ const VEC2 = requireBuiltin('vec2');
 // createGlobalStripes
 
 // -------- FUNCTIONS -------- //
-exports.getHatchAngle = function(nLayerNr) {
-  let hatch_angle_init = PARAM.getParamReal("exposure", "hatch_angle_init");
-  let hatch_angle_increment =  PARAM.getParamReal("exposure", "hatch_angle_increment");
+const getHatchAngle = function(nLayerNr, hatch_angle_init,hatch_angle_increment) {
   
   let hatchAngle = (hatch_angle_init + (nLayerNr * hatch_angle_increment)) % 360;
   
@@ -116,7 +114,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let allSupportContourHatch = new HATCH.bsHatch();
   
   //find this layer hatch angle
-  const hatchAngle = exports.getHatchAngle(nLayerNr);
+  const hatchAngle = getHatchAngle(nLayerNr,PARAM.getParamReal("exposure", "hatch_angle_init"),PARAM.getParamReal("exposure", "hatch_angle_increment"));
     
   //determine if the island is support or part  
   let is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
@@ -191,14 +189,14 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
 
         let hatchingArgs = {
          "fHatchDensity" : PARAM.getParamReal("downskin", "down_skin_hdens"),
-         "fHatchAngle" : hatchAngle,
+         "fHatchAngle" : getHatchAngle(nLayerNr,PARAM.getParamReal('downskin', 'down_skin_hangle'),PARAM.getParamReal('downskin', 'down_skin_hangle_increment')),
          "nCycles" : 1,
          "fCollinearBorderSnapTol" : 0.0,
          "fBlocksortRunAheadLimit": 2.0,
          "hatchOrigin" : {x: 0.0, y: 0.0},
          "blocksortVec" : {x: 0.0, y: -1.0},
          "nFlags" : HATCH.nHatchFlagAlternating | 
-          //HATCH.nHatchFlagBlocksortEnhanced |
+          HATCH.nHatchFlagBlocksortEnhanced |
           HATCH.nHatchFlagFixedOrigin
         }; 
        
@@ -279,7 +277,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     
     let hatchingArgs = {
          "fHatchDensity" : PARAM.getParamReal('support','support_hdens'),
-         "fHatchAngle" : hatchAngle,  
+         "fHatchAngle" : getHatchAngle(nLayerNr,PARAM.getParamReal('support', 'support_hatch_angle_init'),PARAM.getParamReal('support', 'support_hatch_angle_increment')),  
          "nCycles" : 1,
          "fCollinearBorderSnapTol" : 0.0,
          "fBlocksortRunAheadLimit": 2.0,
@@ -306,6 +304,10 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   mergeHatchBlocks(allHatch);
   mergeHatchBlocks(allDownSkinHatch);
   
+  mergeHatchBlocks(allContourHatch);
+  //mergeHatchBlocks(allSupportHatch);
+
+  
   resultHatch.moveDataFrom(allSupportHatch);
   resultHatch.moveDataFrom(allSupportContourHatch);
   resultHatch.moveDataFrom(allHatch);
@@ -320,7 +322,7 @@ const mergeHatchBlocks = function(hatch){
   
   hatch.mergeHatchBlocks({
     "bConvertToHatchMode": true,
-    "nConvertToHatchMaxPointCount": 2,
+    //"nConvertToHatchMaxPointCount": default,
     //"nMaxBlockSize": 512,
     "bCheckAttributes": true
   });  
@@ -418,7 +420,7 @@ function createStripes(islandObj,nLayerNr) {
   
   let stripeIslands = new ISLAND.bsIsland();
   
-  let stripeAngle = exports.getHatchAngle(nLayerNr);
+  let stripeAngle = getHatchAngle(nLayerNr,PARAM.getParamReal('exposure', 'hatch_angle_init'),PARAM.getParamReal('exposure', 'hatch_angle_increment'));
   if (stripeAngle<270) stripeAngle-=180;
   
   islandObj.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,

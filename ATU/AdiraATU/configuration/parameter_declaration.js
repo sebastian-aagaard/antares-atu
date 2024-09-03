@@ -108,10 +108,10 @@ exports.declareParameters = function(parameter)
        LOCALIZER.GetMessage('param_downskintoggle_enable')],
        LOCALIZER.GetMessage('param_downskintoggle_enable')
         );
-    parameter.declareParameterReal('downskin', "down_skin_surface_angle", LOCALIZER.GetMessage('param_down_skin_surface_angle'), 0.0, 89.0, 60.0);
-    parameter.declareParameterInt('downskin', "down_skin_layer_reference", LOCALIZER.GetMessage('param_down_skin_layer_reference'), 1, 9, 5);
-    parameter.declareParameterReal('downskin', "down_skin_hdens", LOCALIZER.GetMessage('param_hatch_down_skin_density'), 0.001, 50.0, 0.1);
-    parameter.declareParameterReal('downskin', "down_skin_hangle", LOCALIZER.GetMessage('param_hatch_down_skin_angle'), 0, 360, 45);
+    parameter.declareParameterReal('downskin', 'down_skin_surface_angle', LOCALIZER.GetMessage('param_down_skin_surface_angle'), 0.0, 89.0, 60.0);
+    parameter.declareParameterInt('downskin', 'down_skin_layer_reference', LOCALIZER.GetMessage('param_down_skin_layer_reference'), 1, 9, 5);
+    parameter.declareParameterReal('downskin', 'down_skin_hdens', LOCALIZER.GetMessage('param_hatch_down_skin_density'), 0.001, 50.0, 0.1);
+    parameter.declareParameterReal('downskin', 'down_skin_hangle', LOCALIZER.GetMessage('param_hatch_down_skin_angle'), 0, 360, 45);
     parameter.declareParameterReal('downskin', 'down_skin_hangle_increment', LOCALIZER.GetMessage('param_hatch_down_skin_angle_increment'), -360.0, 360.0, 90.0);
     parameter.declareParameterReal('downskin', 'down_skin_overlap', LOCALIZER.GetMessage('param_down_skin_overlap'), 0.0, 100.0, 0.7);
     
