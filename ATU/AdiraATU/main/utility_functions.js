@@ -179,18 +179,20 @@ const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
 
 exports.adjustZipperInterfaceDistance = function(adjustInY,firstPathset,secondPathset){
     
-  let firstBounds = firstPathset.getBounds2D();
-  let secondBounds = secondPathset.getBounds2D();
+  const firstBounds = firstPathset.getBounds2D();
+  const secondBounds = secondPathset.getBounds2D();
+  
+  const distanceBewteenInterfaceVectors = PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors');
   
   if(adjustInY){    //inY
     
-    intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstPathset);
-    intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxY,secondPathset);
+    intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY-distanceBewteenInterfaceVectors,firstPathset);
+    intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY+distanceBewteenInterfaceVectors,secondBounds.maxY,secondPathset);
 
     } else { //inX
       
-    intersectPathset(firstBounds.minX,firstBounds.maxX-PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),firstBounds.minY,firstBounds.maxY,firstPathset);
-    intersectPathset(secondBounds.minX+PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors'),secondBounds.maxX,secondBounds.minY,secondBounds.maxY,secondPathset);
+    intersectPathset(firstBounds.minX,firstBounds.maxX-distanceBewteenInterfaceVectors,firstBounds.minY,firstBounds.maxY,firstPathset);
+    intersectPathset(secondBounds.minX+distanceBewteenInterfaceVectors,secondBounds.maxX,secondBounds.minY,secondBounds.maxY,secondPathset);
       
   };
 }; //adjustOverlapBetweenIntefaceHatch
