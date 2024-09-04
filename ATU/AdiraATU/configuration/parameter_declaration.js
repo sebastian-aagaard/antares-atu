@@ -57,8 +57,11 @@ exports.declareParameters = function(parameter)
        [LOCALIZER.GetMessage('param_displayColors_lasers'),
        LOCALIZER.GetMessage('param_displayColors_types'),
        LOCALIZER.GetMessage('param_displayColors_both')],
-       LOCALIZER.GetMessage('param_displayColors_both'));  
-   
+       LOCALIZER.GetMessage('param_displayColors_both'));
+    parameter.declareParameterChoice('display', 'displayTileGridATU', LOCALIZER.GetMessage('param_displayTileGridATU'),
+       [LOCALIZER.GetMessage('param_disableTileGrid'),
+       LOCALIZER.GetMessage('param_enableTileGrid')],
+       LOCALIZER.GetMessage('param_enableTileGrid'));  
    
  parameter.declareParameterGroup('interface', LOCALIZER.GetMessage('grp_interface'));
  

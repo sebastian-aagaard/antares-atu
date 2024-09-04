@@ -7,7 +7,7 @@
 'use strict';
 
 const RGBA = requireBuiltin('bsColRGBAi');
-
+const PARAM = requireBuiltin('bsParam');
 // -------- GLOBAL CONSTANTS -------- //
 
 exports.bLOGGING = false;
@@ -17,7 +17,7 @@ exports.bIncludeScanningAttributes = true;
 exports.nBufferduration = 0;//1500000;//500000;//1000000; //us
 
 //when not in development/ATU mode set to false
-exports.bDrawTile = true;
+exports.bDrawTile = function () {return PARAM.getParamInt('display', 'displayTileGridATU')};
 
 exports.scanningSchema = 'http://schemas.scanlab.com/scanning/2023/01';
 exports.skywritingSchema = 'http://schemas.scanlab.com/skywriting/2023/01';
@@ -26,6 +26,8 @@ exports.parkingPosition = { x: 465 , y: - 560 };
 exports.tilePositionHardLimit = {xmin:-40 , ymin: -60, xmax: 620, ymax: 935};
 exports.maxTargetY = 995;
 
+// exports.dt = function(){
+//   return PARAM.getParamReal("exposure", "min_vector_lenght")};
 
 // -------- TYPE DESIGNATION -------- //
 exports.typeDesignations = {

@@ -10,7 +10,7 @@
 const PARAM = requireBuiltin('bsParam');
 const LAYER = requireBuiltin('bsModelLayer');
 const TILE = require('main/tileing.js');
-const CONST = require('main/constants.js');
+//const CONST = require('main/constants.js');
 const LASER = require('main/laser_designation.js');
 const UTIL = require('main/utility_functions.js');
 
@@ -30,14 +30,11 @@ const UTIL = require('main/utility_functions.js');
 exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress){  
   
   
- //process.print('modelLayerCount: ' + modelLayerCount);
-
   ///////////////////////////////////////////////////////////////////
   // Define Scanner Array and set display Colour, store it in tray //
   //////////////////////////////////////////////////////////////////
   
   LASER.defineScannerArray(modelDataTarget);
-  LASER.setLaserDisplayColor(modelDataTarget);
   
   //////////////////////////////////////////////////
   // Get Boundaries of Work Area / build Envelope //
@@ -47,24 +44,14 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
   /////////////////////////////////////////
   // Caclulate Scene Boundaries pr Layer //
   /////////////////////////////////////////
- 
-//   let srcModel = modelDataSrc.getModel(0);
-//   
-//   modelDataTarget.addEmptyModel();
-//     
-//   modelDataTarget.addModelCopy(srcModel);
       
   const modelCount = modelDataSrc.getModelCount();
   
-   for(let modelIndex=0; modelIndex < modelCount && !progress.cancelled(); ++modelIndex)
-  {  
+  for(let modelIndex=0; modelIndex < modelCount && !progress.cancelled(); modelIndex++){  
     // Gets the source model.
     let sourceModel = modelDataSrc.getModel(modelIndex);
     modelDataTarget.addModelCopy(sourceModel);
-
-    //progress.step(1);
-  }    
-      
+  }
       
   for( let modelIndex=0; modelIndex < modelDataTarget.getModelCount() && !progress.cancelled(); modelIndex++ ){
     
@@ -87,11 +74,6 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
       // retrieve current model layer
       let modelLayer =  currentModel.getModelLayer(thisLayerHeight);
       
-//       if (modelLayer==undefined){
-//         process.printError(layerNumber + " undefined");
-//         continue;
-//         };
-      
       let modelname = currentModel.getAttribEx('ModelName');
       
       if (!isLayerProcessable(modelLayer)) {       
@@ -111,13 +93,11 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
 
     } //layer iterator 
       progress.update(100);
-
+    
   };
-  
 }; //preprocessLayerStack
 
 //---------------------------------------------------------------------------------------------//
-
 
 const isLayerProcessable = function(modelLayer){
     return (
@@ -131,7 +111,6 @@ const isLayerProcessable = function(modelLayer){
     );
 };
 
-
 const isModelOutsideWorkArea = function(boundsArray,limits,layerNr,model){
   
   const bounds = {
@@ -141,17 +120,14 @@ const isModelOutsideWorkArea = function(boundsArray,limits,layerNr,model){
     ymax: boundsArray[3]
   }
   
-
 if(bounds.xmin < limits.xmin || bounds.xmax > limits.xmax ||
    bounds.ymin < limits.ymin || bounds.ymax > limits.ymax){
    
      process.printError("Preprocessor: model outside workarea limits, breach found at layerheigt: " + layerNr + "model " + model.getAttribEx('ModelName') + 
-     " b" + bounds.xmin +"/"+ bounds.xmax +";"+ bounds.ymin +"/"+ bounds.ymax + " l" + limits.xmin +"/"+ limits.xmax +";"+ limits.ymin +"/"+ limits.ymax);
-     
+     " modelBoundaries: " + bounds.xmin +"/"+ bounds.xmax +";"+ bounds.ymin +"/"+ bounds.ymax + " limits: " + limits.xmin +"/"+ limits.xmax +";"+ limits.ymin +"/"+ limits.ymax);
      }
 };
 
-// ADD LAYER BOUNDARIES
 const addLayerBoundariesToAllLayerBoundaries = function(modelData, thisLayerBoundaries, workAreaLimits, layerHeight,srcModel){
   let boundsArray = [
     undefined, // xmin
@@ -194,58 +170,3 @@ const addLayerBoundariesToAllLayerBoundaries = function(modelData, thisLayerBoun
   // Store boundaries in modelData tray
   modelData.setTrayAttribEx('allLayerBoundaries', allLayerBoundaries);
 };
-
-// const addLayerBoundariesToAllLayerBoundaries = (modelData,thisLayerBoundaries,workAreaLimits,layerNr) => {
-//   
-//   let boundsArray = [
-//         undefined,  // xmin
-//         undefined,  // xmax
-//         undefined,  // ymin
-//         undefined]; // ymax 
-//     
-//   if(thisLayerBoundaries){
-//      boundsArray = [
-//         thisLayerBoundaries.m_min.m_coord[0],   // xmin
-//         thisLayerBoundaries.m_max.m_coord[0],   // xmax
-//         thisLayerBoundaries.m_min.m_coord[1],   // ymin
-//         thisLayerBoundaries.m_max.m_coord[1]];  // ymax
-//     
-//     }
-//     
-//  
-//   //check if model is outside boundaries 
-//     
-//   //check if boundaries lies outside the allowed area
-//   isModelOutsideWorkArea(boundsArray,workAreaLimits,layerNr);
-//     
-//   let allLayerBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
-//   
-//   // if allLayerBoundaries has nothing this is first layer
-//   if (allLayerBoundaries == undefined) {
-//     
-//     allLayerBoundaries = [];
-//     allLayerBoundaries[0] = undefined; // add empty layer for layer 0
-//     }
-//   
-//   // if there is nothing yet for this layer, push this boundary 
-//   if (allLayerBoundaries[layerNr] == undefined) {
-//     
-//     allLayerBoundaries[layerNr] = (boundsArray);
-//     
-// 
-//     
-//   } else { // check 
-//     
-//     // check if this layer boundaries exceeds the already stored, if true update the boundary
-//     if (boundsArray[0] < allLayerBoundaries[layerNr][0]) allLayerBoundaries[layerNr][0] = boundsArray[0]; //xmin
-//     if (boundsArray[1] > allLayerBoundaries[layerNr][1]) allLayerBoundaries[layerNr][1] = boundsArray[1]; //xmax
-//     if (boundsArray[2] < allLayerBoundaries[layerNr][2]) allLayerBoundaries[layerNr][2] = boundsArray[2]; //ymin
-//     if (boundsArray[3] > allLayerBoundaries[layerNr][3]) allLayerBoundaries[layerNr][3] = boundsArray[3]; //ymax
-//   
-//   }
-//   
-//   // store boundaries in modelData tray
-//   modelData.setTrayAttribEx('allLayerBoundaries',allLayerBoundaries);
-// } // addLayerBoundariesToAllLayerBoundaries
-
-//---------------------------------------------------------------------------------------------//
