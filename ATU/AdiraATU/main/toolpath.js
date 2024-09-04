@@ -50,57 +50,63 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     let blockedPathHatch = TPGEN.getBlockedPathHatch(thisModel,island_it,islandId);
 
     // store hatch from processed islands  
-//     allHatches.moveDataFrom(supportHatch);
-//     allHatches.moveDataFrom(supportContourHatch);      
-//     allHatches.moveDataFrom(partHatch);
-//     allHatches.moveDataFrom(downSkinHatch);
-//     allHatches.moveDataFrom(contourHatch);
-//     allHatches.moveDataFrom(downSkinContourHatch);
     allHatches.moveDataFrom(blockedPathHatch);
-    
-    //TPGEN.sortHatchByPriority(allHatches);             
-          
+             
     island_it.next();
     islandId++;
   };
   // process open poly lines
   let polyLineHatch = TPGEN.getOpenPolyLinesHatch(modelData,nLayerNr);
   allHatches.moveDataFrom(polyLineHatch);
-    
+  //process.print('1: ' + allHatches.getHatchBlockCount());
+  
   TILE.getTileArray(thisLayer,nLayerNr,modelData);
-    
+  //process.print('2: ' + allHatches.getHatchBlockCount());
+ 
   allHatches = TP2TILE.mergeShortLines(allHatches);
-
-  allHatches.deleteShortLines(PARAM.getParamReal("exposure", "min_vector_lenght"));
+  //process.print('3: ' + allHatches.getHatchBlockCount());
   
   //  --- TILE OPERATIONS --- //
   allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
-        
+  //process.print('4: ' + allHatches.getHatchBlockCount());
+
+  allHatches.mergeHatchBlocks({
+    "bConvertToHatchMode": true,
+    "bCheckAttributes": true
+  });  
+  
   allHatches = TP2TILE.adjustInterfaceVectors(allHatches,thisLayer);
-      
+  //process.print('5: ' + allHatches.getHatchBlockCount());
+
+  allHatches.mergeHatchBlocks({
+    "bConvertToHatchMode": true,
+    "bCheckAttributes": true
+  });  
+
   allHatches = TP2TILE.mergeInterfaceVectors(allHatches); 
-     
+  //process.print('6: ' + allHatches.getHatchBlockCount());
+  
   allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
+  //process.print('7: ' + allHatches.getHatchBlockCount());
   
   allHatches = LASER.adjustInterfaceVectorsBetweenLasers(allHatches);
+  //process.print('8: ' + (allHatches.resultHatch.getHatchBlockCount()+allHatches.interfaceHatch.getHatchBlockCount()));
 
   allHatches = LASER.mergeLaserInterfaceVectors(allHatches);
+  //process.print('9: ' + allHatches.getHatchBlockCount());
 
   LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
-    
-  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
- 
-//allHatches = TP2TILE.sortPartHatchByPositionInTiles(allHatches);
-
-//allHatches = TP2TILE.sortDownSkinByPositionInTiles(allHatches);
+  //process.print('10: ' + allHatches.getHatchBlockCount());
  
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
-    "nConvertToHatchMaxPointCount": 2,
-    //"nMaxBlockSize": 512,
     "bCheckAttributes": true
   });  
-//     
+ //process.print('11: ' + allHatches.getHatchBlockCount());
+
+ allHatches = TP2TILE.deleteShortHatchLines(allHatches);
+ //process.print('12: ' + allHatches.getHatchBlockCount());
+  
   allHatches = TP2TILE.sortHatchByPriorityInTiles(allHatches);
   
   hatchResult.moveDataFrom(allHatches);
