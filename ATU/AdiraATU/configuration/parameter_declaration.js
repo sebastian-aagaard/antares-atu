@@ -59,21 +59,54 @@ exports.declareParameters = function(parameter)
        LOCALIZER.GetMessage('param_displayColors_both')],
        LOCALIZER.GetMessage('param_displayColors_both'));  
    
+   
  parameter.declareParameterGroup('interface', LOCALIZER.GetMessage('grp_interface'));
-      parameter.declareParameterChoice('interface', 'tileInterface', LOCALIZER.GetMessage('param_tileInterface'),
-       [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
-       LOCALIZER.GetMessage('param_tileIntefrace_zipper'),
-       LOCALIZER.GetMessage('param_tileIntefrace_seamless')],
-       LOCALIZER.GetMessage('param_tileIntefrace_overlap'));
-       
-  parameter.declareParameterChoice('interface', 'laserInterface', LOCALIZER.GetMessage('param_laserInterface'),
-    [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
-    LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
-    LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
-    LOCALIZER.GetMessage('param_laserIntefrace_overlap'));
+ 
+    parameter.declareParameterReal('interface', 'interfaceOverlap', LOCALIZER.GetMessage('param_interfaceOverlap'), -10.0, 10.0, 0.1);
+
+    parameter.declareParameterChoice('interface', 'tileInterfaceHatch', LOCALIZER.GetMessage('param_tileInterfaceHatch'),
+     [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
+     LOCALIZER.GetMessage('param_tileIntefrace_zipper'),
+     LOCALIZER.GetMessage('param_tileIntefrace_seamless')],
+     LOCALIZER.GetMessage('param_tileIntefrace_overlap'));
+         
+    parameter.declareParameterChoice('interface', 'laserInterfaceHatch', LOCALIZER.GetMessage('param_laserInterfaceHatch'),
+      [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
+      LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
+      LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
+      LOCALIZER.GetMessage('param_laserIntefrace_overlap'));
+      
+    parameter.declareParameterReal('interface', 'distanceBewteenInterfaceHatchVectors', LOCALIZER.GetMessage('param_distanceBewteenInterfaceHatchVectors'), 0, 10.0, 0);
     
-  parameter.declareParameterReal('interface', 'distanceBewteenInterfaceVectors', LOCALIZER.GetMessage('param_distanceBewteenInterfaceVectors'), -10.0, 10.0, -0.03);
-  parameter.declareParameterReal('interface', 'interfaceOverlap', LOCALIZER.GetMessage('param_interfaceOverlap'), -10.0, 10.0, 0.1);
+    parameter.declareParameterChoice('interface', 'tileInterfaceContour', LOCALIZER.GetMessage('param_tileInterfaceContour'),
+      [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
+      LOCALIZER.GetMessage('param_tileIntefrace_zipper'),
+      LOCALIZER.GetMessage('param_tileIntefrace_seamless')],
+      LOCALIZER.GetMessage('param_tileIntefrace_overlap'));
+       
+    parameter.declareParameterChoice('interface', 'laserInterfaceContour', LOCALIZER.GetMessage('param_laserInterfaceContour'),
+      [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
+      LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
+      LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
+      LOCALIZER.GetMessage('param_laserIntefrace_overlap'));
+
+    parameter.declareParameterReal('interface', 'distanceBewteenInterfaceContourVectors', LOCALIZER.GetMessage('param_distanceBewteenInterfaceContourVectors'), 0.0, 10.0, 0);  
+    
+    
+    parameter.declareParameterChoice('interface', 'tileInterfaceOpenPolyLine', LOCALIZER.GetMessage('param_tileInterfaceOpenPolyLine'),
+     [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
+     LOCALIZER.GetMessage('param_tileIntefrace_zipper'),
+     LOCALIZER.GetMessage('param_tileIntefrace_seamless')],
+     LOCALIZER.GetMessage('param_tileIntefrace_overlap'));
+     
+    parameter.declareParameterChoice('interface', 'laserInterfaceOpenPolyLine', LOCALIZER.GetMessage('param_laserInterfaceOpenPolyLine'),
+      [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
+      LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
+      LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
+      LOCALIZER.GetMessage('param_laserIntefrace_overlap'));
+
+    parameter.declareParameterReal('interface', 'distanceBewteenOpenPolyLineInterfaceVectors', LOCALIZER.GetMessage('param_distanceBewteenOpenPolyLineInterfaceVectors'), 0, 10.0, 0);  
+  
   
   parameter.declareParameterGroup('stripeOverlapAllocation', LOCALIZER.GetMessage('grp_stripeOverlapAllocation'));
     parameter.declareParameterReal('stripeOverlapAllocation', 'firstOverlapShift', LOCALIZER.GetMessage('param_firstOverlapShift'), -430.0, 430.0, 0.0);
