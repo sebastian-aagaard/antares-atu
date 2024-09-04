@@ -177,12 +177,12 @@ const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
   pathset.booleanOpIntersect(intersectPath);
 };
 
-exports.adjustZipperInterfaceDistance = function(adjustInY,firstPathset,secondPathset){
+exports.adjustZipperInterfaceDistance = function(adjustInY,firstPathset,secondPathset,type){
     
   const firstBounds = firstPathset.getBounds2D();
   const secondBounds = secondPathset.getBounds2D();
-  
-  const distanceBewteenInterfaceVectors = PARAM.getParamReal('interface', 'distanceBewteenInterfaceVectors');
+    
+  const distanceBewteenInterfaceVectors = getDistanceBetweenThisTypeInterfaceVectors(type); 
   
   if(adjustInY){    //inY
     
@@ -196,3 +196,73 @@ exports.adjustZipperInterfaceDistance = function(adjustInY,firstPathset,secondPa
       
   };
 }; //adjustOverlapBetweenIntefaceHatch
+
+const getDistanceBetweenThisTypeInterfaceVectors = function (type) {
+  switch (type) {
+    case 0:
+      return PARAM.getParamReal('interface','distanceBewteenOpenPolyLineInterfaceVectors');
+    case 1:
+      return PARAM.getParamReal('interface','distanceBewteenInterfaceHatchVectors');
+    case 2:
+      return PARAM.getParamReal('interface','distanceBewteenInterfaceContourVectors');
+    case 3:
+      return PARAM.getParamReal('interface','distanceBewteenInterfaceHatchVectors');
+    case 4:
+      return PARAM.getParamReal('interface','distanceBewteenInterfaceContourVectors');
+    case 5:
+      return PARAM.getParamReal('interface','distanceBewteenInterfaceHatchVectors');
+    case 6:
+      return PARAM.getParamReal('interface','distanceBewteenInterfaceContourVectors');
+    case 7:
+      return PARAM.getParamReal('interface','distanceBewteenOpenPolyLineInterfaceVectors');
+    default:
+            process.printError('Unexpected type:', type);
+            return null;  // or a default color if appropriate
+  }
+};
+
+exports.getGroupedHatchObjectByType = function(hatch) {
+  
+  let hatchBlocksArray = hatch.getHatchBlockArray();
+  let groupedHatchblocksByType = {};
+
+  // Iterate over each hatchblock
+  hatchBlocksArray.forEach(function(hatchblock) {
+    // Get the tileID and bsid of the current hatchblock
+    const vectorType = hatchblock.getAttributeInt('type');
+
+    if (!groupedHatchblocksByType[vectorType]) {
+        groupedHatchblocksByType[vectorType] = new HATCH.bsHatch();
+    };
+    
+    groupedHatchblocksByType[vectorType].addHatchBlock(hatchblock);
+    
+  });
+  
+  return groupedHatchblocksByType;
+};
+
+
+exports.doesTypeOverlap = function (type,isTileInterface) {
+  switch (type) {
+    case 0:
+      return (isTileInterface ? PARAM.getParamInt('interface','tileInterfaceOpenPolyLine') : PARAM.getParamInt('interface','laserInterfaceOpenPolyLine')) === 0;
+    case 1:
+      return (isTileInterface ? PARAM.getParamInt('interface','tileInterfaceHatch') : PARAM.getParamInt('interface','laserInterfaceHatch')) === 0;
+    case 2:
+      return (isTileInterface ? PARAM.getParamInt('interface','tileInterfaceContour') : PARAM.getParamInt('interface','laserInterfaceContour')) === 0;
+    case 3:
+      return (isTileInterface ? PARAM.getParamInt('interface','tileInterfaceHatch') : PARAM.getParamInt('interface','laserInterfaceHatch')) === 0;
+    case 4:
+      return (isTileInterface ? PARAM.getParamInt('interface','tileInterfaceContour') : PARAM.getParamInt('interface','laserInterfaceContour')) === 0;
+    case 5:
+      return (isTileInterface ? PARAM.getParamInt('interface','tileInterfaceHatch') : PARAM.getParamInt('interface','laserInterfaceHatch')) === 0;
+    case 6:
+      return (isTileInterface ? PARAM.getParamInt('interface','tileInterfaceContour') : PARAM.getParamInt('interface','laserInterfaceContour')) === 0;
+    case 7:
+      return (isTileInterface ? PARAM.getParamInt('interface','tileInterfaceOpenPolyLine') : PARAM.getParamInt('interface','laserInterfaceOpenPolyLine')) === 0;
+    default:
+            process.printError('Unexpected type:', type);
+            return null;  // or a default color if appropriate
+  }
+};
