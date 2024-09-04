@@ -67,10 +67,10 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
       
       
       //if tileoverlap is greater than requested
-      if(tileArray[j].overlapX < -PARAM.getParamReal('interface', 'interfaceOverlap')){
+      if(tileArray[j].overlapX < PARAM.getParamReal('tileing','tile_overlap_x')){
       
         let halfOverlap = Math.abs(tileArray[j].overlapX/2);
-        let overLapCompensation = halfOverlap - PARAM.getParamReal('interface', 'interfaceOverlap')/2;
+        let overLapCompensation = halfOverlap + PARAM.getParamReal('tileing','tile_overlap_x')/2;
            
         switch(tileArray[j].passNumber) {
           case 1:
@@ -90,11 +90,11 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
          };
      // CREATE CLIPPING MASK
        
-     if(tileArray[j].overlapY < -PARAM.getParamReal('interface', 'interfaceOverlap')){
+     if(tileArray[j].overlapY < PARAM.getParamReal('tileing', 'tile_overlap_y')){
       
-        let overLapCompensationY = (Math.abs(tileArray[j].overlapY) - PARAM.getParamReal('interface', 'interfaceOverlap'))/2;
-        
-        if(tileArray[j].tile_number !== 1 && tileArray[j].tile_number !== tileArray[j].requiredPassesY) {
+      let overLapCompensationY = (Math.abs(tileArray[j].overlapY) + PARAM.getParamReal('tileing','tile_overlap_y'))/2;
+       
+      if(tileArray[j].tile_number !== 1 && tileArray[j].tile_number !== tileArray[j].requiredPassesY) {
            
            tile_y_min += overLapCompensationY;
            tile_y_max -= overLapCompensationY;
@@ -212,8 +212,13 @@ exports.adjustInterfaceVectors = function(allHatches,thisLayer){
       } else {
         
         let adjustedHatch = applyZipperInterface(thisHatchBlock);
+        
+        adjustedHatch.mergeHatchBlocks({
+          "bConvertToHatchMode": true,
+          "bCheckAttributes": true
+        });  
         resultHatch.moveDataFrom(adjustedHatch);
-    };
+    }
     
   hatchBlockIterator.next();
     
@@ -244,8 +249,8 @@ const applyZipperInterface = function(hatchBlock){
   
   let pathCount = overLappingPathSet.getPathCount();
   
-  let shouldVectorsOverlap =  PARAM.getParamInt('interface','tileInterface') === 0;
-  
+  let shouldVectorsOverlap = UTIL.doesTypeOverlap(hatchType,true);
+    
   for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
     
     if (pathNumber % 2 !== 0 || shouldVectorsOverlap) {
@@ -259,7 +264,7 @@ const applyZipperInterface = function(hatchBlock){
   };
   
   let isSameStripe = Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000);
-  UTIL.adjustZipperInterfaceDistance(isSameStripe,firstOverlapPathsSet,secondOverlapPathsSet);
+  UTIL.adjustZipperInterfaceDistance(isSameStripe,firstOverlapPathsSet,secondOverlapPathsSet,hatchType);
   
   let firstHatch = new HATCH.bsHatch();
   let secondHatch = new HATCH.bsHatch();
@@ -374,7 +379,7 @@ exports.mergeInterfaceVectors = function(hatch) {
             let mergeHatch = new HATCH.bsHatch();
             
             tileHatch.mergeShortLines(
-                mergeHatch,2, Math.abs(PARAM.getParamReal('interface', 'interfaceOverlap'))+0.001,
+                mergeHatch,2, 0.001,
                 HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
             );
   
@@ -601,3 +606,22 @@ exports.sortPartHatchByPositionInTiles = function(hatch) {
   
     return returnHatch;
 }; // sortDownSkinByPositionInTiles 
+
+exports.mergeShortLinesByType = function(hatches) {
+  
+  let groupedHatchblocksByType = UTIL.getGroupedHatchObjectByType(hatches);
+  let mergedHatch = new HATCH.bsHatch();
+  let returnHatch = new HATCH.bsHatch();
+
+  Object.values(groupedHatchblocksByType).forEach(function(vectorType) {
+    
+    vectorType.mergeShortLines(
+        mergedHatch,PARAM.getParamReal('exposure','min_vector_lenght'), 0.1,
+        HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
+    );
+    returnHatch.moveDataFrom(mergedHatch);
+  });
+  
+  return returnHatch;
+  
+};
