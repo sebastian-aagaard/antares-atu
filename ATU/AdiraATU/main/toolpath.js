@@ -15,7 +15,7 @@ const TPGEN = require('main/toolpath_generation.js');
 const TP2TILE = require('main/toolpath_to_tile.js');
 const TP2PASS = require('main/tile_to_passnumbergroup.js')
 const LASER = require('main/laser_designation.js');
-let TILE = require('main/tileing.js');
+const TILE = require('main/tileing.js');
 
 exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){  
 
@@ -58,17 +58,13 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   // process open poly lines
   let polyLineHatch = TPGEN.getOpenPolyLinesHatch(modelData,nLayerNr);
   allHatches.moveDataFrom(polyLineHatch);
-  //process.print('1: ' + allHatches.getHatchBlockCount());
   
   TILE.getTileArray(thisLayer,nLayerNr,modelData);
-  //process.print('2: ' + allHatches.getHatchBlockCount());
  
   allHatches = TP2TILE.mergeShortLines(allHatches);
-  //process.print('3: ' + allHatches.getHatchBlockCount());
   
   //  --- TILE OPERATIONS --- //
   allHatches = TP2TILE.assignToolpathToTiles(thisModel,nLayerNr,allHatches);
-  //process.print('4: ' + allHatches.getHatchBlockCount());
 
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
@@ -76,7 +72,6 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   });  
   
   allHatches = TP2TILE.adjustInterfaceVectors(allHatches,thisLayer);
-  //process.print('5: ' + allHatches.getHatchBlockCount());
 
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
@@ -84,28 +79,34 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   });  
 
   allHatches = TP2TILE.mergeInterfaceVectors(allHatches); 
-  //process.print('6: ' + allHatches.getHatchBlockCount());
   
   allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
-  //process.print('7: ' + allHatches.getHatchBlockCount());
+  
+   allHatches.mergeHatchBlocks({
+    "bConvertToHatchMode": true,
+    "bCheckAttributes": true
+  });  
+  
+  //allhatches = LASER.handleContour(allHatches);
   
   allHatches = LASER.adjustInterfaceVectorsBetweenLasers(allHatches);
-  //process.print('8: ' + (allHatches.resultHatch.getHatchBlockCount()+allHatches.interfaceHatch.getHatchBlockCount()));
 
   allHatches = LASER.mergeLaserInterfaceVectors(allHatches);
-  //process.print('9: ' + allHatches.getHatchBlockCount());
 
   LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
-  //process.print('10: ' + allHatches.getHatchBlockCount());
  
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
     "bCheckAttributes": true
   });  
- //process.print('11: ' + allHatches.getHatchBlockCount());
 
- allHatches = TP2TILE.deleteShortHatchLines(allHatches);
- //process.print('12: ' + allHatches.getHatchBlockCount());
+
+
+//  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
+  
+//allHatches = TP2TILE.mergeShortLinesByType(allHatches);  
+  
+
   
   allHatches = TP2TILE.sortHatchByPriorityInTiles(allHatches);
   

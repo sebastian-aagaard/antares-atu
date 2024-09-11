@@ -153,10 +153,6 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let allBorderHatch = makeBordersContainer.allBorderHatch;
   let bulkIsland = makeBordersContainer.bulkIsland;
   
-  // sort borders
-  sortBorders(allBorderHatch);
-  
-  
   if (!allBorderHatch || !bulkIsland) {
     throw new Error('Layer: ' + nLayerNr + ' IslandID: ' + islandId + '. Failed to create borders or modify the island.');
   }
@@ -250,14 +246,14 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
          "hatchOrigin" : {x: 0.0, y: 0.0},
          "blocksortVec" : {x: 0.0, y: -1.0},
          "nFlags" : HATCH.nHatchFlagAlternating |
-          HATCH.nHatchFlagBlocksortEnhanced |
+          //HATCH.nHatchFlagBlocksortEnhanced |
           HATCH.nHatchFlagFixedOrigin
         };             
 
       // Hatching stripes
       let fill_hatch = new HATCH.bsHatch();
       bulkStripeIslands.hatchExt2(fill_hatch,hatchingArgs);
-   
+           
       fill_hatch.setAttributeInt('type',CONST.typeDesignations.part_hatch.value);
       fill_hatch.setAttributeInt('islandId',islandId);            
                     
@@ -329,15 +325,6 @@ const mergeHatchBlocks = function(hatch){
   
 };
 
-const sortBorders = function(hatchObj){
-
- if (!PARAM.getParamInt('border','bBorderOrderOutsideIn')){
-  
-   hatchObj.flip(true,false);
-   
-   };
-}
-
 const makeBorders = function(islandObj){
   
   const numberOfBorders = PARAM.getParamInt('border','nNumberOfBorders');
@@ -349,7 +336,13 @@ const makeBorders = function(islandObj){
   
   for (let borderIndex = 1; borderIndex < numberOfBorders+1 ; borderIndex++){
     
-    island.borderToHatch(allBorderHatch);
+    let tempBorderHatch = new HATCH.bsHatch();
+    island.borderToHatch(tempBorderHatch);
+    
+    let borderIndexAttrib = (!PARAM.getParamInt('border','bBorderOrderOutsideIn')) ? numberOfBorders+1 - borderIndex : borderIndex;
+    
+    tempBorderHatch.setAttributeInt('borderIndex',borderIndexAttrib);
+    allBorderHatch.moveDataFrom(tempBorderHatch)
     
     let offsetBorderBy = distanceBetweenBorders;
     

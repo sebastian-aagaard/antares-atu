@@ -28,7 +28,6 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
   let tileArray = thisLayer.getAttribEx('tileTable');
   
   if(!tileArray) throw new Error("tileArray empty, layer: " + nLayerNr + ", model: " + bsModel.getAttribEx("ModelName"));
-
  
   /////////////////////////////////////
   /// sort tilearray by tile number  ///
@@ -53,7 +52,6 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
   /// (passnumber, tile_index, scanhead xcoord and ycoord)  ///
   /////////////////////////////////////////////////////////////
 
-  
   for(let j = 0; j<tileArray.length;j++)
     {
       
@@ -131,11 +129,6 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
         
       // assign tileID to hatches within tile
       tileHatch.setAttributeInt('tileID_3mf',tileID_3mf);
-
-      // generate Segment obejct containing the tiles to 
-      let startVec2 = new VEC2.Vec2(tile_x_cen,tile_y_max);
-      let endVec2 = new VEC2.Vec2(tile_x_cen,tile_y_min);
-      tileSegmentArray[j] = new SEG2D.Seg2d(startVec2,endVec2).toString();  
           
       assignedHatch.moveDataFrom(tileHatch);
       assignedHatch.moveDataFrom(tileHatch_outside);
@@ -211,12 +204,13 @@ exports.adjustInterfaceVectors = function(allHatches,thisLayer){
       
       } else {
         
-        let adjustedHatch = applyZipperInterface(thisHatchBlock);
+        let adjustedHatch = applyInterface(thisHatchBlock);
         
         adjustedHatch.mergeHatchBlocks({
           "bConvertToHatchMode": true,
           "bCheckAttributes": true
-        });  
+        });
+        
         resultHatch.moveDataFrom(adjustedHatch);
     }
     
@@ -227,7 +221,7 @@ exports.adjustInterfaceVectors = function(allHatches,thisLayer){
   return resultHatch;
 }; // adjustInterfaceVectors
 
-const applyZipperInterface = function(hatchBlock){
+const applyInterface = function(hatchBlock){
   
   //if(hatchBlock.isEmpty()) return;  
   
@@ -235,8 +229,11 @@ const applyZipperInterface = function(hatchBlock){
   let secondTileId = hatchBlock.getAttributeInt('overlappingTile_2');
   let hatchType = hatchBlock.getAttributeInt('type');
   let islandId = hatchBlock.getAttributeInt('islandId');
+  let borderIndex = hatchBlock.getAttributeInt('borderIndex');
   let subType = hatchBlock.getModelSubtype();
-  
+    
+  let isSameStripe = Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000);
+
   let overlappingHatch = new HATCH.bsHatch();
   overlappingHatch.addHatchBlock(hatchBlock);
   
@@ -247,6 +244,8 @@ const applyZipperInterface = function(hatchBlock){
 
   overLappingPathSet.addHatches(overlappingHatch);
   
+  overLappingPathSet = UTIL.preDistributeNonFullInterfaceVectors(overLappingPathSet,firstOverlapPathsSet,secondOverlapPathsSet,isSameStripe);
+  
   let pathCount = overLappingPathSet.getPathCount();
   
   let shouldVectorsOverlap = UTIL.doesTypeOverlap(hatchType,true);
@@ -255,15 +254,14 @@ const applyZipperInterface = function(hatchBlock){
     
     if (pathNumber % 2 !== 0 || shouldVectorsOverlap) {
       firstOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
-      };
+      }
       
     if (pathNumber % 2 === 0 || shouldVectorsOverlap) {
       secondOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
       
-    };
-  };
+    }
+  }
   
-  let isSameStripe = Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000);
   UTIL.adjustZipperInterfaceDistance(isSameStripe,firstOverlapPathsSet,secondOverlapPathsSet,hatchType);
   
   let firstHatch = new HATCH.bsHatch();
@@ -291,6 +289,7 @@ const applyZipperInterface = function(hatchBlock){
 
   adjustedHatch.setAttributeInt('type',hatchType);
   adjustedHatch.setAttributeInt('islandId',islandId);
+  (borderIndex === 0) ? null : adjustedHatch.setAttributeInt('borderIndex',borderIndex);
   
   return adjustedHatch; 
 }; 
@@ -338,69 +337,32 @@ exports.deleteShortHatchLines = function (hatch) {
   };
 
 exports.mergeInterfaceVectors = function(hatch) {
-    let hatchBlocksArray = hatch.getHatchBlockArray();
-    
-    // Create objects to hold arrays of hatchBlocksArray grouped by tileID and type
-    let groupedHatchblocksByType = {
-        1: {},
-        3: {},
-        5: {}
-    };
-    let groupedHatchblocksContour = {};
 
-    // Iterate through each hatchblock
-    hatchBlocksArray.forEach(function(hatchblock) {
-        // Get the tileID of the current hatchblock
-        const tileID = hatchblock.getAttributeInt('tileID_3mf');
-        const type = hatchblock.getAttributeInt('type');
-        
-        // Initialize tileID arrays for the specific types if they don't exist
-        if (type === 1 || type === 3 || type === 5) {
-            if (!groupedHatchblocksByType[type][tileID]) {
-                groupedHatchblocksByType[type][tileID] = new HATCH.bsHatch();
-            }
-            groupedHatchblocksByType[type][tileID].addHatchBlock(hatchblock);
-        } else {
-            if (!groupedHatchblocksContour[tileID]) {
-                groupedHatchblocksContour[tileID] = new HATCH.bsHatch();
-            }
-            groupedHatchblocksContour[tileID].addHatchBlock(hatchblock);
-        }
-    });
-    
-    let mergedHatchAll = new HATCH.bsHatch();
+    let groupedHatchblocksByTileType = UTIL.getGroupedHatchObjectByTileType(hatch);
+    let returnHatch = new HATCH.bsHatch();
 
     // Merge hatch blocks for each type (1, 3, 5) separately
-    Object.keys(groupedHatchblocksByType).forEach(function(type) {
-        Object.entries(groupedHatchblocksByType[type]).forEach(function(entry) {
-            let tileId = +entry[0];
-            let tileHatch = entry[1];
+    Object.values(groupedHatchblocksByTileType).forEach(function(tile) {
+        Object.entries(tile).forEach(function(entryType) {
+            let type = +entryType[0];
+            let typeHatch = entryType[1];
             
-            let mergeHatch = new HATCH.bsHatch();
-            
-            tileHatch.mergeShortLines(
-                mergeHatch,2, 0.001,
-                HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
-            );
-  
-            mergedHatchAll.moveDataFrom(mergeHatch);
+            if(type === 1 || type === 3 || type === 5){ //hatch types
+              
+              typeHatch.mergeShortLines(
+                  typeHatch,PARAM.getParamReal('exposure','min_vector_lenght'), 0.001,
+                  HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
+              );
+              
+            } else { // non hatch types
+
+            typeHatch = UTIL.connectHatchBlocksSetAttributes(typeHatch);     
+            }
+            returnHatch.moveDataFrom(typeHatch);
         });
     });
-
-    // Merge contour hatch blocks
-    Object.entries(groupedHatchblocksContour).forEach(function(entry) {
-        let tileId = +entry[0];
-        let contourHatch = entry[1];
-        
-    contourHatch.mergeShortLines(
-          contourHatch,3, 0.001,
-          HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
-      );  
-        
-        mergedHatchAll.moveDataFrom(contourHatch);
-    });
     
-    return mergedHatchAll;
+    return returnHatch;
 }; // mergeInterfaceVectors
 
   
@@ -489,23 +451,52 @@ exports.sortHatchByPriorityInTiles = function(hatch) {
         [CONST.typeDesignations.support_contour.value, PARAM.getParamInt('scanning_priority', 'support_contour_priority')],
     ]);
   
-    // Sort each tile's hatchblocks by priority and add them to the returnHatch
+    // Sort each tile's hatchblocks by type priority first, then by borderIndex if applicable
     Object.keys(groupedHatchblocks).forEach(function(tileID) {
         let hatchInTileArray = groupedHatchblocks[tileID];
 
+        // Sort first by type priority, then by borderIndex if it's greater than 0
         hatchInTileArray.sort(function(a, b) {
+            // Get priority of types from the map
             let prioA = typePriorityMap.get(a.getAttributeInt('type'));
             let prioB = typePriorityMap.get(b.getAttributeInt('type'));
-            return prioA - prioB;
+
+            // First, compare based on type priority
+            if (prioA !== prioB) {
+                return prioA - prioB;
+            }
+
+            // If types are the same, check and sort by borderIndex if both are greater than 0
+            let borderIndexA = a.getAttributeInt('borderIndex');
+            let borderIndexB = b.getAttributeInt('borderIndex');
+
+            if (borderIndexA > 0 && borderIndexB > 0) {
+                return borderIndexA - borderIndexB;  // Sort by borderIndex within the same type
+            }
+
+            // If only one has a borderIndex greater than 0, prioritize it
+            if (borderIndexA > 0) {
+                return -1;  // a comes before b
+            }
+            if (borderIndexB > 0) {
+                return 1;   // b comes before a
+            }
+
+            // If neither has a borderIndex, they are equal within the type
+            return 0;
         });
 
+        // Add sorted hatch blocks back into the returnHatch
         hatchInTileArray.forEach(function(hatchBlock) {
             returnHatch.addHatchBlock(hatchBlock);
         });
     });
   
     return returnHatch;
-}; // sortDownSkinByPosition
+};
+ // sortHatchByPriorityInTiles
+
+
 
 exports.sortPartHatchByPositionInTiles = function(hatch) {
     let returnHatch = new HATCH.bsHatch();

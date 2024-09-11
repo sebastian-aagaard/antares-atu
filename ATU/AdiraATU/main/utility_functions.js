@@ -41,9 +41,7 @@ exports.getModelsInLayer = function(modelData,layerNr){
     return arrayofModels;
 }
 
-////////////////////////////////
-//        generateUUID        //
-//////////////////////////////// 
+//-----------------------------------------------------------------------------------------//
 
 exports.generateUUID = function() { // Public Domain/MIT
     var d = new Date().getTime();//Timestamp
@@ -61,6 +59,8 @@ exports.generateUUID = function() { // Public Domain/MIT
     });
 }
 
+//-----------------------------------------------------------------------------------------//
+
 // return the sum of the array
 exports.getArraySum = function (array) {
 	let sum = 0;
@@ -72,6 +72,8 @@ exports.getArraySum = function (array) {
 	return sum;
 }
 
+//-----------------------------------------------------------------------------------------//
+
 // check if there is anything at the given index
 exports.getValueAtIndex = function (array, index) {
 	if (index >= 0 && index < array.length) {
@@ -80,6 +82,8 @@ exports.getValueAtIndex = function (array, index) {
 		return false;
 	}
 }
+
+//-----------------------------------------------------------------------------------------//
 
 // clip hatch by rectangle
 exports.ClipHatchByRect = function (hatchObj, arr_2dVec, bKeepInside) {
@@ -96,6 +100,8 @@ exports.ClipHatchByRect = function (hatchObj, arr_2dVec, bKeepInside) {
 	
 	return clippedHatch;
 }
+
+//-----------------------------------------------------------------------------------------//
 
 exports.mergeBlocks = function(unmergedHatchBlocks) {
 	let mergeblock = new HATCH.bsHatch();
@@ -117,6 +123,8 @@ exports.mergeBlocks = function(unmergedHatchBlocks) {
 	return mergedblock;
 }
 
+//-----------------------------------------------------------------------------------------//
+
 exports.getTileTable = function(modelData,layerNr){
 
   const tiletable_3mf = exports.getModelsInLayer(modelData,layerNr)[0].getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
@@ -126,6 +134,8 @@ exports.getTileTable = function(modelData,layerNr){
   return tiletable_3mf;
 };
 
+//-----------------------------------------------------------------------------------------//
+
 exports.getWorkAreaLimits = function() {
 return {  
       xmin: PARAM.getParamInt('workarea', 'x_workarea_min_mm'),
@@ -134,6 +144,9 @@ return {
       ymax: PARAM.getParamInt('workarea', 'y_workarea_max_mm')
   };
 }
+
+//-----------------------------------------------------------------------------------------//
+
 
 exports.appendInteger = function(currentInt, newInt) {
     // Convert the current integer and new integer to strings
@@ -149,6 +162,8 @@ exports.appendInteger = function(currentInt, newInt) {
     return resultInt;
 }
 
+//-----------------------------------------------------------------------------------------//
+
 // Function to find the color and alpha based on value
 exports.findColorFromType = function (value) {
   for (let key in CONST.typeDesignations) {
@@ -161,6 +176,8 @@ exports.findColorFromType = function (value) {
   }
   return null; // Return null if value is not found
 }
+
+//-----------------------------------------------------------------------------------------//
 
 const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
   
@@ -177,25 +194,7 @@ const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
   pathset.booleanOpIntersect(intersectPath);
 };
 
-exports.adjustZipperInterfaceDistance = function(adjustInY,firstPathset,secondPathset,type){
-    
-  const firstBounds = firstPathset.getBounds2D();
-  const secondBounds = secondPathset.getBounds2D();
-    
-  const distanceBewteenInterfaceVectors = getDistanceBetweenThisTypeInterfaceVectors(type); 
-  
-  if(adjustInY){    //inY
-    
-    intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY-distanceBewteenInterfaceVectors,firstPathset);
-    intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY+distanceBewteenInterfaceVectors,secondBounds.maxY,secondPathset);
-
-    } else { //inX
-      
-    intersectPathset(firstBounds.minX,firstBounds.maxX-distanceBewteenInterfaceVectors,firstBounds.minY,firstBounds.maxY,firstPathset);
-    intersectPathset(secondBounds.minX+distanceBewteenInterfaceVectors,secondBounds.maxX,secondBounds.minY,secondBounds.maxY,secondPathset);
-      
-  };
-}; //adjustOverlapBetweenIntefaceHatch
+//-----------------------------------------------------------------------------------------//
 
 const getDistanceBetweenThisTypeInterfaceVectors = function (type) {
   switch (type) {
@@ -221,6 +220,38 @@ const getDistanceBetweenThisTypeInterfaceVectors = function (type) {
   }
 };
 
+//-----------------------------------------------------------------------------------------//
+
+exports.getGroupedHatchObjectByTileType = function(hatch) {
+  
+  let hatchBlocksArray = hatch.getHatchBlockArray();
+  let groupedHatchblocksByTileType = {};
+
+  // Iterate over each hatchblock
+  
+  hatchBlocksArray.forEach(function(hatchblock) {
+    
+    const tileID = hatchblock.getAttributeInt('tileID_3mf');
+    const vectorType = hatchblock.getAttributeInt('type');
+
+
+    if (!groupedHatchblocksByTileType[tileID]) {
+        groupedHatchblocksByTileType[tileID] = {};
+    };
+    
+    if (!groupedHatchblocksByTileType[tileID][vectorType]) {
+        groupedHatchblocksByTileType[tileID][vectorType] = new HATCH.bsHatch();
+    };
+    
+    groupedHatchblocksByTileType[tileID][vectorType].addHatchBlock(hatchblock);
+    
+  });
+  
+  return groupedHatchblocksByTileType;
+};
+
+//-----------------------------------------------------------------------------------------//
+
 exports.getGroupedHatchObjectByType = function(hatch) {
   
   let hatchBlocksArray = hatch.getHatchBlockArray();
@@ -242,6 +273,30 @@ exports.getGroupedHatchObjectByType = function(hatch) {
   return groupedHatchblocksByType;
 };
 
+//-----------------------------------------------------------------------------------------//
+
+exports.getGroupedHatchObjectByTileId = function(hatch) {
+  
+  let hatchBlocksArray = hatch.getHatchBlockArray();
+  let groupedHatchblocksByTileId = {};
+
+  // Iterate over each hatchblock
+  hatchBlocksArray.forEach(function(hatchblock) {
+    // Get the tileID and bsid of the current hatchblock
+    const tileId = hatchblock.getAttributeInt('tileID_3mf');
+
+    if (!groupedHatchblocksByTileId[tileId]) {
+        groupedHatchblocksByTileId[tileId] = new HATCH.bsHatch();
+    };
+    
+    groupedHatchblocksByTileId[tileId].addHatchBlock(hatchblock);
+    
+  });
+  
+  return groupedHatchblocksByTileId;
+};
+
+//-----------------------------------------------------------------------------------------//
 
 exports.doesTypeOverlap = function (type,isTileInterface) {
   switch (type) {
@@ -266,3 +321,131 @@ exports.doesTypeOverlap = function (type,isTileInterface) {
             return null;  // or a default color if appropriate
   }
 };
+
+//-----------------------------------------------------------------------------------------//
+
+exports.adjustZipperInterfaceDistance = function(adjustInY,firstPathset,secondPathset,type){
+    
+  const firstBounds = firstPathset.getBounds2D();
+  const secondBounds = secondPathset.getBounds2D();
+    
+  const distanceBewteenInterfaceVectors = getDistanceBetweenThisTypeInterfaceVectors(type); 
+  
+  if(adjustInY){//inY
+    
+    intersectPathset(firstBounds.minX,firstBounds.maxX,firstBounds.minY,firstBounds.maxY-distanceBewteenInterfaceVectors,firstPathset);
+    intersectPathset(secondBounds.minX,secondBounds.maxX,secondBounds.minY+distanceBewteenInterfaceVectors,secondBounds.maxY,secondPathset);
+
+    } else {//inX
+      
+    intersectPathset(firstBounds.minX,firstBounds.maxX-distanceBewteenInterfaceVectors,firstBounds.minY,firstBounds.maxY,firstPathset);
+    intersectPathset(secondBounds.minX+distanceBewteenInterfaceVectors,secondBounds.maxX,secondBounds.minY,secondBounds.maxY,secondPathset);
+      
+  };
+}; //adjustOverlapBetweenIntefaceHatch
+
+//-----------------------------------------------------------------------------------------//
+
+exports.preDistributeNonFullInterfaceVectors = function(overLappingPathSet,firstOverlapPathSet,secondOverlapPathSet,adjustInY){
+  
+  let fullWidthOverlapPathSet = new PATH_SET.bsPathSet(); 
+
+  let overlappingPathSetBounds = overLappingPathSet.getBounds2D();
+  let overlappingPathSetSize = adjustInY ? overlappingPathSetBounds.getHeight() : overlappingPathSetBounds.getWidth();
+  let pathCount = overLappingPathSet.getPathCount();
+  
+  for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
+    
+    let pathLength = overLappingPathSet.getPathLen(pathNumber);
+    let currentPathSet = new PATH_SET.bsPathSet();
+
+    currentPathSet.addSinglePaths(overLappingPathSet,pathNumber);
+
+    let currentPathSetBounds = currentPathSet.getBounds2D();
+    let currentPathSize = adjustInY ? currentPathSetBounds.getHeight() : currentPathSetBounds.getWidth();
+
+    if (currentPathSize < overlappingPathSetSize){
+    //if (currentPathSize < PARAM.getParamReal('interface','interfaceOverlap')){  
+
+      // d1 distance below or left, d2 above or right
+      let d1 = Math.abs(adjustInY ? currentPathSetBounds.minY - overlappingPathSetBounds.minY : currentPathSetBounds.minX - overlappingPathSetBounds.minX);
+      let d2 = Math.abs(adjustInY ? overlappingPathSetBounds.maxY - currentPathSetBounds.maxY : overlappingPathSetBounds.maxX - currentPathSetBounds.maxX);
+            
+      (d1 < d2) ? firstOverlapPathSet.addSinglePaths(overLappingPathSet,pathNumber) : secondOverlapPathSet.addSinglePaths(overLappingPathSet,pathNumber);  
+
+      } else {
+       
+        fullWidthOverlapPathSet.addSinglePaths(overLappingPathSet,pathNumber);
+    }
+  }
+  
+  return fullWidthOverlapPathSet; 
+};
+
+//-----------------------------------------------------------------------------------------//
+
+exports.connectHatchBlocksSetAttributes = function(hatch) {
+  
+  let hatchArray = hatch.getHatchBlockArray();  
+  let returnHatch = new HATCH.bsHatch();
+  let hatchBlockToConnect = new HATCH.bsHatch();
+
+  let groupedByBorderIndex = hatchArray.reduce(function (acc, obj) {
+    let currentBorderIndex = obj.getAttributeInt('borderIndex');
+    
+    // If the group doesn't exist, create an empty array for it
+    if (!acc[currentBorderIndex]) {
+      acc[currentBorderIndex] = [];
+    }
+    
+    acc[currentBorderIndex].push(obj);
+    
+    return acc;
+  }, {});
+  
+  // Iterate over groupedByBorderIndex object keys
+  Object.keys(groupedByBorderIndex).forEach(function(borderIndex) {
+     let group = groupedByBorderIndex[borderIndex];
+
+     group.forEach(function (hatchBlock) {
+       hatchBlockToConnect.addHatchBlock(hatchBlock);
+     });
+       
+     let storedTileID_3mf = group[0].getAttributeInt('tileID_3mf');
+     let storedIslandId = group[0].getAttributeInt('islandId');
+     let storedType = group[0].getAttributeInt('type');
+     let storedBsid = group[0].getAttributeInt('bsid');
+     let storedBorderIndex = group[0].getAttributeInt('borderIndex');
+     let storedModelSubType = group[0].getModelSubtype();
+
+     hatchBlockToConnect.connectHatchBlocks({
+       bEnableSelfConnect: true,
+       fSelfConnectMaxDist: 0.001,
+       fMaxConnectDist: 0.001,
+       fPointReductionDeviationTol: 0.001,
+       fPointReductionEdgeLengthLimit: 0.001,
+       iModelSubtype: storedModelSubType
+     });
+       
+     hatchBlockToConnect.setAttributeInt('tileID_3mf', storedTileID_3mf);
+     hatchBlockToConnect.setAttributeInt('islandId', storedIslandId);
+     hatchBlockToConnect.setAttributeInt('type', storedType);
+     if (storedBsid !== 0) {
+       hatchBlockToConnect.setAttributeInt('bsid', storedBsid);
+     }
+     if (storedBorderIndex !== 0) {
+       hatchBlockToConnect.setAttributeInt('borderIndex', storedBorderIndex);
+     }
+
+     hatchBlockToConnect.mergeHatchBlocks({
+       "bConvertToHatchMode": true,
+       "bCheckAttributes": true
+     });
+     
+     returnHatch.moveDataFrom(hatchBlockToConnect);
+  });
+
+  return returnHatch;
+};
+
+
