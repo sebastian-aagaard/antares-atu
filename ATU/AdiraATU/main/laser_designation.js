@@ -345,11 +345,6 @@ exports.adjustInterfaceVectorsBetweenLasers = function (hatch) {
         
         let adjustedHatch = applyLaserInterface(thisHatchBlock);
         
-        adjustedHatch.mergeHatchBlocks({
-          "bConvertToHatchMode": true,
-          "bCheckAttributes": true
-        });
-        
         resultHatch.moveDataFrom(adjustedHatch);
     }
     
@@ -367,7 +362,7 @@ exports.mergeLaserInterfaceVectors = function(hatch){
   let returnHatch = new HATCH.bsHatch();
   let mergeHatchContainer = new HATCH.bsHatch();
 
-  let groupedHatchObjectTileTypeBsid = getGroupedHatchObjectByTileTypeBsid(hatch);
+  let groupedHatchObjectTileTypeBsid = UTIL.getGroupedHatchObjectByTileTypeLaserId(hatch);
   
   Object.entries(groupedHatchObjectTileTypeBsid).forEach(function(entryTile) {
     let tileKey = entryTile[0];
@@ -382,15 +377,14 @@ exports.mergeLaserInterfaceVectors = function(hatch){
         let laserHatch = laserEntry[1];
        
         let mergeHatchContainer = laserHatch.clone(); 
-       
+        
         if(type === 1 || type === 3 || type === 5){ //hatch types
               
               mergeHatchContainer.mergeShortLines(
                   mergeHatchContainer,PARAM.getParamReal('exposure','min_vector_lenght'), 0.001,
                   HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
               );
-          
-        mergeHatchContainer.pathReordering(new VEC2.Vec2(0,0),HATCH.nSortFlagShortestPath | HATCH.nSortFlagUseHotSpot)
+
         } else {
           
           mergeHatchContainer = UTIL.connectHatchBlocksSetAttributes(mergeHatchContainer);  
@@ -406,39 +400,7 @@ exports.mergeLaserInterfaceVectors = function(hatch){
   return returnHatch;
 };
 
-//-----------------------------------------------------------------------------------------//
 
-const getGroupedHatchObjectByTileTypeBsid = function(hatch) {
-  
-  let hatchBlocksArray = hatch.getHatchBlockArray();
-  let groupedHatchblocksByBsid = {};
-
-  // Iterate over each hatchblock
-  hatchBlocksArray.forEach(function(hatchblock) {
-    // Get the tileID and bsid of the current hatchblock
-    const tileID = hatchblock.getAttributeInt('tileID_3mf');
-    const vectorType = hatchblock.getAttributeInt('type');
-    const laserID = Math.floor(hatchblock.getAttributeInt('bsid')/10);
-    
-    if (!groupedHatchblocksByBsid[tileID]) {
-        groupedHatchblocksByBsid[tileID] = {};
-    };
-    
-    if (!groupedHatchblocksByBsid[tileID][vectorType]) {
-        groupedHatchblocksByBsid[tileID][vectorType] = {};
-    };
-
-    if (!groupedHatchblocksByBsid[tileID][vectorType][laserID]) {
-        groupedHatchblocksByBsid[tileID][vectorType][laserID] = new HATCH.bsHatch();
-    };
-
-    groupedHatchblocksByBsid[tileID][vectorType][laserID].addHatchBlock(hatchblock);
-    
-  });
-  
-  return groupedHatchblocksByBsid;
-  
-};
 
 //-----------------------------------------------------------------------------------------//
 
@@ -560,3 +522,34 @@ exports.adjustContourInterfaceBetweenLasers = function(hatch){
   
   return returnHatch;
 };
+
+//-----------------------------------------------------------------------------------------//
+
+exports.mergeShortLinesForEachBsid = function(hatch){
+  
+  let returnHatch = new HATCH.bsHatch();
+  let groupedHatches = UTIL.getGroupedHatchObjectByTileTypeLaserId(hatch);
+  
+  Object.values(groupedHatches).forEach(function(tiles){
+    Object.entries(tiles).forEach(function(typeEntry){
+      let type = +typeEntry[0];
+      let typeGroup = typeEntry[1];
+      
+      Object.values(typeGroup).forEach(function(laserIdHatch){
+      
+      if(type === 1 || type === 3 || type === 5){ //hatch types  
+        
+        laserIdHatch.mergeShortLines(
+                  laserIdHatch,PARAM.getParamReal('exposure','min_vector_lenght'),PARAM.getParamReal("exposure", "small_vector_merge_distance") ,
+                  HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
+                  );
+      }
+      
+      returnHatch.moveDataFrom(laserIdHatch);
+      
+      });
+    });
+  });
+  
+  return returnHatch;
+  };

@@ -318,11 +318,13 @@ exports.deleteShortHatchLines = function (hatch) {
     let hatchBlock = hatchBlockIterator.get();
     let type = hatchBlock.getAttributeInt('type');
     
-    if (type === 1 || type === 3 || type === 5) {
+    if(type === 2 || type === 4 || type === 6){
+      resultHatch.addHatchBlock(hatchBlock);
+      hatchBlockIterator.next();
+      continue;
+    }
       
-        hatchBlock.deleteShortLines(minVectorLenght);
-        
-      };    
+    hatchBlock.deleteShortLines(minVectorLenght);
     
     if(!hatchBlock.isEmpty()){
       
@@ -353,10 +355,11 @@ exports.mergeInterfaceVectors = function(hatch) {
                   typeHatch,PARAM.getParamReal('exposure','min_vector_lenght'), 0.001,
                   HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
               );
-              
+ 
             } else { // non hatch types
 
-            typeHatch = UTIL.connectHatchBlocksSetAttributes(typeHatch);     
+              typeHatch = UTIL.connectHatchBlocksSetAttributes(typeHatch);
+              
             }
             returnHatch.moveDataFrom(typeHatch);
         });
@@ -496,8 +499,6 @@ exports.sortHatchByPriorityInTiles = function(hatch) {
 };
  // sortHatchByPriorityInTiles
 
-
-
 exports.sortPartHatchByPositionInTiles = function(hatch) {
     let returnHatch = new HATCH.bsHatch();
     let hatchBlocksArray = hatch.getHatchBlockArray();
@@ -616,3 +617,85 @@ exports.mergeShortLinesByType = function(hatches) {
   return returnHatch;
   
 };
+
+exports.clipIntoStripes = function (hatch,island) {
+    
+  let resultHatch = new HATCH.bsHatch();
+  
+  let groupedHatchByType = UTIL.getGroupedHatchObjectByType(hatch);
+
+  Object.keys(groupedHatchByType).forEach(function (type){
+    
+    if (type == 1 || type == 3 || type == 5) {
+      
+      let islandArray = island.getIslandArray();
+      
+      let allHatches = groupedHatchByType[type].clone();
+      let stripeId = 0;
+      islandArray.forEach(function(island) {
+        
+        let clippedHatch = allHatches.clone();
+        
+        clippedHatch.clip(island,true);
+        clippedHatch.setAttributeInt('stripeId',stripeId);
+        resultHatch.moveDataFrom(clippedHatch);
+        
+        stripeId++;
+      });
+
+    } else{
+    
+      resultHatch.moveDataFrom(groupedHatchByType[type]);
+      
+      }
+  });
+  return resultHatch;
+  };
+  
+exports.sortHatches = function(allHatches){
+  let returnHatch = new HATCH.bsHatch();
+  let groupedHatches = UTIL.getGroupedHatchObjectByTileTypeLaserId(allHatches);
+  
+  Object.values(groupedHatches).forEach(function(tiles){
+    Object.values(tiles).forEach(function(type){
+      Object.values(type).forEach(function(laserIdHatch){
+      
+      
+//         laserIdHatch.pathReordering(new VEC2.Vec2(650,370), HATCH.nSortFlagShortestPath | HATCH.nSortFlagUseHotSpot) 
+//         
+//         returnHatch.moveDataFrom(laserIdHatch);
+        
+      let sortedArray = sortByStripeIdAndCenterY(laserIdHatch.getHatchBlockArray());
+      
+        
+      sortedArray.forEach(function (hatchBlock){
+        
+        returnHatch.addHatchBlock(hatchBlock);
+
+        });    
+      });
+    });
+  });
+  
+  return returnHatch;
+  };
+  
+function sortByStripeIdAndCenterY(boundsArray) {
+    return boundsArray.sort(function(a, b) {
+        // First, compare by stripeId (ascending order)
+        var stripeIdA = a.getAttributeInt('stripeId');
+        var stripeIdB = b.getAttributeInt('stripeId');
+        
+        if (stripeIdA !== stripeIdB) {
+            return stripeIdA - stripeIdB; // Sort by stripeId in ascending order
+        }
+        
+        // If stripeIds are equal, compare by center Y (descending order)
+        var centerA = a.getBounds2D().getCenter();
+        var centerB = b.getBounds2D().getCenter();
+        
+        return centerB.y - centerA.y; // Sort by center Y in descending order
+    });
+}
+
+  

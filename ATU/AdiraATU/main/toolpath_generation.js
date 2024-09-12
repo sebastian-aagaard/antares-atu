@@ -122,6 +122,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   
   //retrieve current island
   let thisIsland = island_it.getIsland().clone(); 
+  let stripeIslands = new ISLAND.bsIsland();
   
   //model island containers
   let down_skin_island = new ISLAND.bsIsland();
@@ -129,6 +130,13 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     
   // offset islands by beam compensation
   thisIsland.createOffset(thisIsland,-beam_compensation);
+ 
+ //make stripes 
+  let bulkStripeIslands = createStripes(thisIsland,nLayerNr);
+  
+  stripeIslands.addIslands(bulkStripeIslands);
+  
+ 
  
   //find overhangs
   if(PARAM.getParamInt('downskin','downskintoggle')){
@@ -234,8 +242,10 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       let partBulkIsland = bulkIsland.clone();
       partBulkIsland.intersect(part_island);
       
-      //make stripes 
-      let bulkStripeIslands = createStripes(partBulkIsland,nLayerNr);
+//       //make stripes 
+//       let bulkStripeIslands = createStripes(partBulkIsland,nLayerNr);
+//       
+//       stripeIslands.addIslands(bulkStripeIslands);
       
       let hatchingArgs = {
          "fHatchDensity" : PARAM.getParamReal('exposure', '_hdens'),
@@ -244,7 +254,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
          "fCollinearBorderSnapTol" : 0.0,
          "fBlocksortRunAheadLimit": 2.0,
          "hatchOrigin" : {x: 0.0, y: 0.0},
-         "blocksortVec" : {x: 0.0, y: -1.0},
+         //"blocksortVec" : {x: 0.0, y: -1.0},
          "nFlags" : HATCH.nHatchFlagAlternating |
           //HATCH.nHatchFlagBlocksortEnhanced |
           HATCH.nHatchFlagFixedOrigin
@@ -252,8 +262,11 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
 
       // Hatching stripes
       let fill_hatch = new HATCH.bsHatch();
-      bulkStripeIslands.hatchExt2(fill_hatch,hatchingArgs);
-           
+      //bulkStripeIslands.hatchExt2(fill_hatch,hatchingArgs);
+      
+     partBulkIsland.hatchExt2(fill_hatch,hatchingArgs);
+
+        
       fill_hatch.setAttributeInt('type',CONST.typeDesignations.part_hatch.value);
       fill_hatch.setAttributeInt('islandId',islandId);            
                     
@@ -311,7 +324,8 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   resultHatch.moveDataFrom(allContourHatch);
   resultHatch.moveDataFrom(allDownSkinContourHatch);
  
-  return resultHatch;
+  return {resultHatch: resultHatch,
+          stripeIslands: stripeIslands};
 };
 
 const mergeHatchBlocks = function(hatch){

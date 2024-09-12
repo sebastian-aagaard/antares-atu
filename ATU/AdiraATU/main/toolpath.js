@@ -35,7 +35,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
 
   //CREATE CONTAINERS
   let allHatches = new HATCH.bsHatch();
-
+  let stripeIslands = new ISLAND.bsIsland();
 
   // RUN THROUGH ISLANDS
   let islandId = 1; 
@@ -44,7 +44,10 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     // --- CREATE TOOLPATH --- //
         
     // process islands
-     allHatches.moveDataFrom(TPGEN.processIslands(thisModel,island_it,nLayerNr,islandId));
+    let processedToolpath = TPGEN.processIslands(thisModel,island_it,nLayerNr,islandId);
+    
+     allHatches.moveDataFrom(processedToolpath.resultHatch);
+     stripeIslands.addIslands(processedToolpath.stripeIslands); 
     
     // get blocked path hatches
     let blockedPathHatch = TPGEN.getBlockedPathHatch(thisModel,island_it,islandId);
@@ -77,36 +80,31 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     "bConvertToHatchMode": true,
     "bCheckAttributes": true
   });  
-// 
+ 
   allHatches = TP2TILE.mergeInterfaceVectors(allHatches); 
   
   allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
   
-   allHatches.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "bCheckAttributes": true
-  });  
-//   
   allHatches = LASER.adjustContourInterfaceBetweenLasers(allHatches);
   
   allHatches = LASER.adjustInterfaceVectorsBetweenLasers(allHatches);
 
   allHatches = LASER.mergeLaserInterfaceVectors(allHatches);
-// 
+
   LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
- 
-//   allHatches.mergeHatchBlocks({
-//     "bConvertToHatchMode": true,
-//     "bCheckAttributes": true
-//   });  
-
-
-
-//  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
   
-//allHatches = TP2TILE.mergeShortLinesByType(allHatches);  
+  allHatches = TP2TILE.clipIntoStripes(allHatches,stripeIslands)
   
-
+  allHatches = TP2TILE.sortHatches(allHatches);
+  
+  allHatches.mergeHatchBlocks({
+    "bConvertToHatchMode": true,
+    "bCheckAttributes": true
+  });  
+  
+  allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
+  
+  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
   
   allHatches = TP2TILE.sortHatchByPriorityInTiles(allHatches);
   

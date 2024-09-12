@@ -310,6 +310,39 @@ exports.getGroupedHatchObjectByTileId = function(hatch) {
 
 //-----------------------------------------------------------------------------------------//
 
+exports.getGroupedHatchObjectByTileTypeLaserId = function(hatch) {
+  
+  let hatchBlocksArray = hatch.getHatchBlockArray();
+  let groupedHatchblocksByBsid = {};
+
+  // Iterate over each hatchblock
+  hatchBlocksArray.forEach(function(hatchblock) {
+    // Get the tileID and bsid of the current hatchblock
+    const tileID = hatchblock.getAttributeInt('tileID_3mf');
+    const vectorType = hatchblock.getAttributeInt('type');
+    const laserID = Math.floor(hatchblock.getAttributeInt('bsid')/10);
+    
+    if (!groupedHatchblocksByBsid[tileID]) {
+        groupedHatchblocksByBsid[tileID] = {};
+    };
+    
+    if (!groupedHatchblocksByBsid[tileID][vectorType]) {
+        groupedHatchblocksByBsid[tileID][vectorType] = {};
+    };
+
+    if (!groupedHatchblocksByBsid[tileID][vectorType][laserID]) {
+        groupedHatchblocksByBsid[tileID][vectorType][laserID] = new HATCH.bsHatch();
+    };
+
+    groupedHatchblocksByBsid[tileID][vectorType][laserID].addHatchBlock(hatchblock);
+    
+  });
+  
+  return groupedHatchblocksByBsid;
+};
+
+//-----------------------------------------------------------------------------------------//
+
 exports.doesTypeOverlap = function (type,isTileInterface) {
   switch (type) {
     case 0:
@@ -449,10 +482,10 @@ exports.connectHatchBlocksSetAttributes = function(hatch) {
        hatchBlockToConnect.setAttributeInt('borderIndex', storedBorderIndex);
      }
 
-     hatchBlockToConnect.mergeHatchBlocks({
-       "bConvertToHatchMode": true,
-       "bCheckAttributes": true
-     });
+      hatchBlockToConnect.mergeHatchBlocks({
+        "bConvertToHatchMode": true,
+        "bCheckAttributes": true
+      });
      
      returnHatch.moveDataFrom(hatchBlockToConnect);
   });
