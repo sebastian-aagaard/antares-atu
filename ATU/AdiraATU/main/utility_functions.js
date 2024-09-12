@@ -181,6 +181,18 @@ exports.findColorFromType = function (value) {
 
 const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
   
+  let slightOffset = 0.001;
+  
+  if(xmin === xmax){
+    xmin -= slightOffset;
+    xmax += slightOffset;
+    };
+    
+  if(ymin === ymax){
+    ymin -= slightOffset;
+    ymax += slightOffset;
+    };   
+  
   let intersecArrayVec2D = new Array(4);
   intersecArrayVec2D[0] = new VEC2.Vec2(xmin, ymin); //min,min
   intersecArrayVec2D[1] = new VEC2.Vec2(xmin, ymax); //min,max

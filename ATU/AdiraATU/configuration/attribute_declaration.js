@@ -40,7 +40,8 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('overlappingTile_7');
   buildAttrib.declareAttributeInt('overlappingTile_8');
   buildAttrib.declareAttributeInt('overlappingTile_9');
-  buildAttrib.declareAttributeInt('numberOfOverlappingLasers');
+  //buildAttrib.declareAttributeInt('numberOfOverlappingLasers');
+  buildAttrib.declareAttributeInt('overlapCount');
   buildAttrib.declareAttributeInt('overlappingLaser_1');
   buildAttrib.declareAttributeInt('overlappingLaser_2');
   buildAttrib.declareAttributeInt('overlappingLaser_3');

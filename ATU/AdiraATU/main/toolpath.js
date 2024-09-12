@@ -77,7 +77,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     "bConvertToHatchMode": true,
     "bCheckAttributes": true
   });  
-
+// 
   allHatches = TP2TILE.mergeInterfaceVectors(allHatches); 
   
   allHatches = LASER.staticDistribution(thisModel,modelData,nLayerNr,allHatches);
@@ -86,19 +86,19 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     "bConvertToHatchMode": true,
     "bCheckAttributes": true
   });  
-  
-  //allhatches = LASER.handleContour(allHatches);
+//   
+  allHatches = LASER.adjustContourInterfaceBetweenLasers(allHatches);
   
   allHatches = LASER.adjustInterfaceVectorsBetweenLasers(allHatches);
 
   allHatches = LASER.mergeLaserInterfaceVectors(allHatches);
-
+// 
   LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
  
-  allHatches.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "bCheckAttributes": true
-  });  
+//   allHatches.mergeHatchBlocks({
+//     "bConvertToHatchMode": true,
+//     "bCheckAttributes": true
+//   });  
 
 
 
