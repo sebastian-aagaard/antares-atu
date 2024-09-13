@@ -193,12 +193,12 @@ const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
     ymax += slightOffset;
     };   
   
-  let intersecArrayVec2D = new Array(4);
-  intersecArrayVec2D[0] = new VEC2.Vec2(xmin, ymin); //min,min
-  intersecArrayVec2D[1] = new VEC2.Vec2(xmin, ymax); //min,max
-  intersecArrayVec2D[2] = new VEC2.Vec2(xmax, ymax); // max,max
-  intersecArrayVec2D[3] = new VEC2.Vec2(xmax, ymin); // max,min
-
+  let intersecArrayVec2D = [
+    new VEC2.Vec2(xmin, ymin), //min,min
+    new VEC2.Vec2(xmin, ymax), //min,max
+    new VEC2.Vec2(xmax, ymax), // max,max
+    new VEC2.Vec2(xmax, ymin) // max,min
+  ];
   let intersectPath = new PATH_SET.bsPathSet();
   intersectPath.addNewPath(intersecArrayVec2D); // add tiles zones to pathset  
   intersectPath.setClosed(true); // set the zones to closed polygons
@@ -401,7 +401,6 @@ exports.preDistributeNonFullInterfaceVectors = function(overLappingPathSet,first
   
   for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
     
-    let pathLength = overLappingPathSet.getPathLen(pathNumber);
     let currentPathSet = new PATH_SET.bsPathSet();
 
     currentPathSet.addSinglePaths(overLappingPathSet,pathNumber);
@@ -409,8 +408,8 @@ exports.preDistributeNonFullInterfaceVectors = function(overLappingPathSet,first
     let currentPathSetBounds = currentPathSet.getBounds2D();
     let currentPathSize = adjustInY ? currentPathSetBounds.getHeight() : currentPathSetBounds.getWidth();
 
-    if (currentPathSize < overlappingPathSetSize){
-    //if (currentPathSize < PARAM.getParamReal('interface','interfaceOverlap')){  
+    //if (currentPathSize < overlappingPathSetSize){
+    if (currentPathSize < PARAM.getParamReal('interface','interfaceOverlap')){  
 
       // d1 distance below or left, d2 above or right
       let d1 = Math.abs(adjustInY ? currentPathSetBounds.minY - overlappingPathSetBounds.minY : currentPathSetBounds.minX - overlappingPathSetBounds.minX);

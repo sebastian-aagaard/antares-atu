@@ -232,7 +232,6 @@ const applyInterface = function(hatchBlock){
   let borderIndex = hatchBlock.getAttributeInt('borderIndex');
   let subType = hatchBlock.getModelSubtype();
     
-  let isSameStripe = Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000);
 
   let overlappingHatch = new HATCH.bsHatch();
   overlappingHatch.addHatchBlock(hatchBlock);
@@ -244,26 +243,45 @@ const applyInterface = function(hatchBlock){
 
   overLappingPathSet.addHatches(overlappingHatch);
   
-  overLappingPathSet = UTIL.preDistributeNonFullInterfaceVectors(overLappingPathSet,firstOverlapPathsSet,secondOverlapPathsSet,isSameStripe);
+  let dummyPathset = overLappingPathSet.clone();
+  
+  //let isSameStripe = Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000);
+  
+  let firstPathSet = overLappingPathSet.getPathPoints(0);
+  
+  let pathWidth = Math.abs(firstPathSet[0].x -firstPathSet[1].x);
+  let pathHeight = Math.abs(firstPathSet[0].y -firstPathSet[1].y);
+  
+  
+  let adjustInY = (pathWidth < pathHeight) ? true : false;
+
+  overLappingPathSet = UTIL.preDistributeNonFullInterfaceVectors(overLappingPathSet,firstOverlapPathsSet,secondOverlapPathsSet,adjustInY);
   
   let pathCount = overLappingPathSet.getPathCount();
   
   let shouldVectorsOverlap = UTIL.doesTypeOverlap(hatchType,true);
     
   for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
-    
+    let firstContainer = new PATH_SET.bsPathSet();
+    let secondContainer = new PATH_SET.bsPathSet();
+
     if (pathNumber % 2 !== 0 || shouldVectorsOverlap) {
-      firstOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
+      
+      firstContainer.addSinglePaths(overLappingPathSet,pathNumber);
       }
       
     if (pathNumber % 2 === 0 || shouldVectorsOverlap) {
-      secondOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
+      secondContainer.addSinglePaths(overLappingPathSet,pathNumber);
       
     }
+        
+    UTIL.adjustZipperInterfaceDistance(adjustInY,firstContainer,dummyPathset,hatchType);
+    UTIL.adjustZipperInterfaceDistance(adjustInY,dummyPathset,secondContainer,hatchType);
+
+    firstOverlapPathsSet.addPaths(firstContainer);
+    secondOverlapPathsSet.addPaths(secondContainer);
   }
-  
-  UTIL.adjustZipperInterfaceDistance(isSameStripe,firstOverlapPathsSet,secondOverlapPathsSet,hatchType);
-  
+
   let firstHatch = new HATCH.bsHatch();
   let secondHatch = new HATCH.bsHatch();
 
