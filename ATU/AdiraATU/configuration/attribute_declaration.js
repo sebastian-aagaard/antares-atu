@@ -30,25 +30,13 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('islandId');
   buildAttrib.declareAttributeInt('stripeId');
   buildAttrib.declareAttributeInt('bMoveFromFront');
-  buildAttrib.declareAttributeInt('numberofOverlappingTiles')
+  //buildAttrib.declareAttributeInt('numberofOverlappingTiles')
   buildAttrib.declareAttributeInt('overlappingTile_1');
   buildAttrib.declareAttributeInt('overlappingTile_2');
   buildAttrib.declareAttributeInt('overlappingTile_3');
   buildAttrib.declareAttributeInt('overlappingTile_4');
-  buildAttrib.declareAttributeInt('overlappingTile_5');
-  buildAttrib.declareAttributeInt('overlappingTile_6');
-  buildAttrib.declareAttributeInt('overlappingTile_7');
-  buildAttrib.declareAttributeInt('overlappingTile_8');
-  buildAttrib.declareAttributeInt('overlappingTile_9');
   //buildAttrib.declareAttributeInt('numberOfOverlappingLasers');
   buildAttrib.declareAttributeInt('overlapCount');
   buildAttrib.declareAttributeInt('overlappingLaser_1');
   buildAttrib.declareAttributeInt('overlappingLaser_2');
-  buildAttrib.declareAttributeInt('overlappingLaser_3');
-  buildAttrib.declareAttributeInt('overlappingLaser_4');
-  buildAttrib.declareAttributeInt('overlappingLaser_5');
-  buildAttrib.declareAttributeInt('overlappingLaser_6');
-  buildAttrib.declareAttributeInt('overlappingLaser_7');
-  buildAttrib.declareAttributeInt('overlappingLaser_8');
-  buildAttrib.declareAttributeInt('overlappingLaser_9');
 };
