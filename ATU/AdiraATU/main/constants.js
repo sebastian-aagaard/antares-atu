@@ -31,12 +31,6 @@ exports.maxTargetY = 995;
 
 // -------- TYPE DESIGNATION -------- //
 exports.typeDesignations = {
-  open_polyline: {
-    value: 0,
-    name: "open_polyline",
-    color1: new RGBA.bsColRGBAi(255, 0, 0, 255), // red
-    color2: new RGBA.bsColRGBAi(200, 0, 0, 255)  // dark red
-  },
   part_hatch: {
     value: 1,
     name: "part_hatch",
@@ -78,6 +72,12 @@ exports.typeDesignations = {
     name: "support_open_polyline",
     color1: new RGBA.bsColRGBAi(0, 0, 139, 255), // dark blue
     color2: new RGBA.bsColRGBAi(0, 0, 100, 255)  // darker blue
+  },
+  open_polyline: {
+    value: 8,
+    name: "open_polyline",
+    color1: new RGBA.bsColRGBAi(255, 0, 0, 255), // red
+    color2: new RGBA.bsColRGBAi(200, 0, 0, 255)  // dark red
   }
 };
 

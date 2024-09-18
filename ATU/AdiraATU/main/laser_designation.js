@@ -112,28 +112,39 @@ const getLaserDisplayColors = function(){
 
 // static distributing the lasing zone by 
 // finding the midway point of the scanner reach
-exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
+exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
     
-  let returnHatch = new HATCH.bsHatch(); // to be returned
-    
-  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
   let tileTable = thisLayer.getAttribEx('tileTable');
+
+  let returnHatch = new HATCH.bsHatch();
+    
   let groupedHatchByTileId = UTIL.getGroupedHatchObjectByTileId(hatchObj);
+  
   let xDiv = getScanheadLaserAllocationArrayX(bsModelData);
 
   Object.entries(groupedHatchByTileId).forEach(function (tileEntry) {
-    let tileId = tileEntry[0];
+    let tileId = +tileEntry[0];
     let tileHatch = tileEntry[1];
-   
+    
+    if(tileId === 0){
+      return;
+      process.printError('invalid tileId at ' + thisLayer.getLayerZ() + ', tileId: ' + tileId);
+    }
+    
     let thisTile = tileTable.find(function (tile) {     
      return tile.tileID == tileId;
      });
-     
+    
+    if(!thisTile) {
+      return;
+      process.printError('cannot read thisTile.scanhead_outline at ' + thisLayer.getLayerZ() + ', recieved:' + tileId);
+      }
+    
     let thisTileLayout = thisTile.scanhead_outline;
-     
     let clip_min_y = thisTileLayout[0].m_coord[1];
     let clip_max_y = thisTileLayout[2].m_coord[1];
     let xTileOffset = thisTileLayout[0].m_coord[0];
+      
 
     let halfVectorOverlap = PARAM.getParamReal('interface', 'interfaceOverlap')/2;
 
@@ -153,7 +164,16 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
       let tileHatchInside = UTIL.ClipHatchByRect(tileHatch,clipPoints,true);
       let tileHatchOutside = UTIL.ClipHatchByRect(tileHatch,clipPoints,false);
 
-      anotateHatchBlocks(tileHatchInside,laserIndex,tileId);
+      anotateHatchBlocks(tileHatchInside,laserIndex+1,tileId,thisLayer); 
+      
+//       if(thisTile.laserClipPoints[laserIndex] == undefined){
+//         thisTile.laserClipPoints[laserIndex] = [];
+//         }
+      
+      thisTile.laserClipPoints[laserIndex] = {xmin : clip_min_x,
+                                         xmax : clip_max_x,
+                                         ymin : clip_min_y,
+                                         ymax : clip_max_y};
 
       tileHatch.makeEmpty();
 
@@ -161,12 +181,62 @@ exports.staticDistribution = function(thisModel,bsModelData,nLayerNr,hatchObj) {
       tileHatch.moveDataFrom(tileHatchOutside);
         
      }
-   
-  returnHatch.moveDataFrom(tileHatch);
+        
+    thisLayer.setAttribEx('tileTable',tileTable);    
+
+    tileHatch = removeEmptyHatches(tileHatch);   
+     
+    returnHatch.moveDataFrom(tileHatch);     
   });
 
   return returnHatch;
 } //fixedLaserWorkload
+
+const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer) {
+    // add bsid attribute to hatch blocks
+    let hatchIterator = tileHatch.getHatchBlockIterator();
+
+    while (hatchIterator.isValid()) {
+        let currHatchBlock = hatchIterator.get(); // Fixed typo in currHatcBlock
+        
+        let tileID = currHatchBlock.getAttributeInt('tileID_3mf');
+        
+        // Check if laser is assigned to the model or to the specific laserIndex
+        if (PARAM.getParamInt('laserAllocation', 'laserAssignedToModel') === 0 || 
+            PARAM.getParamInt('laserAllocation', 'laserAssignedToModel') == laserIndex) {
+            
+            let prevBsid = currHatchBlock.getAttributeInt('bsid');
+
+            if (prevBsid > 0) {
+              
+                let overlapCount = currHatchBlock.getAttributeInt('overlapCount');
+                
+                overlapCount++;
+                
+                let overlappingDesignation = 'overlappingLaser_' + overlapCount.toString();
+                currHatchBlock.setAttributeInt(overlappingDesignation, prevBsid);
+                currHatchBlock.setAttributeInt('overlapCount', overlapCount);
+            }
+            
+            // Set bsid based on laserIndex and type
+            let type = currHatchBlock.getAttributeInt('type');
+            let bsid = (10 * laserIndex) + type;
+            currHatchBlock.setAttributeInt('bsid', bsid); // set attributes
+            
+            if(bsid == 0){
+               process.printError('Error in assigning bsid to tile: ' + curTileId + ' at ' + thisLayer.getLayerZ() + 
+                                   ' type: ' + type + ' bsid: ' + bsid + ' laserIndex: ' + laserIndex);
+              };
+            
+            if (!type || !bsid || !laserIndex) {
+                process.printError('Error in assigning bsid to tile: ' + curTileId + ' at ' + thisLayer.getLayerZ() + 
+                                   ' type: ' + type + ' bsid: ' + bsid + ' laserIndex: ' + laserIndex);
+            }
+        }
+        hatchIterator.next();  // Move to the next hatch block
+    }
+};
+
 
 const removeEmptyHatches = function(tileHatch){
   
@@ -213,43 +283,6 @@ const getScanheadLaserAllocationArrayX = function(bsModelData){
     return xDiv;
 };
   
-const anotateHatchBlocks = function(tileHatch,laserIndex,curTileId){
-    // add bsid attribute to hatchblocks
-  let hatchIterator = tileHatch.getHatchBlockIterator();
-
-  while(hatchIterator.isValid()){
-   let currHatcBlock = hatchIterator.get();
-    
-   let tileID = currHatcBlock.getAttributeInt('tileID_3mf');
-   
-   if(tileID != curTileId){
-      hatchIterator.next();
-      continue;
-     }  
-     
-   if(PARAM.getParamInt('laserAllocation','laserAssignedToModel') === 0 || PARAM.getParamInt('laserAllocation','laserAssignedToModel') == laserIndex+1){
-         
-    let prevBsid = currHatcBlock.getAttributeInt('bsid');       
-
-    if(prevBsid > 0){
-      let overlappingNumber = +currHatcBlock.getAttributeInt('overlapCount')
-      
-        overlappingNumber++;
-        
-        let overlappingDesignation = 'overlappingLaser_' + overlappingNumber.toString();
-        currHatcBlock.setAttributeInt(overlappingDesignation,prevBsid);
-        currHatcBlock.setAttributeInt('overlapCount',overlappingNumber);
-      }
-    
-    let type = currHatcBlock.getAttributeInt('type');
-    let bsid = (10 * (laserIndex+1))+type;
-    currHatcBlock.setAttributeInt('bsid',bsid); // set attributes      
-     
-     }
-   hatchIterator.next();
-  }
-};
-
 //---------------------------------------------------------------------------------------------//
 
 
@@ -257,7 +290,7 @@ exports.assignProcessParameters = function(bsHatch,bsModelData,bsModel,nLayerNr)
 
   const laser_color = getLaserDisplayColors();
 
-  const bsidTable = bsModel.getAttribEx('customTable');
+  const customTable = bsModel.getAttribEx('customTable');
   
   let hatchIterator = bsHatch.getHatchBlockIterator();
   
@@ -269,9 +302,19 @@ exports.assignProcessParameters = function(bsHatch,bsModelData,bsModel,nLayerNr)
     let type = thisHatchBlock.getAttributeInt('type');
     let tileNumber = thisHatchBlock.getAttributeInt('tileID_3mf') % 1000;
     
-    let thisProcessParameters = bsidTable.find(function (item) {
+    if(!bsid){
+      hatchIterator.next();
+      continue;
+      throw new Error('bsid undefined: at layer nr '+nLayerNr + ' tileId: ' +thisHatchBlock.getAttributeInt('tileID_3mf') + '/ type: ' + type);
+      };
+    
+    let thisProcessParameters = customTable.find(function (item) {
         return item.bsid === bsid;
     });
+    
+    if(thisProcessParameters===undefined){
+      throw new Error('cannot read process parameters: at layer nr '+nLayerNr + ' tileId: ' +thisHatchBlock.getAttributeInt('tileID_3mf') + '/ type: ' + type + '/ bsid:' + bsid);
+      };
     
     let thisLayer = bsModel.getModelLayerByNr(nLayerNr);
     let tileArray = thisLayer.getAttribEx('tileTable');
@@ -326,205 +369,6 @@ const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_
 
 //-----------------------------------------------------------------------------------------//
 
-exports.adjustInterfaceVectorsBetweenLasers = function (hatch) {
-
-  let hatchBlockIterator = hatch.getHatchBlockIterator();
-  let resultHatch = new HATCH.bsHatch();
-
-  while (hatchBlockIterator.isValid()) {   
-    
-    let thisHatchBlock = hatchBlockIterator.get();
-    let overlapNumber = thisHatchBlock.getAttributeInt('overlapCount');
-    let borderIndex = thisHatchBlock.getAttributeInt('borderIndex');
-    
-    if(overlapNumber === 0 || borderIndex > 0) {
-      
-        resultHatch.addHatchBlock(thisHatchBlock);
-      
-      } else {
-        
-        let adjustedHatch = applyLaserInterface(thisHatchBlock);
-        
-        resultHatch.moveDataFrom(adjustedHatch);
-    }
-    
-  hatchBlockIterator.next();
-    
-  };
-  
-  return resultHatch;
-}; // adjustInterfaceVectorsBetweenLasers
-
-//-----------------------------------------------------------------------------------------//
-
-exports.mergeLaserInterfaceVectors = function(hatch){
-   
-  let returnHatch = new HATCH.bsHatch();
-  let mergeHatchContainer = new HATCH.bsHatch();
-
-  let groupedHatchObjectTileTypeBsid = UTIL.getGroupedHatchObjectByTileTypeLaserId(hatch);
-  
-  Object.entries(groupedHatchObjectTileTypeBsid).forEach(function(entryTile) {
-    let tileKey = entryTile[0];
-    let tile = entryTile[1];
-    
-    Object.entries(tile).forEach(function(entryType) {
-      let type = +entryType[0];
-      let typeGroup = entryType[1];
-      
-      Object.entries(typeGroup).forEach(function(laserEntry) {
-        let laserId = laserEntry[0];
-        let laserHatch = laserEntry[1];
-       
-        let mergeHatchContainer = laserHatch.clone(); 
-        
-        if(type === 1 || type === 3 || type === 5){ //hatch types
-              
-              mergeHatchContainer.mergeShortLines(
-                  mergeHatchContainer,PARAM.getParamReal('exposure','min_vector_lenght'), 0.001,
-                  HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
-              );
-
-        } else {
-          
-          mergeHatchContainer = UTIL.connectHatchBlocksSetAttributes(mergeHatchContainer);  
-          
-        }
-           
-        returnHatch.moveDataFrom(mergeHatchContainer);
-        
-      });
-    });
-  });
-
-  return returnHatch;
-};
-
-
-
-//-----------------------------------------------------------------------------------------//
-
-const applyLaserInterface = function(hatchBlock){
-    
-  let firstBsid = hatchBlock.getAttributeInt('overlappingLaser_1');
-  let secondBsid = hatchBlock.getAttributeInt('bsid');
-  let tileID = hatchBlock.getAttributeInt('tileID_3mf');
-  let hatchType = hatchBlock.getAttributeInt('type');
-  let islandId = hatchBlock.getAttributeInt('islandId');
-  let borderIndex = hatchBlock.getAttributeInt('borderIndex');
-  let subType = hatchBlock.getModelSubtype();
-  
-  let overLappingPathSet = new PATH_SET.bsPathSet();
-
-  let firstOverlapPathsSet = new PATH_SET.bsPathSet();
-  let secondOverlapPathsSet = new PATH_SET.bsPathSet(); 
-
-  let overlappingHatch = new HATCH.bsHatch();
-  overlappingHatch.addHatchBlock(hatchBlock);
-
-  overLappingPathSet.addHatches(overlappingHatch);
-  
-  overLappingPathSet = UTIL.preDistributeNonFullInterfaceVectors(overLappingPathSet,firstOverlapPathsSet,secondOverlapPathsSet,false);
-  
-  let shouldVectorsOverlap = UTIL.doesTypeOverlap(hatchType,false);
-  
-  let fullWidthOverlapPathsetCount = overLappingPathSet.getPathCount();
-  
-  for(let pathNumber = 0 ; pathNumber < fullWidthOverlapPathsetCount; pathNumber++){
-    
-    if (pathNumber % 2 !== 0 || shouldVectorsOverlap) {
-      firstOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
-      }
-      
-    if (pathNumber % 2 === 0 || shouldVectorsOverlap) {
-      secondOverlapPathsSet.addSinglePaths(overLappingPathSet,pathNumber);
-    }
-  }
-  
-  if(borderIndex % 2 === 0){
-      UTIL.adjustZipperInterfaceDistance(false,firstOverlapPathsSet,secondOverlapPathsSet,hatchType);
-    } else {
-      UTIL.adjustZipperInterfaceDistance(false,secondOverlapPathsSet,firstOverlapPathsSet,hatchType);
-  }
-
-  let firstHatch = new HATCH.bsHatch();
-  let secondHatch = new HATCH.bsHatch();
-
-  let addPathArgs = {
-     nModelSubtype : subType,
-     nOpenPathPolylineMode : POLY_IT.nPolyOpen,
-     nOpenPathTryPolyClosedPolylineModeTol : 0.0,
-     nClosedPathPolylineMode : POLY_IT.nPolyClosed,
-     bMergePolyHatch : false,
-     bTwoPointsPathAsPolyHatch : false
-  };
-
-  firstHatch.addPathsExt(firstOverlapPathsSet,addPathArgs);
-  secondHatch.addPathsExt(secondOverlapPathsSet,addPathArgs);
-    
-    if(borderIndex % 2 === 0){
-      firstHatch.setAttributeInt('bsid', firstBsid);
-      secondHatch.setAttributeInt('bsid', secondBsid);
-    } else {
-      firstHatch.setAttributeInt('bsid', secondBsid);
-      secondHatch.setAttributeInt('bsid', firstBsid);
-  }
-  
-  let adjustedHatch = new HATCH.bsHatch();
-
-  adjustedHatch.moveDataFrom(firstHatch);
-  adjustedHatch.moveDataFrom(secondHatch);
-  
-  adjustedHatch.setAttributeInt('tileID_3mf',tileID);
-  adjustedHatch.setAttributeInt('type',hatchType);
-  adjustedHatch.setAttributeInt('islandId',islandId);
-  (borderIndex === 0) ? null : adjustedHatch.setAttributeInt('borderIndex',borderIndex);
-  
-  return adjustedHatch; 
-};
-
-//-----------------------------------------------------------------------------------------//
-
-exports.adjustContourInterfaceBetweenLasers = function(hatch){
-  
-  let returnHatch = new HATCH.bsHatch();
-  
-  let hatchGroupedByTileType = UTIL.getGroupedHatchObjectByTileType(hatch);
-  
-  Object.entries(hatchGroupedByTileType).forEach(function(tileEntry) {
-    let tileId = tileEntry[0];
-    let tileGroup = tileEntry[1];
-    Object.keys(tileGroup).forEach(function(type){
-      
-      let currentHatch = hatchGroupedByTileType[tileId][type];
-      
-      let hatchBlockIterator = currentHatch.getHatchBlockIterator();
-      
-      while(hatchBlockIterator.isValid()){
-        let currentHatchBlock = hatchBlockIterator.get();
-                
-        let borderIndex = currentHatchBlock.getAttributeInt('borderIndex');
-        let borderOverlap = currentHatchBlock.getAttributeInt('overlapCount');
-        
-        if(borderIndex > 0 && borderOverlap > 0) {
-          let adjustedHatch = applyLaserInterface(currentHatchBlock);
-          returnHatch.moveDataFrom(adjustedHatch);
-          
-        } else {
-          returnHatch.addHatchBlock(currentHatchBlock);
-          
-          };
-        hatchBlockIterator.next();
-        
-      }
-    });
-  });
-  
-  return returnHatch;
-};
-
-//-----------------------------------------------------------------------------------------//
-
 exports.mergeShortLinesForEachBsid = function(hatch){
   
   let returnHatch = new HATCH.bsHatch();
@@ -532,15 +376,15 @@ exports.mergeShortLinesForEachBsid = function(hatch){
   
   Object.values(groupedHatches).forEach(function(tiles){
     Object.entries(tiles).forEach(function(typeEntry){
-      let type = +typeEntry[0];
+      let type = typeEntry[0];
       let typeGroup = typeEntry[1];
       
       Object.values(typeGroup).forEach(function(laserIdHatch){
       
-      if(type === 1 || type === 3 || type === 5){ //hatch types  
+      if(type == 1 || type == 3 || type == 5){ //hatch types  
         
         laserIdHatch.mergeShortLines(
-                  laserIdHatch,PARAM.getParamReal('exposure','min_vector_lenght'),PARAM.getParamReal("exposure", "small_vector_merge_distance") ,
+                  laserIdHatch,PARAM.getParamReal('exposure','vector_lenght_merge_attempt'),PARAM.getParamReal("exposure", "small_vector_merge_distance") ,
                   HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
                   );
       }

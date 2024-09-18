@@ -123,6 +123,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   //retrieve current island
   let thisIsland = island_it.getIsland().clone(); 
   let stripeIslands = new ISLAND.bsIsland();
+  let returnStripeObj = [];
   
   //model island containers
   let down_skin_island = new ISLAND.bsIsland();
@@ -132,11 +133,10 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   thisIsland.createOffset(thisIsland,-beam_compensation);
  
  //make stripes 
-  let bulkStripeIslands = createStripes(thisIsland,nLayerNr);
-  
-  stripeIslands.addIslands(bulkStripeIslands);
-  
- 
+  let stripe = createStripes(thisIsland,nLayerNr);
+  stripeIslands.addIslands(stripe.islands);
+  returnStripeObj = {islands: stripeIslands,
+                    angle : stripe.angle};
  
   //find overhangs
   if(PARAM.getParamInt('downskin','downskintoggle')){
@@ -312,31 +312,27 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   mergeHatchBlocks(allSupportHatch);
   mergeHatchBlocks(allHatch);
   mergeHatchBlocks(allDownSkinHatch);
-  
   mergeHatchBlocks(allContourHatch);
-  //mergeHatchBlocks(allSupportHatch);
+  mergeHatchBlocks(allDownSkinContourHatch);
+  mergeHatchBlocks(allSupportContourHatch);
 
-  
   resultHatch.moveDataFrom(allSupportHatch);
   resultHatch.moveDataFrom(allSupportContourHatch);
   resultHatch.moveDataFrom(allHatch);
   resultHatch.moveDataFrom(allDownSkinHatch);
   resultHatch.moveDataFrom(allContourHatch);
   resultHatch.moveDataFrom(allDownSkinContourHatch);
+  
  
   return {resultHatch: resultHatch,
-          stripeIslands: stripeIslands};
+          stripe: returnStripeObj};
 };
 
 const mergeHatchBlocks = function(hatch){
-  
   hatch.mergeHatchBlocks({
     "bConvertToHatchMode": true,
-    //"nConvertToHatchMaxPointCount": default,
-    //"nMaxBlockSize": 512,
     "bCheckAttributes": true
   });  
-  
 };
 
 const makeBorders = function(islandObj){
@@ -346,16 +342,17 @@ const makeBorders = function(islandObj){
   const distanceBorderToHatch = PARAM.getParamReal('border','fDistanceBorderToHatch');
   let allBorderHatch = new HATCH.bsHatch();
   let island = islandObj.clone();
-  let offsetIsland = new ISLAND.bsIsland();
   
   for (let borderIndex = 1; borderIndex < numberOfBorders+1 ; borderIndex++){
     
     let tempBorderHatch = new HATCH.bsHatch();
+        
     island.borderToHatch(tempBorderHatch);
     
     let borderIndexAttrib = (!PARAM.getParamInt('border','bBorderOrderOutsideIn')) ? numberOfBorders+1 - borderIndex : borderIndex;
     
     tempBorderHatch.setAttributeInt('borderIndex',borderIndexAttrib);
+    
     allBorderHatch.moveDataFrom(tempBorderHatch)
     
     let offsetBorderBy = distanceBetweenBorders;
@@ -367,7 +364,7 @@ const makeBorders = function(islandObj){
     if(island.isEmpty()) break;
       
   }
-                    
+                      
 return {'allBorderHatch' : allBorderHatch,
         'bulkIsland' : island}
 }
@@ -433,7 +430,8 @@ function createStripes(islandObj,nLayerNr) {
   islandObj.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,
     fStripeLength,stripeAngle,stripeRefPoint);
 
-  return stripeIslands;
+  return {islands: stripeIslands,
+          angle:stripeAngle};
 
 } //createStripes
 

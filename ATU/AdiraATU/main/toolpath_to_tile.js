@@ -22,19 +22,16 @@ const PATH_SET = requireBuiltin('bsPathSet');
 
 // ----- CODE ---- //
 
-exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
-
-  let thisLayer = bsModel.getModelLayerByNr(nLayerNr);
-  let tileArray = thisLayer.getAttribEx('tileTable');
+exports.assignToolpathToTiles = function(allHatches,thisLayer) {
   
-  if(!tileArray) throw new Error("tileArray empty, layer: " + nLayerNr + ", model: " + bsModel.getAttribEx("ModelName"));
- 
+  let tileTable = thisLayer.getAttribEx('tileTable');
+  
   /////////////////////////////////////
   /// sort tilearray by tile number  ///
   //////////////////////////////////////
     
-  if(tileArray.length > 1){
-    tileArray.sort(function(a, b) {
+  if(tileTable.length > 1){
+    tileTable.sort(function(a, b) {
       return a.tile_number - b.tile_number;
     });
   }
@@ -43,8 +40,6 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
   /// generate containers for hatching and islands ///
   ////////////////////////////////////////////////////
   
-  let vec2_tile_array = new Array();
-  let tileSegmentArray = new Array();
   let assignedHatch = allHatches.clone(); 
 
   /////////////////////////////////////////////////////////////
@@ -52,32 +47,29 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
   /// (passnumber, tile_index, scanhead xcoord and ycoord)  ///
   /////////////////////////////////////////////////////////////
 
-  for(let j = 0; j<tileArray.length;j++)
+  for(let j = 0; j<tileTable.length;j++)
     {
       
       // get the coordinates of the current tile 
-      let tile_x_min = tileArray[j].scanhead_outline[0].m_coord[0]//
-      let tile_x_max = tileArray[j].scanhead_outline[2].m_coord[0]//
-      let tile_y_min = tileArray[j].scanhead_outline[0].m_coord[1];//
-      let tile_y_max = tileArray[j].scanhead_outline[2].m_coord[1];//
-      let tile_y_cen = (tile_y_min+tile_y_max)/2;
-      let tile_x_cen = (tile_x_min+tile_x_max)/2;
+      let tile_x_min = tileTable[j].scanhead_outline[0].m_coord[0]//
+      let tile_x_max = tileTable[j].scanhead_outline[2].m_coord[0]//
+      let tile_y_min = tileTable[j].scanhead_outline[0].m_coord[1];//
+      let tile_y_max = tileTable[j].scanhead_outline[2].m_coord[1];//
       
       
       //if tileoverlap is greater than requested
-      if(tileArray[j].overlapX < PARAM.getParamReal('tileing','tile_overlap_x')){
+      if(tileTable[j].overlapX < PARAM.getParamReal('tileing','tile_overlap_x')){
       
-        let halfOverlap = Math.abs(tileArray[j].overlapX/2);
-        let overLapCompensation = halfOverlap + PARAM.getParamReal('tileing','tile_overlap_x')/2;
+        let overLapCompensation = (Math.abs(tileTable[j].overlapX) + PARAM.getParamReal('tileing','tile_overlap_x'))/2;
            
-        switch(tileArray[j].passNumber) {
+        switch(tileTable[j].passNumber) {
           case 1:
             tile_x_max -= overLapCompensation-PARAM.getParamReal('stripeOverlapAllocation','firstOverlapShift');//
             break;
           case 2:
             tile_x_min += overLapCompensation+PARAM.getParamReal('stripeOverlapAllocation','firstOverlapShift');
             //if there is 3 passes
-            if(tileArray[j].requiredPassesX>2){
+            if(tileTable[j].requiredPassesX>2){
               tile_x_max -= overLapCompensation-PARAM.getParamReal('stripeOverlapAllocation','secondOverlapShift');
               }           
             break;
@@ -86,231 +78,85 @@ exports.assignToolpathToTiles = function(bsModel,nLayerNr,allHatches) {
             break;
           };  
          };
+         
      // CREATE CLIPPING MASK
-       
-     if(tileArray[j].overlapY < PARAM.getParamReal('tileing', 'tile_overlap_y')){
+     if(tileTable[j].overlapY < PARAM.getParamReal('tileing', 'tile_overlap_y')){
       
-      let overLapCompensationY = (Math.abs(tileArray[j].overlapY) + PARAM.getParamReal('tileing','tile_overlap_y'))/2;
+      let overLapCompensationY = (Math.abs(tileTable[j].overlapY) + PARAM.getParamReal('tileing','tile_overlap_y'))/2;
        
-      if(tileArray[j].tile_number !== 1 && tileArray[j].tile_number !== tileArray[j].requiredPassesY) {
+      if(tileTable[j].tile_number !== 1 && tileTable[j].tile_number !== tileTable[j].requiredPassesY) {
            
            tile_y_min += overLapCompensationY;
            tile_y_max -= overLapCompensationY;
            
-           } else if(tileArray[j].tile_number === 1) {
+           } else if(tileTable[j].tile_number === 1) {
            
            tile_y_max -= overLapCompensationY;
            
-        } else if(tileArray[j].tile_number === tileArray[j].requiredPassesY) {
+        } else if(tileTable[j].tile_number === tileTable[j].requiredPassesY) {
            
              tile_y_min += overLapCompensationY;
            
         };
       };   
-         
-      // add the corrdinates to vector pointset
-      let tile_points = new Array(4);
-      tile_points[0] = new VEC2.Vec2(tile_x_min, tile_y_min); //min,min
-      tile_points[1] = new VEC2.Vec2(tile_x_min, tile_y_max); //min,max
-      tile_points[2] = new VEC2.Vec2(tile_x_max, tile_y_max); // max,max
-      tile_points[3] = new VEC2.Vec2(tile_x_max, tile_y_min); // max,min
-
-      //vec2_tile_array[j] =  tile_points;  
-      
-      // clip allHatches to get hatches within this tile
-      let tileHatch = UTIL.ClipHatchByRect(assignedHatch,tile_points,true);
-      let tileHatch_outside = UTIL.ClipHatchByRect(assignedHatch,tile_points,false);
-        
-      assignedHatch.makeEmpty();
-      
-      let tileID_3mf = tileArray[j].tile_number+(tileArray[j].passNumber)*1000;
-      
-      anotateTileIntefaceHatchblocks(tileHatch,tileID_3mf);
-        
-      // assign tileID to hatches within tile
-      tileHatch.setAttributeInt('tileID_3mf',tileID_3mf);
           
-      assignedHatch.moveDataFrom(tileHatch);
-      assignedHatch.moveDataFrom(tileHatch_outside);
+      // add the corrdinates to vector pointset
+      let clipPoints = [
+        new VEC2.Vec2(tile_x_min, tile_y_min), //min,min
+        new VEC2.Vec2(tile_x_min, tile_y_max), //min,max
+        new VEC2.Vec2(tile_x_max, tile_y_max), // max,max
+        new VEC2.Vec2(tile_x_max, tile_y_min) // max,min
+      ];
+      
+      tileTable[j].clipPoints = {xmin : tile_x_min,
+                                 xmax : tile_x_max,
+                                 ymin : tile_y_min,
+                                 ymax : tile_y_max};
+                                 
+      // clip allHatches to get hatches within this tile
+      let tileHatch = UTIL.ClipHatchByRect(allHatches,clipPoints,true);
+      let tileHatch_outside = UTIL.ClipHatchByRect(allHatches,clipPoints,false);        
+      allHatches.makeEmpty();
+                                 
+      let tileId = tileTable[j].tileID;           
+      anotateTileIntefaceHatchblocks(tileHatch,tileId);
+          
+      allHatches.moveDataFrom(tileHatch);
+      allHatches.moveDataFrom(tileHatch_outside);
         
     } //for
-        
-    return assignedHatch;
+    
+    thisLayer.setAttribEx('tileTable',tileTable);    
+    
+    return allHatches;
     
 } //assignToolpathToTiles
 
 
 const anotateTileIntefaceHatchblocks = function(hatch,tileID) {
-
+  let returnHatch = new HATCH.bsHatch();
   let hatchBlockIterator = hatch.getHatchBlockIterator();
 
   while (hatchBlockIterator.isValid()) {   
-    let thisHatchBlock = hatchBlockIterator.get();
+    let currHatchBlock = hatchBlockIterator.get();
 
-        let prevTileID = thisHatchBlock.getAttributeInt('tileID_3mf');       
+        let prevTileID = currHatchBlock.getAttributeInt('tileID_3mf');       
        
         if (prevTileID > 0 ){
+          let overlapCount = currHatchBlock.getAttributeInt('overlapCount');
           
-          let overlapNumber = +thisHatchBlock.getAttributeInt('numberofOverlappingTiles');
-          
-          if(overlapNumber == 0) {
-            thisHatchBlock.setAttributeInt('overlappingTile_1',prevTileID);
-            overlapNumber++;
-            };
-          
-          overlapNumber++;
+          overlapCount++;
                              
-          let overlapping_designation = 'overlappingTile_' + overlapNumber.toString();
-          
-          thisHatchBlock.setAttributeInt(overlapping_designation,tileID);
-          thisHatchBlock.setAttributeInt('numberofOverlappingTiles',overlapNumber);
+          let overlappingDesignation = 'overlappingTile_' + overlapCount.toString();
+          currHatchBlock.setAttributeInt(overlappingDesignation,prevTileID);
+          currHatchBlock.setAttributeInt('overlapCount',overlapCount);
                       
         };  
+          currHatchBlock.setAttributeInt('tileID_3mf',tileID);
 
     hatchBlockIterator.next();
-    };
-  };
-
-exports.sortHatchBlocks = function(thisModel,nLayerNr,allHatches){
- 
-  const thisLayer = thisModel.getModelLayerByNr(nLayerNr);
-  const tileSegmentArray = thisLayer.getAttribEx('tileSegmentArray');
-  
-  const sortingArguments = {
-    sSegRegionFillingMode             : "NegativeY",
-    bInvertFillingSequence            : false,
-    fSegRegionFillingGridSize         : 0.0,
-    sSetAssignedRegionIndexMemberName : "regionIndex"
-    };
-    
-    allHatches.sortHatchBlocksForMinDistToSegments(tileSegmentArray,0,sortingArguments);
-      
-    return allHatches;
-};
-
-exports.adjustInterfaceVectors = function(allHatches,thisLayer){
-
-  let hatchBlockIterator = allHatches.getHatchBlockIterator();
-  let resultHatch = new HATCH.bsHatch();
-
-  while (hatchBlockIterator.isValid()) {   
-    
-    let thisHatchBlock = hatchBlockIterator.get();
-    let overlapNumber = thisHatchBlock.getAttributeInt('numberofOverlappingTiles');
-    
-    if(overlapNumber === 0) {
-      
-        resultHatch.addHatchBlock(thisHatchBlock);
-      
-      } else {
-        
-        let adjustedHatch = applyInterface(thisHatchBlock);
-        
-        adjustedHatch.mergeHatchBlocks({
-          "bConvertToHatchMode": true,
-          "bCheckAttributes": true
-        });
-        
-        resultHatch.moveDataFrom(adjustedHatch);
     }
-    
-  hatchBlockIterator.next();
-    
   };
-  
-  return resultHatch;
-}; // adjustInterfaceVectors
-
-const applyInterface = function(hatchBlock){
-  
-  //if(hatchBlock.isEmpty()) return;  
-  
-  let firstTileId = hatchBlock.getAttributeInt('overlappingTile_1');
-  let secondTileId = hatchBlock.getAttributeInt('overlappingTile_2');
-  let hatchType = hatchBlock.getAttributeInt('type');
-  let islandId = hatchBlock.getAttributeInt('islandId');
-  let borderIndex = hatchBlock.getAttributeInt('borderIndex');
-  let subType = hatchBlock.getModelSubtype();
-    
-
-  let overlappingHatch = new HATCH.bsHatch();
-  overlappingHatch.addHatchBlock(hatchBlock);
-  
-  let overLappingPathSet = new PATH_SET.bsPathSet();
-  
-  let firstOverlapPathsSet = new PATH_SET.bsPathSet();
-  let secondOverlapPathsSet = new PATH_SET.bsPathSet(); 
-
-  overLappingPathSet.addHatches(overlappingHatch);
-  
-  let dummyPathset = overLappingPathSet.clone();
-  
-  //let isSameStripe = Math.floor(firstTileId / 1000) === Math.floor(secondTileId / 1000);
-  
-  let firstPathSet = overLappingPathSet.getPathPoints(0);
-  
-  let pathWidth = Math.abs(firstPathSet[0].x -firstPathSet[1].x);
-  let pathHeight = Math.abs(firstPathSet[0].y -firstPathSet[1].y);
-  
-  
-  let adjustInY = (pathWidth < pathHeight) ? true : false;
-
-  overLappingPathSet = UTIL.preDistributeNonFullInterfaceVectors(overLappingPathSet,firstOverlapPathsSet,secondOverlapPathsSet,adjustInY);
-  
-  let pathCount = overLappingPathSet.getPathCount();
-  
-  let shouldVectorsOverlap = UTIL.doesTypeOverlap(hatchType,true);
-    
-  for(let pathNumber = 0 ; pathNumber < pathCount; pathNumber++){
-    let firstContainer = new PATH_SET.bsPathSet();
-    let secondContainer = new PATH_SET.bsPathSet();
-
-    if (pathNumber % 2 !== 0 || shouldVectorsOverlap) {
-      
-      firstContainer.addSinglePaths(overLappingPathSet,pathNumber);
-      }
-      
-    if (pathNumber % 2 === 0 || shouldVectorsOverlap) {
-      secondContainer.addSinglePaths(overLappingPathSet,pathNumber);
-      
-    }
-        
-    UTIL.adjustZipperInterfaceDistance(adjustInY,firstContainer,dummyPathset,hatchType);
-    UTIL.adjustZipperInterfaceDistance(adjustInY,dummyPathset,secondContainer,hatchType);
-
-    firstOverlapPathsSet.addPaths(firstContainer);
-    secondOverlapPathsSet.addPaths(secondContainer);
-  }
-
-  let firstHatch = new HATCH.bsHatch();
-  let secondHatch = new HATCH.bsHatch();
-
-  let addPathArgs = {
-     nModelSubtype : subType,
-     nOpenPathPolylineMode : POLY_IT.nPolyOpen,
-     nOpenPathTryPolyClosedPolylineModeTol : 0.0,
-     nClosedPathPolylineMode : POLY_IT.nPolyClosed,
-     bMergePolyHatch : false,
-     bTwoPointsPathAsPolyHatch : false
-  };
-    
-  firstHatch.addPathsExt(firstOverlapPathsSet,addPathArgs);
-  secondHatch.addPathsExt(secondOverlapPathsSet,addPathArgs);
-  
-  firstHatch.setAttributeInt('tileID_3mf', firstTileId);
-  secondHatch.setAttributeInt('tileID_3mf', secondTileId);
-    
-  let adjustedHatch = new HATCH.bsHatch();
-
-  adjustedHatch.moveDataFrom(firstHatch);
-  adjustedHatch.moveDataFrom(secondHatch);
-
-  adjustedHatch.setAttributeInt('type',hatchType);
-  adjustedHatch.setAttributeInt('islandId',islandId);
-  (borderIndex === 0) ? null : adjustedHatch.setAttributeInt('borderIndex',borderIndex);
-  
-  return adjustedHatch; 
-}; 
 
 exports.mergeShortLines = function(hatch){
 
@@ -356,37 +202,6 @@ exports.deleteShortHatchLines = function (hatch) {
   return resultHatch;
   };
 
-exports.mergeInterfaceVectors = function(hatch) {
-
-    let groupedHatchblocksByTileType = UTIL.getGroupedHatchObjectByTileType(hatch);
-    let returnHatch = new HATCH.bsHatch();
-
-    // Merge hatch blocks for each type (1, 3, 5) separately
-    Object.values(groupedHatchblocksByTileType).forEach(function(tile) {
-        Object.entries(tile).forEach(function(entryType) {
-            let type = +entryType[0];
-            let typeHatch = entryType[1];
-            
-            if(type === 1 || type === 3 || type === 5){ //hatch types
-              
-              typeHatch.mergeShortLines(
-                  typeHatch,PARAM.getParamReal('exposure','min_vector_lenght'), 0.001,
-                  HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
-              );
- 
-            } else { // non hatch types
-
-              typeHatch = UTIL.connectHatchBlocksSetAttributes(typeHatch);
-              
-            }
-            returnHatch.moveDataFrom(typeHatch);
-        });
-    });
-    
-    return returnHatch;
-}; // mergeInterfaceVectors
-
-  
 exports.rearrangeHatchblocks = function(hatch) {
     let returnHatch = new HATCH.bsHatch();
     let hatchBlocksArray = hatch.getHatchBlockArray();
@@ -636,6 +451,16 @@ exports.mergeShortLinesByType = function(hatches) {
   
 };
 
+// exports.combineSmallStripeIslands = function(stripeIslands){
+//   
+//   let islandArray = 
+//   // unify
+//   
+//   
+//   
+//   
+//   };
+
 exports.clipIntoStripes = function (hatch,island) {
     
   let resultHatch = new HATCH.bsHatch();
@@ -652,6 +477,7 @@ exports.clipIntoStripes = function (hatch,island) {
       let stripeId = 0;
       islandArray.forEach(function(island) {
         
+        let patternInfo = island.getPatternInfo();
         let clippedHatch = allHatches.clone();
         
         clippedHatch.clip(island,true);
@@ -661,7 +487,7 @@ exports.clipIntoStripes = function (hatch,island) {
         stripeId++;
       });
 
-    } else{
+    } else {
     
       resultHatch.moveDataFrom(groupedHatchByType[type]);
       
@@ -670,28 +496,56 @@ exports.clipIntoStripes = function (hatch,island) {
   return resultHatch;
   };
   
-exports.sortHatches = function(allHatches){
+exports.sortHatches = function(allHatches,stripeAngle){
   let returnHatch = new HATCH.bsHatch();
+  let sortingHatch = new HATCH.bsHatch();
   let groupedHatches = UTIL.getGroupedHatchObjectByTileTypeLaserId(allHatches);
   
   Object.values(groupedHatches).forEach(function(tiles){
-    Object.values(tiles).forEach(function(type){
-      Object.values(type).forEach(function(laserIdHatch){
+    Object.entries(tiles).forEach(function(typeEntry){
+      let typeKey = typeEntry[0];
+      let typeGroup = typeEntry[1];
       
-      
-//         laserIdHatch.pathReordering(new VEC2.Vec2(650,370), HATCH.nSortFlagShortestPath | HATCH.nSortFlagUseHotSpot) 
-//         
-//         returnHatch.moveDataFrom(laserIdHatch);
+      Object.values(typeGroup).forEach(function(laserIdHatch){
         
-      let sortedArray = sortByStripeIdAndCenterY(laserIdHatch.getHatchBlockArray());
-      
-        
-      sortedArray.forEach(function (hatchBlock){
-        
-        returnHatch.addHatchBlock(hatchBlock);
+        if (typeKey == 1 || typeKey == 3 || typeKey == 5) {
 
-        });    
-      });
+          let sortedArray = sortByStripeIdAndCenterY(laserIdHatch.getHatchBlockArray());
+          
+          sortedArray.forEach(function (hatchBlock){
+          
+          let type = hatchBlock.getAttributeInt('type');
+          
+          let tileID_3mf = hatchBlock.getAttributeInt('tileID_3mf');
+          let islandId = hatchBlock.getAttributeInt('islandId');
+          let bsid = hatchBlock.getAttributeInt('bsid');
+          let borderIndex = hatchBlock.getAttributeInt('borderIndex');
+          let stripeId = hatchBlock.getAttributeInt('stripeId');
+            
+          sortingHatch.addHatchBlock(hatchBlock);   
+            
+          //sortPathsWithMinimizedLineDistance(sortingHatch,5);
+          sortPathsByStripeAngle(sortingHatch, 2, stripeAngle * Math.PI / 180);
+          //sortPathsByCenterY(sortingHatch);
+            
+          sortingHatch.setAttributeInt('tileID_3mf',tileID_3mf);
+          sortingHatch.setAttributeInt('islandId',islandId);
+          sortingHatch.setAttributeInt('type',type);
+          sortingHatch.setAttributeInt('bsid',bsid);
+          sortingHatch.setAttributeInt('borderIndex',borderIndex);
+          sortingHatch.setAttributeInt('stripeId',stripeId);
+            
+          returnHatch.moveDataFrom(sortingHatch);
+          });
+        
+          } else {
+        
+            returnHatch.moveDataFrom(laserIdHatch);
+
+        };
+      
+        });
+
     });
   });
   
@@ -716,4 +570,406 @@ function sortByStripeIdAndCenterY(boundsArray) {
     });
 }
 
-  
+const sortPathsByCenterY = function (hatch) {
+    let pathSet = new PATH_SET.bsPathSet();
+    pathSet.addHatches(hatch);
+
+    let pathCount = pathSet.getPathCount();
+    let pathsWithCenters = [];
+
+    // Iterate through all paths in the hatch
+    for (let i = 0; i < pathCount; i++) {
+        let points = pathSet.getPathPoints(i);  // Get the points of the path
+        
+        // Calculate the center point (average of X and Y coordinates of all points)
+        let centerX = 0;
+        let centerY = 0;
+        let pointCount = points.length;
+
+        for (let j = 0; j < pointCount; j++) {
+            centerX += points[j].x;
+            centerY += points[j].y;
+        }
+
+        centerX /= pointCount;
+        centerY /= pointCount;
+
+        // Store the path index and centerY for sorting
+        pathsWithCenters.push({ index: i, centerY: centerY });
+    }
+
+    // Sort paths based on centerY (ascending order)
+    pathsWithCenters.sort(function(a, b) {
+        return b.centerY - a.centerY;
+    });
+
+    // Create a new pathSet for sorted paths
+    let sortedPathSet = new PATH_SET.bsPathSet();
+
+    // Add paths to the sorted pathSet in the new order
+    for (let i = 0; i < pathsWithCenters.length; i++) {
+        sortedPathSet.addSinglePaths(pathSet, pathsWithCenters[i].index);
+    }
+
+    // Clear the original hatch paths and replace with sorted ones
+    hatch.clear();
+    hatch.addPaths(sortedPathSet);
+
+    return hatch;  // Return the sorted hatch for reference
+}
+
+function sortPathsWithMinimizedLineDistance(hatch, maxJumpDistance) {
+    let pathSet = new PATH_SET.bsPathSet();
+    pathSet.addHatches(hatch);
+
+    let pathCount = pathSet.getPathCount();
+    let pathsWithCenters = [];
+
+    // Step 1: Iterate through all paths and calculate their center points
+    for (let i = 0; i < pathCount; i++) {
+        let points = pathSet.getPathPoints(i);  // Get the points of the path
+
+        // Calculate the center point (average of X and Y coordinates)
+        let centerX = 0;
+        let centerY = 0;
+        let pointCount = points.length;
+
+        for (let j = 0; j < pointCount; j++) {
+            centerX += points[j].x;
+            centerY += points[j].y;
+        }
+
+        centerX /= pointCount;
+        centerY /= pointCount;
+
+        // Store the path index, centerY, and start/end points
+        pathsWithCenters.push({ 
+            index: i, 
+            centerX: centerX, 
+            centerY: centerY, 
+            startPoint: points[0], 
+            endPoint: points[points.length - 1] 
+        });
+    }
+
+    // Step 2: Sort paths by centerY in descending order (start with the topmost vector)
+    pathsWithCenters.sort(function(a, b) {
+        return b.centerY - a.centerY;
+    });
+
+    // Step 3: Initialize sorted paths and start with the topmost vector
+    let sortedPaths = [];
+    let currentPath = pathsWithCenters[0];  // Start with the first path (highest centerY)
+    sortedPaths.push(currentPath);
+    pathsWithCenters.splice(0, 1);  // Remove it from the list
+
+    // Step 4: Loop through the remaining paths
+    while (pathsWithCenters.length > 0) {
+        let closestPathIndex = -1;
+        let minLineDistance = Infinity;
+
+        // Find the path that minimizes the distance between the lines (current vector and next vector)
+        for (let i = 0; i < pathsWithCenters.length; i++) {
+            let distance = getLineDistance(currentPath, pathsWithCenters[i]);  // Calculate line-to-line distance
+            if (distance < minLineDistance) {
+                minLineDistance = distance;
+                closestPathIndex = i;
+            }
+        }
+
+        // Step 5: Check if the line distance exceeds the maxJumpDistance
+        if (minLineDistance > maxJumpDistance) {
+            // If the line distance exceeds the limit, pick the next path from the top of the remaining paths (highest centerY)
+            currentPath = pathsWithCenters[0];  // Take the top-most vector from the remaining list
+            sortedPaths.push(currentPath);
+            pathsWithCenters.splice(0, 1);  // Remove it from the list
+        } else {
+            // If the line distance is within the limit, add the closest path
+            currentPath = pathsWithCenters[closestPathIndex];
+            sortedPaths.push(currentPath);
+            pathsWithCenters.splice(closestPathIndex, 1);  // Remove it from the list
+        }
+    }
+
+    // Step 6: Create a new pathSet for the sorted paths
+    let sortedPathSet = new PATH_SET.bsPathSet();
+
+    for (let i = 0; i < sortedPaths.length; i++) {
+        sortedPathSet.addSinglePaths(pathSet, sortedPaths[i].index);
+    }
+
+    // Step 7: Replace the original hatch paths with the sorted ones
+    hatch.clear();
+    hatch.addPaths(sortedPathSet);
+
+    return hatch;  // Return the sorted hatch for reference
+}
+function sortPathsByStripeAngle(hatch, maxJumpDistance, stripeAngle) {
+    let pathSet = new PATH_SET.bsPathSet();
+    pathSet.addHatches(hatch);
+
+    let pathCount = pathSet.getPathCount();
+    let pathsWithProjections = [];
+
+    // Calculate the direction vector from the stripe angle
+    let stripeDirection = new VEC2.Vec2(Math.sin(stripeAngle), Math.cos(stripeAngle));  // Direction vector for the stripe
+
+    // Step 1: Iterate through all paths and calculate their center points and projections
+    for (let i = 0; i < pathCount; i++) {
+        let points = pathSet.getPathPoints(i);  // Get the points of the path
+
+        // Calculate the center point (average of X and Y coordinates)
+        let centerX = 0;
+        let centerY = 0;
+        let pointCount = points.length;
+
+        for (let j = 0; j < pointCount; j++) {
+            centerX += points[j].x;
+            centerY += points[j].y;
+        }
+
+        centerX /= pointCount;
+        centerY /= pointCount;
+
+        // Calculate the projection of the center point onto the stripe direction
+        let center = new VEC2.Vec2(centerX, centerY);
+        let projection = center.dot(stripeDirection);
+
+        // Store the path index, projection, and start/end points
+        pathsWithProjections.push({ 
+            index: i, 
+            projection: projection, 
+            center: center,
+            startPoint: points[0], 
+            endPoint: points[points.length - 1],
+            bounds: {
+                xMin: Math.min.apply(null, points.map(function(p) { return p.x; })),
+                xMax: Math.max.apply(null, points.map(function(p) { return p.x; }))
+            }
+        });
+    }
+
+    // Step 2: Sort paths by projection (to start with topmost vectors relative to the angle)
+    pathsWithProjections.sort(function(a, b) {
+        return b.projection - a.projection;  // Start with topmost vector relative to angle
+    });
+
+    // Step 3: Initialize sorted paths and set of unvisited paths
+    let sortedPaths = [];
+    let currentPath = pathsWithProjections[0];  // Start with the first path (highest projection)
+    sortedPaths.push(currentPath);
+    pathsWithProjections.splice(0, 1);  // Remove it from the list
+
+    // Step 4: Loop through the remaining paths and find the closest path along the stripe direction
+    while (pathsWithProjections.length > 0) {
+        let closestPathIndex = -1;
+        let minLineDistance = Infinity;
+        let topmostValidIndex = -1;
+        let topmostY = -Infinity;  // Track topmost Y coordinate
+
+        // Track X bounds for the current path
+        let currentXMin = currentPath.bounds.xMin;
+        let currentXMax = currentPath.bounds.xMax;
+
+        // Step 5: Find immediate neighbors based on proximity (line-to-line distance)
+        for (let i = 0; i < pathsWithProjections.length; i++) {
+            let distance = getLineDistance(currentPath, pathsWithProjections[i]);  // Calculate line-to-line distance
+            let yCoord = pathsWithProjections[i].center.y;
+
+            // If the current path and the other path are close enough
+            if (distance < maxJumpDistance) {
+                if (distance < minLineDistance) {
+                    minLineDistance = distance;
+                    closestPathIndex = i;
+                }
+            }
+
+            // Keep track of the topmost valid vector by actual Y coordinate
+            if (yCoord > topmostY) {
+                topmostY = yCoord;
+                topmostValidIndex = i;
+            }
+        }
+
+        // Step 6: If a neighbor was found, process it, otherwise jump to the topmost vector
+        if (closestPathIndex !== -1) {
+            // Add the closest neighbor to the sorted paths
+            currentPath = pathsWithProjections[closestPathIndex];
+            sortedPaths.push(currentPath);
+            pathsWithProjections.splice(closestPathIndex, 1);  // Remove it from the list
+        } else if (topmostValidIndex !== -1) {
+            // **MUST** jump to the topmost vector relative to the angle
+            currentPath = pathsWithProjections[topmostValidIndex];
+            sortedPaths.push(currentPath);
+            pathsWithProjections.splice(topmostValidIndex, 1);  // Remove it from the list
+        }
+    }
+
+    // Step 7: Create a new pathSet for the sorted paths
+    let sortedPathSet = new PATH_SET.bsPathSet();
+
+    for (let i = 0; i < sortedPaths.length; i++) {
+        sortedPathSet.addSinglePaths(pathSet, sortedPaths[i].index);
+    }
+
+    // Step 8: Replace the original hatch paths with the sorted ones
+    hatch.clear();
+    hatch.addPaths(sortedPathSet);
+
+    return hatch;  // Return the sorted hatch for reference
+}
+
+// Function to calculate the line-to-line distance
+function getLineDistance(vector1, vector2) {
+    let start1 = vector1.startPoint;
+    let end1 = vector1.endPoint;
+    let start2 = vector2.startPoint;
+    let end2 = vector2.endPoint;
+
+    let distanceStartToLine2 = pointToLineDistance(start1, start2, end2);
+    let distanceEndToLine2 = pointToLineDistance(end1, start2, end2);
+    let distanceStartToLine1 = pointToLineDistance(start2, start1, end1);
+    let distanceEndToLine1 = pointToLineDistance(end2, start1, end1);
+
+    return Math.min(distanceStartToLine2, distanceEndToLine2, distanceStartToLine1, distanceEndToLine1);
+}
+
+// Function to calculate the shortest distance from a point to a line
+function pointToLineDistance(point, lineStart, lineEnd) {
+    let lineLengthSquared = lineStart.distanceSq(lineEnd);
+    if (lineLengthSquared === 0) {
+        return point.distance(lineStart);
+    }
+    let t = ((point.x - lineStart.x) * (lineEnd.x - lineStart.x) + (point.y - lineStart.y) * (lineEnd.y - lineStart.y)) / lineLengthSquared;
+    t = Math.max(0, Math.min(1, t));  // Clamp t between 0 and 1
+    let projection = new VEC2.Vec2(lineStart.x + t * (lineEnd.x - lineStart.x), lineStart.y + t * (lineEnd.y - lineStart.y));
+    return point.distance(projection);
+}
+
+
+
+
+
+// function sortPathsByStripeAngle(hatch, maxJumpDistance, stripeAngle) {
+//     let pathSet = new PATH_SET.bsPathSet();
+//     pathSet.addHatches(hatch);
+// 
+//     let pathCount = pathSet.getPathCount();
+//     let pathsWithProjections = [];
+// 
+//     // Calculate the reversed direction vector from the stripe angle
+//     let stripeDirection = new VEC2.Vec2(-Math.cos(stripeAngle), -Math.sin(stripeAngle));  // Reverse direction vector for the stripe
+// 
+//     // Step 1: Iterate through all paths and calculate their center points and projections
+//     for (let i = 0; i < pathCount; i++) {
+//         let points = pathSet.getPathPoints(i);  // Get the points of the path
+// 
+//         // Calculate the center point (average of X and Y coordinates)
+//         let centerX = 0;
+//         let centerY = 0;
+//         let pointCount = points.length;
+// 
+//         for (let j = 0; j < pointCount; j++) {
+//             centerX += points[j].x;
+//             centerY += points[j].y;
+//         }
+// 
+//         centerX /= pointCount;
+//         centerY /= pointCount;
+// 
+//         // Calculate the projection of the center point onto the reversed stripe direction
+//         let center = new VEC2.Vec2(centerX, centerY);
+//         let projection = center.dot(stripeDirection);
+// 
+//         // Store the path index, projection, and start/end points
+//         pathsWithProjections.push({ 
+//             index: i, 
+//             projection: projection, 
+//             center: center,
+//             startPoint: points[0], 
+//             endPoint: points[points.length - 1] 
+//         });
+//     }
+// 
+//     // Step 2: Sort paths by the projection in descending order (or ascending if needed)
+//     pathsWithProjections.sort(function(a, b) {
+//         return b.projection - a.projection;
+//     });
+// 
+//     // Step 3: Initialize sorted paths and start with the first projected path
+//     let sortedPaths = [];
+//     let currentPath = pathsWithProjections[0];  // Start with the first path (highest projection)
+//     sortedPaths.push(currentPath);
+//     pathsWithProjections.splice(0, 1);  // Remove it from the list
+// 
+//     // Step 4: Loop through the remaining paths and find the closest path along the stripe direction
+//     while (pathsWithProjections.length > 0) {
+//         let closestPathIndex = -1;
+//         let minLineDistance = Infinity;
+// 
+//         // Find the path that minimizes the distance between the lines (current vector and next vector)
+//         for (let i = 0; i < pathsWithProjections.length; i++) {
+//             let distance = getLineDistance(currentPath, pathsWithProjections[i]);  // Calculate line-to-line distance
+//             if (distance < minLineDistance) {
+//                 minLineDistance = distance;
+//                 closestPathIndex = i;
+//             }
+//         }
+// 
+//         // Step 5: Check if the line distance exceeds the maxJumpDistance
+//         if (minLineDistance > maxJumpDistance) {
+//             // If the line distance exceeds the limit, pick the next path based on projection
+//             currentPath = pathsWithProjections[0];  // Take the next highest projection
+//             sortedPaths.push(currentPath);
+//             pathsWithProjections.splice(0, 1);  // Remove it from the list
+//         } else {
+//             // If the line distance is within the limit, add the closest path
+//             currentPath = pathsWithProjections[closestPathIndex];
+//             sortedPaths.push(currentPath);
+//             pathsWithProjections.splice(closestPathIndex, 1);  // Remove it from the list
+//         }
+//     }
+// 
+//     // Step 6: Create a new pathSet for the sorted paths
+//     let sortedPathSet = new PATH_SET.bsPathSet();
+// 
+//     for (let i = 0; i < sortedPaths.length; i++) {
+//         sortedPathSet.addSinglePaths(pathSet, sortedPaths[i].index);
+//     }
+// 
+//     // Step 7: Replace the original hatch paths with the sorted ones
+//     hatch.clear();
+//     hatch.addPaths(sortedPathSet);
+// 
+//     return hatch;  // Return the sorted hatch for reference
+// }
+// 
+// // Function to calculate the line-to-line distance
+// function getLineDistance(vector1, vector2) {
+//     let start1 = vector1.startPoint;
+//     let end1 = vector1.endPoint;
+//     let start2 = vector2.startPoint;
+//     let end2 = vector2.endPoint;
+// 
+//     let distanceStartToLine2 = pointToLineDistance(start1, start2, end2);
+//     let distanceEndToLine2 = pointToLineDistance(end1, start2, end2);
+//     let distanceStartToLine1 = pointToLineDistance(start2, start1, end1);
+//     let distanceEndToLine1 = pointToLineDistance(end2, start1, end1);
+// 
+//     return Math.min(distanceStartToLine2, distanceEndToLine2, distanceStartToLine1, distanceEndToLine1);
+// }
+// 
+// // Function to calculate the shortest distance from a point to a line
+// function pointToLineDistance(point, lineStart, lineEnd) {
+//     let lineLengthSquared = lineStart.distanceSq(lineEnd);
+//     if (lineLengthSquared === 0) {
+//         return point.distance(lineStart);
+//     }
+//     let t = ((point.x - lineStart.x) * (lineEnd.x - lineStart.x) + (point.y - lineStart.y) * (lineEnd.y - lineStart.y)) / lineLengthSquared;
+//     t = Math.max(0, Math.min(1, t));  // Clamp t between 0 and 1
+//     let projection = new VEC2.Vec2(lineStart.x + t * (lineEnd.x - lineStart.x), lineStart.y + t * (lineEnd.y - lineStart.y));
+//     return point.distance(projection);
+// }
+
+
+//--------------------------------------------------------//

@@ -158,6 +158,8 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
     
     let tileReach = tileSize*requiredPasses + overlap * (requiredPasses - 1);
           
+    let modelSize = maxCoord - minCoord;
+    
     let startingPos = minCoord;
   
     if(modelCenterLocation!==0){
@@ -167,7 +169,11 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
       };
   
 
-    if (startingPos + tileReach > workareaMax) { // if outside of workarea
+    if (startingPos + tileReach + shift < maxCoord ) { // if model is outside workingarea
+        requiredPasses++;
+    }
+    
+    if (startingPos + tileReach > workareaMax ) { // if outside of workarea
         startingPos = workareaMax + shift - tileReach;
     }
 
@@ -190,7 +196,7 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
     };
 };
 
-exports.getTileArray = function (modelLayer, layerNr, modelData) {
+exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) {
   
   if(!modelData) {
     throw new Error ("getTileArray: modelData could not be obtained for layer " + layerNr);
@@ -299,7 +305,9 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
               overlapY: overlap_y,
               shiftX: shiftX,
               shiftY: shiftY,
-              layer: layerNr
+              layer: layerNr,
+              laserClipPoints : [],
+              clipPoints : [],
           };
           tileTable.push(tile_obj);
 
@@ -336,11 +344,12 @@ exports.getTileArray = function (modelLayer, layerNr, modelData) {
   
   let attemptCounter;
   
-  storeTileTable(modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr);
+  saveTileTable(modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr);
   
+  return tileTable;
 };
 
-const storeTileTable = function(modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr){
+const saveTileTable = function(modelLayer,tileTable,tileTable3mf,attemptCounter,layerNr){
   
   modelLayer.setAttribEx('tileTable', tileTable);
   modelLayer.setAttribEx('tileTable_3mf', tileTable3mf);
@@ -356,9 +365,9 @@ const storeTileTable = function(modelLayer,tileTable,tileTable3mf,attemptCounter
   
   attemptCounter++;
   
-  if(attemptCounter>10) throw new Error("Tileing | Tilearray : Failed to retrieve tileArray at layer: " + layerNr);
+  if(attemptCounter>100) throw new Error("Tileing | Tilearray : Failed to retrieve tileArray at layer: " + layerNr);
   
     process.printWarning("re-attempt to get tileArray, layer nr " + layerNr + " attempt nr: " + attemptCounter);
-    storeTileTable(modelLayer,tileTable,tileTable3mf);
+    saveTileTable(modelLayer,tileTable,tileTable3mf);
   };
 }
