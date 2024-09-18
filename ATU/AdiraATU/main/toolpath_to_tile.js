@@ -158,6 +158,7 @@ const anotateTileIntefaceHatchblocks = function(hatch,tileID) {
     }
   };
 
+
 exports.mergeShortLines = function(hatch){
 
   const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
