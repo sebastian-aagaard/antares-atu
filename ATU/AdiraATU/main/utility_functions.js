@@ -178,6 +178,15 @@ exports.findColorFromType = function (value) {
 }
 
 //-----------------------------------------------------------------------------------------//
+function getHeight (bsBounds2D){
+  return bsBounds2D.maxY-bsBounds2D.minY;
+};
+
+function getWidth (bsBounds2D){
+  return bsBounds2D.maxX-bsBounds2D.minX;
+};
+
+//-----------------------------------------------------------------------------------------//
 
 const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
   
@@ -210,8 +219,7 @@ const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
 
 const getDistanceBetweenThisTypeInterfaceVectors = function (type) {
   switch (type) {
-    case 0:
-      return PARAM.getParamReal('interface','distanceBewteenOpenPolyLineInterfaceVectors');
+ 
     case 1:
       return PARAM.getParamReal('interface','distanceBewteenInterfaceHatchVectors');
     case 2:
@@ -226,6 +234,9 @@ const getDistanceBetweenThisTypeInterfaceVectors = function (type) {
       return PARAM.getParamReal('interface','distanceBewteenInterfaceContourVectors');
     case 7:
       return PARAM.getParamReal('interface','distanceBewteenOpenPolyLineInterfaceVectors');
+    case 8:
+      return PARAM.getParamReal('interface','distanceBewteenOpenPolyLineInterfaceVectors');
+
     default:
             process.printError('Unexpected type:', type);
             return null;  // or a default color if appropriate
@@ -562,7 +573,7 @@ exports.adjustInterfaceVectors = function(hatch,thisLayer,isLaserOperation) {
 
 const adjustMultipleOverlappingHatchBlocks = function(hatchBlock) {
   
-  if(hatchBlock.isEmpty()) return;
+  if(hatchBlock.isEmpty() || hatchBlock.getPointCount()<2) return;
 
   let returnHatch = new HATCH.bsHatch();
   
@@ -698,7 +709,7 @@ exports.mergeInterfaceVectors = function(hatch, getGroupedHatchFunction, isLaser
 //-----------------------------------------------------------------------------------------//
 const applyInterface = function(hatchBlock, tileTable, isLaserOperation) {
   
-  if(hatchBlock.isEmpty()) return;
+  if(hatchBlock.isEmpty() || hatchBlock.getPointCount()<2) return;
   
   // Determine attribute names based on whether it's a tile interface or laser interface
   let overlapAttr1 = isLaserOperation ? 'overlappingLaser_1' : 'overlappingTile_1';
@@ -719,9 +730,11 @@ const applyInterface = function(hatchBlock, tileTable, isLaserOperation) {
   
   let overlappingHatch = new HATCH.bsHatch();
   overlappingHatch.addHatchBlock(hatchBlock);
-
+  
   let overLappingPathSet = new PATH_SET.bsPathSet();
   overLappingPathSet.addHatches(overlappingHatch);
+
+  if(overLappingPathSet.isEmpty()) return;
 
   let interfaceOverlapPreAllocateLimit = PARAM.getParamReal('interface', 'interfaceOverlap') - 0.001; // reduce abit to ensure shorter vectors get preallocated
   let firstOverlapPathsSet = new PATH_SET.bsPathSet();
@@ -731,10 +744,6 @@ const applyInterface = function(hatchBlock, tileTable, isLaserOperation) {
   let adjustInY = determineAdjustmentDirection(isLaserOperation, firstId, secondId);
   
   let overlapLimits = getClipIntersectionCoordinates(tileTable, firstId, secondId, adjustInY, tileId, isLaserOperation);
-  let overlapDistance = overlapLimits.distance;
-
-  let currentPathSetBounds = overLappingPathSet.getBounds2D();
-  let currentPathSize = (adjustInY) ? currentPathSetBounds.getHeight() : currentPathSetBounds.getWidth();
   
   if(!isLaserOperation){
     // Check if the start and end points lie on the boundary of either the firstId or secondId tiles
@@ -760,13 +769,16 @@ const applyInterface = function(hatchBlock, tileTable, isLaserOperation) {
   for (let pathNumber = 0; pathNumber < pathCount; pathNumber++) {
     let currentPathSet = new PATH_SET.bsPathSet();
     currentPathSet.addSinglePaths(overLappingPathSet, pathNumber);
-    
+    if(currentPathSet.isEmpty()) continue;
+
     let currentPathSetBounds = currentPathSet.getBounds2D();
-    let currentPathSize = (adjustInY) ? currentPathSetBounds.getHeight() : currentPathSetBounds.getWidth();
+    
+    let currentPathSize = (adjustInY) ? getHeight(currentPathSetBounds) : getWidth(currentPathSetBounds);
 
     if (currentPathSize < interfaceOverlapPreAllocateLimit && borderIndex === 0) {
       // Pre-distribute vectors that don't cover full interface
       preDistributeNonFullInterfaceVectors(currentPathSet, firstOverlapPathsSet, secondOverlapPathsSet, adjustInY, shouldVectorsOverlap, overlapLimits);
+      
     } else {
       let fixedVectorEnd = (borderIndex % 2 !== 0) ? 'start' : 'end';
       
@@ -840,106 +852,6 @@ function isPointOnBoundary(point, tileBounds) {
     (point.y === tileBounds.ymin || point.y === tileBounds.ymax)
   );
 }
-
-
-
-
-
-// // Function to apply interface, cut vectors from the END, and assign paths to the correct overlap pathset
-// const applyInterface = function(hatchBlock, tileTable, isLaserOperation) {
-//   
-//   // Determine attribute names based on whether it's a tile interface or laser interface
-//   let overlapAttr1 = isLaserOperation ? 'overlappingLaser_1' : 'overlappingTile_1';
-//   let overlapAttr2 = isLaserOperation ? 'bsid' : 'tileID_3mf';
-//   
-//   let overlap1 = hatchBlock.getAttributeInt(overlapAttr1);
-//   let overlap2 = hatchBlock.getAttributeInt(overlapAttr2);
-//   
-//   // Assign firstId and secondId dynamically based on laser operation
-//   let firstId = Math.min(overlap1, overlap2);
-//   let secondId = Math.max(overlap1, overlap2);
-// 
-//   let hatchType = hatchBlock.getAttributeInt('type');
-//   let islandId = hatchBlock.getAttributeInt('islandId');
-//   let borderIndex = hatchBlock.getAttributeInt('borderIndex');
-//   let subType = hatchBlock.getModelSubtype();
-//   let tileId = hatchBlock.getAttributeInt('tileID_3mf');
-//   
-//   let overlappingHatch = new HATCH.bsHatch();
-//   overlappingHatch.addHatchBlock(hatchBlock);
-// 
-//   let overLappingPathSet = new PATH_SET.bsPathSet();
-//   overLappingPathSet.addHatches(overlappingHatch);
-// 
-//   let pathCount = overLappingPathSet.getPathCount();
-//   let interfaceOverlapPreAllocateLimit = PARAM.getParamReal('interface', 'interfaceOverlap')-0.001; // reduce abit to ensure shorter vectors get preallocated
-//   let firstOverlapPathsSet = new PATH_SET.bsPathSet();
-//   let secondOverlapPathsSet = new PATH_SET.bsPathSet();
-// 
-//   let shouldVectorsOverlap = doesTypeOverlap(hatchType, isLaserOperation);
-//   let adjustInY = determineAdjustmentDirection(isLaserOperation, firstId, secondId);
-//   
-//   let overlapLimits = getClipIntersectionCoordinates(tileTable, firstId, secondId, adjustInY,tileId, isLaserOperation);
-//   
-//   let overlapDistance = overlapLimits.distance;
-// 
-//   
-// 
-//   // Iterate through all paths (vectors) and process each
-//   for (let pathNumber = 0; pathNumber < pathCount; pathNumber++) {
-//     let currentPathSet = new PATH_SET.bsPathSet();
-//     currentPathSet.addSinglePaths(overLappingPathSet, pathNumber);
-//     
-//     let currentPathSetBounds = currentPathSet.getBounds2D();
-//     let currentPathSize = (adjustInY) ? currentPathSetBounds.getHeight() : currentPathSetBounds.getWidth();
-// 
-//     if (currentPathSize < interfaceOverlapPreAllocateLimit && borderIndex === 0) {
-//       // Pre-distribute vectors that don't cover full interface
-//       preDistributeNonFullInterfaceVectors(currentPathSet, firstOverlapPathsSet, secondOverlapPathsSet, adjustInY, shouldVectorsOverlap,overlapLimits);
-//     } else {
-//     
-//       let fixedVectorEnd = (borderIndex % 2 !== 0) ? 'start' : 'end';
-//       
-//       adjustVectorLength(currentPathSet, 0, fixedVectorEnd, hatchType);  
-// 
-//       // Based on the coordinates, add to the correct overlap paths set
-//       addToCorrectOverlapSet(currentPathSet, firstOverlapPathsSet, secondOverlapPathsSet, firstId, secondId, isLaserOperation, shouldVectorsOverlap, fixedVectorEnd);
-//       
-//       }
-//   }
-// 
-//   // Prepare the final hatch objects for both containers
-//   let firstHatch = new HATCH.bsHatch();
-//   let secondHatch = new HATCH.bsHatch();
-// 
-//   let addPathArgs = {
-//     nModelSubtype: subType,
-//     nOpenPathPolylineMode: POLY_IT.nPolyOpen,
-//     nOpenPathTryPolyClosedPolylineModeTol: 0.0,
-//     nClosedPathPolylineMode: POLY_IT.nPolyClosed,
-//     bMergePolyHatch: false,
-//     bTwoPointsPathAsPolyHatch: false
-//   };
-// 
-//   firstHatch.addPathsExt(firstOverlapPathsSet, addPathArgs);
-//   secondHatch.addPathsExt(secondOverlapPathsSet, addPathArgs);
-// 
-//   firstHatch.setAttributeInt(overlapAttr2, firstId);
-//   secondHatch.setAttributeInt(overlapAttr2, secondId);
-// 
-//   // Combine the two hatches into one adjusted hatch object
-//   let adjustedHatch = new HATCH.bsHatch();
-//   adjustedHatch.moveDataFrom(firstHatch);
-//   adjustedHatch.moveDataFrom(secondHatch);
-// 
-//   adjustedHatch.setAttributeInt('type', hatchType);
-//   adjustedHatch.setAttributeInt('islandId', islandId);
-//   if (borderIndex !== 0) adjustedHatch.setAttributeInt('borderIndex', borderIndex);
-//   if (isLaserOperation) adjustedHatch.setAttributeInt('tileID_3mf', tileId);
-// 
-//   return adjustedHatch;  // Return the final adjusted hatch
-// };
-
 //-----------------------------------------------------------------------------------------//
 
 const preDistributeNonFullInterfaceVectors = function(currentPathSet,firstOverlapPathSet,secondOverlapPathSet,adjustInY,shouldTypeOverlap,overlapLimits){
@@ -1034,61 +946,77 @@ const determineAdjustmentDirection = function(isLaserOperation, firstId, secondI
 }
 
 function adjustVectorLength(pathSet, fixedPointType, type) {
+  
+    if(pathSet.isEmpty()) return;
     // Step 1: Get the adjustment amount (distance) from the interface function
     const adjustmentAmount = getDistanceBetweenThisTypeInterfaceVectors(type);  // Get distance from the provided function
 
-    // Step 2: Get the start and end points of the vector from the pathset
+    // Step 2: Get the path points from the pathset (considering paths with more than two points)
     let points = pathSet.getPathPoints(0);  // Array of vec2 objects representing the path
-
-    // Assume the path has two points: start (points[0]) and end (points[1])
-    let startPoint = points[0];
-    let endPoint = points[1];
+  
+    if (points.length < 2) {
+        process.printError('Path contains fewer than 2 points, cannot adjust length.');
+        return pathSet;
+    }
 
     // Step 3: Determine which point should remain fixed (either "start" or "end")
-    let fixedPoint, movablePoint;
+    let fixedPoint, movablePoints;
     if (fixedPointType === "start") {
-        fixedPoint = startPoint.clone();  // Clone to ensure immutability
-        movablePoint = endPoint.clone();
+        fixedPoint = points[0].clone();  // Fix the start point
+        movablePoints = points.slice(1);  // All points except the first are "movable"
     } else if (fixedPointType === "end") {
-        fixedPoint = endPoint.clone();  // Clone to ensure immutability
-        movablePoint = startPoint.clone();
+        fixedPoint = points[points.length - 1].clone();  // Fix the end point
+        movablePoints = points.slice(0, points.length - 1).reverse();  // Reverse to process from the last point backward
     } else {
         throw new Error("Invalid fixedPointType. Use 'start' or 'end'.");
     }
 
-    // Step 4: Calculate the current vector length and direction
-    let direction = movablePoint.sub(fixedPoint);  // Get the direction vector (movablePoint - fixedPoint)
-    let currentLength = direction.length();        // Get the current length of the vector
+    // Step 4: Adjust the total path length by shortening segments starting from the last one
+    let remainingAdjustment = adjustmentAmount;  // Track how much adjustment is left
 
-    // Step 5: Calculate the new length of the vector
-    let newLength = currentLength - adjustmentAmount;  // New length after adjustment
+    for (let i = 0; i < movablePoints.length && remainingAdjustment > 0; i++) {
+        let direction = movablePoints[i].sub(fixedPoint);  // Get the direction vector of the current segment
+        let segmentLength = direction.length();  // Length of the current segment
 
-    // Step 6: Check if the new length is less than zero
-    if (newLength < 0) {
-        //process.printWarning("Adjustment exceeds the current vector length, resulting in negative length. Returning original pathset.");
-        return pathSet;  // Return the original pathset without making any changes
+        if (segmentLength > remainingAdjustment) {
+            // Step 5: Adjust the current segment if it can accommodate the remaining adjustment
+            let newLength = segmentLength - remainingAdjustment;
+            let scaleFactor = newLength / segmentLength;
+            let newDirection = direction.mulByScalar(scaleFactor);  // Scale the direction vector
+            let newMovablePoint = fixedPoint.add(newDirection);  // Calculate the new position
+
+            // Update the point in the path
+            if (fixedPointType === "start") {
+                points[i + 1] = newMovablePoint;  // Adjust in the original direction
+            } else {
+                points[points.length - 2 - i] = newMovablePoint;  // Adjust backward if end is fixed
+            }
+
+            // Adjustment is done
+            remainingAdjustment = 0;
+        } else {
+            // Step 6: If the segment is too short, remove its entire length and move to the next segment
+            remainingAdjustment -= segmentLength;
+
+            // The movable point should collapse onto the fixed point
+            if (fixedPointType === "start") {
+                points[i + 1] = fixedPoint.clone();  // Collapse the movable point onto the fixed point
+            } else {
+                points[points.length - 2 - i] = fixedPoint.clone();  // Collapse for the reverse case
+            }
+
+            // Move the fixed point to the next point in the path
+            fixedPoint = points[fixedPointType === "start" ? i + 1 : points.length - 2 - i];
+        }
     }
 
-    // Step 7: Scale the vector if the new length is valid
-    let scaleFactor = newLength / currentLength;       // Scaling factor for the new length
-    let newDirection = direction.mulByScalar(scaleFactor);  // Scale the direction vector
-
-    // Step 8: Calculate the new position of the movable point based on the scaled direction vector
-    let newMovablePoint = fixedPoint.add(newDirection);  // New position for the movable point
-
-    // Step 9: Update the path points with the modified point
-    if (fixedPointType === "start") {
-        points[1] = newMovablePoint;  // Update end point if start is fixed
-    } else {
-        points[0] = newMovablePoint;  // Update start point if end is fixed
-    }
-
-    // Step 10: Set the modified points back into the pathset
+    // Step 7: Set the modified points back into the pathset
     pathSet.setPathPoints(0, points);
 
     // Return the updated pathset for reference
     return pathSet;
 }
+
 
 // Function to add the path to the correct overlap pathset based on passed uncutPoint information
 function addToCorrectOverlapSet(pathSet, firstOverlapPathsSet, secondOverlapPathsSet, firstId, secondId, isLaserOperation, shouldTypeOverlap, uncutEndType) {
@@ -1230,4 +1158,3 @@ function addPathsToHatchBlock(hatchBlock, pathSet) {
         }
     }
 }
-
