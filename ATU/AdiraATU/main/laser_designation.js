@@ -166,9 +166,6 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
 
       anotateHatchBlocks(tileHatchInside,laserIndex+1,tileId,thisLayer); 
       
-//       if(thisTile.laserClipPoints[laserIndex] == undefined){
-//         thisTile.laserClipPoints[laserIndex] = [];
-//         }
       
       thisTile.laserClipPoints[laserIndex] = {xmin : clip_min_x,
                                          xmax : clip_max_x,

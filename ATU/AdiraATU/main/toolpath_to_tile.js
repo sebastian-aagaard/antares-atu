@@ -115,6 +115,8 @@ exports.assignToolpathToTiles = function(allHatches,thisLayer) {
                                  
       // clip allHatches to get hatches within this tile
       let tileHatch = UTIL.ClipHatchByRect(allHatches,clipPoints,true);
+      tileHatch = UTIL.ClipHatchByRect(tileHatch,clipPoints,true);
+
       let tileHatch_outside = UTIL.ClipHatchByRect(allHatches,clipPoints,false);        
       allHatches.makeEmpty();
                                  
@@ -128,10 +130,27 @@ exports.assignToolpathToTiles = function(allHatches,thisLayer) {
     
     thisLayer.setAttribEx('tileTable',tileTable);    
     
+    removeEmptyHatches(allHatches,'tileID_3mf');
+    
     return allHatches;
     
 } //assignToolpathToTiles
 
+
+const removeEmptyHatches = function(tileHatch,nonZeroAttribute){
+  
+  // getHatchBlockArray
+  let hatchBlockArray = tileHatch.getHatchBlockArray();
+
+  // remove empty hatches
+  return hatchBlockArray.reduce(function(reducedArray, currentHatch) {         
+    if (!currentHatch.isEmpty() && !currentHatch.getAttributeInt(nonZeroAttribute) == 0) {
+        reducedArray.addHatchBlock(currentHatch);           
+    }
+    return reducedArray;         
+  }, new HATCH.bsHatch());
+  
+};
 
 const anotateTileIntefaceHatchblocks = function(hatch,tileID) {
   let returnHatch = new HATCH.bsHatch();

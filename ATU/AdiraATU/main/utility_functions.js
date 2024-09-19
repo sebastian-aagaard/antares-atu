@@ -487,6 +487,11 @@ exports.adjustContourInterface = function(hatch,thisLayer,isLaserOperation){
 
       while(hatchBlockIterator.isValid()){
         let currentHatchBlock = hatchBlockIterator.get();
+        
+        if (currentHatchBlock.isEmpty()){
+          hatchBlockIterator.next();
+          continue;
+        } 
                 
         let borderIndex = currentHatchBlock.getAttributeInt('borderIndex');
         let borderOverlap = currentHatchBlock.getAttributeInt('overlapCount');
@@ -623,7 +628,7 @@ const adjustMultipleOverlappingHatchBlocks = function(hatchBlock) {
     storedPathSet.makeEmpty();
     storedPathSet.addNewPath(startPoint, endPoint);
       
-    adjustVectorLength(storedPathSet, 0, 'end', hatchType);  
+    adjustVectorLength(storedPathSet, 'end', hatchType);  
 
 
     storedHatch.addPaths(storedPathSet);
@@ -690,6 +695,8 @@ exports.mergeInterfaceVectors = function(hatch, getGroupedHatchFunction, isLaser
 
 //-----------------------------------------------------------------------------------------//
 const applyInterface = function(hatchBlock, tileTable, isLaserOperation) {
+  
+  if(hatchBlock.isEmpty()) return;
   
   // Determine attribute names based on whether it's a tile interface or laser interface
   let overlapAttr1 = isLaserOperation ? 'overlappingLaser_1' : 'overlappingTile_1';
@@ -761,7 +768,7 @@ const applyInterface = function(hatchBlock, tileTable, isLaserOperation) {
     } else {
       let fixedVectorEnd = (borderIndex % 2 !== 0) ? 'start' : 'end';
       
-      adjustVectorLength(currentPathSet, 0, fixedVectorEnd, hatchType);  
+      adjustVectorLength(currentPathSet, fixedVectorEnd, hatchType);  
 
       // Based on the coordinates, add to the correct overlap paths set
       addToCorrectOverlapSet(currentPathSet, firstOverlapPathsSet, secondOverlapPathsSet, firstId, secondId, isLaserOperation, shouldVectorsOverlap, fixedVectorEnd);
@@ -1008,7 +1015,6 @@ const getClipIntersectionCoordinates = function(tileTable, firstId, secondId, ad
 
 //-----------------------------------------------------------------------------------------//
 
-
 const determineAdjustmentDirection = function(isLaserOperation, firstId, secondId) {
 
     // If pathWidth equals pathHeight, we need to apply custom logic
@@ -1025,13 +1031,12 @@ const determineAdjustmentDirection = function(isLaserOperation, firstId, secondI
     }
 }
 
-
-function adjustVectorLength(pathSet, nIndex, fixedPointType, type) {
+function adjustVectorLength(pathSet, fixedPointType, type) {
     // Step 1: Get the adjustment amount (distance) from the interface function
     const adjustmentAmount = getDistanceBetweenThisTypeInterfaceVectors(type);  // Get distance from the provided function
 
     // Step 2: Get the start and end points of the vector from the pathset
-    let points = pathSet.getPathPoints(nIndex);  // Array of vec2 objects representing the path
+    let points = pathSet.getPathPoints(0);  // Array of vec2 objects representing the path
 
     // Assume the path has two points: start (points[0]) and end (points[1])
     let startPoint = points[0];
@@ -1077,7 +1082,7 @@ function adjustVectorLength(pathSet, nIndex, fixedPointType, type) {
     }
 
     // Step 10: Set the modified points back into the pathset
-    pathSet.setPathPoints(nIndex, points);
+    pathSet.setPathPoints(0, points);
 
     // Return the updated pathset for reference
     return pathSet;
