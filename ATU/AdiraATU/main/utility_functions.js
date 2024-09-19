@@ -562,6 +562,8 @@ exports.adjustInterfaceVectors = function(hatch,thisLayer,isLaserOperation) {
 
 const adjustMultipleOverlappingHatchBlocks = function(hatchBlock) {
   
+  if(hatchBlock.isEmpty()) return;
+
   let returnHatch = new HATCH.bsHatch();
   
   let overlappingTileArray = [ 
