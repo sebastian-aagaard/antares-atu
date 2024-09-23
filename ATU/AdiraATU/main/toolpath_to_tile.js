@@ -545,8 +545,8 @@ exports.sortHatches = function(allHatches,stripeAngle){
           sortingHatch.addHatchBlock(hatchBlock);   
             
           //sortPathsWithMinimizedLineDistance(sortingHatch,5);
-          sortPathsByStripeAngle(sortingHatch, 2, stripeAngle * Math.PI / 180);
-          //sortPathsByCenterY(sortingHatch);
+          //sortPathsByStripeAngle(sortingHatch, 2, stripeAngle * Math.PI / 180);
+          sortPathsByCenterY(sortingHatch);
             
           sortingHatch.setAttributeInt('tileID_3mf',tileID_3mf);
           sortingHatch.setAttributeInt('islandId',islandId);
@@ -865,8 +865,6 @@ function pointToLineDistance(point, lineStart, lineEnd) {
     let projection = new VEC2.Vec2(lineStart.x + t * (lineEnd.x - lineStart.x), lineStart.y + t * (lineEnd.y - lineStart.y));
     return point.distance(projection);
 }
-
-
 
 
 
