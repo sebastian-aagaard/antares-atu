@@ -176,7 +176,7 @@
     "param_minimumLayerDuration_ms": "Minimum Time for Full Layer Cycle [ms]",
   "grp_laserAssignment": "Laser Distribution Strategy",    
      "param_assignmentMode": "Laser Distribution",
-     "static": "Static",
+     "static": "static",
      "full": "Fully Assign All Vectors Within Reach of Laser",    
   "grp_tileing": "Tile Strategy",
      "param_ScanningMode": "Scanning Mode",

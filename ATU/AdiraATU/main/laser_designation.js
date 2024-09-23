@@ -119,10 +119,9 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
   let returnHatch = new HATCH.bsHatch();
     
   let groupedHatchByTileId = UTIL.getGroupedHatchObjectByTileId(hatchObj);
-  
-  
+  let xDiv;
   if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
-    let xDiv = getScanheadLaserAllocationArrayX(bsModelData);  
+    xDiv = getScanheadLaserAllocationArrayX(bsModelData);  
   }
   
 
@@ -154,6 +153,8 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
     for(let laserIndex = 0; laserIndex < CONST.nLaserCount; laserIndex++){ // run trough all laser dedication zones
       
       let clip_min_x, clip_max_x;
+      
+      let assignmentMode = PARAM.getParamStr('laserAssignment', 'assignmentMode');
       
       if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
         clip_min_x = xTileOffset+xDiv[laserIndex]-halfVectorOverlap; // laserZoneOverLap

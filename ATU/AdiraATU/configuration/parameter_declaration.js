@@ -57,7 +57,7 @@ exports.declareParameters = function(parameter)
        [LOCALIZER.GetMessage('param_displayColors_lasers'),
        LOCALIZER.GetMessage('param_displayColors_types'),
        LOCALIZER.GetMessage('param_displayColors_both')],
-       LOCALIZER.GetMessage('param_displayColors_both'));
+       LOCALIZER.GetMessage('param_displayColors_lasers'));
     parameter.declareParameterChoice('display', 'displayTileGridATU', LOCALIZER.GetMessage('param_displayTileGridATU'),
        [LOCALIZER.GetMessage('param_disableTileGrid'),
        LOCALIZER.GetMessage('param_enableTileGrid')],
@@ -71,13 +71,13 @@ exports.declareParameters = function(parameter)
      [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
      LOCALIZER.GetMessage('param_tileIntefrace_zipper'),
      LOCALIZER.GetMessage('param_tileIntefrace_seamless')],
-     LOCALIZER.GetMessage('param_tileIntefrace_overlap'));
+     LOCALIZER.GetMessage('param_tileIntefrace_zipper'));
          
     parameter.declareParameterChoice('interface', 'laserInterfaceHatch', LOCALIZER.GetMessage('param_laserInterfaceHatch'),
       [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
       LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
       LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
-      LOCALIZER.GetMessage('param_laserIntefrace_overlap'));
+      LOCALIZER.GetMessage('param_laserIntefrace_zipper'));
       
     parameter.declareParameterReal('interface', 'distanceBewteenInterfaceHatchVectors', LOCALIZER.GetMessage('param_distanceBewteenInterfaceHatchVectors'), 0, 10.0, 0);
     
@@ -91,7 +91,7 @@ exports.declareParameters = function(parameter)
       [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
       LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
       LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
-      LOCALIZER.GetMessage('param_laserIntefrace_overlap'));
+      LOCALIZER.GetMessage('param_laserIntefrace_zipper'));
 
     parameter.declareParameterReal('interface', 'distanceBewteenInterfaceContourVectors', LOCALIZER.GetMessage('param_distanceBewteenInterfaceContourVectors'), 0.0, 10.0, 0);  
     
@@ -100,13 +100,13 @@ exports.declareParameters = function(parameter)
      [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
      LOCALIZER.GetMessage('param_tileIntefrace_zipper'),
      LOCALIZER.GetMessage('param_tileIntefrace_seamless')],
-     LOCALIZER.GetMessage('param_tileIntefrace_overlap'));
+     LOCALIZER.GetMessage('param_tileIntefrace_zipper'));
      
     parameter.declareParameterChoice('interface', 'laserInterfaceOpenPolyLine', LOCALIZER.GetMessage('param_laserInterfaceOpenPolyLine'),
       [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
       LOCALIZER.GetMessage('param_laserIntefrace_zipper'),
       LOCALIZER.GetMessage('param_laserIntefrace_seamless')],
-      LOCALIZER.GetMessage('param_laserIntefrace_overlap'));
+      LOCALIZER.GetMessage('param_laserIntefrace_zipper'));
 
     parameter.declareParameterReal('interface', 'distanceBewteenOpenPolyLineInterfaceVectors', LOCALIZER.GetMessage('param_distanceBewteenOpenPolyLineInterfaceVectors'), 0, 10.0, 0);  
   
@@ -120,7 +120,7 @@ exports.declareParameters = function(parameter)
   
  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
-    parameter.declareParameterReal('exposure', 'vector_lenght_merge_attempt', LOCALIZER.GetMessage('param_vector_lenght_merge_attempt'), 0.0, 10.0, 1);
+    parameter.declareParameterReal('exposure', 'vector_lenght_merge_attempt', LOCALIZER.GetMessage('param_vector_lenght_merge_attempt'), 0.0, 10.0, 0.1);
     parameter.declareParameterReal('exposure', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.1);
 
     parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 50.0, 0.1);//0.1 50.0   
@@ -298,7 +298,8 @@ exports.declareParameters = function(parameter)
      LOCALIZER.GetMessage('param_assignmentMode'),
       [LOCALIZER.GetMessage('static'),
       LOCALIZER.GetMessage('full')],
-     LOCALIZER.GetMessage('static')
+     LOCALIZER.GetMessage('static'),'static: Static allocation distributes the vectors based on the center reach point between adjancent lasers' +
+                                    '\nfull: Full allocation allocates all vectors to all lasers in reach'
       );           
            
    // group tileing
