@@ -48,6 +48,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         //set process head offset
         
         if(PARAM.getParamInt('tileing','processHeadAlignment') == 0) { //default / automatic
+          
           processHeadOffsetX = PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2 - scanfieldCenterXOffset; // center arround origo laser 3
           processHeadOffsetY = pass[0].ProcessHeadFromFront ? 0 : pass[0].tileHeight; // offset along the movement direction
           
