@@ -120,7 +120,11 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
     
   let groupedHatchByTileId = UTIL.getGroupedHatchObjectByTileId(hatchObj);
   
-  let xDiv = getScanheadLaserAllocationArrayX(bsModelData);
+  
+  if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
+    let xDiv = getScanheadLaserAllocationArrayX(bsModelData);  
+  }
+  
 
   Object.entries(groupedHatchByTileId).forEach(function (tileEntry) {
     let tileId = +tileEntry[0];
@@ -145,14 +149,20 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
     let clip_max_y = thisTileLayout[2].m_coord[1];
     let xTileOffset = thisTileLayout[0].m_coord[0];
       
-
     let halfVectorOverlap = PARAM.getParamReal('interface', 'interfaceOverlap')/2;
 
     for(let laserIndex = 0; laserIndex < CONST.nLaserCount; laserIndex++){ // run trough all laser dedication zones
       
-      let clip_min_x = xTileOffset+xDiv[laserIndex]-halfVectorOverlap; // laserZoneOverLap
-      let clip_max_x = xTileOffset+xDiv[laserIndex+1]+halfVectorOverlap; //laserZoneOverLap
-
+      let clip_min_x, clip_max_x;
+      
+      if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
+        clip_min_x = xTileOffset+xDiv[laserIndex]-halfVectorOverlap; // laserZoneOverLap
+        clip_max_x = xTileOffset+xDiv[laserIndex+1]+halfVectorOverlap; //laserZoneOverLap
+      } else {
+        let scanner = getScanner(laserIndex+1)
+        clip_min_x = xTileOffset + scanner.abs_x_min;
+        clip_max_x = xTileOffset + scanner.abs_x_max;
+      }
       // add the corrdinates to vector pointset
       let clipPoints = [
        new VEC2.Vec2(clip_min_x, clip_min_y), //min,min

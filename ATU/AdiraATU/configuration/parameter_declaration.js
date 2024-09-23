@@ -211,10 +211,10 @@ exports.declareParameters = function(parameter)
    
   // -------- WORK AREA -------- //
   parameter.declareParameterGroup('workarea',LOCALIZER.GetMessage('grp_workarea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterInt('workarea', 'x_workarea_min_mm',LOCALIZER.GetMessage('param_x_workarea_min_mm'),0,1010,0);
-    parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,1010,1000);
-    parameter.declareParameterInt('workarea', 'y_workarea_min_mm',LOCALIZER.GetMessage('param_y_workarea_min_mm'),0,1010,0);
-    parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),0,1010,1000);
+    parameter.declareParameterInt('workarea', 'x_workarea_min_mm',LOCALIZER.GetMessage('param_x_workarea_min_mm'),0,1015,0);
+    parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,1015,1000);
+    parameter.declareParameterInt('workarea', 'y_workarea_min_mm',LOCALIZER.GetMessage('param_y_workarea_min_mm'),-508,1015,0);
+    parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),-258,1015,1000);
     
   // -------- MOVEMENT SETTINGS -------- //  
   parameter.declareParameterGroup('movementSettings',LOCALIZER.GetMessage('grp_movementSettings'),'Movement Settings',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
@@ -241,7 +241,7 @@ exports.declareParameters = function(parameter)
   parameter.declareParameterGroup('scanhead',LOCALIZER.GetMessage('grp_scanhead'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
-    parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,110,110);//110;
+    parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,200,110);//110;
     
     parameter.declareParameterReal('scanhead', 'y_scanfield_ref_mm',LOCALIZER.GetMessage('param_y_scanfield_ref_mm'),0,110,60);//110;
     
@@ -249,8 +249,8 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', 'x_scanner1_min_mm',LOCALIZER.GetMessage('param_x_scanner1_min_mm'),-100,0,-40);
     parameter.declareParameterReal('scanhead', 'x_scanner1_ref_mm',LOCALIZER.GetMessage('param_x_scanner1_ref_mm'),0,390,40);
 
-    parameter.declareParameterReal('scanhead', 'x_scanner2_max_mm',LOCALIZER.GetMessage('param_x_scanner2_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner2_min_mm',LOCALIZER.GetMessage('param_x_scanner2_min_mm'),-100,0,-80);
+    parameter.declareParameterReal('scanhead', 'x_scanner2_max_mm',LOCALIZER.GetMessage('param_x_scanner2_max_mm'),0,125,80); //80
+    parameter.declareParameterReal('scanhead', 'x_scanner2_min_mm',LOCALIZER.GetMessage('param_x_scanner2_min_mm'),-125,0,-80); //80
     parameter.declareParameterReal('scanhead', 'x_scanner2_ref_mm',LOCALIZER.GetMessage('param_x_scanner2_ref_mm'),0,390,125);
 
     parameter.declareParameterReal('scanhead', 'x_scanner3_max_mm',LOCALIZER.GetMessage('param_x_scanner3_max_mm'),0,100,80);
@@ -293,14 +293,17 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('buildTimeEstimation', 'powderfillingDuration_ms',LOCALIZER.GetMessage('param_powderfillingDuration_ms'),0,100000,21000);
     parameter.declareParameterInt('buildTimeEstimation', 'minimumLayerDuration_ms',LOCALIZER.GetMessage('param_minimumLayerDuration_ms'),0,10000000,47000);
            
+  parameter.declareParameterGroup('laserAssignment',LOCALIZER.GetMessage('grp_laserAssignment'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+    parameter.declareParameterChoice('laserAssignment', 'assignmentMode', 
+     LOCALIZER.GetMessage('param_assignmentMode'),
+      [LOCALIZER.GetMessage('static'),
+      LOCALIZER.GetMessage('full')],
+     LOCALIZER.GetMessage('static')
+      );           
+           
    // group tileing
   parameter.declareParameterGroup('tileing',LOCALIZER.GetMessage('grp_tileing'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterChoice('tileing', 'TilingMode', 
-     LOCALIZER.GetMessage('param_TilingMode'),
-      [LOCALIZER.GetMessage('param_TilingMode_Static'),
-      LOCALIZER.GetMessage('param_TilingMode_Smart')],
-     LOCALIZER.GetMessage('param_TilingMode_Static')
-      );
+
   parameter.declareParameterChoice('tileing', 'ScanningMode', 
      LOCALIZER.GetMessage('param_ScanningMode'),
       [LOCALIZER.GetMessage('param_ScanningMode_MoveAndShoot'),
@@ -318,8 +321,8 @@ exports.declareParameters = function(parameter)
      +"\nDefault - Move And Shoot: the tile center is placed at the process head center." +
      "\nCustom: define the process head offsets specifically."); 
   
-    parameter.declareParameterReal('tileing', 'processHeadCustomOffset_x',LOCALIZER.GetMessage('param_processHeadCustomOffset_x'),-210,220,0);   
-    parameter.declareParameterReal('tileing', 'processHeadCustomOffset_y',LOCALIZER.GetMessage('param_processHeadCustomOffset_y'),-60,50,0);
+    parameter.declareParameterReal('tileing', 'processHeadCustomOffset_x',LOCALIZER.GetMessage('param_processHeadCustomOffset_x'),-210,210,0);   
+    parameter.declareParameterReal('tileing', 'processHeadCustomOffset_y',LOCALIZER.GetMessage('param_processHeadCustomOffset_y'),-100,220,0);
     parameter.declareParameterReal('tileing', 'processheadRampOffset',LOCALIZER.GetMessage('param_processheadRampOffset'),0,50,0.5);
     parameter.declareParameterReal('tileing', 'tileTravelForBreachingYLimit',LOCALIZER.GetMessage('param_tileTravelForBreachingYLimit'),0.001,5,0.5);
  
@@ -330,7 +333,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,7);
     parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,7); 
-    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,110.0,33.0);
+    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,150.0,33.0);
     
   parameter.declareParameterGroup('scanning_priority', LOCALIZER.GetMessage('grp_scanning_priority'));
     parameter.declareParameterInt('scanning_priority','part_hatch_priority', LOCALIZER.GetMessage('param_part_hatch_priority'),0,2000,100);
