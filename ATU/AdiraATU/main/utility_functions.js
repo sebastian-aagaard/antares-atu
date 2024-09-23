@@ -543,11 +543,6 @@ exports.adjustInterfaceVectors = function(hatch,thisLayer,isLaserOperation) {
     let overlapCount = thisHatchBlock.getAttributeInt('overlapCount');
     let borderIndex = thisHatchBlock.getAttributeInt('borderIndex');
     
-    if(thisHatchBlock.getAttributeInt('tileID_3mf') === 3022 && thisHatchBlock.getAttributeInt('type') === 1){
-      
-      let temporary = 0;
-      }
-    
     if (overlapCount === 0 || borderIndex > 0) {
       
         resultHatch.addHatchBlock(thisHatchBlock);

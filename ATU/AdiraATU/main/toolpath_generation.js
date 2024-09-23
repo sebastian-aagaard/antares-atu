@@ -157,7 +157,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   };
      
   // create borders, and decrease size of bulkIsland
-  let makeBordersContainer = makeBorders(thisIsland);
+  let makeBordersContainer = makeBorders(thisIsland,islandId);
   let allBorderHatch = makeBordersContainer.allBorderHatch;
   let bulkIsland = makeBordersContainer.bulkIsland;
   
@@ -335,7 +335,7 @@ const mergeHatchBlocks = function(hatch){
   });  
 };
 
-const makeBorders = function(islandObj){
+const makeBorders = function(islandObj,islandId){
   
   const numberOfBorders = PARAM.getParamInt('border','nNumberOfBorders');
   const distanceBetweenBorders = PARAM.getParamReal('border','fDistanceBetweenBorders');
@@ -352,7 +352,8 @@ const makeBorders = function(islandObj){
     let borderIndexAttrib = (!PARAM.getParamInt('border','bBorderOrderOutsideIn')) ? numberOfBorders+1 - borderIndex : borderIndex;
     
     tempBorderHatch.setAttributeInt('borderIndex',borderIndexAttrib);
-    
+    tempBorderHatch.setAttributeInt('islandId',islandId);
+
     allBorderHatch.moveDataFrom(tempBorderHatch)
     
     let offsetBorderBy = distanceBetweenBorders;
