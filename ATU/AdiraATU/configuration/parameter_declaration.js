@@ -85,7 +85,7 @@ exports.declareParameters = function(parameter)
       [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
       LOCALIZER.GetMessage('param_tileIntefrace_zipper'),
       LOCALIZER.GetMessage('param_tileIntefrace_seamless')],
-      LOCALIZER.GetMessage('param_tileIntefrace_overlap'));
+      LOCALIZER.GetMessage('param_tileIntefrace_zipper'));
        
     parameter.declareParameterChoice('interface', 'laserInterfaceContour', LOCALIZER.GetMessage('param_laserInterfaceContour'),
       [LOCALIZER.GetMessage('param_laserIntefrace_overlap'),
