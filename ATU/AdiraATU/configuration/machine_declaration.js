@@ -32,5 +32,4 @@ exports.declareMachine = function(machineConfig)
   machineConfig.addLayerThickness(100);
   machineConfig.addLayerThickness(1000);
 
-
 };

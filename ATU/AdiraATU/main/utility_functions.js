@@ -137,11 +137,14 @@ exports.getTileTable = function(modelData,layerNr){
 //-----------------------------------------------------------------------------------------//
 
 exports.getWorkAreaLimits = function() {
+  
+  let useProcessingArea = PARAM.getParamInt('activeWorkArea', 'setAtiveBuildArea') === 0;
+  
 return {  
-      xmin: PARAM.getParamInt('workarea', 'x_workarea_min_mm'),
-      ymin: PARAM.getParamInt('workarea', 'y_workarea_min_mm'),
-      xmax: PARAM.getParamInt('workarea', 'x_workarea_max_mm'),
-      ymax: PARAM.getParamInt('workarea', 'y_workarea_max_mm')
+      xmin: (useProcessingArea) ? PARAM.getParamInt('workarea', 'x_workarea_min_mm') : PARAM.getParamInt('calibrationArea', 'x_calibrationArea_min_mm'),
+      ymin: (useProcessingArea) ? PARAM.getParamInt('workarea', 'y_workarea_min_mm') : PARAM.getParamInt('calibrationArea', 'y_calibrationArea_min_mm'),
+      xmax: (useProcessingArea) ? PARAM.getParamInt('workarea', 'x_workarea_max_mm') : PARAM.getParamInt('calibrationArea', 'x_calibrationArea_max_mm'),
+      ymax: (useProcessingArea) ? PARAM.getParamInt('workarea', 'y_workarea_max_mm') : PARAM.getParamInt('calibrationArea', 'y_calibrationArea_max_mm')
   };
 }
 

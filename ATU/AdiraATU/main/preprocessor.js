@@ -40,7 +40,7 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
   // Get Boundaries of Work Area / build Envelope //
   /////////////////////////////////////////////////
   const workAreaLimits = UTIL.getWorkAreaLimits();
-   
+   //getCalibrationAreaLimits
   /////////////////////////////////////////
   // Caclulate Scene Boundaries pr Layer //
   /////////////////////////////////////////

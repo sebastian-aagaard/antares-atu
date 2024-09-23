@@ -209,12 +209,27 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('tileShift', 'shiftTileInX', LOCALIZER.GetMessage('param_shiftTileInX'), 0, 430, 0);
     parameter.declareParameterReal('tileShift', 'shiftTileInY', LOCALIZER.GetMessage('param_shiftTileInY'), 0, 430, 0);
    
+  parameter.declareParameterGroup('activeWorkArea',LOCALIZER.GetMessage('grp_activeWorkArea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+    parameter.declareParameterChoice('activeWorkArea', 'setAtiveBuildArea', 
+       LOCALIZER.GetMessage('param_activeBuildArea'),
+        [LOCALIZER.GetMessage('param_workArea'),
+        LOCALIZER.GetMessage('param_calirationArea')],
+        LOCALIZER.GetMessage('param_workArea')
+        );
+   
   // -------- WORK AREA -------- //
   parameter.declareParameterGroup('workarea',LOCALIZER.GetMessage('grp_workarea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterInt('workarea', 'x_workarea_min_mm',LOCALIZER.GetMessage('param_x_workarea_min_mm'),0,1015,0);
     parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,1015,1000);
     parameter.declareParameterInt('workarea', 'y_workarea_min_mm',LOCALIZER.GetMessage('param_y_workarea_min_mm'),-508,1015,0);
     parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),-258,1015,1000);
+    
+   // -------- WORK AREA -------- //
+  parameter.declareParameterGroup('calibrationArea',LOCALIZER.GetMessage('grp_calibrationArea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+    parameter.declareParameterInt('calibrationArea', 'x_calibrationArea_min_mm',LOCALIZER.GetMessage('param_x_calibrationArea_min_mm'),-50,0,0);
+    parameter.declareParameterInt('calibrationArea', 'x_calibrationArea_max_mm',LOCALIZER.GetMessage('param_x_calibrationArea_max_mm'),0,1015,1010);
+    parameter.declareParameterInt('calibrationArea', 'y_calibrationArea_min_mm',LOCALIZER.GetMessage('param_y_calibrationArea_min_mm'),-508,0,-508);
+    parameter.declareParameterInt('calibrationArea', 'y_calibrationArea_max_mm',LOCALIZER.GetMessage('param_y_calibrationArea_max_mm'),-258,0,-258);   
     
   // -------- MOVEMENT SETTINGS -------- //  
   parameter.declareParameterGroup('movementSettings',LOCALIZER.GetMessage('grp_movementSettings'),'Movement Settings',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
@@ -267,6 +282,7 @@ exports.declareParameters = function(parameter)
 
     parameter.declareParameterReal('scanhead', 'x_scanner_actual_allowed_reach',LOCALIZER.GetMessage('param_x_scanner_actual_allowed_reach'),0,200,200);
     parameter.declareParameterReal('scanhead', 'y_scanner_actual_allowed_reach',LOCALIZER.GetMessage('param_y_scanner_actual_allowed_reach'),0,200,200);
+
     
  parameter.declareParameterGroup('skywriting', LOCALIZER.GetMessage('grp_skywriting')); 
       parameter.declareParameterChoice('skywriting','skywritingMode',
