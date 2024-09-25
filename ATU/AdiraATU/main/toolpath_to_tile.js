@@ -494,7 +494,7 @@ exports.clipIntoStripes = function (hatch,island) {
       let islandArray = island.getIslandArray();
       
       let allHatches = groupedHatchByType[type].clone();
-      let stripeId = 0;
+      let stripeId = 1;
       islandArray.forEach(function(island) {
         
         let patternInfo = island.getPatternInfo();
@@ -543,10 +543,11 @@ exports.sortHatches = function(allHatches,stripeAngle){
           let stripeId = hatchBlock.getAttributeInt('stripeId');
             
           sortingHatch.addHatchBlock(hatchBlock);   
-            
+         // process.print(stripeAngle);
+          let stripeAngleRadians = stripeAngle * Math.PI / 180;
           //sortPathsWithMinimizedLineDistance(sortingHatch,5);
-          //sortPathsByStripeAngle(sortingHatch, 2, stripeAngle * Math.PI / 180);
-          sortPathsByCenterY(sortingHatch);
+          //sortPathsWithSplitDetection(sortingHatch, stripeAngleRadians);
+         sweepLineSort(sortingHatch);
             
           sortingHatch.setAttributeInt('tileID_3mf',tileID_3mf);
           sortingHatch.setAttributeInt('islandId',islandId);
@@ -572,15 +573,75 @@ exports.sortHatches = function(allHatches,stripeAngle){
   return returnHatch;
   };
   
+function sweepLineSort(hatch, sweepAngle) {
+  let pathSet = new PATH_SET.bsPathSet();
+  pathSet.addHatches(hatch);
+
+  let pathCount = pathSet.getPathCount();
+  let pathsWithProjections = [];
+
+  // Calculate the sweep direction vector from the sweep angle
+  let sweepDirection = new VEC2.Vec2(Math.cos(sweepAngle), Math.sin(sweepAngle));
+
+  // Step 1: Iterate through all paths and calculate their projections onto the sweep direction
+  for (let i = 0; i < pathCount; i++) {
+      let points = pathSet.getPathPoints(i);  // Get the points of the path
+
+      // Calculate the center point (average of X and Y coordinates)
+      let centerX = 0;
+      let centerY = 0;
+      let pointCount = points.length;
+
+      for (let j = 0; j < pointCount; j++) {
+          centerX += points[j].x;
+          centerY += points[j].y;
+      }
+
+      centerX /= pointCount;
+      centerY /= pointCount;
+
+      let center = new VEC2.Vec2(centerX, centerY);
+
+      // Calculate the projection of the center onto the sweep direction
+      let projection = center.dot(sweepDirection);
+
+      // Store the path index, projection, and points
+      pathsWithProjections.push({
+          index: i,
+          projection: projection,
+          center: center,
+          points: points
+      });
+  }
+
+    // Step 2: Sort the paths by their projection (which is equivalent to sorting by how they are "swept")
+    pathsWithProjections.sort(function (a, b) {
+        return b.projection - a.projection;  // Sort in descending order based on projection
+    });
+
+    // Step 3: Create a new pathSet for the sorted paths
+    let sortedPathSet = new PATH_SET.bsPathSet();
+    for (let i = 0; i < pathsWithProjections.length; i++) {
+        sortedPathSet.addSinglePaths(pathSet, pathsWithProjections[i].index);
+    }
+
+    // Step 4: Replace the original hatch paths with the sorted ones
+    hatch.clear();
+    hatch.addPaths(sortedPathSet);
+
+    return hatch;  // Return the sorted hatch for reference
+}
+
+  
 function sortByStripeIdAndCenterY(boundsArray) {
     return boundsArray.sort(function(a, b) {
-        // First, compare by stripeId (ascending order)
-        var stripeIdA = a.getAttributeInt('stripeId');
-        var stripeIdB = b.getAttributeInt('stripeId');
-        
-        if (stripeIdA !== stripeIdB) {
-            return stripeIdA - stripeIdB; // Sort by stripeId in ascending order
-        }
+//         // First, compare by stripeId (ascending order)
+//         var stripeIdA = a.getAttributeInt('stripeId');
+//         var stripeIdB = b.getAttributeInt('stripeId');
+//         
+//         if (stripeIdA !== stripeIdB) {
+//             return stripeIdA - stripeIdB; // Sort by stripeId in ascending order
+//         }
         
         // If stripeIds are equal, compare by center Y (descending order)
         var centerA = a.getBounds2D().getCenter();
@@ -724,148 +785,6 @@ function sortPathsWithMinimizedLineDistance(hatch, maxJumpDistance) {
 
     return hatch;  // Return the sorted hatch for reference
 }
-function sortPathsByStripeAngle(hatch, maxJumpDistance, stripeAngle) {
-    let pathSet = new PATH_SET.bsPathSet();
-    pathSet.addHatches(hatch);
-
-    let pathCount = pathSet.getPathCount();
-    let pathsWithProjections = [];
-
-    // Calculate the direction vector from the stripe angle
-    let stripeDirection = new VEC2.Vec2(Math.sin(stripeAngle), Math.cos(stripeAngle));  // Direction vector for the stripe
-
-    // Step 1: Iterate through all paths and calculate their center points and projections
-    for (let i = 0; i < pathCount; i++) {
-        let points = pathSet.getPathPoints(i);  // Get the points of the path
-
-        // Calculate the center point (average of X and Y coordinates)
-        let centerX = 0;
-        let centerY = 0;
-        let pointCount = points.length;
-
-        for (let j = 0; j < pointCount; j++) {
-            centerX += points[j].x;
-            centerY += points[j].y;
-        }
-
-        centerX /= pointCount;
-        centerY /= pointCount;
-
-        // Calculate the projection of the center point onto the stripe direction
-        let center = new VEC2.Vec2(centerX, centerY);
-        let projection = center.dot(stripeDirection);
-
-        // Store the path index, projection, and start/end points
-        pathsWithProjections.push({ 
-            index: i, 
-            projection: projection, 
-            center: center,
-            startPoint: points[0], 
-            endPoint: points[points.length - 1],
-            bounds: {
-                xMin: Math.min.apply(null, points.map(function(p) { return p.x; })),
-                xMax: Math.max.apply(null, points.map(function(p) { return p.x; }))
-            }
-        });
-    }
-
-    // Step 2: Sort paths by projection (to start with topmost vectors relative to the angle)
-    pathsWithProjections.sort(function(a, b) {
-        return b.projection - a.projection;  // Start with topmost vector relative to angle
-    });
-
-    // Step 3: Initialize sorted paths and set of unvisited paths
-    let sortedPaths = [];
-    let currentPath = pathsWithProjections[0];  // Start with the first path (highest projection)
-    sortedPaths.push(currentPath);
-    pathsWithProjections.splice(0, 1);  // Remove it from the list
-
-    // Step 4: Loop through the remaining paths and find the closest path along the stripe direction
-    while (pathsWithProjections.length > 0) {
-        let closestPathIndex = -1;
-        let minLineDistance = Infinity;
-        let topmostValidIndex = -1;
-        let topmostY = -Infinity;  // Track topmost Y coordinate
-
-        // Track X bounds for the current path
-        let currentXMin = currentPath.bounds.xMin;
-        let currentXMax = currentPath.bounds.xMax;
-
-        // Step 5: Find immediate neighbors based on proximity (line-to-line distance)
-        for (let i = 0; i < pathsWithProjections.length; i++) {
-            let distance = getLineDistance(currentPath, pathsWithProjections[i]);  // Calculate line-to-line distance
-            let yCoord = pathsWithProjections[i].center.y;
-
-            // If the current path and the other path are close enough
-            if (distance < maxJumpDistance) {
-                if (distance < minLineDistance) {
-                    minLineDistance = distance;
-                    closestPathIndex = i;
-                }
-            }
-
-            // Keep track of the topmost valid vector by actual Y coordinate
-            if (yCoord > topmostY) {
-                topmostY = yCoord;
-                topmostValidIndex = i;
-            }
-        }
-
-        // Step 6: If a neighbor was found, process it, otherwise jump to the topmost vector
-        if (closestPathIndex !== -1) {
-            // Add the closest neighbor to the sorted paths
-            currentPath = pathsWithProjections[closestPathIndex];
-            sortedPaths.push(currentPath);
-            pathsWithProjections.splice(closestPathIndex, 1);  // Remove it from the list
-        } else if (topmostValidIndex !== -1) {
-            // **MUST** jump to the topmost vector relative to the angle
-            currentPath = pathsWithProjections[topmostValidIndex];
-            sortedPaths.push(currentPath);
-            pathsWithProjections.splice(topmostValidIndex, 1);  // Remove it from the list
-        }
-    }
-
-    // Step 7: Create a new pathSet for the sorted paths
-    let sortedPathSet = new PATH_SET.bsPathSet();
-
-    for (let i = 0; i < sortedPaths.length; i++) {
-        sortedPathSet.addSinglePaths(pathSet, sortedPaths[i].index);
-    }
-
-    // Step 8: Replace the original hatch paths with the sorted ones
-    hatch.clear();
-    hatch.addPaths(sortedPathSet);
-
-    return hatch;  // Return the sorted hatch for reference
-}
-
-// Function to calculate the line-to-line distance
-function getLineDistance(vector1, vector2) {
-    let start1 = vector1.startPoint;
-    let end1 = vector1.endPoint;
-    let start2 = vector2.startPoint;
-    let end2 = vector2.endPoint;
-
-    let distanceStartToLine2 = pointToLineDistance(start1, start2, end2);
-    let distanceEndToLine2 = pointToLineDistance(end1, start2, end2);
-    let distanceStartToLine1 = pointToLineDistance(start2, start1, end1);
-    let distanceEndToLine1 = pointToLineDistance(end2, start1, end1);
-
-    return Math.min(distanceStartToLine2, distanceEndToLine2, distanceStartToLine1, distanceEndToLine1);
-}
-
-// Function to calculate the shortest distance from a point to a line
-function pointToLineDistance(point, lineStart, lineEnd) {
-    let lineLengthSquared = lineStart.distanceSq(lineEnd);
-    if (lineLengthSquared === 0) {
-        return point.distance(lineStart);
-    }
-    let t = ((point.x - lineStart.x) * (lineEnd.x - lineStart.x) + (point.y - lineStart.y) * (lineEnd.y - lineStart.y)) / lineLengthSquared;
-    t = Math.max(0, Math.min(1, t));  // Clamp t between 0 and 1
-    let projection = new VEC2.Vec2(lineStart.x + t * (lineEnd.x - lineStart.x), lineStart.y + t * (lineEnd.y - lineStart.y));
-    return point.distance(projection);
-}
-
 
 
 // function sortPathsByStripeAngle(hatch, maxJumpDistance, stripeAngle) {
@@ -875,8 +794,8 @@ function pointToLineDistance(point, lineStart, lineEnd) {
 //     let pathCount = pathSet.getPathCount();
 //     let pathsWithProjections = [];
 // 
-//     // Calculate the reversed direction vector from the stripe angle
-//     let stripeDirection = new VEC2.Vec2(-Math.cos(stripeAngle), -Math.sin(stripeAngle));  // Reverse direction vector for the stripe
+//     // Calculate the direction vector from the stripe angle
+//     let stripeDirection = new VEC2.Vec2(Math.sin(stripeAngle), Math.cos(stripeAngle));  // Direction vector for the stripe
 // 
 //     // Step 1: Iterate through all paths and calculate their center points and projections
 //     for (let i = 0; i < pathCount; i++) {
@@ -895,7 +814,7 @@ function pointToLineDistance(point, lineStart, lineEnd) {
 //         centerX /= pointCount;
 //         centerY /= pointCount;
 // 
-//         // Calculate the projection of the center point onto the reversed stripe direction
+//         // Calculate the projection of the center point onto the stripe direction
 //         let center = new VEC2.Vec2(centerX, centerY);
 //         let projection = center.dot(stripeDirection);
 // 
@@ -905,16 +824,20 @@ function pointToLineDistance(point, lineStart, lineEnd) {
 //             projection: projection, 
 //             center: center,
 //             startPoint: points[0], 
-//             endPoint: points[points.length - 1] 
+//             endPoint: points[points.length - 1],
+//             bounds: {
+//                 xMin: Math.min.apply(null, points.map(function(p) { return p.x; })),
+//                 xMax: Math.max.apply(null, points.map(function(p) { return p.x; }))
+//             }
 //         });
 //     }
 // 
-//     // Step 2: Sort paths by the projection in descending order (or ascending if needed)
+//     // Step 2: Sort paths by projection (to start with topmost vectors relative to the angle)
 //     pathsWithProjections.sort(function(a, b) {
-//         return b.projection - a.projection;
+//         return b.projection - a.projection;  // Start with topmost vector relative to angle
 //     });
 // 
-//     // Step 3: Initialize sorted paths and start with the first projected path
+//     // Step 3: Initialize sorted paths and set of unvisited paths
 //     let sortedPaths = [];
 //     let currentPath = pathsWithProjections[0];  // Start with the first path (highest projection)
 //     sortedPaths.push(currentPath);
@@ -924,43 +847,61 @@ function pointToLineDistance(point, lineStart, lineEnd) {
 //     while (pathsWithProjections.length > 0) {
 //         let closestPathIndex = -1;
 //         let minLineDistance = Infinity;
+//         let topmostValidIndex = -1;
+//         let topmostY = -Infinity;  // Track topmost Y coordinate
 // 
-//         // Find the path that minimizes the distance between the lines (current vector and next vector)
+//         // Track X bounds for the current path
+//         let currentXMin = currentPath.bounds.xMin;
+//         let currentXMax = currentPath.bounds.xMax;
+// 
+//         // Step 5: Find immediate neighbors based on proximity (line-to-line distance)
 //         for (let i = 0; i < pathsWithProjections.length; i++) {
 //             let distance = getLineDistance(currentPath, pathsWithProjections[i]);  // Calculate line-to-line distance
-//             if (distance < minLineDistance) {
-//                 minLineDistance = distance;
-//                 closestPathIndex = i;
+//             let yCoord = pathsWithProjections[i].center.y;
+// 
+//             // If the current path and the other path are close enough
+//             if (distance < maxJumpDistance) {
+//                 if (distance < minLineDistance) {
+//                     minLineDistance = distance;
+//                     closestPathIndex = i;
+//                 }
+//             }
+// 
+//             // Keep track of the topmost valid vector by actual Y coordinate
+//             if (yCoord > topmostY) {
+//                 topmostY = yCoord;
+//                 topmostValidIndex = i;
 //             }
 //         }
 // 
-//         // Step 5: Check if the line distance exceeds the maxJumpDistance
-//         if (minLineDistance > maxJumpDistance) {
-//             // If the line distance exceeds the limit, pick the next path based on projection
-//             currentPath = pathsWithProjections[0];  // Take the next highest projection
-//             sortedPaths.push(currentPath);
-//             pathsWithProjections.splice(0, 1);  // Remove it from the list
-//         } else {
-//             // If the line distance is within the limit, add the closest path
+//         // Step 6: If a neighbor was found, process it, otherwise jump to the topmost vector
+//         if (closestPathIndex !== -1) {
+//             // Add the closest neighbor to the sorted paths
 //             currentPath = pathsWithProjections[closestPathIndex];
 //             sortedPaths.push(currentPath);
 //             pathsWithProjections.splice(closestPathIndex, 1);  // Remove it from the list
+//         } else if (topmostValidIndex !== -1) {
+//             // **MUST** jump to the topmost vector relative to the angle
+//             currentPath = pathsWithProjections[topmostValidIndex];
+//             sortedPaths.push(currentPath);
+//             pathsWithProjections.splice(topmostValidIndex, 1);  // Remove it from the list
 //         }
 //     }
 // 
-//     // Step 6: Create a new pathSet for the sorted paths
+//     // Step 7: Create a new pathSet for the sorted paths
 //     let sortedPathSet = new PATH_SET.bsPathSet();
 // 
 //     for (let i = 0; i < sortedPaths.length; i++) {
 //         sortedPathSet.addSinglePaths(pathSet, sortedPaths[i].index);
 //     }
 // 
-//     // Step 7: Replace the original hatch paths with the sorted ones
+//     // Step 8: Replace the original hatch paths with the sorted ones
 //     hatch.clear();
 //     hatch.addPaths(sortedPathSet);
 // 
 //     return hatch;  // Return the sorted hatch for reference
 // }
+// 
 // 
 // // Function to calculate the line-to-line distance
 // function getLineDistance(vector1, vector2) {
@@ -988,6 +929,5 @@ function pointToLineDistance(point, lineStart, lineEnd) {
 //     let projection = new VEC2.Vec2(lineStart.x + t * (lineEnd.x - lineStart.x), lineStart.y + t * (lineEnd.y - lineStart.y));
 //     return point.distance(projection);
 // }
-
 
 //--------------------------------------------------------//
