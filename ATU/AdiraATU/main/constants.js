@@ -12,12 +12,9 @@ const PARAM = requireBuiltin('bsParam');
 
 exports.bLOGGING = false;
 exports.bVERBOSE = false;
-exports.nLaserCount = 5;
 exports.bIncludeScanningAttributes = true;
 exports.nBufferduration = 0;//1500000;//500000;//1000000; //us
 
-//when not in development/ATU mode set to false
-exports.bDrawTile = function () {return PARAM.getParamInt('display', 'displayTileGridATU')};
 
 exports.scanningSchema = 'http://schemas.scanlab.com/scanning/2023/01';
 exports.skywritingSchema = 'http://schemas.scanlab.com/skywriting/2023/01';

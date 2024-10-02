@@ -17,6 +17,7 @@ const RND = requireBuiltin('random');
 const RGBA = requireBuiltin('bsColRGBAi');
 const POLY_IT = requireBuiltin('bsPolylineIterator');
 
+
 // -------- SCRIPT INCLUDES -------- //
 const UTIL = require('main/utility_functions.js');
 const CONST = require('main/constants.js');
@@ -68,7 +69,7 @@ exports.defineScannerArray = function(bsModelData) {
 
   let scannerArray = [];
   
-  for (let i = 0; i < CONST.nLaserCount; i++) {
+  for (let i = 0; i < PARAM.getParamInt("scanhead", "laserCount"); i++) {
   scannerArray[i] = getScanner(i+1);
     };
     
@@ -86,8 +87,9 @@ const getLaserDisplayColors = function(){
   const l_rnd_gen = new RND.Rand(239803);
   
   const laser_color = [];
-   
-  const l_col = new Array(CONST.nLaserCount);
+  const laser_count = PARAM.getParamInt("scanhead", "laserCount"); 
+  
+  const l_col = new Array(laser_count);
   // using the previously defined color scheme for displaying lasers
   l_col[1] = new RGBA.bsColRGBAi(247,4,4,255);  // red
   l_col[2] = new RGBA.bsColRGBAi(72,215,85,255); // green
@@ -95,7 +97,7 @@ const getLaserDisplayColors = function(){
   l_col[4] = new RGBA.bsColRGBAi(249,9,254,255); // purple
   l_col[5] = new RGBA.bsColRGBAi(45,234,238,255); // light blue
 
-  for(let l_laser_nr = 1;l_laser_nr<CONST.nLaserCount+1;l_laser_nr++)
+  for(let l_laser_nr = 1;l_laser_nr<laser_count+1;l_laser_nr++)
     {
       if (l_laser_nr > 5) {// support for auto generating colors for additional lasers
       l_col[l_laser_nr] = new RGBA.bsColRGBAi(215 - (l_rnd_gen.getNextRandom()*100),
@@ -115,9 +117,9 @@ const getLaserDisplayColors = function(){
 exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
     
   let tileTable = thisLayer.getAttribEx('tileTable');
-
   let returnHatch = new HATCH.bsHatch();
-    
+  let laserCount = PARAM.getParamInt("scanhead", "laserCount");  
+  
   let groupedHatchByTileId = UTIL.getGroupedHatchObjectByTileId(hatchObj);
   let xDiv;
   if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
@@ -149,8 +151,8 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
     let xTileOffset = thisTileLayout[0].m_coord[0];
       
     let halfVectorOverlap = PARAM.getParamReal('interface', 'interfaceOverlap')/2;
-
-    for(let laserIndex = 0; laserIndex < CONST.nLaserCount; laserIndex++){ // run trough all laser dedication zones
+      
+    for(let laserIndex = 0; laserIndex < laserCount; laserIndex++){ // run trough all laser dedication zones
       
       let clip_min_x, clip_max_x;
       
@@ -164,7 +166,7 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
         if(laserIndex === 0){ // if first laser only overlap max x
           clip_min_x = xDiv[laserIndex];
           clip_max_x = xDiv[laserIndex+1]+halfVectorOverlap;
-        } else if (laserIndex === CONST.nLaserCount-1) { // if laser laser only overlap min x
+        } else if (laserIndex === laserCount-1) { // if last laser only overlap min x
           clip_min_x = xDiv[laserIndex]-halfVectorOverlap;
           clip_max_x = xDiv[laserIndex+1];
         } else { // else overlap both min and max x
@@ -190,7 +192,6 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
       };
       
       //Assign tile offset
-      
       clip_min_x += xTileOffset;
       clip_max_x += xTileOffset;
       
@@ -386,6 +387,7 @@ exports.assignProcessParameters = function(bsHatch,bsModelData,bsModel,nLayerNr)
 //-----------------------------------------------------------------------------------------//
 
 const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_color) {
+    
     switch (displayMode) {
         case 0:
             return laser_color[laserId].rgba();
@@ -396,7 +398,7 @@ const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_
         case 2:
             const colorData = UTIL.findColorFromType(type);
             let color = (tileNumber % 2 === 0) ? colorData.color2 : colorData.color1;
-            color.a(255 * (laserId / CONST.nLaserCount));
+            color.a(255 * (laserId / PARAM.getParamInt("scanhead", "laserCount")));
             return color.rgba();
         
         default:

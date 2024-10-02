@@ -33,7 +33,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   //CREATE CONTAINERS
   let allHatches = new HATCH.bsHatch();
   let stripeIslands = new ISLAND.bsIsland();
-
+  
   // RUN THROUGH ISLANDS
   let island_it = modelData.getFirstIsland(nLayerNr); // get island Iterator
   let islandId = 1; 

@@ -65,8 +65,9 @@ exports.prepareModelExposure = function(model){
 
   // Array to store laser objects
   let customTable = [];
+  let laserCount = PARAM.getParamInt("scanhead", "laserCount");
 
-for (let l_laser_nr = 1; l_laser_nr <= CONST.nLaserCount; ++l_laser_nr) {
+for (let l_laser_nr = 1; l_laser_nr <= laserCount;l_laser_nr++) {
     let keys = Object.keys(typeDesignations);
     for (let i = 0; i < keys.length; i++) {
         let type = keys[i];

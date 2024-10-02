@@ -145,6 +145,7 @@
     "param_pass_alternating": "alternating",
     "param_pass_same": "same",
   "grp_scanhead": "Scanhead",
+    "param_laserCount": "Laser Count",
     "param_x_scanfield_size_mm": "Total Scanfield size X [mm]",
     "param_y_scanfield_size_mm": "Total Scanfield size Y [mm]",
     "param_y_scanfield_ref_mm" : "Y-ref [mm]",
