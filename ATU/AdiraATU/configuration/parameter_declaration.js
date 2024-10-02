@@ -255,8 +255,8 @@ exports.declareParameters = function(parameter)
   // -------- SCANNER HEAD -------- //
   parameter.declareParameterGroup('scanhead',LOCALIZER.GetMessage('grp_scanhead'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     
-    parameter.declareParameterInt('scanhead', 'laserCount',LOCALIZER.GetMessage('param_laserCount'),0,5,5); //430
-    
+    parameter.declareParameterInt('scanhead', 'laserCount',LOCALIZER.GetMessage('param_laserCount'),0,5,5);
+        
     parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,200,110);//110;
     

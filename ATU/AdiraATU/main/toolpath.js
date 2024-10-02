@@ -98,20 +98,24 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   
   allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
   
-    allHatches.mergeHatchBlocks({
+  allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
     "bCheckAttributes": true
   });
   
-  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
+  allHatches.mergeHatchBlocks({
+    "bConvertToHatchMode": true,
+    "bCheckAttributes": true
+  });
 
   allHatches = TP2TILE.sortHatches(allHatches,stripeAngle);
   
   LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
 
   allHatches = TP2TILE.sortHatchByPriorityInTiles(allHatches);
-  
-  
+
+  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
+
   hatchResult.moveDataFrom(allHatches);
   
 }; // makeExposureLayer

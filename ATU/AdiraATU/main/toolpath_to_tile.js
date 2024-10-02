@@ -112,15 +112,14 @@ exports.assignToolpathToTiles = function(allHatches,thisLayer) {
                                  xmax : tile_x_max,
                                  ymin : tile_y_min,
                                  ymax : tile_y_max};
-                                 
+                     
+      let tileId = tileTable[j].tileID;
+                           
       // clip allHatches to get hatches within this tile
       let tileHatch = UTIL.ClipHatchByRect(allHatches,clipPoints,true);
-      tileHatch = UTIL.ClipHatchByRect(tileHatch,clipPoints,true);
-
       let tileHatch_outside = UTIL.ClipHatchByRect(allHatches,clipPoints,false);        
       allHatches.makeEmpty();
                                  
-      let tileId = tileTable[j].tileID;           
       anotateTileIntefaceHatchblocks(tileHatch,tileId);
           
       allHatches.moveDataFrom(tileHatch);
@@ -146,7 +145,9 @@ const removeEmptyHatches = function(tileHatch,nonZeroAttribute){
   return hatchBlockArray.reduce(function(reducedArray, currentHatch) {         
     if (!currentHatch.isEmpty() && !currentHatch.getAttributeInt(nonZeroAttribute) == 0) {
         reducedArray.addHatchBlock(currentHatch);           
-    }
+    } else {
+      let tep = 0;
+      };
     return reducedArray;         
   }, new HATCH.bsHatch());
   
@@ -517,6 +518,9 @@ exports.clipIntoStripes = function (hatch,island) {
   };
   
 exports.sortHatches = function(allHatches,stripeAngle){
+  
+  allHatches.createIntAttribSegmenting('stripeId',true);
+  
   let returnHatch = new HATCH.bsHatch();
   let sortingHatch = new HATCH.bsHatch();
   let groupedHatches = UTIL.getGroupedHatchObjectByTileTypeLaserId(allHatches);
@@ -530,6 +534,8 @@ exports.sortHatches = function(allHatches,stripeAngle){
         
         if (typeKey == 1 || typeKey == 3 || typeKey == 5) {
 
+ 
+
           let sortedArray = sortByStripeIdAndCenterY(laserIdHatch.getHatchBlockArray());
           
           sortedArray.forEach(function (hatchBlock){
@@ -542,12 +548,19 @@ exports.sortHatches = function(allHatches,stripeAngle){
           let borderIndex = hatchBlock.getAttributeInt('borderIndex');
           let stripeId = hatchBlock.getAttributeInt('stripeId');
             
-          sortingHatch.addHatchBlock(hatchBlock);   
+          sortingHatch.addHatchBlock(hatchBlock);  
+          
+          sortingHatch.mergeShortLines( // merge if vectors are on almost sharing start and end point.
+            sortingHatch,0.01,0.01,
+            HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
+          );  
+            
          // process.print(stripeAngle);
           let stripeAngleRadians = stripeAngle * Math.PI / 180;
           //sortPathsWithMinimizedLineDistance(sortingHatch,5);
           //sortPathsWithSplitDetection(sortingHatch, stripeAngleRadians);
-         sweepLineSort(sortingHatch);
+            
+          sweepLineSort(sortingHatch,stripeAngleRadians);
             
           sortingHatch.setAttributeInt('tileID_3mf',tileID_3mf);
           sortingHatch.setAttributeInt('islandId',islandId);
@@ -581,7 +594,7 @@ function sweepLineSort(hatch, sweepAngle) {
   let pathsWithProjections = [];
 
   // Calculate the sweep direction vector from the sweep angle
-  let sweepDirection = new VEC2.Vec2(Math.cos(sweepAngle), Math.sin(sweepAngle));
+  let sweepDirection = new VEC2.Vec2(-Math.cos(sweepAngle), -Math.sin(sweepAngle));
 
   // Step 1: Iterate through all paths and calculate their projections onto the sweep direction
   for (let i = 0; i < pathCount; i++) {
@@ -635,13 +648,13 @@ function sweepLineSort(hatch, sweepAngle) {
   
 function sortByStripeIdAndCenterY(boundsArray) {
     return boundsArray.sort(function(a, b) {
-//         // First, compare by stripeId (ascending order)
-//         var stripeIdA = a.getAttributeInt('stripeId');
-//         var stripeIdB = b.getAttributeInt('stripeId');
-//         
-//         if (stripeIdA !== stripeIdB) {
-//             return stripeIdA - stripeIdB; // Sort by stripeId in ascending order
-//         }
+        // First, compare by stripeId (ascending order)
+        var stripeIdA = a.getAttributeInt('stripeId');
+        var stripeIdB = b.getAttributeInt('stripeId');
+        
+        if (stripeIdA !== stripeIdB) {
+            return stripeIdA - stripeIdB; // Sort by stripeId in ascending order
+        }
         
         // If stripeIds are equal, compare by center Y (descending order)
         var centerA = a.getBounds2D().getCenter();
