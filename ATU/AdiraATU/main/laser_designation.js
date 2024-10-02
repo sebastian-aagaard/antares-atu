@@ -155,15 +155,45 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
       let clip_min_x, clip_max_x;
       
       let assignmentMode = PARAM.getParamStr('laserAssignment', 'assignmentMode');
+      let scanner = getScanner(laserIndex+1)
+
       
       if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
-        clip_min_x = xTileOffset+xDiv[laserIndex]-halfVectorOverlap; // laserZoneOverLap
-        clip_max_x = xTileOffset+xDiv[laserIndex+1]+halfVectorOverlap; //laserZoneOverLap
+        
+        // set clip width, account for overlap
+        if(laserIndex === 0){ // if first laser only overlap max x
+          clip_min_x = xDiv[laserIndex];
+          clip_max_x = xDiv[laserIndex+1]+halfVectorOverlap;
+        } else if (laserIndex === CONST.nLaserCount-1) { // if laser laser only overlap min x
+          clip_min_x = xDiv[laserIndex]-halfVectorOverlap;
+          clip_max_x = xDiv[laserIndex+1];
+        } else { // else overlap both min and max x
+          clip_min_x = xDiv[laserIndex]-halfVectorOverlap;
+          clip_max_x = xDiv[laserIndex+1]+halfVectorOverlap; 
+        }
+        
       } else {
-        let scanner = getScanner(laserIndex+1)
-        clip_min_x = xTileOffset + scanner.abs_x_min;
-        clip_max_x = xTileOffset + scanner.abs_x_max;
+        clip_min_x = scanner.abs_x_min;
+        clip_max_x = scanner.abs_x_max;
       }
+      
+      //check if laser allocation zone is outside the preset range
+      
+      if(scanner.abs_x_min > clip_min_x) {
+        clip_min_x = scanner.abs_x_min;
+        process.printWarning('laser ' + (laserIndex+1) + " is trying to allocate outside min x limit")
+      }; 
+      
+      if(scanner.abs_x_max < clip_max_x) {
+        clip_max_x = scanner.abs_x_max;
+        process.printWarning('laser ' + (laserIndex+1) + " is trying to allocate outside max x limit")
+      };
+      
+      //Assign tile offset
+      
+      clip_min_x += xTileOffset;
+      clip_max_x += xTileOffset;
+      
       // add the corrdinates to vector pointset
       let clipPoints = [
        new VEC2.Vec2(clip_min_x, clip_min_y), //min,min
