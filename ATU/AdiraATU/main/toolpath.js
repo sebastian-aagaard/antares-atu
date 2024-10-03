@@ -102,11 +102,6 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     "bConvertToHatchMode": true,
     "bCheckAttributes": true
   });
-  
-  allHatches.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "bCheckAttributes": true
-  });
 
   allHatches = TP2TILE.sortHatches(allHatches,stripeAngle);
   

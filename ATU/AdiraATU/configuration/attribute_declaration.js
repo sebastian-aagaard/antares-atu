@@ -30,12 +30,10 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('islandId');
   buildAttrib.declareAttributeInt('stripeId');
   buildAttrib.declareAttributeInt('bMoveFromFront');
-  //buildAttrib.declareAttributeInt('numberofOverlappingTiles')
   buildAttrib.declareAttributeInt('overlappingTile_1');
   buildAttrib.declareAttributeInt('overlappingTile_2');
   buildAttrib.declareAttributeInt('overlappingTile_3');
   buildAttrib.declareAttributeInt('overlappingTile_4');
-  //buildAttrib.declareAttributeInt('numberOfOverlappingLasers');
   buildAttrib.declareAttributeInt('overlapCount');
   buildAttrib.declareAttributeInt('overlappingLaser_1');
   buildAttrib.declareAttributeInt('overlappingLaser_2');

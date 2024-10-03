@@ -114,9 +114,11 @@ exports.assignToolpathToTiles = function(allHatches,thisLayer) {
                                  ymax : tile_y_max};
                      
       let tileId = tileTable[j].tileID;
-                           
+                              
       // clip allHatches to get hatches within this tile
       let tileHatch = UTIL.ClipHatchByRect(allHatches,clipPoints,true);
+      tileHatch = UTIL.ClipHatchByRect(tileHatch,clipPoints,true);
+
       let tileHatch_outside = UTIL.ClipHatchByRect(allHatches,clipPoints,false);        
       allHatches.makeEmpty();
                                  
@@ -472,16 +474,6 @@ exports.mergeShortLinesByType = function(hatches) {
   
 };
 
-// exports.combineSmallStripeIslands = function(stripeIslands){
-//   
-//   let islandArray = 
-//   // unify
-//   
-//   
-//   
-//   
-//   };
-
 exports.clipIntoStripes = function (hatch,island) {
     
   let resultHatch = new HATCH.bsHatch();
@@ -534,7 +526,6 @@ exports.sortHatches = function(allHatches,stripeAngle){
         
         if (typeKey == 1 || typeKey == 3 || typeKey == 5) {
 
- 
 
           let sortedArray = sortByStripeIdAndCenterY(laserIdHatch.getHatchBlockArray());
           
@@ -551,7 +542,7 @@ exports.sortHatches = function(allHatches,stripeAngle){
           sortingHatch.addHatchBlock(hatchBlock);  
           
           sortingHatch.mergeShortLines( // merge if vectors are on almost sharing start and end point.
-            sortingHatch,0.01,0.01,
+            sortingHatch,10,0.05,
             HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
           );  
             
