@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<layer xmlns="http://schemas.microsoft.com/3dmanufacturing/toolpath/2019/05" xmlns:bin="http://schemas.microsoft.com/3dmanufacturing/binary/2023/05" xmlns:adira="http://adira.com/addcreator/202305" xmlns:skywriting="http://schemas.scanlab.com/skywriting/2023/01" xmlns:tiling="http://adira.com/tilinginformation/202305">
-	<parts></parts>
-	<profiles></profiles>
-	<data></data>
-	<segments></segments>
-</layer>
