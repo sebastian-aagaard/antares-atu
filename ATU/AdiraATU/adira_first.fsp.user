@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Root>
-  <LastOpened>
-    <File TabGroupIndex="0" TabIndex="0">main/laser_designation.js</File>
-    <File TabGroupIndex="1" TabIndex="0">main/toolpath.js</File>
-    <File TabGroupIndex="0" TabIndex="1">main/toolpath_to_tile.js</File>
-    <File TabGroupIndex="0" TabIndex="2">main/utility_functions.js</File>
-    <Active>main/toolpath.js</Active>
-  </LastOpened>
   <LastBreakpoints>
     <Breakpoint>
       <Line>513</Line>
