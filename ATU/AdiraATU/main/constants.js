@@ -13,8 +13,6 @@ const PARAM = requireBuiltin('bsParam');
 exports.bLOGGING = false;
 exports.bVERBOSE = false;
 exports.bIncludeScanningAttributes = true;
-exports.nBufferduration = 0;//1500000;//500000;//1000000; //us maybe add to profile if required
-
 
 exports.scanningSchema = 'http://schemas.scanlab.com/scanning/2023/01';
 exports.skywritingSchema = 'http://schemas.scanlab.com/skywriting/2023/01';

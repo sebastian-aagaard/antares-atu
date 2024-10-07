@@ -199,7 +199,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         "name": "layertotals",
         "namespace": "http://nikonslm.com/statistics/202305",
          "attributes" : {
-           "tilebuffer" : CONST.nBufferduration,
+           "tilebuffer_us" : PARAM.getParamInt('tileing','tileBufferDuration_us'),
            "layerScanningDuration_s" : null,
            "layerTotalDuration_s" : null,
            "ConsolidatedPowderInLayer_kg" : layerPart_kg.toFixed(3),

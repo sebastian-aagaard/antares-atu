@@ -225,7 +225,7 @@ const getTileExposureDuration = function(exposureArray, modelData) {
 
         // Add polyline to the corresponding laser exposure time
         exposureTimeObj[laserID].addPolyline(cur, exposureSettings);
-        
+
         // Get the added duration caused by skywriting
         skywritingTime[laserID] += getSkywritingDuration(cur, modelData);
         
@@ -241,7 +241,7 @@ const getTileExposureDuration = function(exposureArray, modelData) {
             // Get exposure time of each laser in tile
             tile.laserExposureTime[key] = exposureTimeObj[key].getExposureTimeMicroSeconds();
             tile.laserExposureTime[key] += skywritingTime[key];
-            tile.laserExposureTime[key] += CONST.nBufferduration;
+            tile.laserExposureTime[key] += PARAM.getParamInt('tileing','tileBufferDuration_us');
 
             // Update the maximum exposure time for the tile
             tile.exposureTime = Math.max(tile.exposureTime, tile.laserExposureTime[key]);

@@ -206,6 +206,7 @@
      "param_number_x" : "Number of Shifts: X Count [integer]",
      "param_step_y": "Tile Shift Size: Y Step [mm]",
      "param_number_y" : "Number of Shifts: Y Count [integer]",
+     "param_tileBufferDuration_us" : "Extra Buffer Duration added to Each Tile [us]",
   "grp_scanning_priority": "Scanning Priority",
      "param_part_hatch_priority" : "Bulk Hatch",
      "param_downskin_hatch_priority" : "Downskin Hatch",
