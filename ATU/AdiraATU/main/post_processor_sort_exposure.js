@@ -41,35 +41,35 @@ exports.postprocessSortExposure_MT = function(
 
    while(layerIt.isValid() && !progress.cancelled()) {
      
-    const layerNr = layerIt.getLayerNr();
+      const layerNr = layerIt.getLayerNr();
 
-    const tileTable_3mf = UTIL.getTileTable(modelData,layerNr);
+      const tileTable_3mf = UTIL.getTileTable(modelData,layerNr);
      
-    if (!tileTable_3mf) {
+      if (!tileTable_3mf) {
+        layerIt.next();
+        progress.step(1);
+        process.printError("Nothing to postprocess in layer " + layerNr);
+        continue;
+        }
+
+      const tileExposureData = mapTileExposureData(modelData,layerNr,tileTable_3mf);
+     
+      let exposureArray = createExposureArray(tileExposureData);
+     
+      fillVoidsinExposureArray(exposureArray);
+   
+      let sortedExposureArray = sortMovementDirectionOfTiles(exposureArray);
+     
+      updateProcessingOrder(sortedExposureArray);
+     
+      getTileExposureDuration(sortedExposureArray,modelData);
+     
+      trimAwayEmptyLeadingAndTrailingTiles(sortedExposureArray); 
+      //process.print('layerNr: ' + layerNr); 
+      EXP3MF.createExporter3mf(sortedExposureArray,layerIt,modelData,layerNr);
+    
       layerIt.next();
       progress.step(1);
-      process.printError("Nothing to postprocess in layer " + layerNr);
-      continue;
-      }
-
-    const tileExposureData = mapTileExposureData(modelData,layerNr,tileTable_3mf);
-     
-    let exposureArray = createExposureArray(tileExposureData);
-     
-    fillVoidsinExposureArray(exposureArray);
-   
-    let sortedExposureArray = sortMovementDirectionOfTiles(exposureArray);
-     
-    updateProcessingOrder(sortedExposureArray);
-     
-    getTileExposureDuration(sortedExposureArray,modelData);
-     
-    trimAwayEmptyLeadingAndTrailingTiles(sortedExposureArray); 
-    //process.print('layerNr: ' + layerNr); 
-    EXP3MF.createExporter3mf(sortedExposureArray,layerIt,modelData,layerNr);
-    
-    layerIt.next();
-    progress.step(1);
    };
 } // postprocessSortExposure_MT
  
@@ -169,8 +169,7 @@ const getTileExposureDuration = function(exposureArray, modelData) {
       let tileHeight = tile.tileHeight;
       
       tile.laserExposureTime = {};
-      tile.exposureTime = 0;
-      
+      tile.exposureTime = 0;      
 
       tile.exposure.forEach(function(cur, curIndex) {
         const cur_bsid = cur.getAttributeInt('bsid');
@@ -226,6 +225,7 @@ const getTileExposureDuration = function(exposureArray, modelData) {
 
         // Add polyline to the corresponding laser exposure time
         exposureTimeObj[laserID].addPolyline(cur, exposureSettings);
+        
         // Get the added duration caused by skywriting
         skywritingTime[laserID] += getSkywritingDuration(cur, modelData);
         
@@ -283,7 +283,10 @@ const getSkywritingDuration = function(cur,modelData){
   const polylineMode = cur.getPolylineMode()
   let skywritingOccurances = 0;
   
+    
   if(polylineMode == 0 ||polylineMode == 1) { //closed or open polyline
+    
+  //process.print(polylineMode);  
 
     const pointCount = cur.getPointCount();
     const args = {
@@ -299,22 +302,19 @@ const getSkywritingDuration = function(cur,modelData){
 
     } else if (polylineMode == 2) { //hatch
     
-    let skipcount = cur.getSkipCount();
-    skywritingOccurances += skipcount*2;
-    skywritingOccurances += 1; // add extra instance for start and stop
+      let skipcount = cur.getSkipCount();
+      skywritingOccurances += skipcount*2;
+      skywritingOccurances += 1; // add extra instance for start and stop
       
-    } else if (polylineMode == 3) { // mode invalid
+    } else if (polylineMode === 3) { // mode invalid
     
       throw new Error("polyline mode invalid");
       
     }
     
 
-  let npostDur = skyWritingParamters.npost*skywritingPostConst/10; // do we still divide by 10
-  let nprevDur = skyWritingParamters.nprev*skywritingPrevConst/10; // do we still divide by 10
-      
-    
-    //process.print('skywritingOccurances: '+ skywritingOccurances);
+  let npostDur = skyWritingParamters.npost*skywritingPostConst;
+  let nprevDur = skyWritingParamters.nprev*skywritingPrevConst;
     
   return (npostDur + nprevDur)*skywritingOccurances;
 }

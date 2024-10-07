@@ -35,8 +35,6 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
   
   let scanfieldCenterYOffset = PARAM.getParamReal('tileing','tile_size')/2-(PARAM.getParamReal('scanhead','y_scanfield_size_mm')-PARAM.getParamReal('scanhead','y_scanfield_ref_mm'));
   scanfieldCenterYOffset = scanfieldCenterYOffset < 0 ? 0 : scanfieldCenterYOffset;
-  
-  
      
   exposureArray.forEach(function(pass, passIndex) {
     
@@ -209,7 +207,6 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
            }
     };
     
-    
   exporter_3mf.metadata.unshift(layerData);
     
   assignLayerTotals(exporter_3mf);  
@@ -217,8 +214,8 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
   //Set the exporter_3mf for all models in this layer
   //const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
 
-  arrayOfModels.forEach(function(m){
-    m.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf);
+  arrayOfModels.forEach(function(model){
+    model.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf);
   });
     
 //     let thisModel = modelData.getModel(0);
