@@ -350,8 +350,6 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,7); 
     parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,150.0,33.0);
     parameter.declareParameterInt('tileing','tileBufferDuration_us', LOCALIZER.GetMessage('param_tileBufferDuration_us'),0.0,5000000,0);
-
-    
     
   parameter.declareParameterGroup('scanning_priority', LOCALIZER.GetMessage('grp_scanning_priority'));
     parameter.declareParameterInt('scanning_priority','part_hatch_priority', LOCALIZER.GetMessage('param_part_hatch_priority'),0,2000,100);
@@ -362,4 +360,13 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('scanning_priority','support_contour_priority', LOCALIZER.GetMessage('param_support_contour_priority'),0,2000,600);
     parameter.declareParameterInt('scanning_priority','support_open_polyline_priority', LOCALIZER.GetMessage('param_support_open_polyline_priority'),0,2000,700);
     parameter.declareParameterInt('scanning_priority','open_polyline_priority', LOCALIZER.GetMessage('param_openPolyline_priority'),0,2000,800);
+    
+parameter.declareParameterGroup('exportInfo', LOCALIZER.GetMessage('grp_exportInfo'),'extra information to export',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+  parameter.declareParameterChoice('exportInfo', 'exportWithATU',
+     LOCALIZER.GetMessage('param_exportWith'),
+      [LOCALIZER.GetMessage('netfabb'),
+      LOCALIZER.GetMessage('atu')],
+      LOCALIZER.GetMessage('atu'),
+      "Select the correct export option, either Netfabb using an ebpa or with ATU");   
+ 
 }

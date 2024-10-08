@@ -57,7 +57,7 @@ exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress)
     
     let currentModel = modelDataTarget.getModel(modelIndex);
   
-    const modelLayerCount = modelDataSrc.getLayerCount()+1; //get layer count
+    const modelLayerCount = modelDataSrc.getLayerCount(); //get layer count
     progress.initSteps(modelLayerCount);
     
     let minMaxZValue = {};

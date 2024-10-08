@@ -215,7 +215,10 @@
      "param_downskin_contour_priority" : "Downskin Contour",
      "param_support_contour_priority" : "Support Contour",
      "param_support_open_polyline_priority" : "Support Open Polyline",
-     "param_openPolyline_priority" : "Open Polylines"
-
+     "param_openPolyline_priority" : "Open Polylines",
+  "grp_exportInfo": "Export Options",
+    "param_exportWith" : "Choose what platform you are on",
+    "netfabb" : "Netfabb",
+    "atu" : "ATU"
 }
     

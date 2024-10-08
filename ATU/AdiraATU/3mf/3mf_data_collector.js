@@ -211,16 +211,13 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
     
   assignLayerTotals(exporter_3mf);  
 
-  //Set the exporter_3mf for all models in this layer
-  //const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
+  let storeInformationAtOutputLayer = layerNr;
+
+  if(PARAM.getParamInt('exportInfo', 'exportWithATU'))  storeInformationAtOutputLayer--;
 
   arrayOfModels.forEach(function(model){
-    model.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf);
+    model.getModelLayerByNr(storeInformationAtOutputLayer).setAttribEx('exporter_3mf', exporter_3mf);
   });
-    
-//     let thisModel = modelData.getModel(0);
-//     var thisLayer = thisModel.getModelLayerByNr(layerNr);
-//    thisLayer.setAttribEx('exporter_3mf', exporter_3mf);  
   
 };
 

@@ -119,7 +119,6 @@ exports.prepareModelExposure = function(model){
 
 exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){ 
 
-  //if(nLayerNr==1) { return }; 
   TOOLPATH.makeExposureLayer(modelData, hatchResult, nLayerNr);
   
 }; // makeExposureLayer
