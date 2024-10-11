@@ -62,7 +62,7 @@ exports.declareParameters = function(parameter)
    
  parameter.declareParameterGroup('interface', LOCALIZER.GetMessage('grp_interface'));
  
-    parameter.declareParameterReal('interface', 'interfaceOverlap', LOCALIZER.GetMessage('param_interfaceOverlap'), -10.0, 10.0, 0.1);
+    parameter.declareParameterReal('interface', 'interfaceOverlap', LOCALIZER.GetMessage('param_interfaceOverlap'), -10.0, 200.0, 0.1);
 
     parameter.declareParameterChoice('interface', 'tileInterfaceHatch', LOCALIZER.GetMessage('param_tileInterfaceHatch'),
      [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
@@ -216,9 +216,9 @@ exports.declareParameters = function(parameter)
   // -------- WORK AREA -------- //
   parameter.declareParameterGroup('workarea',LOCALIZER.GetMessage('grp_workarea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterInt('workarea', 'x_workarea_min_mm',LOCALIZER.GetMessage('param_x_workarea_min_mm'),0,1015,0);
-    parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,1015,1000);
+    parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,1300,1300);
     parameter.declareParameterInt('workarea', 'y_workarea_min_mm',LOCALIZER.GetMessage('param_y_workarea_min_mm'),-508,1015,0);
-    parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),-258,1015,1000);
+    parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),-258,1300,1300);
     
    // -------- WORK AREA -------- //
   parameter.declareParameterGroup('calibrationArea',LOCALIZER.GetMessage('grp_calibrationArea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
@@ -251,35 +251,31 @@ exports.declareParameters = function(parameter)
   // -------- SCANNER HEAD -------- //
   parameter.declareParameterGroup('scanhead',LOCALIZER.GetMessage('grp_scanhead'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     
-    parameter.declareParameterInt('scanhead', 'laserCount',LOCALIZER.GetMessage('param_laserCount'),0,5,5);
+    parameter.declareParameterInt('scanhead', 'laserCount',LOCALIZER.GetMessage('param_laserCount'),0,12,12);
         
-    parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,430,430); //430
+    parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,1300,1300); //430
     parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,200,110);//110;
     
     parameter.declareParameterReal('scanhead', 'y_scanfield_ref_mm',LOCALIZER.GetMessage('param_y_scanfield_ref_mm'),0,110,60);//110;
     
-    parameter.declareParameterReal('scanhead', 'x_scanner1_max_mm',LOCALIZER.GetMessage('param_x_scanner1_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner1_min_mm',LOCALIZER.GetMessage('param_x_scanner1_min_mm'),-100,0,-40);
-    parameter.declareParameterReal('scanhead', 'x_scanner1_ref_mm',LOCALIZER.GetMessage('param_x_scanner1_ref_mm'),0,390,40);
+    let laserRackSlots = 12;
+    let laserSlotPitch = 107;
+    let startLocationSlotOne = 61.5;
+    let reach = 302.5;
+    
+    for(let laserID = 1; laserID < laserRackSlots+1; laserID++){
+      
+    let scannerRefLabel = 'x_scanner' + laserID + '_ref_mm';
+    let scannerMinLabel = 'x_scanner' + laserID + '_min_mm';
+    let scannerMaxLabel = 'x_scanner' + laserID + '_max_mm';
+  
+    let laserRefPos = startLocationSlotOne + (laserID-1)*laserSlotPitch  
+    parameter.declareParameterReal('scanhead', scannerRefLabel,  scannerRefLabel, 0,1300,laserRefPos);
+    parameter.declareParameterReal('scanhead', scannerMinLabel,  scannerMinLabel, -302.5,0,-reach);
+    parameter.declareParameterReal('scanhead', scannerMaxLabel,  scannerMaxLabel, 0,390,reach);
+      
+    }
 
-    parameter.declareParameterReal('scanhead', 'x_scanner2_max_mm',LOCALIZER.GetMessage('param_x_scanner2_max_mm'),0,125,80); //80
-    parameter.declareParameterReal('scanhead', 'x_scanner2_min_mm',LOCALIZER.GetMessage('param_x_scanner2_min_mm'),-125,0,-80); //80
-    parameter.declareParameterReal('scanhead', 'x_scanner2_ref_mm',LOCALIZER.GetMessage('param_x_scanner2_ref_mm'),0,390,125);
-
-    parameter.declareParameterReal('scanhead', 'x_scanner3_max_mm',LOCALIZER.GetMessage('param_x_scanner3_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner3_min_mm',LOCALIZER.GetMessage('param_x_scanner3_min_mm'),-100,0,-80);
-    parameter.declareParameterReal('scanhead', 'x_scanner3_ref_mm',LOCALIZER.GetMessage('param_x_scanner3_ref_mm'),0,390,210);
-
-    parameter.declareParameterReal('scanhead', 'x_scanner4_max_mm',LOCALIZER.GetMessage('param_x_scanner4_max_mm'),0,100,80);
-    parameter.declareParameterReal('scanhead', 'x_scanner4_min_mm',LOCALIZER.GetMessage('param_x_scanner4_min_mm'),-100,0,-80);
-    parameter.declareParameterReal('scanhead', 'x_scanner4_ref_mm',LOCALIZER.GetMessage('param_x_scanner4_ref_mm'),0,390,295);
-
-    parameter.declareParameterReal('scanhead', 'x_scanner5_max_mm',LOCALIZER.GetMessage('param_x_scanner5_max_mm'),0,100,50);
-    parameter.declareParameterReal('scanhead', 'x_scanner5_min_mm',LOCALIZER.GetMessage('param_x_scanner5_min_mm'),-100,0,-80);
-    parameter.declareParameterReal('scanhead', 'x_scanner5_ref_mm',LOCALIZER.GetMessage('param_x_scanner5_ref_mm'),0,390,380);    
-
-    parameter.declareParameterReal('scanhead', 'x_scanner_actual_allowed_reach',LOCALIZER.GetMessage('param_x_scanner_actual_allowed_reach'),0,200,200);
-    parameter.declareParameterReal('scanhead', 'y_scanner_actual_allowed_reach',LOCALIZER.GetMessage('param_y_scanner_actual_allowed_reach'),0,200,200);
 
     
  parameter.declareParameterGroup('skywriting', LOCALIZER.GetMessage('grp_skywriting')); 
@@ -348,7 +344,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,7);
     parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,7); 
-    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,150.0,33.0);
+    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,300.0,100.0);
     parameter.declareParameterInt('tileing','tileBufferDuration_us', LOCALIZER.GetMessage('param_tileBufferDuration_us'),0.0,5000000,0);
     
   parameter.declareParameterGroup('scanning_priority', LOCALIZER.GetMessage('grp_scanning_priority'));
