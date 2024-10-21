@@ -508,10 +508,16 @@ exports.clipIntoStripes = function (hatch,island) {
   });
   return resultHatch;
   };
+
+
   
 exports.sortHatches = function(allHatches,stripeAngle){
   
   allHatches.createIntAttribSegmenting('stripeId',true);
+    
+  stripeAngle = UTIL.invertAngleIfQ1orQ2(stripeAngle);
+  let stripeAngleRadians = stripeAngle * Math.PI / 180;
+  
   
   let returnHatch = new HATCH.bsHatch();
   let sortingHatch = new HATCH.bsHatch();
@@ -546,8 +552,8 @@ exports.sortHatches = function(allHatches,stripeAngle){
             HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
           );  
             
-         // process.print(stripeAngle);
-          let stripeAngleRadians = stripeAngle * Math.PI / 180;
+ 
+  
           //sortPathsWithMinimizedLineDistance(sortingHatch,5);
           //sortPathsWithSplitDetection(sortingHatch, stripeAngleRadians);
             
@@ -585,7 +591,8 @@ function sweepLineSort(hatch, sweepAngle) {
   let pathsWithProjections = [];
 
   // Calculate the sweep direction vector from the sweep angle
-  let sweepDirection = new VEC2.Vec2(-Math.cos(sweepAngle), -Math.sin(sweepAngle));
+  let sweepDirection = new VEC2.Vec2(Math.cos(sweepAngle), Math.sin(sweepAngle));
+  
 
   // Step 1: Iterate through all paths and calculate their projections onto the sweep direction
   for (let i = 0; i < pathCount; i++) {
@@ -620,7 +627,7 @@ function sweepLineSort(hatch, sweepAngle) {
 
     // Step 2: Sort the paths by their projection (which is equivalent to sorting by how they are "swept")
     pathsWithProjections.sort(function (a, b) {
-        return b.projection - a.projection;  // Sort in descending order based on projection
+        return a.projection - b.projection; //sort in ascending order
     });
 
     // Step 3: Create a new pathSet for the sorted paths

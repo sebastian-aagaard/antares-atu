@@ -133,7 +133,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   thisIsland.createOffset(thisIsland,-beam_compensation);
  
  //make stripes 
-  let stripe = createStripes(thisIsland,nLayerNr);
+  let stripe = createStripes(thisIsland,nLayerNr,hatchAngle);
   stripeIslands.addIslands(stripe.islands);
   returnStripeObj = {islands: stripeIslands,
                     angle : stripe.angle};
@@ -414,7 +414,7 @@ exports.getOpenPolyLinesHatch = function(modelData,nLayerNr){
 
 //=============================================================================
 
-function createStripes(islandObj,nLayerNr) {
+function createStripes(islandObj,nLayerNr,hatchAngle) {
   
   let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
   let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
@@ -425,7 +425,8 @@ function createStripes(islandObj,nLayerNr) {
   
   let stripeIslands = new ISLAND.bsIsland();
   
-  let stripeAngle = getHatchAngle(nLayerNr,PARAM.getParamReal('exposure', 'hatch_angle_init'),PARAM.getParamReal('exposure', 'hatch_angle_increment'));
+  let stripeAngle = hatchAngle;
+  
   if (stripeAngle<270) stripeAngle-=180;
   
   islandObj.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,
