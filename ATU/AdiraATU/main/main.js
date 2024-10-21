@@ -14,6 +14,7 @@ const LOCALIZER = require('localization/localizer.js');
 const PARAM = requireBuiltin('bsParam');
 
 // -------- SCRIPTS INCLUDES -------- //
+const TEST = require('main/unit_test.js')
 const MACHINE_CONFIG = require('../configuration/machine_declaration.js');
 const PARAM_CONFIG = require('../configuration/parameter_declaration.js');
 const ATTRIB_CONFIG = require('../configuration/attribute_declaration.js');
@@ -31,9 +32,9 @@ const TOOLPATH = require('main/Toolpath.js');
 
 //----------------------------------------------------------------------------//
 
-exports.unitTesting = function( testInfo ){
+exports.unitTesting = function(testInfo){
   // testname, additional info, test passed
-  testInfo.addTest( 'DummyTest', 'Dummy', true);
+  TEST.unitTesting(testInfo)
 }
 
 //----------------------------------------------------------------------------//
