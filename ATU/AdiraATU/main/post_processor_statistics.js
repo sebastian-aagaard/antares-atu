@@ -27,6 +27,7 @@ exports.getStatistics = function(
   progress, 
   layer_start_nr, 
   layer_end_nr){
+
   
   const partMassKg = getPartMassKg(modelData,progress,layer_start_nr,layer_end_nr);
   const buildTime_ms = getBuildTime_ms(modelData,progress,layer_start_nr,layer_end_nr);
@@ -142,40 +143,21 @@ const getBuildTime_ms = function(modelData,progress,layer_start_nr,layer_end_nr)
   let buildTime_ms = 0;
   while(layerIt.isValid() && !progress.cancelled())
   {
-    let layerNr = layerIt.getLayerNr();
-    
-    if(layerNr === 1 && PARAM.getParamInt('exportInfo', 'exportWithATU')){
-       progress.step(1);
-       layerIt.next();
-       continue;
-      } // correct for off by one exporter error
-
+    const layerNr = layerIt.getLayerNr();
     
     const recoatingTime_ms = PARAM.getParamInt('buildTimeEstimation','recoatingDuration_ms');
     const powderFillingTime_ms = PARAM.getParamInt('buildTimeEstimation', 'powderfillingDuration_ms');
     const minimumLayerTime_ms = PARAM.getParamInt('buildTimeEstimation', 'minimumLayerDuration_ms');
-    let exportData,layerDuration_ms;
-      
-    if(PARAM.getParamInt('exportInfo', 'exportWithATU')) layerNr--;
-      
-    try{
-    exportData = UTIL.getModelsInLayer(modelData,layerNr)[0]
+    
+    let exportData = UTIL.getModelsInLayer(modelData,layerNr)[0]
       .getModelLayerByNr(layerNr)
       .getAttribEx('exporter_3mf')
       .metadata;
-    
-    if(exportData === undefined) throw new Error('Meta data for layer was not retrieved') ;  
 
-    layerDuration_ms = exportData[0]
+    let layerDuration_ms = exportData[0]
       .attributes
       .layerTotalDuration/1000;
-    
-    if(layerDuration_ms === undefined) throw new Error ('Failed to get Layer Duration')
-    
-    }catch(error){
-      process.printError('An error occurred post processing statistics in layer ' + layerNr + " " + error.message);
-      } 
-      
+//     
     let transport_mm = getTransportationDistance_mm(exportData);
     let transportTime_ms = (transport_mm/PARAM.getParamReal('movementSettings', 'axis_transport_speed'))*1000;
     
@@ -195,7 +177,7 @@ const getBuildTime_ms = function(modelData,progress,layer_start_nr,layer_end_nr)
 } 
 
 const getTransportationDistance_mm = function(exportData){
-    
+  
   let transport_mm = 0;
     
   exportData.forEach(function(pass, index){
@@ -250,13 +232,6 @@ const getPartMassKg = function(modelData,progress,layer_start_nr,layer_end_nr){
   while(layerIt.isValid() && !progress.cancelled())
   {
     let layerNr = layerIt.getLayerNr();
-    
-    if(layerNr === 1 && PARAM.getParamInt('exportInfo', 'exportWithATU')){
-       progress.step(1);
-       layerIt.next();
-       continue;
-      } // correct for off by one exporter error
-      
     let islandIt = modelData.getFirstIsland(layerNr);  
     
     while(islandIt.isValid() && !progress.cancelled())
