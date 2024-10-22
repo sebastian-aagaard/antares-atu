@@ -509,15 +509,10 @@ exports.clipIntoStripes = function (hatch,island) {
   return resultHatch;
   };
 
-
-  
 exports.sortHatches = function(allHatches,stripeAngle){
-  
-  allHatches.createIntAttribSegmenting('stripeId',true);
-    
+      
   stripeAngle = UTIL.invertAngleIfQ1orQ2(stripeAngle);
   let stripeAngleRadians = stripeAngle * Math.PI / 180;
-  
   
   let returnHatch = new HATCH.bsHatch();
   let sortingHatch = new HATCH.bsHatch();
@@ -531,7 +526,6 @@ exports.sortHatches = function(allHatches,stripeAngle){
       Object.values(typeGroup).forEach(function(laserIdHatch){
         
         if (typeKey == 1 || typeKey == 3 || typeKey == 5) {
-
 
           let sortedArray = sortByStripeIdAndCenterY(laserIdHatch.getHatchBlockArray());
           
@@ -551,11 +545,6 @@ exports.sortHatches = function(allHatches,stripeAngle){
             sortingHatch,10,0.05,
             HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
           );  
-            
- 
-  
-          //sortPathsWithMinimizedLineDistance(sortingHatch,5);
-          //sortPathsWithSplitDetection(sortingHatch, stripeAngleRadians);
             
           sweepLineSort(sortingHatch,stripeAngleRadians);
             
