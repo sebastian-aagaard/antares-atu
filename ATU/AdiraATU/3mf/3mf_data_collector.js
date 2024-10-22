@@ -13,11 +13,7 @@ const CONST = require('main/constants.js');
 
 exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr){
   
-  const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
-  
-  if(!arrayOfModels) process.printError("no models found in layer" + layerNr);
-  
-  const layerPart_kg = getPartLayerMass(arrayOfModels,layerNr);
+  const layerPart_kg = getPartLayerMass(modelData,layerNr);
   const powderbed_kg = (modelData.getLayerThickness() 
     * PARAM.getParamInt('workarea','x_workarea_max_mm') 
     * PARAM.getParamInt('workarea','y_workarea_max_mm')
@@ -209,22 +205,19 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
     
   assignLayerTotals(exporter_3mf);  
 
-  //Set the exporter_3mf for all models in this layer
-  //const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
-
-  arrayOfModels.forEach(function(model){
-    model.getModelLayerByNr(layerNr).setAttribEx('exporter_3mf', exporter_3mf);
-  });
-    
-//     let thisModel = modelData.getModel(0);
-//     var thisLayer = thisModel.getModelLayerByNr(layerNr);
-//    thisLayer.setAttribEx('exporter_3mf', exporter_3mf);  
+  modelData.getModel(0)
+    .getModelLayerByNr(layerNr)
+    .setAttribEx('exporter_3mf', exporter_3mf);
   
 };
 
-const getPartLayerMass = function(models,layerNr){
+const getPartLayerMass = function(modelData,layerNr){
 
-  const surface_area_mm2 = models.reduce(function(acc, model){
+  const arrayOfModels = UTIL.getModelsInLayer(modelData, layerNr);
+  
+  if(!arrayOfModels) process.printError("no models found in layer" + layerNr);
+
+  const surface_area_mm2 = arrayOfModels.reduce(function(acc, model){
     const islandArray = new ISLAND.bsIsland();
     const layer = model.getModelLayerByNr(layerNr);
     islandArray.addPathSet(layer.getAllIslandsPathSet());
@@ -233,7 +226,7 @@ const getPartLayerMass = function(models,layerNr){
     return acc + surface;
   },0);
   
-  const height_cm = models[0].getLayerThickness() / 1000;
+  const height_cm = arrayOfModels[0].getLayerThickness() / 1000;
   const surface_area_cm2 = surface_area_mm2 / 100;
   const volume_cc = surface_area_cm2 * height_cm ;
   const mass_grams = volume_cc * PARAM.getParamReal('material','density_g_cc') ;

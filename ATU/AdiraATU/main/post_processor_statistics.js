@@ -149,7 +149,7 @@ const getBuildTime_ms = function(modelData,progress,layer_start_nr,layer_end_nr)
     const powderFillingTime_ms = PARAM.getParamInt('buildTimeEstimation', 'powderfillingDuration_ms');
     const minimumLayerTime_ms = PARAM.getParamInt('buildTimeEstimation', 'minimumLayerDuration_ms');
     
-    let exportData = UTIL.getModelsInLayer(modelData,layerNr)[0]
+    let exportData = modelData.getModel(0)
       .getModelLayerByNr(layerNr)
       .getAttribEx('exporter_3mf')
       .metadata;

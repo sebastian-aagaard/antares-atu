@@ -141,7 +141,7 @@ exports.mergeBlocks = function(unmergedHatchBlocks) {
 
 exports.getTileTable = function(modelData,layerNr){
 
-  const tiletable_3mf = exports.getModelsInLayer(modelData,layerNr)[0].getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
+  const tiletable_3mf = modelData.getModel(0).getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
 
   if(!tiletable_3mf) return false;
     
