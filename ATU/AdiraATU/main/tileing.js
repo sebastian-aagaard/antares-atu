@@ -151,7 +151,7 @@ function calculateRequiredPasses(sceneSize, tileWidth, tileHeight, overlapX, ove
 }
 
 function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize,
-  requiredPasses, overlap, shift, maxshift, modelCenterLocation) {
+  requiredPasses, overlap, shift, maxshift, modelCenterLocation,tilePosHardLimitMax) {
   
     let adjustedOverlap = overlap;
     let adjustedTileSize = tileSize;
@@ -173,19 +173,31 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
         requiredPasses++;
     }
     
-    if (startingPos + tileReach > workareaMax ) { // if outside of workarea
+    if (startingPos + tileReach > workareaMax) { // if outside of workarea
         startingPos = workareaMax + shift - tileReach;
     }
+    
 
     if (startingPos < workareaMin) {
         //overlap = (startingPos - workareaMin) / (requiredPasses - 1);
         //startingPos = workareaMin;
-        adjustedOverlap = ( (maxCoord - minCoord) - tileReach + maxshift) / (requiredPasses - 1);
+        adjustedOverlap = (modelSize - tileReach + maxshift) / (requiredPasses - 1);
         adjustedTileSize = (tileReach+adjustedOverlap)/requiredPasses;
         let adjustedTileReach = tileSize*requiredPasses + adjustedOverlap * (requiredPasses - 1);
         
         startingPos = maxCoord-adjustedTileReach+maxshift;
     }
+    
+    let lastTileStartPos = startingPos+tileReach-tileSize+maxshift;
+    
+    if(lastTileStartPos > tilePosHardLimitMax){
+      let requiredAddedOverlap = lastTileStartPos-tilePosHardLimitMax;
+      adjustedOverlap = requiredAddedOverlap / (requiredPasses - 1);
+      adjustedOverlap *=-1;
+      if(requiredPasses === 1) { // if only one pass the start position needs to be moved back
+        startingPos=tilePosHardLimitMax+shift;
+      }
+    }    
     
 
     return {
@@ -235,7 +247,7 @@ exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) 
 
   let adjustedTileLayoutX = adjustTileLayout(
       modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
-      required_passes_x, PARAM.getParamReal('tileing', 'tile_overlap_x'),shiftX,maxShiftX,PARAM.getParamReal('tileShift', 'shiftTileInX'));
+      required_passes_x, PARAM.getParamReal('tileing', 'tile_overlap_x'),shiftX,maxShiftX,PARAM.getParamReal('tileShift', 'shiftTileInX'),CONST.tilePositionHardLimit.xmax);
       
   let scanhead_x_starting_pos = adjustedTileLayoutX.startingPos;
   let overlap_x = adjustedTileLayoutX.adjustedOverlap;
@@ -245,7 +257,7 @@ exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) 
 
   let adjustedTileLayoutY = adjustTileLayout(
     modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
-    required_passes_y, PARAM.getParamReal('tileing', 'tile_overlap_y'),shiftY,maxShiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'));
+    required_passes_y, PARAM.getParamReal('tileing', 'tile_overlap_y'),shiftY,maxShiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'),CONST.tilePositionHardLimit.ymax);
       
   let scanhead_y_starting_pos = adjustedTileLayoutY.startingPos;
   let overlap_y = adjustedTileLayoutY.adjustedOverlap;
