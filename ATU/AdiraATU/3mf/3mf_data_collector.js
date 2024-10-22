@@ -47,7 +47,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         
         if(PARAM.getParamInt('tileing','processHeadAlignment') == 0) { //default / automatic
           
-          processHeadOffsetX = PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2 - scanfieldCenterXOffset; // center arround origo laser 3
+          processHeadOffsetX = PARAM.getParamReal('scanhead','x_scanner3_ref_mm'); // offset distance from tile edge to center ref scanner 3
           processHeadOffsetY = pass[0].ProcessHeadFromFront ? 0 : pass[0].tileHeight; // offset along the movement direction
           
           } else { // custom
@@ -166,8 +166,6 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
 
       
       if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
-      
-
       // Create node object
         exporter_3mf.metadata[passIndex].nodes[tileIndex] = {
           "name": "movement",
