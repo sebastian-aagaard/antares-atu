@@ -88,9 +88,9 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
             "sequencetransferspeed": PARAM.getParamReal('movementSettings', 'axis_transport_speed').toFixed(3),
             "processHeadOffsetX" : processHeadOffsetX.toFixed(3),
             "processHeadOffsetY" : processHeadOffsetY.toFixed(3),
-            "processHeadRampOffsetY" : (PARAM.getParamReal('tileing','processheadRampOffset') * (pass[0].ProcessHeadFromFront ? -1 : 1)).toFixed(3),
-            "requiredPasses": exposureArray.length,
-            "tilesInPass": pass.length,
+            //"processHeadRampOffsetY" : (PARAM.getParamReal('tileing','processheadRampOffset') * (pass[0].ProcessHeadFromFront ? -1 : 1)).toFixed(3),
+            //"requiredPasses": exposureArray.length,
+            //"tilesInPass": pass.length,
             "layerScanningDuration_us": null,
             "layerTotalDuration_us": null
           },
