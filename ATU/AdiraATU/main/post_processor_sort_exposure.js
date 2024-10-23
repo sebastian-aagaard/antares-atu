@@ -53,13 +53,15 @@ exports.postprocessSortExposure_MT = function(
         }
 
       const tileExposureData = mapTileExposureData(modelData,layerNr,tileTable_3mf);
-     
+
       let exposureArray = createExposureArray(tileExposureData);
      
+      sortProcessingOrderWithinTile(exposureArray);  
+        
       fillVoidsinExposureArray(exposureArray);
    
       let sortedExposureArray = sortMovementDirectionOfTiles(exposureArray);
-     
+        
       updateProcessingOrder(sortedExposureArray);
      
       getTileExposureDuration(sortedExposureArray,modelData);
@@ -73,6 +75,99 @@ exports.postprocessSortExposure_MT = function(
    };
 } // postprocessSortExposure_MT
  
+
+const sortProcessingOrderWithinTile = function(exposureArray) {
+  
+  exposureArray.forEach(function (pass){
+    pass.forEach(function (tile){
+      tile.exposure = groupAndSortExposure(tile.exposure);
+    })
+  })
+}//sortProcessingOrderWithinTile
+
+function groupAndSortExposure(exposure) {
+    // Step 1: Group exposure by modelIndex and check if islandId === 0 exists
+    var groups = {};
+
+    exposure.forEach(function(polyline) {
+        var modelIndex = polyline.getModelIndex();
+        var islandId = polyline.getAttributeInt('islandId');
+
+        if (!groups[modelIndex]) {
+            groups[modelIndex] = { hasIslandIdZero: false, polylines: [] };
+        }
+
+        // If any polyline has islandId === 0, set the flag to merge the whole group
+        if (islandId === 0) {
+            groups[modelIndex].hasIslandIdZero = true;
+        }
+
+        groups[modelIndex].polylines.push(polyline);
+    });
+
+    // Step 2: Handle merging all islands into islandId === 0 if needed
+    var mergedGroups = Object.keys(groups).map(function(modelIndex) {
+        var group = groups[modelIndex];
+
+        // If islandId === 0 exists in this modelIndex, merge all into the islandId === 0 container
+        if (group.hasIslandIdZero) {
+            group.polylines.forEach(function(polyline) {
+                // Set all islandId to 0 for this group
+                polyline.setAttributeInt('islandId', 0);
+            });
+        }
+
+        // Sort each group by priority and position
+        group.polylines.sort(function(a, b) {
+            // Sort by priority (ascending order)
+            var priorityA = a.getAttributeInt('priority');
+            var priorityB = b.getAttributeInt('priority');
+
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+
+            // Sort by position
+            var boundsA = a.tryGetBounds2D();
+            var boundsB = b.tryGetBounds2D();
+
+            // Sort by maxY (largest first)
+            if (boundsA.maxY !== boundsB.maxY) {
+                return boundsB.maxY - boundsA.maxY;
+            }
+
+            return 0;  // Consider equal if all conditions are the same
+        });
+
+        return group.polylines;
+    });
+
+    // Step 3: Sort groups based on the object with the largest maxY in the group
+    mergedGroups.sort(function(groupA, groupB) {
+        // Find the object with the largest maxY in each group
+        var maxYA = Math.max.apply(null, groupA.map(function(obj) {
+            return obj.tryGetBounds2D().maxY;
+        }));
+
+        var maxYB = Math.max.apply(null, groupB.map(function(obj) {
+            return obj.tryGetBounds2D().maxY;
+        }));
+
+        // Sort the groups by the largest maxY in the group (largest first)
+        return maxYB - maxYA;
+    });
+
+    // Step 4: Flatten the sorted groups back into a single array
+    var sortedObjects = [];
+    mergedGroups.forEach(function(group) {
+        sortedObjects.push.apply(sortedObjects, group);
+    });
+
+    return sortedObjects;
+}
+
+
+
 
 const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray){
   

@@ -422,68 +422,84 @@ const copyAttributes = function(originalHatchBlock, newHatchBlock) {
 //-----------------------------------------------------------------------------------------//
 
 exports.connectHatchBlocksSetAttributes = function(hatch) {
-  
+
   let hatchArray = hatch.getHatchBlockArray();  
   let returnHatch = new HATCH.bsHatch();
   let hatchBlockToConnect = new HATCH.bsHatch();
 
+  // Group by borderIndex first
   let groupedByBorderIndex = hatchArray.reduce(function (acc, obj) {
     let currentBorderIndex = obj.getAttributeInt('borderIndex');
     
-    // If the group doesn't exist, create an empty array for it
+    // If the group for the borderIndex doesn't exist, create an empty array for it
     if (!acc[currentBorderIndex]) {
-      acc[currentBorderIndex] = [];
+      acc[currentBorderIndex] = {};
     }
     
-    acc[currentBorderIndex].push(obj);
+    // Further group by islandId within each borderIndex group
+    let currentIslandId = obj.getAttributeInt('islandId');
+    if (!acc[currentBorderIndex][currentIslandId]) {
+      acc[currentBorderIndex][currentIslandId] = [];
+    }
+    
+    acc[currentBorderIndex][currentIslandId].push(obj);
     
     return acc;
   }, {});
-  
+
   // Iterate over groupedByBorderIndex object keys
   Object.keys(groupedByBorderIndex).forEach(function(borderIndex) {
-     let group = groupedByBorderIndex[borderIndex];
+     let groupsByIslandId = groupedByBorderIndex[borderIndex];
 
-     group.forEach(function (hatchBlock) {
-       hatchBlockToConnect.addHatchBlock(hatchBlock);
+     // Iterate over the groups by islandId within each borderIndex
+     Object.keys(groupsByIslandId).forEach(function(islandId) {
+         let group = groupsByIslandId[islandId];
+
+         group.forEach(function (hatchBlock) {
+           hatchBlockToConnect.addHatchBlock(hatchBlock)
+         });
+
+         let storedTileID_3mf = group[0].getAttributeInt('tileID_3mf');
+         let storedIslandId = group[0].getAttributeInt('islandId');
+         let storedType = group[0].getAttributeInt('type');
+         let storedBsid = group[0].getAttributeInt('bsid');
+         let storedBorderIndex = group[0].getAttributeInt('borderIndex');
+         let storedModelSubType = group[0].getModelSubtype();
+
+         hatchBlockToConnect.connectHatchBlocks({
+           bEnableSelfConnect: true,
+           fSelfConnectMaxDist: 0.001,
+           fMaxConnectDist: 0.001,
+           fPointReductionDeviationTol: 0.001,
+           fPointReductionEdgeLengthLimit: 0.001,
+           iModelSubtype: storedModelSubType
+         });
+
+
+         hatchBlockToConnect.setAttributeInt('tileID_3mf', storedTileID_3mf);
+         hatchBlockToConnect.setAttributeInt('islandId', storedIslandId);
+         hatchBlockToConnect.setAttributeInt('type', storedType);
+         
+         if (storedBsid !== 0) {
+           hatchBlockToConnect.setAttributeInt('bsid', storedBsid);
+         }
+         
+         if (storedBorderIndex !== 0) {
+           hatchBlockToConnect.setAttributeInt('borderIndex', storedBorderIndex);
+         }
+
+         hatchBlockToConnect.mergeHatchBlocks({
+           "bConvertToHatchMode": true,
+           "bCheckAttributes": true
+         });
+
+         returnHatch.moveDataFrom(hatchBlockToConnect);
      });
-       
-     let storedTileID_3mf = group[0].getAttributeInt('tileID_3mf');
-     let storedIslandId = group[0].getAttributeInt('islandId');
-     let storedType = group[0].getAttributeInt('type');
-     let storedBsid = group[0].getAttributeInt('bsid');
-     let storedBorderIndex = group[0].getAttributeInt('borderIndex');
-     let storedModelSubType = group[0].getModelSubtype();
-
-     hatchBlockToConnect.connectHatchBlocks({
-       bEnableSelfConnect: true,
-       fSelfConnectMaxDist: 0.001,
-       fMaxConnectDist: 0.001,
-       fPointReductionDeviationTol: 0.001,
-       fPointReductionEdgeLengthLimit: 0.001,
-       iModelSubtype: storedModelSubType
-     });
-       
-     hatchBlockToConnect.setAttributeInt('tileID_3mf', storedTileID_3mf);
-     hatchBlockToConnect.setAttributeInt('islandId', storedIslandId);
-     hatchBlockToConnect.setAttributeInt('type', storedType);
-     if (storedBsid !== 0) {
-       hatchBlockToConnect.setAttributeInt('bsid', storedBsid);
-     }
-     if (storedBorderIndex !== 0) {
-       hatchBlockToConnect.setAttributeInt('borderIndex', storedBorderIndex);
-     }
-
-      hatchBlockToConnect.mergeHatchBlocks({
-        "bConvertToHatchMode": true,
-        "bCheckAttributes": true
-      });
-     
-     returnHatch.moveDataFrom(hatchBlockToConnect);
   });
 
   return returnHatch;
 };
+
 
 //-----------------------------------------------------------------------------------------//
 
