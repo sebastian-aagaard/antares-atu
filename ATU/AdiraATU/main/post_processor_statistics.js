@@ -141,15 +141,24 @@ const getBuildTime_ms = function(modelData,progress,layer_start_nr,layer_end_nr)
       layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
 
   let buildTime_ms = 0;
-  while(layerIt.isValid() && !progress.cancelled())
-  {
+  while(layerIt.isValid() && !progress.cancelled()){
+    
     const layerNr = layerIt.getLayerNr();
     
     const recoatingTime_ms = PARAM.getParamInt('buildTimeEstimation','recoatingDuration_ms');
     const powderFillingTime_ms = PARAM.getParamInt('buildTimeEstimation', 'powderfillingDuration_ms');
     const minimumLayerTime_ms = PARAM.getParamInt('buildTimeEstimation', 'minimumLayerDuration_ms');
     
-    let exportData = modelData.getModel(0)
+    const model = UTIL.getModelsInLayer(modelData,layerNr)[0];
+    
+    if (!model) {
+      process.printWarning("Post Processor Statistics: Nothing to postprocess in layer " + layerNr + ' / ' + layerIt.getLayerZ() + ' mm');
+      layerIt.next();
+      progress.step(1);
+      continue;
+    }
+    
+    let exportData = model
       .getModelLayerByNr(layerNr)
       .getAttribEx('exporter_3mf')
       .metadata;
@@ -181,7 +190,8 @@ const getTransportationDistance_mm = function(exportData){
   let transport_mm = 0;
     
   exportData.forEach(function(pass, index){
-    
+    if(pass.length === 0) return;
+
     if(index == 0) return;
     
     

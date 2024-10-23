@@ -46,9 +46,9 @@ exports.postprocessSortExposure_MT = function(
       const tileTable_3mf = UTIL.getTileTable(modelData,layerNr);
      
       if (!tileTable_3mf) {
+        process.printWarning("Nothing to postprocess in layer " + layerNr + ' / ' + layerIt.getLayerZ() + ' mm');
         layerIt.next();
         progress.step(1);
-        process.printError("Nothing to postprocess in layer " + layerNr);
         continue;
         }
 
@@ -66,7 +66,8 @@ exports.postprocessSortExposure_MT = function(
      
       getTileExposureDuration(sortedExposureArray,modelData);
      
-      trimAwayEmptyLeadingAndTrailingTiles(sortedExposureArray); 
+      sortedExposureArray = trimAwayEmptyLeadingAndTrailingTiles(sortedExposureArray);
+        
       //process.print('layerNr: ' + layerNr); 
       EXP3MF.createExporter3mf(sortedExposureArray,layerIt,modelData,layerNr);
     
@@ -169,9 +170,8 @@ function groupAndSortExposure(exposure) {
 
 
 
-const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray){
-  
-    exposureArray.forEach(function(pass){
+const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray) {
+  exposureArray = exposureArray.filter(function(pass) {
     // Remove leading zeroes
     while (pass.length > 0 && pass[0].exposureTime === 0) {
       pass.shift();
@@ -180,9 +180,15 @@ const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray){
     // Remove trailing zeroes
     while (pass.length > 0 && pass[pass.length - 1].exposureTime === 0) {
       pass.pop();
-    };
+    }
+
+    // Return true if the pass is not empty, false if it is empty (filtering out empty passes)
+    return pass.length > 0;
   });
+
+  return exposureArray;
 };
+
 
 
 const fillVoidsinExposureArray = function(exposureArray) {

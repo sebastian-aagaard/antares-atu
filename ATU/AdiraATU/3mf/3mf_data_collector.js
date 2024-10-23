@@ -34,6 +34,8 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
      
   exposureArray.forEach(function(pass, passIndex) {
     
+    if(pass.length === 0) return;
+    
     let shouldYOffsetBeCorrected = false;
     
     try {
@@ -205,7 +207,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
     
   assignLayerTotals(exporter_3mf);  
 
-  modelData.getModel(0)
+  UTIL.getModelsInLayer(modelData,layerNr)[0]
     .getModelLayerByNr(layerNr)
     .setAttribEx('exporter_3mf', exporter_3mf);
   

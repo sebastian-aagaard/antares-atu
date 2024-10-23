@@ -37,9 +37,9 @@ exports.getModelsInLayer = function(modelData,layerNr){
       arrayofModels.push(modelData.getModel(modelIt))
   };
     
-    if(!arrayofModels) return false;
-      
-    return arrayofModels;
+  if(arrayofModels === undefined) return false;
+    
+  return arrayofModels;
 }
 
 //-----------------------------------------------------------------------------------------//
@@ -141,9 +141,19 @@ exports.mergeBlocks = function(unmergedHatchBlocks) {
 
 exports.getTileTable = function(modelData,layerNr){
 
-  const tiletable_3mf = modelData.getModel(0).getModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
+  let arrayOfModels = exports.getModelsInLayer(modelData,layerNr);
 
-  if(!tiletable_3mf) return false;
+  if(!arrayOfModels[0]) { 
+    process.printWarning ('failed to retrieve model in layer ' + layerNr);
+    return false;
+  }
+  
+  const tiletable_3mf = arrayOfModels[0].maybeGetModelLayerByNr(layerNr).getAttribEx('tileTable_3mf');
+
+  if(!tiletable_3mf){ 
+    process.printWarning ('failed to retrieve tile table from model in layer ' + layerNr);
+    return false;
+  }
     
   return tiletable_3mf;
 };
