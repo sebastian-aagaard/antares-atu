@@ -75,7 +75,6 @@ exports.postprocessSortExposure_MT = function(
       progress.step(1);
    };
 } // postprocessSortExposure_MT
- 
 
 const sortProcessingOrderWithinTile = function(exposureArray) {
   
@@ -129,12 +128,12 @@ function groupAndSortExposure(exposure) {
             }
 
             // Sort by position
-            var boundsA = a.tryGetBounds2D();
-            var boundsB = b.tryGetBounds2D();
+            var centerA = a.tryGetBounds2D().getCenter();
+            var centerB = b.tryGetBounds2D().getCenter();
 
             // Sort by maxY (largest first)
-            if (boundsA.maxY !== boundsB.maxY) {
-                return boundsB.maxY - boundsA.maxY;
+            if (centerA.y !== centerB.y) {
+                return centerB.y - centerA.y;
             }
 
             return 0;  // Consider equal if all conditions are the same
@@ -167,9 +166,6 @@ function groupAndSortExposure(exposure) {
     return sortedObjects;
 }
 
-
-
-
 const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray) {
   exposureArray = exposureArray.filter(function(pass) {
     // Remove leading zeroes
@@ -188,8 +184,6 @@ const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray) {
 
   return exposureArray;
 };
-
-
 
 const fillVoidsinExposureArray = function(exposureArray) {
   
@@ -256,8 +250,6 @@ const createExposureArray = function(tileObj) {
         return pass !== undefined;
     });
 };
-
-
 
 const getTileExposureDuration = function(exposureArray, modelData) {
   
