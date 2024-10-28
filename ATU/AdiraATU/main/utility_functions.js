@@ -103,17 +103,24 @@ exports.getValueAtIndex = function (array, index) {
 // clip hatch by rectangle
 exports.ClipHatchByRect = function (hatchObj, arr_2dVec, bKeepInside) {
   if (typeof bKeepInside === 'undefined') bKeepInside = true;
-	let tiles_pathset = new PATH_SET.bsPathSet(); // generate pathset object
-	tiles_pathset.addNewPath(arr_2dVec); // add tiles zones to pathset  
-	tiles_pathset.setClosed(true); // set the zones to closed polygons
-	let tile_clipping_island = new ISLAND.bsIsland(); // generate island object
-	tile_clipping_island.addPathSet(tiles_pathset); // add pathset as new island
+    
+  let tile_clipping_island = exports.generateIslandFromCoordinates(arr_2dVec,true);
 	
 	let clippedHatch = hatchObj.clone(); // clone overall hatching
 	clippedHatch.clip(tile_clipping_island, bKeepInside); // clip the hatching with the tile_islands
 	
 	return clippedHatch;
 }
+
+exports.generateIslandFromCoordinates = function (arr_2dVec,shouldBeClosed){
+  let tiles_pathset = new PATH_SET.bsPathSet(); // generate pathset object
+	tiles_pathset.addNewPath(arr_2dVec); // add tiles zones to pathset  
+	tiles_pathset.setClosed(shouldBeClosed); // set the zones to closed polygons
+	let island = new ISLAND.bsIsland(); // generate island object
+	island.addPathSet(tiles_pathset); // add pathset as new island
+  
+  return island;
+  };
 
 //-----------------------------------------------------------------------------------------//
 

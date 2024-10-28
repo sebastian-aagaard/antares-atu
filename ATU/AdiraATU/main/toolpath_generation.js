@@ -132,12 +132,6 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   // offset islands by beam compensation
   thisIsland.createOffset(thisIsland,-beam_compensation);
  
- //make stripes 
-  let stripe = createStripes(thisIsland,nLayerNr,hatchAngle);
-  stripeIslands.addIslands(stripe.islands);
-  returnStripeObj = {islands: stripeIslands,
-                    angle : stripe.angle};
- 
   //find overhangs
   if(PARAM.getParamInt('downskin','downskintoggle')){
     
@@ -323,9 +317,11 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   resultHatch.moveDataFrom(allContourHatch);
   resultHatch.moveDataFrom(allDownSkinContourHatch);
   
+  let stripeAngle = hatchAngle;
+  if (stripeAngle<270) stripeAngle-=180;
  
   return {resultHatch: resultHatch,
-          stripe: returnStripeObj};
+          stripeAngle: stripeAngle};
 };
 
 const mergeHatchBlocks = function(hatch){
@@ -412,30 +408,6 @@ exports.getOpenPolyLinesHatch = function(modelData,nLayerNr){
   return allPolyLineHatch;
 }  
 
-//=============================================================================
-
-function createStripes(islandObj,nLayerNr,hatchAngle) {
-  
-  let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
-  let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
-  let fStripeOverlap = PARAM.getParamReal('strategy','fStripeOverlap');
-  let fStripeLength = PARAM.getParamReal('strategy','fStripeLength');
-  let fpatternShift = PARAM.getParamReal('strategy','fPatternShift');
-  let stripeRefPoint = new VEC2.Vec2(nLayerNr*fpatternShift,0);
-  
-  let stripeIslands = new ISLAND.bsIsland();
-  
-  let stripeAngle = hatchAngle;
-  
-  if (stripeAngle<270) stripeAngle-=180;
-  
-  islandObj.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,
-    fStripeLength,stripeAngle,stripeRefPoint);
-
-  return {islands: stripeIslands,
-          angle:stripeAngle};
-
-} //createStripes
 
 //============================================================================
 

@@ -41,6 +41,7 @@ exports.assignToolpathToTiles = function(allHatches,thisLayer) {
   ////////////////////////////////////////////////////
   
   let assignedHatch = allHatches.clone(); 
+  let tileIslands = {};
 
   /////////////////////////////////////////////////////////////
   ///                 Index hatces to tiles                 ///
@@ -108,13 +109,19 @@ exports.assignToolpathToTiles = function(allHatches,thisLayer) {
         new VEC2.Vec2(tile_x_max, tile_y_min) // max,min
       ];
       
+      
       tileTable[j].clipPoints = {xmin : tile_x_min,
                                  xmax : tile_x_max,
                                  ymin : tile_y_min,
                                  ymax : tile_y_max};
                      
       let tileId = tileTable[j].tileID;
-                              
+                             
+      //storeTileIsland
+      if(tileIslands[tileId] === undefined){
+        tileIslands[tileId] = UTIL.generateIslandFromCoordinates(clipPoints,true);
+        }                          
+                                 
       // clip allHatches to get hatches within this tile
       let tileHatch = UTIL.ClipHatchByRect(allHatches,clipPoints,true);
       tileHatch = UTIL.ClipHatchByRect(tileHatch,clipPoints,true);
@@ -133,7 +140,8 @@ exports.assignToolpathToTiles = function(allHatches,thisLayer) {
     
     removeEmptyHatches(allHatches,'tileID_3mf');
     
-    return allHatches;
+    return {allHatches: allHatches,
+            tileIslands: tileIslands}
     
 } //assignToolpathToTiles
 
@@ -474,40 +482,113 @@ exports.mergeShortLinesByType = function(hatches) {
   
 };
 
-exports.clipIntoStripes = function (hatch,island) {
+
+exports.generateTileIslands = function(tileIslands,thisLayer){
+  
+  let stripeObject = [];
+
+  let tileIntersectIslands = {};
+
+  Object.entries(tileIslands).forEach(function(tileIslandEntry){    
+    let tileId = tileIslandEntry[0];
+    let tileIsland = tileIslandEntry[1].getIslandArray()[0];
+    
+    let islandIterator = thisLayer.getFirstIsland();
+
+    while (islandIterator.isValid()){
+      
+      let thisIsland = islandIterator.getIsland();
+      let thisTile = tileIsland.clone();
+      
+      thisTile.intersect(thisIsland);
+            
+      if(!thisTile.isEmpty()){
+        
+        if(tileIntersectIslands[tileId] === undefined){
+          tileIntersectIslands[tileId] = new ISLAND.bsIsland();
+        }
+       
+        tileIntersectIslands[tileId].addIslands(thisTile);
+      }
+      
+      islandIterator.next();
+    }        
+  })
+
+return  tileIntersectIslands;
+};
+
+exports.generateTileStripes = function(tileIntersectIslands,nLayerNr,stripeAngle){
+  
+  let tileStripes = {};
+  
+  Object.entries(tileIntersectIslands).forEach(function (tileIslandEntry){
+    
+    let tileId = tileIslandEntry[0];
+    let tileIslands = tileIslandEntry[1];
+    
+    if(tileStripes[tileId] === undefined){
+      tileStripes[tileId] = new ISLAND.bsIsland();
+    }
+    
+  let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
+  let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
+  let fStripeOverlap = PARAM.getParamReal('strategy','fStripeOverlap');
+  let fStripeLength = PARAM.getParamReal('strategy','fStripeLength');
+  let fpatternShift = PARAM.getParamReal('strategy','fPatternShift');
+  let stripeRefPoint = new VEC2.Vec2(nLayerNr*fpatternShift,0);
+  
+  let stripeIslands = new ISLAND.bsIsland();
+    
+  tileIslands.createStripes(tileStripes[tileId],fStripeWidth,fMinWidth,fStripeOverlap,
+    fStripeLength,stripeAngle,stripeRefPoint);
+        
+  });
+  
+  return tileStripes;
+  
+};
+
+exports.clipIntoStripes = function (hatch,tileStripes,thisLayer) {
     
   let resultHatch = new HATCH.bsHatch();
   
-  let groupedHatchByType = UTIL.getGroupedHatchObjectByType(hatch);
+  let groupedHatch = UTIL.getGroupedHatchObjectByTileType(hatch);
 
-  Object.keys(groupedHatchByType).forEach(function (type){
+  Object.entries(groupedHatch).forEach(function (tileEntry){
+    let tileId = tileEntry[0];
+    let tileGroup = tileEntry[1];
     
-    if (type == 1 || type == 3 || type == 5) {
+    Object.entries(tileGroup).forEach(function (typeEntry){
+      let typeId = typeEntry[0];
+      let typeHatch = typeEntry[1];
       
-      let islandArray = island.getIslandArray();
-      
-      let allHatches = groupedHatchByType[type].clone();
-      let stripeId = 1;
-      islandArray.forEach(function(island) {
+      if (typeId == 1 || typeId == 3 || typeId == 5) {
         
-        let patternInfo = island.getPatternInfo();
-        let clippedHatch = allHatches.clone();
+        let islandArray = tileStripes[tileId].getIslandArray();
         
-        clippedHatch.clip(island,true);
-        clippedHatch.setAttributeInt('stripeId',stripeId);
-        resultHatch.moveDataFrom(clippedHatch);
-        
-        stripeId++;
-      });
+        let allHatches = typeHatch.clone();
+        let stripeId = 1;
+        islandArray.forEach(function(island) {
+          
+          let clippedHatch = allHatches.clone();
+          
+          clippedHatch.clip(island,true);
+          clippedHatch.setAttributeInt('stripeId',stripeId);
+          resultHatch.moveDataFrom(clippedHatch);
+          
+          stripeId++;
+        });
 
-    } else {
-    
-      resultHatch.moveDataFrom(groupedHatchByType[type]);
+      } else {
       
-      }
+        resultHatch.moveDataFrom(typeHatch);
+        
+        }
+    });
   });
   return resultHatch;
-  };
+};
 
 exports.sortHatches = function(allHatches,stripeAngle){
       
@@ -527,7 +608,9 @@ exports.sortHatches = function(allHatches,stripeAngle){
         
         if (typeKey == 1 || typeKey == 3 || typeKey == 5) {
 
-          let sortedArray = sortByStripeIdAndCenterY(laserIdHatch.getHatchBlockArray());
+          //let sortedArray = sortByStripeIdAndCenterY(laserIdHatch.getHatchBlockArray());
+          
+          let sortedArray = laserIdHatch.getHatchBlockArray();
           
           sortedArray.forEach(function (hatchBlock){
           
@@ -636,12 +719,12 @@ function sweepLineSort(hatch, sweepAngle) {
 function sortByStripeIdAndCenterY(boundsArray) {
     return boundsArray.sort(function(a, b) {
         // First, compare by stripeId (ascending order)
-        var stripeIdA = a.getAttributeInt('stripeId');
-        var stripeIdB = b.getAttributeInt('stripeId');
-        
-        if (stripeIdA !== stripeIdB) {
-            return stripeIdA - stripeIdB; // Sort by stripeId in ascending order
-        }
+//         var stripeIdA = a.getAttributeInt('stripeId');
+//         var stripeIdB = b.getAttributeInt('stripeId');
+//         
+//         if (stripeIdA !== stripeIdB) {
+//             return stripeIdA - stripeIdB; // Sort by stripeId in ascending order
+//         }
         
         // If stripeIds are equal, compare by center Y (descending order)
         var centerA = a.getBounds2D().getCenter();

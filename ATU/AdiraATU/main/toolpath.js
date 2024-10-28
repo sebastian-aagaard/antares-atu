@@ -32,7 +32,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
 
   //CREATE CONTAINERS
   let allHatches = new HATCH.bsHatch();
-  let stripeIslands = new ISLAND.bsIsland();
+  //let stripeIslands = new ISLAND.bsIsland();
   
   // RUN THROUGH ISLANDS
   let island_it = modelData.getFirstIsland(nLayerNr); // get island Iterator
@@ -46,8 +46,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     let processedToolpath = TPGEN.processIslands(thisModel,island_it,nLayerNr,islandId);
     
      allHatches.moveDataFrom(processedToolpath.resultHatch);
-     stripeIslands.addIslands(processedToolpath.stripe.islands); 
-     stripeAngle = processedToolpath.stripe.angle;
+     //stripeIslands.addIslands(processedToolpath.stripe.islands); 
+     stripeAngle = processedToolpath.stripeAngle;
     // get blocked path hatches
     let blockedPathHatch = TPGEN.getBlockedPathHatch(thisModel,island_it,islandId);
 
@@ -71,7 +71,8 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   });
 
   //  --- TILE OPERATIONS --- //
-  allHatches = TP2TILE.assignToolpathToTiles(allHatches,thisLayer);
+  let assignContainer = TP2TILE.assignToolpathToTiles(allHatches,thisLayer);
+  allHatches = assignContainer.allHatches; 
   allHatches = UTIL.adjustContourInterface(allHatches,thisLayer,false);
   allHatches = UTIL.adjustInterfaceVectors(allHatches,thisLayer,false);
 
@@ -93,19 +94,22 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     "bCheckAttributes": true
   });
   
-  ////TP2Tile.combineSmallStripeIslands(stripeIslands); TODO
-  allHatches = TP2TILE.clipIntoStripes(allHatches,stripeIslands)
+  let tileIslands = assignContainer.tileIslands;
+  let tileIntersectIslands = TP2TILE.generateTileIslands(tileIslands,thisLayer);
+  let tileStripes = TP2TILE.generateTileStripes(tileIntersectIslands,nLayerNr,stripeAngle);
+  
+  allHatches = TP2TILE.clipIntoStripes(allHatches,tileStripes,thisLayer);
   
   allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
-  
+    
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
     "bCheckAttributes": true
   });
 
   allHatches = TP2TILE.sortHatches(allHatches,stripeAngle);
-  
-  allHatches.removeAttributes("stripeId");
+
+  allHatches.removeAttributes('stripeId');
   
   allHatches.mergeHatchBlocks({
     "bConvertToHatchMode": true,
@@ -113,8 +117,6 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   });  
   
   LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
-
-  //allHatches = TP2TILE.sortHatchByPriorityInTiles(allHatches);
 
   allHatches = TP2TILE.deleteShortHatchLines(allHatches);
   
