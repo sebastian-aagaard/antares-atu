@@ -591,7 +591,6 @@ exports.clipIntoStripes = function (hatch,tileStripes,thisLayer) {
 };
 
 exports.sortHatches = function(allHatches,stripeAngle){
-      
   stripeAngle = UTIL.invertAngleIfQ1orQ2(stripeAngle);
   let stripeAngleRadians = stripeAngle * Math.PI / 180;
   
@@ -608,9 +607,9 @@ exports.sortHatches = function(allHatches,stripeAngle){
         
         if (typeKey == 1 || typeKey == 3 || typeKey == 5) {
 
-          //let sortedArray = sortByStripeIdAndCenterY(laserIdHatch.getHatchBlockArray());
+          let sortedArray = sortStripes(laserIdHatch.getHatchBlockArray());
           
-          let sortedArray = laserIdHatch.getHatchBlockArray();
+          //let sortedArray = laserIdHatch.getHatchBlockArray();
           
           sortedArray.forEach(function (hatchBlock){
           
@@ -716,21 +715,23 @@ function sweepLineSort(hatch, sweepAngle) {
 }
 
   
-function sortByStripeIdAndCenterY(boundsArray) {
+function sortStripes(boundsArray) {
     return boundsArray.sort(function(a, b) {
-        // First, compare by stripeId (ascending order)
-//         var stripeIdA = a.getAttributeInt('stripeId');
-//         var stripeIdB = b.getAttributeInt('stripeId');
-//         
-//         if (stripeIdA !== stripeIdB) {
-//             return stripeIdA - stripeIdB; // Sort by stripeId in ascending order
-//         }
+
         
-        // If stripeIds are equal, compare by center Y (descending order)
-        var centerA = a.getBounds2D().getCenter();
-        var centerB = b.getBounds2D().getCenter();
+      // If stripeIds are equal, compare by center Y (descending order)
+      let maxYA = a.getBounds2D().maxY;
+      let maxYB = b.getBounds2D().maxY;
+      
+      if (maxYA !== maxYB){
+        return maxYB - maxYA; // Sort by center Y in decending order
+      }
+      
+      let stripeIdA = a.getAttributeInt('stripeId');
+      let stripeIdB = b.getAttributeInt('stripeId');
+      
+      return stripeIdB - stripeIdA; // Sort by stripeId in decending order        
         
-        return centerB.y - centerA.y; // Sort by center Y in descending order
     });
 }
 

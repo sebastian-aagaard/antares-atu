@@ -128,15 +128,19 @@ function groupAndSortExposure(exposure) {
             }
 
             // Sort by position
-            var centerA = a.tryGetBounds2D().getCenter();
-            var centerB = b.tryGetBounds2D().getCenter();
+            var maxYA = a.tryGetBounds2D().maxY;
+            var maxYB = b.tryGetBounds2D().maxY;
 
             // Sort by maxY (largest first)
-            if (centerA.y !== centerB.y) {
-                return centerB.y - centerA.y;
+            if (maxYA !== maxYB) {
+                return maxYB - maxYA;
             }
+            
+            let stripeIdA = a.getAttributeInt('stripeId');
+            let stripeIdB = b.getAttributeInt('stripeId');
 
-            return 0;  // Consider equal if all conditions are the same
+            return stripeIdB - stripeIdA; // Sort by stripeId in decending order    
+
         });
 
         return group.polylines;

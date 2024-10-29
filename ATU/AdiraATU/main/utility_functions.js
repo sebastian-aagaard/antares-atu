@@ -68,7 +68,7 @@ exports.invertAngleIfQ1orQ2 = function(angleDeg){
  angleDeg %= 360; 
   
   if(angleDeg < 180.0 && angleDeg > 0.0){
-    angleDeg += 180;
+    angleDeg = (angleDeg + 180.0) % 360;
     };
   
   return angleDeg;

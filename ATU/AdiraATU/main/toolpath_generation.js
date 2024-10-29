@@ -31,8 +31,8 @@ const getHatchAngle = function(nLayerNr, hatch_angle_init,hatch_angle_increment)
   
   // if the angle falls in the 1st or 2nd quadrant, move it to the 3rd or 4th
   //this ensures that the hatching is always against the gas flow
-  if (hatchAngle >= 0.0 && hatchAngle <= 180.0){     
-    hatchAngle += 180.0;
+  if(hatchAngle <= 90.0 || hatchAngle >= 270.0 ){ 
+    hatchAngle = (hatchAngle - 180.0 + 360) % 360;
     }
   
   return hatchAngle;
@@ -236,11 +236,6 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       let partBulkIsland = bulkIsland.clone();
       partBulkIsland.intersect(part_island);
       
-//       //make stripes 
-//       let bulkStripeIslands = createStripes(partBulkIsland,nLayerNr);
-//       
-//       stripeIslands.addIslands(bulkStripeIslands);
-      
       let hatchingArgs = {
          "fHatchDensity" : PARAM.getParamReal('exposure', '_hdens'),
          "fHatchAngle" : hatchAngle,
@@ -256,11 +251,9 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
 
       // Hatching stripes
       let fill_hatch = new HATCH.bsHatch();
-      //bulkStripeIslands.hatchExt2(fill_hatch,hatchingArgs);
       
-     partBulkIsland.hatchExt2(fill_hatch,hatchingArgs);
+      partBulkIsland.hatchExt2(fill_hatch,hatchingArgs);
 
-        
       fill_hatch.setAttributeInt('type',CONST.typeDesignations.part_hatch.value);
       fill_hatch.setAttributeInt('islandId',islandId);            
                     
@@ -318,7 +311,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   resultHatch.moveDataFrom(allDownSkinContourHatch);
   
   let stripeAngle = hatchAngle;
-  if (stripeAngle<270) stripeAngle-=180;
+ //if (stripeAngle<270) stripeAngle-=180;
  
   return {resultHatch: resultHatch,
           stripeAngle: stripeAngle};
@@ -402,9 +395,12 @@ exports.getOpenPolyLinesHatch = function(modelData,nLayerNr){
       polyline_it.next(); // looks at next polyline
     }
   
-    
-  allPolyLineHatch.pathReordering(new VEC2.Vec2(1000,1000),HATCH.nSortFlagShortestPath|HATCH.nSortFlagFlipOrientation|HATCH.nSortFlagUseHotSpot);
-
+  
+  if(!allPolyLineHatch.isEmpty()){
+    let polylineBounds = allPolyLineHatch.tryGetBounds2D();
+    allPolyLineHatch.pathReordering(new VEC2.Vec2(polylineBounds.maxX,polylineBounds.maxY),HATCH.nSortFlagShortestPath|HATCH.nSortFlagFlipOrientation|HATCH.nSortFlagUseHotSpot);
+  }
+  
   return allPolyLineHatch;
 }  
 
