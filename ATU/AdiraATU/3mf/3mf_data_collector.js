@@ -102,7 +102,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
          if(PARAM.getParamInt('tileing','processHeadAlignment') == 0) { //default / automatic
           
            
-          processHeadOffsetX = PARAM.getParamReal('scanhead','x_scanfield_size_mm')/2-scanfieldCenterXOffset;
+          processHeadOffsetX = PARAM.getParamReal('scanhead','x_scanner3_ref_mm');
           processHeadOffsetY = PARAM.getParamReal('tileing', 'tile_size')/2+scanfieldCenterYOffset;
   
           
