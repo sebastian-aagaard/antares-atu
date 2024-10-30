@@ -18,7 +18,7 @@ exports.scanningSchema = 'http://schemas.scanlab.com/scanning/2023/01';
 exports.skywritingSchema = 'http://schemas.scanlab.com/skywriting/2023/01';
 
 exports.parkingPosition = { x: 465 , y: - 560 };
-exports.tilePositionHardLimit = {xmin:-40 , ymin: -60, xmax: 645, ymax: 935};
+exports.tilePositionHardLimit = {xmin:-40 , ymin: -60, xmax: 645, ymax: 995};
 exports.maxTargetY = 995;
 
 // exports.dt = function(){
