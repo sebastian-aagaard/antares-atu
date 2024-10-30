@@ -32,12 +32,13 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
   let scanfieldCenterYOffset = PARAM.getParamReal('tileing','tile_size')/2-(PARAM.getParamReal('scanhead','y_scanfield_size_mm')-PARAM.getParamReal('scanhead','y_scanfield_ref_mm'));
   scanfieldCenterYOffset = scanfieldCenterYOffset < 0 ? 0 : scanfieldCenterYOffset;
      
+  let passStartPos = {x : undefined,
+                      y : undefined};
+  
   exposureArray.forEach(function(pass, passIndex) {
     
     if(pass.length === 0) return;
-    
-    let shouldYOffsetBeCorrected = false;
-    
+        
     try {
       if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
         
@@ -59,30 +60,30 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         
         let startY = pass[0].ProcessHeadFromFront ? pass[0].ycoord : pass[0].ycoord + pass[0].tileHeight;
         
-        let startYMaxPosition = CONST.maxTargetY - PARAM.getParamReal('tileing','processheadRampOffset') - pass[0].tileHeight;
+        let startYMaxPosition = CONST.maxTargetY - pass[0].tileHeight;
             
         if(startY > startYMaxPosition){
           let targetY = pass[0].ycoord;
           startY = targetY + PARAM.getParamReal('tileing','tileTravelForBreachingYLimit');
-          shouldYOffsetBeCorrected = true;
         };
         
         if(startY+processHeadOffsetY > CONST.maxTargetY) {
           
-          let processHeadOffsetYAdjustment = startY + processHeadOffsetY + PARAM.getParamReal('tileing','processheadRampOffset') - CONST.maxTargetY;
-          //process.print('processHeadOffsetYAdjustment: ' + Math.ceil(processHeadOffsetYAdjustment));
+          let processHeadOffsetYAdjustment = startY + processHeadOffsetY - CONST.maxTargetY;
           processHeadOffsetY -= processHeadOffsetYAdjustment;
           processHeadOffsetY -= 0.001; // extra offset to ensure we are within travel if round down to allowed position
           };
             
+          passStartPos.x = pass[0].xcoord;
+          passStartPos.y = startY;
             
          exporter_3mf.metadata[passIndex] = {
           "name": "onthefly",
           "namespace": "http://nikonslm.com/tilinginformation/202305",
           "attributes": {
             "uuid": UTIL.generateUUID(),
-            "startx": pass[0].xcoord.toFixed(3),
-            "starty": startY.toFixed(3),
+            "startx": passStartPos.x.toFixed(3),
+            "starty": passStartPos.y.toFixed(3),
             "sequencetransferspeed": PARAM.getParamReal('movementSettings', 'axis_transport_speed').toFixed(3),
             "processHeadOffsetX" : processHeadOffsetX.toFixed(3),
             "processHeadOffsetY" : processHeadOffsetY.toFixed(3),
@@ -129,25 +130,9 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
       process.printWarning('PostProcess | createExporter3mf: failed at pass ' + passIndex + ', layer ' + layerNr +" "+ e.message);
     }
     
+    let previousTargetPosition = passStartPos;
+    
     pass.forEach(function(tile, tileIndex){
-      let speedY;
-      let travel = tile.tileHeight;
-      
-      // Determine tile size and y speed
-      if (PARAM.getParamInt('tileing', 'ScanningMode')) { // onthefly
-        //if startY was above limit correct actual travel distance
-        if(shouldYOffsetBeCorrected){ 
-          travel = PARAM.getParamReal('tileing','tileTravelForBreachingYLimit');
-          shouldYOffsetBeCorrected = false;
-          };
-        speedY = tile.exposureTime > 0 ? travel / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('movementSettings', 'axis_max_speed');
-        speedY = speedY > PARAM.getParamReal('movementSettings', 'axis_max_speed') ? PARAM.getParamReal('movementSettings', 'axis_max_speed') : speedY;
-      } else { // move and shoot
-        speedY = PARAM.getParamReal('movementSettings', 'axis_transport_speed');
-      }
-
-      const tileMovementDuration = (travel / speedY) * 1000 * 1000;
-
       // Determine next y-coordinate
       let nextTileYCoord, nextTileXCoord;
       if (tileIndex === pass.length - 1) { // if last tile
@@ -158,10 +143,29 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         nextTileYCoord = tile.ProcessHeadFromFront ? pass[tileIndex + 1].ycoord : tile.ycoord;
       }
 
+      if(nextTileYCoord > CONST.tilePositionHardLimit.ymax){ // does next tile coord breach
+        nextTileYCoord = nextTileYCoord-tile.tileHeight+PARAM.getParamReal('tileing','tileTravelForBreachingYLimit');
+      };
+
       if (nextTileXCoord === undefined || nextTileYCoord === undefined) {
         throw new Error('failed to get next tile coord, at pass ' + passIndex + ', tile ' + tileIndex);
       }
+      
+      let travel = Math.abs(previousTargetPosition.y-nextTileYCoord);
+      
+      previousTargetPosition.y = nextTileYCoord;
+      previousTargetPosition.x = nextTileXCoord;
+      
+       // Determine tile size and y speed
+      let speedY;
+      if (PARAM.getParamInt('tileing', 'ScanningMode')) { // onthefly
+        speedY = tile.exposureTime > 0 ? travel / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('movementSettings', 'axis_max_speed');
+        speedY = speedY > PARAM.getParamReal('movementSettings', 'axis_max_speed') ? PARAM.getParamReal('movementSettings', 'axis_max_speed') : speedY;
+      } else { // move and shoot
+        speedY = PARAM.getParamReal('movementSettings', 'axis_transport_speed');
+      }
 
+      const tileMovementDuration = (travel / speedY) * 1000 * 1000;      
       
       if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
       // Create node object
@@ -189,6 +193,8 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         };
         }
       });
+      
+      
   });
 
   let layerData =  {
