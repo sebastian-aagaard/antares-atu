@@ -135,6 +135,11 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
     pass.forEach(function(tile, tileIndex){
       // Determine next y-coordinate
       let nextTileYCoord, nextTileXCoord;
+      
+      if(tileIndex === 0){ // if first tile
+      tile.exposureTime += PARAM.getParamInt('tileing','firstTileInStripeAddedDuration_us');
+      }
+    
       if (tileIndex === pass.length - 1) { // if last tile
         nextTileYCoord = tile.ycoord + (tile.ProcessHeadFromFront ? tile.tileHeight : 0);
         nextTileXCoord = tile.xcoord;
@@ -156,7 +161,13 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
       previousTargetPosition.y = nextTileYCoord;
       previousTargetPosition.x = nextTileXCoord;
       
-       // Determine tile size and y speed
+      // Add time to tile if it is below least procesing time for tile
+
+      if(tile.exposureTime<PARAM.getParamInt('tileing','minimumTileTime_us')){
+      tile.ExposureTime = PARAM.getParamInt('tileing','minimumTileTime_us');  
+      }      
+
+      
       let speedY;
       if (PARAM.getParamInt('tileing', 'ScanningMode')) { // onthefly
         speedY = tile.exposureTime > 0 ? travel / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('movementSettings', 'axis_max_speed');

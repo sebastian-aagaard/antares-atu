@@ -350,6 +350,9 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,7); 
     parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,150.0,33.0);
     parameter.declareParameterInt('tileing','tileBufferDuration_us', LOCALIZER.GetMessage('param_tileBufferDuration_us'),0.0,5000000,0);
+    parameter.declareParameterInt('tileing','firstTileInStripeAddedDuration_us', LOCALIZER.GetMessage('param_firstTileInStripeAddedDuration_us'),0.0,5000000,0);
+    parameter.declareParameterInt('tileing','minimumTileTime_us', LOCALIZER.GetMessage('param_minimumTileTime_us'),0.0,5000000,0);
+
 
     
     
