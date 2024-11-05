@@ -418,16 +418,17 @@ const getSkywritingDuration = function(cur,modelData){
 
 const getSkywritingCountForPolyline = function(points,skyWritingParamters){
   
-  let count = 0;
+  let count = 2; // adding to instances for start and stop.
   
     for (let i = 1; i < points.length - 1; i++) {
         const currentPoint = points[i].vec;
         const previousPoint = points[i-1].vec;
         const nextPoint = points[i+1].vec;
         const angleBetweenVectors = currentPoint.getAngleDeg(previousPoint, nextPoint);
-        const angularChange = 180-angleBetweenVectors;
-        const cosTheta = Math.cos(angularChange);
-
+        const angularChangeDeg = 180-angleBetweenVectors;
+        const angularChangeRad = angularChangeDeg * (Math.PI / 180); // Convert to radians  
+        const cosTheta = Math.cos(angularChangeRad);
+        
         if (cosTheta < skyWritingParamters.limit) count++;
     }
     
