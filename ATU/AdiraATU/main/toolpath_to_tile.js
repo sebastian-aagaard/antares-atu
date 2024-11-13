@@ -483,7 +483,7 @@ exports.mergeShortLinesByType = function(hatches) {
 };
 
 
-exports.generateTileIslands = function(tileIslands,thisLayer){
+exports.generateTileIslands = function(tileIslands, layerNumber, modelData){
   
   let stripeObject = [];
 
@@ -493,7 +493,7 @@ exports.generateTileIslands = function(tileIslands,thisLayer){
     let tileId = tileIslandEntry[0];
     let tileIsland = tileIslandEntry[1].getIslandArray()[0];
     
-    let islandIterator = thisLayer.getFirstIsland();
+    let islandIterator = modelData.getFirstIsland(layerNumber);
 
     while (islandIterator.isValid()){
       
@@ -560,10 +560,15 @@ exports.clipIntoStripes = function (hatch,tileStripes,thisLayer) {
     let tileGroup = tileEntry[1];
     
     Object.entries(tileGroup).forEach(function (typeEntry){
+            
       let typeId = typeEntry[0];
       let typeHatch = typeEntry[1];
       
       if (typeId == 1 || typeId == 3 || typeId == 5) {
+        
+        if(tileStripes[tileId].isEmpty()){
+          return;
+        }
         
         let islandArray = tileStripes[tileId].getIslandArray();
         

@@ -325,11 +325,9 @@ const getScanheadLaserAllocationArrayX = function(bsModelData){
 //---------------------------------------------------------------------------------------------//
 
 
-exports.assignProcessParameters = function(bsHatch,bsModelData,bsModel,nLayerNr){
+exports.assignProcessParameters = function(bsHatch,modelData,nLayerNr,modelLayer){
 
   const laser_color = getLaserDisplayColors();
-
-  const customTable = bsModel.getAttribEx('customTable');
   
   let hatchIterator = bsHatch.getHatchBlockIterator();
   
@@ -347,6 +345,10 @@ exports.assignProcessParameters = function(bsHatch,bsModelData,bsModel,nLayerNr)
       throw new Error('bsid undefined: at layer nr '+nLayerNr + ' tileId: ' +thisHatchBlock.getAttributeInt('tileID_3mf') + '/ type: ' + type);
       };
     
+    let modelIndex = thisHatchBlock.getAttributeInt('model_index');
+    let model = modelData.getModel(modelIndex);
+    let customTable = model.getAttribEx('customTable');
+      
     let thisProcessParameters = customTable.find(function (item) {
         return item.bsid === bsid;
     });
@@ -355,8 +357,7 @@ exports.assignProcessParameters = function(bsHatch,bsModelData,bsModel,nLayerNr)
       throw new Error('cannot read process parameters: at layer nr '+nLayerNr + ' tileId: ' +thisHatchBlock.getAttributeInt('tileID_3mf') + '/ type: ' + type + '/ bsid:' + bsid);
       };
     
-    let thisLayer = bsModel.getModelLayerByNr(nLayerNr);
-    let tileArray = thisLayer.getAttribEx('tileTable');
+    let tileArray = modelLayer.getAttribEx('tileTable');
     let tileID = thisHatchBlock.getAttributeInt('tileID_3mf');
     let xcoord, ycoord;
     tileArray.forEach(function(tileObj) {

@@ -57,67 +57,69 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     islandId++;
   };
   
+  thisLayer.setAttribEx("stripeAngle",stripeAngle);
+  
   // process open poly lines
   let polyLineHatch = TPGEN.getOpenPolyLinesHatch(modelData,nLayerNr);
   allHatches.moveDataFrom(polyLineHatch);
   
-  TILE.storeTileTableAsLayerAttrib(thisLayer,nLayerNr,modelData);
-
-  allHatches = TP2TILE.mergeShortLines(allHatches);
-
-  allHatches.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "bCheckAttributes": true
-  });
-
-  //  --- TILE OPERATIONS --- //
-  let assignContainer = TP2TILE.assignToolpathToTiles(allHatches,thisLayer);
-  allHatches = assignContainer.allHatches; 
-  allHatches = UTIL.adjustContourInterface(allHatches,thisLayer,false);
-  allHatches = UTIL.adjustInterfaceVectors(allHatches,thisLayer,false);
-
-  allHatches = UTIL.mergeInterfaceVectors(allHatches, UTIL.getGroupedHatchObjectByTileType,false); 
-
-  allHatches.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "bCheckAttributes": true
-  });  
-
-  allHatches = LASER.staticDistribution(modelData,allHatches,thisLayer);
-  allHatches = UTIL.adjustContourInterface(allHatches,thisLayer,true);
-  allHatches = UTIL.adjustInterfaceVectors(allHatches,thisLayer,true);
-
-  allHatches = UTIL.mergeInterfaceVectors(allHatches, UTIL.getGroupedHatchObjectByTileTypeLaserId,true);
-
-  allHatches.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "bCheckAttributes": true
-  });
-  
-  let tileIslands = assignContainer.tileIslands;
-  let tileIntersectIslands = TP2TILE.generateTileIslands(tileIslands,thisLayer);
-  let tileStripes = TP2TILE.generateTileStripes(tileIntersectIslands,nLayerNr,stripeAngle);
-  
-  allHatches = TP2TILE.clipIntoStripes(allHatches,tileStripes,thisLayer);
-  
-  allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
-    
-  allHatches.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "bCheckAttributes": true
-  });
-  allHatches = TP2TILE.sortHatches(allHatches,stripeAngle);
-
-  //allHatches.removeAttributes('stripeId');
-  
-  allHatches.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "bCheckAttributes": true
-  });  
-  
-  LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
-
-  allHatches = TP2TILE.deleteShortHatchLines(allHatches);
+//   TILE.storeTileTableAsLayerAttrib(thisLayer,nLayerNr,modelData);
+// 
+//   allHatches = TP2TILE.mergeShortLines(allHatches);
+// 
+//   allHatches.mergeHatchBlocks({
+//     "bConvertToHatchMode": true,
+//     "bCheckAttributes": true
+//   });
+// 
+//   //  --- TILE OPERATIONS --- //
+//   let assignContainer = TP2TILE.assignToolpathToTiles(allHatches,thisLayer);
+//   allHatches = assignContainer.allHatches; 
+//   allHatches = UTIL.adjustContourInterface(allHatches,thisLayer,false);
+//   allHatches = UTIL.adjustInterfaceVectors(allHatches,thisLayer,false);
+// 
+//   allHatches = UTIL.mergeInterfaceVectors(allHatches, UTIL.getGroupedHatchObjectByTileType,false); 
+// 
+//   allHatches.mergeHatchBlocks({
+//     "bConvertToHatchMode": true,
+//     "bCheckAttributes": true
+//   });  
+// 
+//   allHatches = LASER.staticDistribution(modelData,allHatches,thisLayer);
+//   allHatches = UTIL.adjustContourInterface(allHatches,thisLayer,true);
+//   allHatches = UTIL.adjustInterfaceVectors(allHatches,thisLayer,true);
+// 
+//   allHatches = UTIL.mergeInterfaceVectors(allHatches, UTIL.getGroupedHatchObjectByTileTypeLaserId,true);
+// 
+//   allHatches.mergeHatchBlocks({
+//     "bConvertToHatchMode": true,
+//     "bCheckAttributes": true
+//   });
+//   
+//   let tileIslands = assignContainer.tileIslands;
+//   let tileIntersectIslands = TP2TILE.generateTileIslands(tileIslands,thisLayer);
+//   let tileStripes = TP2TILE.generateTileStripes(tileIntersectIslands,nLayerNr,stripeAngle);
+//   
+//   allHatches = TP2TILE.clipIntoStripes(allHatches,tileStripes,thisLayer);
+//   
+//   allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
+//     
+//   allHatches.mergeHatchBlocks({
+//     "bConvertToHatchMode": true,
+//     "bCheckAttributes": true
+//   });
+//   allHatches = TP2TILE.sortHatches(allHatches,stripeAngle);
+// 
+//   //allHatches.removeAttributes('stripeId');
+//   
+//   allHatches.mergeHatchBlocks({
+//     "bConvertToHatchMode": true,
+//     "bCheckAttributes": true
+//   });  
+//   
+//   LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
+// 
+//   allHatches = TP2TILE.deleteShortHatchLines(allHatches);
   
   hatchResult.moveDataFrom(allHatches);
   
