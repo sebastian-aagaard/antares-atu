@@ -49,7 +49,7 @@ exports.declareParameters = function(parameter)
        LOCALIZER.GetMessage('param_border_order_outside_in_enable')],
        LOCALIZER.GetMessage('param_border_order_outside_in_enable'));
    
- parameter.declareParameterGroup('display', LOCALIZER.GetMessage('grp_display'));
+ parameter.declareParameterGroup('display', LOCALIZER.GetMessage('grp_display'),"Decide what color scheme is used to preview the vectors",BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
       parameter.declareParameterChoice('display', 'displayColors', LOCALIZER.GetMessage('param_displayColors'),
        [LOCALIZER.GetMessage('param_displayColors_lasers'),
        LOCALIZER.GetMessage('param_displayColors_types'),
@@ -114,11 +114,12 @@ exports.declareParameters = function(parameter)
   parameter.declareParameterGroup('laserAllocation', LOCALIZER.GetMessage('grp_laserAllocation'));
     parameter.declareParameterInt('laserAllocation', 'laserAssignedToModel', LOCALIZER.GetMessage('param_laserAssignedToModel'), 0, 5, 0);
   
- parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
-    parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
-    parameter.declareParameterReal('exposure', 'vector_lenght_merge_attempt', LOCALIZER.GetMessage('param_vector_lenght_merge_attempt'), 0.0, 10.0, 0.1);
-    parameter.declareParameterReal('exposure', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.1);
-
+ parameter.declareParameterGroup('shortVectorHandling', LOCALIZER.GetMessage('grp_shortVectorHandling'),'Options for short vectors',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+    parameter.declareParameterReal('shortVectorHandling', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
+    parameter.declareParameterReal('shortVectorHandling', 'vector_lenght_merge_attempt', LOCALIZER.GetMessage('param_vector_lenght_merge_attempt'), 0.0, 10.0, 0.1);
+    parameter.declareParameterReal('shortVectorHandling', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.1);
+   
+   parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 50.0, 0.1);//0.1 50.0   
     parameter.declareParameterReal('exposure', 'hatch_angle_init', LOCALIZER.GetMessage('param_hatch_angle_init'), 0, 360, 45);
     parameter.declareParameterReal('exposure', 'hatch_angle_increment', LOCALIZER.GetMessage('param_hatch_angle_increment'), -360, 360, 90.0);   
