@@ -24,11 +24,14 @@ const TILE = require('main/tileing.js');
 exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){  
 
   let thisModel = modelData.getModel(0);
-  let thisLayer = thisModel.getModelLayerByNr(nLayerNr);
+  let thisModelLayer = thisModel.getModelLayerByNr(nLayerNr);
   let modelName = thisModel.getAttrib('ModelName');  
 
   // check if this layer is valid, if not move on
-  if(!thisLayer.isValid()) return;
+  if(!thisModelLayer.isValid()) return;
+    
+  // check if model in layer is outside buildplate
+  checkifModelLayerisOutsideWorkArea(thisModelLayer,nLayerNr,modelName);  
 
   //CREATE CONTAINERS
   let allHatches = new HATCH.bsHatch();
@@ -41,7 +44,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
 
   while(island_it.isValid()){
     // --- CREATE TOOLPATH --- //
-        
+    
     // process islands
     let processedToolpath = TPGEN.processIslands(thisModel,island_it,nLayerNr,islandId);
     
@@ -57,70 +60,37 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
     islandId++;
   };
   
-  thisLayer.setAttribEx("stripeAngle",stripeAngle);
+  thisModelLayer.setAttribEx("stripeAngle",stripeAngle);
   
   // process open poly lines
   let polyLineHatch = TPGEN.getOpenPolyLinesHatch(modelData,nLayerNr);
   allHatches.moveDataFrom(polyLineHatch);
   
-//   TILE.storeTileTableAsLayerAttrib(thisLayer,nLayerNr,modelData);
-// 
-//   allHatches = TP2TILE.mergeShortLines(allHatches);
-// 
-//   allHatches.mergeHatchBlocks({
-//     "bConvertToHatchMode": true,
-//     "bCheckAttributes": true
-//   });
-// 
-//   //  --- TILE OPERATIONS --- //
-//   let assignContainer = TP2TILE.assignToolpathToTiles(allHatches,thisLayer);
-//   allHatches = assignContainer.allHatches; 
-//   allHatches = UTIL.adjustContourInterface(allHatches,thisLayer,false);
-//   allHatches = UTIL.adjustInterfaceVectors(allHatches,thisLayer,false);
-// 
-//   allHatches = UTIL.mergeInterfaceVectors(allHatches, UTIL.getGroupedHatchObjectByTileType,false); 
-// 
-//   allHatches.mergeHatchBlocks({
-//     "bConvertToHatchMode": true,
-//     "bCheckAttributes": true
-//   });  
-// 
-//   allHatches = LASER.staticDistribution(modelData,allHatches,thisLayer);
-//   allHatches = UTIL.adjustContourInterface(allHatches,thisLayer,true);
-//   allHatches = UTIL.adjustInterfaceVectors(allHatches,thisLayer,true);
-// 
-//   allHatches = UTIL.mergeInterfaceVectors(allHatches, UTIL.getGroupedHatchObjectByTileTypeLaserId,true);
-// 
-//   allHatches.mergeHatchBlocks({
-//     "bConvertToHatchMode": true,
-//     "bCheckAttributes": true
-//   });
-//   
-//   let tileIslands = assignContainer.tileIslands;
-//   let tileIntersectIslands = TP2TILE.generateTileIslands(tileIslands,thisLayer);
-//   let tileStripes = TP2TILE.generateTileStripes(tileIntersectIslands,nLayerNr,stripeAngle);
-//   
-//   allHatches = TP2TILE.clipIntoStripes(allHatches,tileStripes,thisLayer);
-//   
-//   allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
-//     
-//   allHatches.mergeHatchBlocks({
-//     "bConvertToHatchMode": true,
-//     "bCheckAttributes": true
-//   });
-//   allHatches = TP2TILE.sortHatches(allHatches,stripeAngle);
-// 
-//   //allHatches.removeAttributes('stripeId');
-//   
-//   allHatches.mergeHatchBlocks({
-//     "bConvertToHatchMode": true,
-//     "bCheckAttributes": true
-//   });  
-//   
-//   LASER.assignProcessParameters(allHatches,modelData,thisModel,nLayerNr);
-// 
-//   allHatches = TP2TILE.deleteShortHatchLines(allHatches);
-  
   hatchResult.moveDataFrom(allHatches);
   
 }; // makeExposureLayer
+
+  
+const checkifModelLayerisOutsideWorkArea = function(modelLayer,layerNr,modelName){
+    
+  const limits = UTIL.getWorkAreaLimits();
+    
+  if(limits.xmin >= limits.xmax || limits.ymin >= limits.ymax){
+    process.printError('Invalid Work Area Limits: would result in a zero or negative workspace area');
+  }  
+    
+  const bounds = modelLayer.tryGetBounds2D();
+  
+  if(!bounds) {
+    process.printError('Undefined model layer bounds at layer ' + layerNr + ' model ' + modelName);
+  }
+  
+  if(bounds.minX < limits.xmin || bounds.maxX > limits.xmax || bounds.minY < limits.ymin || bounds.maxY > limits.ymax){
+    
+    throw new Error("Model outside workarea limits, breach found at layer number " 
+    + layerNr + " model " + modelName + " modelBoundaries: " + bounds.minX +"/"+ bounds.maxX +";"
+    + bounds.minY +"/"+ bounds.maxY + " limits: " + limits.xmin +"/"+ limits.xmax +";"+ limits.ymin +"/"+ limits.ymax);
+  
+    }
+  
+};

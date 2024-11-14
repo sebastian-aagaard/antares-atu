@@ -10,6 +10,7 @@
 
 const PARAM = requireBuiltin('bsParam');
 const PATH_SET = requireBuiltin('bsPathSet');
+const BOUNDS2D = requireBuiltin('bsBounds2D');
 const VEC2 = requireBuiltin('vec2');
 const MODEL = requireBuiltin('bsModel');
 const UTIL = require('main/utility_functions.js');
@@ -98,37 +99,36 @@ function getTilePosition(x_pos, y_pos,tileSize_x = undefined, tileSize_y = undef
     };
 }
 
+const getSceneSize = function (modelData, layerNr) {
+  
+  let modelArray = UTIL.getModelsInLayer(modelData,layerNr);
+  
+  let modelCount = modelArray.length;
 
-function getBoundaryData(modelData, layerNr) {
-    try {
-        const layerPosZ = modelData.getLayerPosZ(layerNr); 
-        const allBoundaries = modelData.getTrayAttribEx('allLayerBoundaries');
-        const boundaries = allBoundaries[layerPosZ];
+  let sceneBounds = new BOUNDS2D.bsBounds2D;
+  
+  modelArray.forEach( function(model) {
+    
+    let modelLayer = model.getModelLayerByNr(layerNr);
+    let modelBounds = modelLayer.tryGetBounds2D();
         
-        if (!boundaries) {
-            throw new Error("No boundaries found for layer position Z: " + layerPosZ);
-        }
-        
-        // Return the boundary data
-        return {
-            xmin: boundaries[0],
-            xmax: boundaries[1],
-            ymin: boundaries[2],
-            ymax: boundaries[3]
-        };
-    } catch (e) {
-        process.printWarning('tiling | getBoundaryData Failed: cannot access boundaries at layer nr: ' + layerNr + ' - ' + e.message);
-        return null; 
+    sceneBounds.addBounds(modelBounds);
+    
+    });
+    
+    if(!sceneBounds.isValid() ) {
+      process.printWarning('no models found in layer ' + layerNr);
     }
-}
-
+    
+  return sceneBounds;
+};
 
 function calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY) {
     return {
-        scene_size_x: (modelBoundaries.xmax - modelBoundaries.xmin) + Math.abs(maxShiftX),
-        scene_size_y: (modelBoundaries.ymax - modelBoundaries.ymin) + Math.abs(maxShiftY),
-        model_size_x: modelBoundaries.xmax - modelBoundaries.xmin,
-        model_size_y: modelBoundaries.ymax - modelBoundaries.ymin
+        scene_size_x: (modelBoundaries.maxX - modelBoundaries.minX) + Math.abs(maxShiftX),
+        scene_size_y: (modelBoundaries.maxY - modelBoundaries.minY) + Math.abs(maxShiftY),
+        model_size_x: modelBoundaries.maxX - modelBoundaries.minX,
+        model_size_y: modelBoundaries.maxY - modelBoundaries.minY
     };
 }
 
@@ -227,7 +227,7 @@ exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) 
   const maxShiftY = (PARAM.getParamInt('tileing', 'number_y') - 1) * PARAM.getParamReal('tileing', 'step_y');
 
   // Get boundary data
-  const modelBoundaries = getBoundaryData(modelData, layerNr);
+  const modelBoundaries = getSceneSize(modelData, layerNr);
     
   // Calculate scene size
   const sceneSize = calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY);
@@ -246,7 +246,7 @@ exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) 
   // Adjust starting positions
 
   let adjustedTileLayoutX = adjustTileLayout(
-      modelBoundaries.xmin,modelBoundaries.xmax, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
+      modelBoundaries.minX,modelBoundaries.maxX, workAreaLimits.xmin, workAreaLimits.xmax, tileOutlineOrigin.tile_width,
       required_passes_x, PARAM.getParamReal('tileing', 'tile_overlap_x'),shiftX,maxShiftX,PARAM.getParamReal('tileShift', 'shiftTileInX'),CONST.tilePositionHardLimit.xmax);
       
   let scanhead_x_starting_pos = adjustedTileLayoutX.startingPos;
@@ -256,7 +256,7 @@ exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) 
 
 
   let adjustedTileLayoutY = adjustTileLayout(
-    modelBoundaries.ymin,modelBoundaries.ymax, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
+    modelBoundaries.minY,modelBoundaries.maxY, workAreaLimits.ymin, workAreaLimits.ymax, tileOutlineOrigin.tile_height,
     required_passes_y, PARAM.getParamReal('tileing', 'tile_overlap_y'),shiftY,maxShiftY,PARAM.getParamReal('tileShift', 'shiftTileInY'),CONST.tilePositionHardLimit.ymax);
       
   let scanhead_y_starting_pos = adjustedTileLayoutY.startingPos;

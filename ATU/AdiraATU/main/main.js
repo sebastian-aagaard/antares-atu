@@ -23,11 +23,8 @@ const POST_PROCESS_SORT = require('main/post_processor_sort_exposure.js');
 const POST_PROCESS_META = require('main/post_processor_meta.js')
 const POST_PROCESS_PLOT = require('main/post_processor_plot.js')
 const POST_PROCESS_STATS = require('main/post_processor_statistics.js');
-//let POST_PROCESS_DURATION = require('main/post_processor_scanning_duration.js');
 const PREP_MODEL = require('main/prepare_model_exposure.js');
 const CONST = require('main/constants.js');
-//let UTIL = require('main/utility_functions.js');
-//let CONST = require('main/constants.js');
 const PREPROCESSOR = require('main/preprocessor.js');
 const TOOLPATH = require('main/Toolpath.js');
 
@@ -85,23 +82,6 @@ exports.declareBuildAttributes = function(buildAttrib){
 //----------------------------------------------------------------------------//
 
 /**
-* Preprocessing step. This function is optional.
-* If no preprocessing is required then remove this function.
-* If the function exists then it has to add data to modelDataTarget
-* Otherwise the preprocessing result is empty and nothing 
-* is processed further on.
-* @param  modelDataSrc     bsModelData
-* @param  modelDataTarget  bsModelData
-* @param  progress         bsProgress
-*/
-exports.preprocessLayerStack = function(modelDataSrc, modelDataTarget, progress){
-  PREPROCESSOR.preprocessLayerStack(modelDataSrc, modelDataTarget, progress);
-  
-}; //preprocessLayerStack
-
-//----------------------------------------------------------------------------//
-
-/**
 * Prepare a part for calculation. Checking configuration
 * and adding properties to the part
 * @param  model   bsModel
@@ -137,9 +117,9 @@ exports.configurePostProcessingSteps = function(postprocessing_config){
   postprocessing_config.addPostProcessingStep(POST_PROCESS_TILES.postprocessTiles_MT,
     {bMultithread: true, nProgressWeight: 10});
   postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
-    {bMultithread: true, nProgressWeight: 10});
+    {bMultithread: true, nProgressWeight: 9});
   postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
-    {bMultithread: false, nProgressWeight: 2});
+    {bMultithread: false, nProgressWeight: 5});
   postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
     {bMultithread: false, nProgressWeight: 1});
   if(PARAM.getParamInt('display', 'displayTileGridATU')) postprocessing_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,
