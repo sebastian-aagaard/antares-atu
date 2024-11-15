@@ -24,7 +24,7 @@ const LASER = require('main/laser_designation.js');
     // 1. get tile
     // 2. assign toolpath to tiles
 
-exports.postprocessTiles_MT = function( 
+exports.postprocessCutVectorsIntoTiles_MT = function( 
   modelData, 
   progress, 
   layer_start_nr, 
@@ -55,7 +55,7 @@ exports.postprocessTiles_MT = function(
 
     let allHatches = new HATCH.bsHatch();
     exposureArray.forEach(function(polyline) {
-      polyline.setAttributeInt('model_index',polyline.getModelIndex());
+      polyline.setAttributeInt('modelIndex',polyline.getModelIndex());
       polyline.setAttributeInt('_processing_order',1);
       polyline.polylineToHatch(allHatches);
       
@@ -135,4 +135,71 @@ exports.postprocessTiles_MT = function(
 
     layerIterator.next();
   };   
+}
+
+exports.postprocessDivideHatchBlocksIntoTiles_MT = function( 
+  modelData, 
+  progress, 
+  layer_start_nr, 
+  layer_end_nr){
+
+  let startTime = Date.now();
+    
+  let layerCount = layer_end_nr - layer_start_nr + 1;
+  let modelCount = modelData.getModelCount();
+    
+  progress.initSteps(layerCount);
+     
+  let layerIterator = modelData.getPreferredLayerProcessingOrderIterator(
+    layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
+    
+  while(layerIterator.isValid() && !progress.cancelled()){
+    
+    let layerNumber = layerIterator.getLayerNr();
+    let layerZ = layerIterator.getLayerZ();
+    let zUnit = modelData.getZUnit();
+    let modelZero = modelData.getModel(0);
+    let modelLayer = modelZero.maybeGetModelLayerByNr(layerNumber);
+    
+    if(!modelLayer) {
+      process.printError("Couldn't get modelLayer " + layerNumber + " at " + layerZ + "mm"); 
+      }
+            
+    let exposureArray = modelData.getLayerPolylineArray(layerNumber,
+    POLY_IT.nLayerExposure,'rw');
+
+    let allHatches = new HATCH.bsHatch();
+    exposureArray.forEach(function(polyline, index) {
+      polyline.setAttributeInt('modelIndex',polyline.getModelIndex());
+      polyline.setAttributeInt('stripeId',index);
+      polyline.setAttributeInt('_processing_order',1);
+      polyline.polylineToHatch(allHatches);
+      
+      polyline.deletePolyline();
+      });
+     
+    allHatches = TP2TILE.mergeShortLines(allHatches);
+
+    allHatches.mergeHatchBlocks({
+      "bConvertToHatchMode": true,
+      "bCheckAttributes": true
+    });
+
+    //  --- TILE OPERATIONS --- //
+    let assignContainer = TP2TILE.assignToolpathToTiles(allHatches,modelLayer);
+    allHatches = assignContainer.allHatches; 
+
+    //allHatches = LASER.staticDistribution(modelData,allHatches,modelLayer);
+      
+    allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
+
+    //LASER.assignProcessParameters(allHatches,modelData,layerNumber,modelLayer); 
+        
+    modelLayer.createExposurePolylinesFromHatch(allHatches);
+
+    layerIterator.next();
+  };
+  
+  let endTime = Date.now()  
+  process.print('tile: Calculation time: ' + (endTime - startTime) + ' ms');
 }
