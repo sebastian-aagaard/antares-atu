@@ -184,7 +184,17 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
         
         // move downskin border to results  
         allDownSkinContourHatch.moveDataFrom(downSkinContourHatch);                         
+       
+        let downSkinBulkIsland = bulkIsland.clone();
+        downSkinBulkIsland.intersect(down_skin_island);
+        
+        // down skin hatching
+        let downSkin_hatch = new HATCH.bsHatch();
+        // create stripes
+        let downskinBulkStripeIslands = createStripes(downSkinBulkIsland,nLayerNr,hatchAngle);
 
+        // hatch stripes
+        
         let hatchingArgs = {
          "fHatchDensity" : PARAM.getParamReal("downskin", "down_skin_hdens"),
          "fHatchAngle" : getHatchAngle(nLayerNr,PARAM.getParamReal('downskin', 'down_skin_hangle'),PARAM.getParamReal('downskin', 'down_skin_hangle_increment')),
@@ -197,13 +207,8 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
           HATCH.nHatchFlagBlocksortEnhanced |
           HATCH.nHatchFlagFixedOrigin
         }; 
-       
-        let downSkinBulkIsland = bulkIsland.clone();
-        downSkinBulkIsland.intersect(down_skin_island);
         
-        // down skin hatching
-        let downSkin_hatch = new HATCH.bsHatch();
-        downSkinBulkIsland.hatchExt2(downSkin_hatch,hatchingArgs);
+        downskinBulkStripeIslands.hatchExt2(downSkin_hatch,hatchingArgs);
         
         //assign type designation
         downSkin_hatch.setAttributeInt('type',CONST.typeDesignations.downskin_hatch.value);
@@ -235,6 +240,11 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       //get part islands
       let partBulkIsland = bulkIsland.clone();
       partBulkIsland.intersect(part_island);
+
+      // Hatching stripes
+      let fill_hatch = new HATCH.bsHatch();
+      
+      let bulkStripes = createStripes(partBulkIsland,nLayerNr,hatchAngle);
       
       let hatchingArgs = {
          "fHatchDensity" : PARAM.getParamReal('exposure', '_hdens'),
@@ -247,12 +257,9 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
          "nFlags" : HATCH.nHatchFlagAlternating |
           HATCH.nHatchFlagBlocksortEnhanced |
           HATCH.nHatchFlagFixedOrigin
-        };             
-
-      // Hatching stripes
-      let fill_hatch = new HATCH.bsHatch();
-      
-      partBulkIsland.hatchExt2(fill_hatch,hatchingArgs);
+        };
+        
+      bulkStripes.hatchExt2(fill_hatch,hatchingArgs);
 
       fill_hatch.setAttributeInt('type',CONST.typeDesignations.part_hatch.value);
       fill_hatch.setAttributeInt('islandId',islandId);            
@@ -271,34 +278,36 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     allSupportContourHatch.moveDataFrom(supportBorderHatch);
     }
     
-    let hatchingArgs = {
-         "fHatchDensity" : PARAM.getParamReal('support','support_hdens'),
-         "fHatchAngle" : getHatchAngle(nLayerNr,PARAM.getParamReal('support', 'support_hatch_angle_init'),PARAM.getParamReal('support', 'support_hatch_angle_increment')),  
-         "nCycles" : 1,
-         "fCollinearBorderSnapTol" : 0.0,
-         "fBlocksortRunAheadLimit": 2.0,
-         "hatchOrigin" : {x: 0.0, y: 0.0},
-         "blocksortVec" : {x: 0.0, y: -1.0},
-         "nFlags" : HATCH.nHatchFlagAlternating | 
-          HATCH.nHatchFlagBlocksortEnhanced |
-          HATCH.nHatchFlagFlexDensity
-        };              
+    let supportBulkIslands = generateOffset(thisIsland,beam_compensation).offsetIsland;
+    let supportHatch = new HATCH.bsHatch();
     
-    let supportBulk = generateOffset(thisIsland,beam_compensation).offsetIsland;
-    var support_hatch = new HATCH.bsHatch();
-    supportBulk.hatchExt2(support_hatch,hatchingArgs);
+    let supportStripeIslands = createStripes(supportBulkIslands,nLayerNr,hatchAngle);
+    let hatchingArgs = {
+      "fHatchDensity" : PARAM.getParamReal('support','support_hdens'),
+      "fHatchAngle" : getHatchAngle(nLayerNr,PARAM.getParamReal('support', 'support_hatch_angle_init'),PARAM.getParamReal('support', 'support_hatch_angle_increment')),  
+      "nCycles" : 1,
+      "fCollinearBorderSnapTol" : 0.0,
+      "fBlocksortRunAheadLimit": 2.0,
+      "hatchOrigin" : {x: 0.0, y: 0.0},
+      "blocksortVec" : {x: 0.0, y: -1.0},
+      "nFlags" : HATCH.nHatchFlagAlternating | 
+      HATCH.nHatchFlagBlocksortEnhanced |
+      HATCH.nHatchFlagFlexDensity
+    };
+    
+  supportStripeIslands.hatchExt2(supportHatch,hatchingArgs);
       
-    support_hatch.setAttributeInt('type',CONST.typeDesignations.support_hatch.value);
-    support_hatch.setAttributeInt('islandId',islandId);
-    allSupportHatch.moveDataFrom(support_hatch);       
+    supportHatch.setAttributeInt('type',CONST.typeDesignations.supportHatch.value);
+    supportHatch.setAttributeInt('islandId',islandId);
+    allSupportHatch.moveDataFrom(supportHatch);       
   }
   
   
   let resultHatch = new HATCH.bsHatch();
   
-  mergeHatchBlocks(allSupportHatch);
-  mergeHatchBlocks(allHatch);
-  mergeHatchBlocks(allDownSkinHatch);
+  //mergeHatchBlocks(allSupportHatch);
+  //mergeHatchBlocks(allHatch);
+  //mergeHatchBlocks(allDownSkinHatch);
   mergeHatchBlocks(allContourHatch);
   mergeHatchBlocks(allDownSkinContourHatch);
   mergeHatchBlocks(allSupportContourHatch);
@@ -311,7 +320,6 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   resultHatch.moveDataFrom(allDownSkinContourHatch);
   
   let stripeAngle = hatchAngle;
- //if (stripeAngle<270) stripeAngle-=180;
  
   return {resultHatch: resultHatch,
           stripeAngle: stripeAngle};
@@ -323,6 +331,7 @@ const mergeHatchBlocks = function(hatch){
     "bCheckAttributes": true
   });  
 };
+
 
 const makeBorders = function(islandObj,islandId){
   
@@ -406,6 +415,23 @@ exports.getOpenPolyLinesHatch = function(modelData,nLayerNr){
 
 
 //============================================================================
+
+function createStripes(islands,nLayerNr,stripeAngle){
+
+  let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
+  let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
+  let fStripeOverlap = PARAM.getParamReal('strategy','fStripeOverlap');
+  let fStripeLength = PARAM.getParamReal('strategy','fStripeLength');
+  let fpatternShift = PARAM.getParamReal('strategy','fPatternShift');
+  let stripeRefPoint = new VEC2.Vec2(nLayerNr*fpatternShift,0);
+  
+  let stripeIslands = new ISLAND.bsIsland();
+  
+  islands.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,
+    fStripeLength,stripeAngle,stripeRefPoint);
+  
+  return stripeIslands
+};
 
 exports.sortHatchByPriority = function(allHatches){
 
