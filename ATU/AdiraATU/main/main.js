@@ -18,6 +18,7 @@ const TEST = require('main/unit_test.js')
 const MACHINE_CONFIG = require('../configuration/machine_declaration.js');
 const PARAM_CONFIG = require('../configuration/parameter_declaration.js');
 const ATTRIB_CONFIG = require('../configuration/attribute_declaration.js');
+const POST_PROCESS_INIT = require('main/post_processor_init.js');
 const POST_PROCESS_TILES = require('main/post_processor_tiles.js');
 const POST_PROCESS_SORT = require('main/post_processor_sort_exposure.js');
 const POST_PROCESS_META = require('main/post_processor_meta.js')
@@ -25,7 +26,6 @@ const POST_PROCESS_PLOT = require('main/post_processor_plot.js')
 const POST_PROCESS_STATS = require('main/post_processor_statistics.js');
 const PREP_MODEL = require('main/prepare_model_exposure.js');
 const CONST = require('main/constants.js');
-const PREPROCESSOR = require('main/preprocessor.js');
 const TOOLPATH = require('main/Toolpath.js');
 
 //----------------------------------------------------------------------------//
@@ -101,10 +101,12 @@ exports.prepareModelExposure = function(model){
 
 exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){ 
 
-  //if(nLayerNr==1) { return }; 
   TOOLPATH.makeExposureLayer(modelData, hatchResult, nLayerNr);
   
 }; // makeExposureLayer
+
+
+ // do something …
 
 
   
@@ -114,16 +116,55 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
 exports.configurePostProcessingSteps = function(postprocessing_config){
 
   // Postprocessing the toolpaths using the given function:
-  postprocessing_config.addPostProcessingStep(POST_PROCESS_TILES.postprocessTiles_MT,
+  let startTime = Date.now()
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_INIT.postprocess_storeScannerArray,
+    {bMultithread: false, nProgressWeight: 1});
+    
+  let endTime = Date.now()
+  process.printLogFile('1 Calculation time: ' + (endTime - startTime) + ' ms')  
+  startTime = Date.now()
+  
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_INIT.storeTileLayoutInLayer_MT,
     {bMultithread: true, nProgressWeight: 10});
+    
+  endTime = Date.now()
+  process.printLogFile('2 Calculation time: ' + (endTime - startTime) + ' ms')  
+  startTime = Date.now()
+    
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_TILES.postprocessTiles_MT,
+    {bMultithread: true, nProgressWeight: 7});
+    
+  endTime = Date.now()
+  process.printLogFile('3 Calculation time: ' + (endTime - startTime) + ' ms')  
+  startTime = Date.now()
+    
   postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
     {bMultithread: true, nProgressWeight: 9});
+    
+  endTime = Date.now()
+  process.printLogFile('4 Calculation time: ' + (endTime - startTime) + ' ms')  
+  startTime = Date.now()
+    
   postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
     {bMultithread: false, nProgressWeight: 5});
+
+  endTime = Date.now()
+  process.printLogFile('5 Calculation time: ' + (endTime - startTime) + ' ms')  
+  startTime = Date.now()
+    
   postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
-    {bMultithread: false, nProgressWeight: 1});
+    {bMultithread: false, nProgressWeight: 2});
+
+  endTime = Date.now()
+  process.printLogFile('6 Calculation time: ' + (endTime - startTime) + ' ms')  
+  startTime = Date.now()
+    
   if(PARAM.getParamInt('display', 'displayTileGridATU')) postprocessing_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,
-    {bMultithread: false, nProgressWeight: 1});    
+    {bMultithread: false, nProgressWeight: 2});
+    
+  endTime = Date.now()
+  process.printLogFile('7 Calculation time: ' + (endTime - startTime) + ' ms')  
+  process.flushLogFile();
 };
 
 
@@ -144,13 +185,13 @@ exports.declareExportFilter = function(exportFilter){
   });  
 };
 
-/**
-* Export exposure data to file
-* @param  exportFile     bsFile
-* @param  sFilter        string
-* @param  modelData      bsModelData
-* @param  progress       bsProgress
-*/
+// /**
+// * Export exposure data to file
+// * @param  exportFile     bsFile
+// * @param  sFilter        string
+// * @param  modelData      bsModelData
+// * @param  progress       bsProgress
+// */
 exports.exportToFile = function(exportFile, sFilter, modelData, progress) {
   if('CLI-C108C8EC-70C4-40AE-94D2-75B778311531' != sFilter){
     throw new Error('Unsupported export filter');
@@ -180,14 +221,14 @@ exports.exportToFile = function(exportFile, sFilter, modelData, progress) {
 * @param  modelData      bsModelData
 * @param  progress       bsProgress
 */
-exports.exportToDirectory = function(
-  exportDir, 
-  sFilter, 
-  modelData, 
-  progress)
-{
-  throw new Error('Unsupported export filter');
-};
+// exports.exportToDirectory = function(
+//   exportDir, 
+//   sFilter, 
+//   modelData, 
+//   progress)
+// {
+//   throw new Error('Unsupported export filter');
+// };
 
 /**
 * Define arbitrary additional properties.

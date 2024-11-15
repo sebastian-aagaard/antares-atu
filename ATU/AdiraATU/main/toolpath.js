@@ -10,6 +10,7 @@
 const PARAM = requireBuiltin('bsParam');
 const ISLAND = requireBuiltin('bsIsland');
 const HATCH = requireBuiltin('bsHatch');
+const LAYER = requireBuiltin('bsModelLayer');
 
 // -------- SCRIPT INCLUDES -------- //
 const UTIL = require('main/utility_functions.js');
@@ -23,12 +24,16 @@ const TILE = require('main/tileing.js');
 // -------- FUNCTIONS -------- //
 exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){  
 
+
   let thisModel = modelData.getModel(0);
   let thisModelLayer = thisModel.getModelLayerByNr(nLayerNr);
   let modelName = thisModel.getAttrib('ModelName');  
 
+  if(!isLayerProcessable(thisModelLayer)) return;
+
   // check if this layer is valid, if not move on
   if(!thisModelLayer.isValid()) return;
+    
     
   // check if model in layer is outside buildplate
   checkifModelLayerisOutsideWorkArea(thisModelLayer,nLayerNr,modelName);  
@@ -71,6 +76,18 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
 }; // makeExposureLayer
 
   
+const isLayerProcessable = function(modelLayer){
+    return (
+        modelLayer.isValid() &&
+        modelLayer.tryGetBounds2D() &&
+        modelLayer.hasData(
+            LAYER.nLayerDataTypeIsland |
+            LAYER.nLayerDataTypeOpenPolyline |
+            LAYER.nLayerDataTypeExposurePolyline
+        )
+    );
+};
+
 const checkifModelLayerisOutsideWorkArea = function(modelLayer,layerNr,modelName){
     
   const limits = UTIL.getWorkAreaLimits();
@@ -82,7 +99,7 @@ const checkifModelLayerisOutsideWorkArea = function(modelLayer,layerNr,modelName
   const bounds = modelLayer.tryGetBounds2D();
   
   if(!bounds) {
-    process.printError('Undefined model layer bounds at layer ' + layerNr + ' model ' + modelName);
+    process.printError('Toolpath: Undefined model layer bounds at layer ' + layerNr + ' at ' + modelLayer.getLayerZ() + ' for model ' + modelName);
   }
   
   if(bounds.minX < limits.xmin || bounds.maxX > limits.xmax || bounds.minY < limits.ymin || bounds.maxY > limits.ymax){

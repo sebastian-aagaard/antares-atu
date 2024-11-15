@@ -65,7 +65,7 @@ const getScanner = function(laserIndex){
   //  Define and store scanner array   //
   ///////////////////////////////////////
   
-exports.defineScannerArray = function(bsModelData) {
+exports.storeScannerArrayInTray = function(bsModelData) {
 
   let scannerArray = [];
   

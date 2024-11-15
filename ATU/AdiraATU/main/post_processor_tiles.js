@@ -29,9 +29,7 @@ exports.postprocessTiles_MT = function(
   progress, 
   layer_start_nr, 
   layer_end_nr){
-    
-  LASER.defineScannerArray(modelData);
-    
+        
   let layerCount = layer_end_nr - layer_start_nr + 1;
   let modelCount = modelData.getModelCount();
     
@@ -51,9 +49,7 @@ exports.postprocessTiles_MT = function(
     if(!modelLayer) {
       process.printError("Couldn't get modelLayer " + layerNumber + " at " + layerZ + "mm"); 
       }
-    
-    TILE.storeTileTableAsLayerAttrib(modelLayer, layerNumber, modelData);
-        
+            
     let exposureArray = modelData.getLayerPolylineArray(layerNumber,
     POLY_IT.nLayerExposure,'rw');
 
@@ -140,14 +136,3 @@ exports.postprocessTiles_MT = function(
     layerIterator.next();
   };   
 }
-
-  
-  
-  // ops in assign tiles:
-  /*
-  -get tile array
-  -assignToolpathToTiles()
-  -laser assign static
-  -assign processparams
-  
-  */
