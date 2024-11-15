@@ -16,6 +16,7 @@ exports.prepareModelExposure = function(model){
   
   
   // Save Parameter JSON string
+  model.setAttrib('processedByLaser',PARAM.getParamInt('laserAllocation', 'laserAssignedToModel').toString());
 
   let parameterConfiguration =
     {

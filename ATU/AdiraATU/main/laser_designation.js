@@ -149,9 +149,7 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
     let clip_min_y = thisTileLayout[0].m_coord[1];
     let clip_max_y = thisTileLayout[2].m_coord[1];
     let xTileOffset = thisTileLayout[0].m_coord[0];
-      
-    let halfVectorOverlap = PARAM.getParamReal('interface', 'interfaceOverlap')/2;
-      
+            
     for(let laserIndex = 0; laserIndex < laserCount; laserIndex++){ // run trough all laser dedication zones
       
       let clip_min_x, clip_max_x;
@@ -165,13 +163,13 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
         // set clip width, account for overlap
         if(laserIndex === 0){ // if first laser only overlap max x
           clip_min_x = xDiv[laserIndex];
-          clip_max_x = xDiv[laserIndex+1]+halfVectorOverlap;
+          clip_max_x = xDiv[laserIndex+1];
         } else if (laserIndex === laserCount-1) { // if last laser only overlap min x
-          clip_min_x = xDiv[laserIndex]-halfVectorOverlap;
+          clip_min_x = xDiv[laserIndex];
           clip_max_x = xDiv[laserIndex+1];
         } else { // else overlap both min and max x
-          clip_min_x = xDiv[laserIndex]-halfVectorOverlap;
-          clip_max_x = xDiv[laserIndex+1]+halfVectorOverlap; 
+          clip_min_x = xDiv[laserIndex];
+          clip_max_x = xDiv[laserIndex+1]; 
         }
         
       } else {
@@ -206,7 +204,7 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
       let tileHatchInside = UTIL.ClipHatchByRect(tileHatch,clipPoints,true);
       let tileHatchOutside = UTIL.ClipHatchByRect(tileHatch,clipPoints,false);
 
-      anotateHatchBlocks(tileHatchInside,laserIndex+1,tileId,thisLayer); 
+      anotateHatchBlocks(tileHatchInside,laserIndex+1,tileId,thisLayer,bsModelData); 
       
       
       thisTile.laserClipPoints[laserIndex] = {xmin : clip_min_x,
@@ -231,7 +229,7 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
   return returnHatch;
 } //fixedLaserWorkload
 
-const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer) {
+const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer,modelData) {
     // add bsid attribute to hatch blocks
     let hatchIterator = tileHatch.getHatchBlockIterator();
 
@@ -239,10 +237,11 @@ const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer)
         let currHatchBlock = hatchIterator.get(); // Fixed typo in currHatcBlock
         
         let tileID = currHatchBlock.getAttributeInt('tileID_3mf');
-        
+        let modelIndex = currHatchBlock.getAttributeInt('modelIndex');
+        let processedByLaser = Number(modelData.getModel(modelIndex).getAttrib('processedByLaser'));
         // Check if laser is assigned to the model or to the specific laserIndex
-        if (PARAM.getParamInt('laserAllocation', 'laserAssignedToModel') === 0 || 
-            PARAM.getParamInt('laserAllocation', 'laserAssignedToModel') == laserIndex) {
+        if (processedByLaser === 0 || 
+            processedByLaser === laserIndex) {
             
             let prevBsid = currHatchBlock.getAttributeInt('bsid');
 
@@ -345,7 +344,7 @@ exports.assignProcessParameters = function(bsHatch,modelData,nLayerNr,modelLayer
       throw new Error('bsid undefined: at layer nr '+nLayerNr + ' tileId: ' +thisHatchBlock.getAttributeInt('tileID_3mf') + '/ type: ' + type);
       };
     
-    let modelIndex = thisHatchBlock.getAttributeInt('model_index');
+    let modelIndex = thisHatchBlock.getAttributeInt('modelIndex');
     let model = modelData.getModel(modelIndex);
     let customTable = model.getAttribEx('customTable');
       

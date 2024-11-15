@@ -23,7 +23,7 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeReal('xcoord');
   buildAttrib.declareAttributeReal('ycoord');
   buildAttrib.declareAttributeInt('tile_index');
-  buildAttrib.declareAttributeInt('model_index');
+  buildAttrib.declareAttributeInt('modelIndex');
   buildAttrib.declareAttributeInt('tileID_3mf');
   buildAttrib.declareAttributeReal('Hatch_Duration_ms');
   buildAttrib.declareAttributeInt('laser_index');
@@ -39,4 +39,5 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('overlapCount');
   buildAttrib.declareAttributeInt('overlappingLaser_1');
   buildAttrib.declareAttributeInt('overlappingLaser_2');
+  buildAttrib.declareAttributeInt('processedByLaser');
 };
