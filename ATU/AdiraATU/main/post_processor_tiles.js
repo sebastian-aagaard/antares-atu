@@ -171,8 +171,9 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
     let allHatches = new HATCH.bsHatch();
     exposureArray.forEach(function(polyline, index) {
       polyline.setAttributeInt('modelIndex',polyline.getModelIndex());
-      polyline.setAttributeInt('stripeId',index);
+      polyline.setAttributeInt('hatchBlockId',index);
       polyline.setAttributeInt('_processing_order',1);
+      
       polyline.polylineToHatch(allHatches);
       
       polyline.deletePolyline();
@@ -186,14 +187,13 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
     });
 
     //  --- TILE OPERATIONS --- //
-    let assignContainer = TP2TILE.assignHatchblocksToTiles(allHatches,modelLayer);
-    allHatches = assignContainer.allHatches; 
-
-    //allHatches = LASER.staticDistribution(modelData,allHatches,modelLayer);
+    TP2TILE.assignHatchblocksToTiles(allHatches,modelLayer);
+    
+    allHatches = LASER.staticDistribution(modelData,allHatches,modelLayer);
       
     allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
 
-    //LASER.assignProcessParameters(allHatches,modelData,layerNumber,modelLayer); 
+    LASER.assignProcessParameters(allHatches,modelData,layerNumber,modelLayer); 
         
     modelLayer.createExposurePolylinesFromHatch(allHatches);
 

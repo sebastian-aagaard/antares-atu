@@ -30,6 +30,7 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('sharedZone');
   buildAttrib.declareAttributeInt('islandId');
   buildAttrib.declareAttributeInt('stripeId');
+  buildAttrib.declareAttributeInt('hatchBlockId');
   buildAttrib.declareAttributeReal('stripeAngle');
   buildAttrib.declareAttributeInt('bMoveFromFront');
   buildAttrib.declareAttributeInt('overlappingTile_1');

@@ -36,124 +36,64 @@ exports.assignHatchblocksToTiles = function(allHatches,thisLayer) {
     });
   }
   
-  ///////////////////////////////////////////////////
-  /// generate containers for hatching and islands ///
-  ////////////////////////////////////////////////////
-  
-  let assignedHatch = allHatches.clone(); 
-  let tileIslands = {};
-
   /////////////////////////////////////////////////////////////
   ///                 Index hatces to tiles                 ///
   /// (passnumber, tile_index, scanhead xcoord and ycoord)  ///
   /////////////////////////////////////////////////////////////
 
-  for(let j = 0; j<tileTable.length;j++)
-    {
-      
-      // get the coordinates of the current tile 
-      let tile_x_min = tileTable[j].scanhead_outline[0].m_coord[0]//
-      let tile_x_max = tileTable[j].scanhead_outline[2].m_coord[0]//
-      let tile_y_min = tileTable[j].scanhead_outline[0].m_coord[1];//
-      let tile_y_max = tileTable[j].scanhead_outline[2].m_coord[1];//
-      
-      
-      //if tileoverlap is greater than requested X
-      if(tileTable[j].overlapX < PARAM.getParamReal('tileing','tile_overlap_x')){
-      
-        let overLapCompensation = (Math.abs(tileTable[j].overlapX) + PARAM.getParamReal('tileing','tile_overlap_x'))/2;
-           
-        switch(tileTable[j].passNumber) {
-          case 1:
-            tile_x_max -= overLapCompensation-PARAM.getParamReal('stripeOverlapAllocation','firstOverlapShift');//
-            break;
-          case 2:
-            tile_x_min += overLapCompensation+PARAM.getParamReal('stripeOverlapAllocation','firstOverlapShift');
-            //if there is 3 passes
-            if(tileTable[j].requiredPassesX>2){
-              tile_x_max -= overLapCompensation-PARAM.getParamReal('stripeOverlapAllocation','secondOverlapShift');
-              }           
-            break;
-          case 3:
-            tile_x_min += overLapCompensation+PARAM.getParamReal('stripeOverlapAllocation','secondOverlapShift');
-            break;
-          };  
-         };
-         
-      //if tileoverlap is greater than requested X
-      if(tileTable[j].overlapY < PARAM.getParamReal('tileing', 'tile_overlap_y')){
-      
-        let overLapCompensationY = (Math.abs(tileTable[j].overlapY) + PARAM.getParamReal('tileing','tile_overlap_y'))/2;
-       
-        if(tileTable[j].tile_number !== 1 && tileTable[j].tile_number !== tileTable[j].requiredPassesY) {
-           
-          tile_y_min += overLapCompensationY;
-          tile_y_max -= overLapCompensationY;
+  for(let j = 0; j<tileTable.length;j++){
+    // get the coordinates of the current tile 
+    let tile_x_min = tileTable[j].scanhead_outline[0].m_coord[0]//
+    let tile_x_max = tileTable[j].scanhead_outline[2].m_coord[0]//
+    let tile_y_min = tileTable[j].scanhead_outline[0].m_coord[1];//
+    let tile_y_max = tileTable[j].scanhead_outline[2].m_coord[1];//
+   
+    // add the corrdinates to vector pointset
+    let clipPoints = [
+      new VEC2.Vec2(tile_x_min, tile_y_min), //min,min
+      new VEC2.Vec2(tile_x_min, tile_y_max), //min,max
+      new VEC2.Vec2(tile_x_max, tile_y_max), // max,max
+      new VEC2.Vec2(tile_x_max, tile_y_min) // max,min
+    ];
+    
+    tileTable[j].clipPoints = {xmin : tile_x_min,
+                               xmax : tile_x_max,
+                               ymin : tile_y_min,
+                               ymax : tile_y_max};
+                   
+    let tileId = tileTable[j].tileID;                   
+    filterAndAssignHatchBlocks(allHatches,tile_x_min,tile_x_max,tile_y_min,tile_y_max,tileId,thisLayer);
+  } //for
 
-        } else if(tileTable[j].tile_number === 1) {
+  thisLayer.setAttribEx('tileTable',tileTable);    
 
-          tile_y_max -= overLapCompensationY;
-           
-        } else if(tileTable[j].tile_number === tileTable[j].requiredPassesY) {
-           
-          tile_y_min += overLapCompensationY;
-        };
-      };   
-      
-      
-      // add the corrdinates to vector pointset
-      let clipPoints = [
-        new VEC2.Vec2(tile_x_min, tile_y_min), //min,min
-        new VEC2.Vec2(tile_x_min, tile_y_max), //min,max
-        new VEC2.Vec2(tile_x_max, tile_y_max), // max,max
-        new VEC2.Vec2(tile_x_max, tile_y_min) // max,min
-      ];
-      
-      
-      tileTable[j].clipPoints = {xmin : tile_x_min,
-                                 xmax : tile_x_max,
-                                 ymin : tile_y_min,
-                                 ymax : tile_y_max};
-                     
-      let tileId = tileTable[j].tileID;                   
-                                 
-      filterAndAssignHatchBlocks(assignedHatch,tile_x_min,tile_x_max,tile_y_min,tile_y_max,tileId);
-        
-    } //for
-    
-    thisLayer.setAttribEx('tileTable',tileTable);    
-    
-    removeEmptyHatches(allHatches,'tileID_3mf');
-    
-    return {allHatches: assignedHatch,
-            tileIslands: tileIslands}
-    
+  removeEmptyHatches(allHatches,'tileID_3mf');
+
+  return allHatches;
 } //assignToolpathToTiles
-
 
 function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId){
   
   if(allHatches.isEmpty()){
     return undefined;
     }
-  
+   
   let filteredHatch = new HATCH.bsHatch();
-  
-  let hatchBlockIterator = allHatches.getHatchBlockIterator();
     
+  let hatchBlockIterator = allHatches.getHatchBlockIterator();   
   while(hatchBlockIterator.isValid()){
  
     let currentHatchBlock = hatchBlockIterator.get();
     let bounds2D = currentHatchBlock.tryGetBounds2D();
     
-    if(bounds2D) process.printWarning('FilterHatchBlocks: Could not retrieve bounds2D')
+    if(!bounds2D) process.printWarning('FilterHatchBlocks: Could not retrieve bounds2D');
     
     let hatchBlockCenter = bounds2D.getCenter();
     
     if(hatchBlockCenter.x > minX && hatchBlockCenter.x < maxX && hatchBlockCenter.y > minY && hatchBlockCenter.y < maxY){
       anotateTileIntefaceHatchBlock(currentHatchBlock,tileId);
       filteredHatch.addHatchBlock(currentHatchBlock);
-    }
+    }   
     
     hatchBlockIterator.next();
   }
@@ -161,6 +101,8 @@ function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId){
   return filteredHatch;
   
 } // filterHatchBlocks
+
+
 
 exports.assignToolpathToTiles = function(allHatches,thisLayer) {
   
