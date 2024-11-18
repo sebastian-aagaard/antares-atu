@@ -186,7 +186,7 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
     });
 
     //  --- TILE OPERATIONS --- //
-    let assignContainer = TP2TILE.assignToolpathToTiles(allHatches,modelLayer);
+    let assignContainer = TP2TILE.assignHatchblocksToTiles(allHatches,modelLayer);
     allHatches = assignContainer.allHatches; 
 
     //allHatches = LASER.staticDistribution(modelData,allHatches,modelLayer);
