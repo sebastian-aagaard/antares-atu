@@ -144,31 +144,31 @@ exports.configurePostProcessingSteps = function(postprocessing_config){
   //process.print('3 Calculation time: ' + (endTime - startTime) + ' ms')  
   startTime = Date.now()
     
-  postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
-    {bMultithread: true, nProgressWeight: 9});
-    
-  endTime = Date.now()
-  //process.print('4 Calculation time: ' + (endTime - startTime) + ' ms')  
-  startTime = Date.now()
-    
-  postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
-    {bMultithread: false, nProgressWeight: 5});
-
-  endTime = Date.now()
-  //process.print('5 Calculation time: ' + (endTime - startTime) + ' ms')  
-  startTime = Date.now()
-    
-  postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
-    {bMultithread: false, nProgressWeight: 2});
-
-  endTime = Date.now()
-  //process.print('6 Calculation time: ' + (endTime - startTime) + ' ms')  
-  startTime = Date.now()
-    
+//   postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
+//     {bMultithread: true, nProgressWeight: 9});
+//     
+//   endTime = Date.now()
+//   //process.print('4 Calculation time: ' + (endTime - startTime) + ' ms')  
+//   startTime = Date.now()
+//     
+//   postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
+//     {bMultithread: false, nProgressWeight: 5});
+// 
+//   endTime = Date.now()
+//   //process.print('5 Calculation time: ' + (endTime - startTime) + ' ms')  
+//   startTime = Date.now()
+//     
+//   postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
+//     {bMultithread: false, nProgressWeight: 2});
+// 
+//   endTime = Date.now()
+//   //process.print('6 Calculation time: ' + (endTime - startTime) + ' ms')  
+//   startTime = Date.now()
+//     
   if(PARAM.getParamInt('display', 'displayTileGridATU')) postprocessing_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,
     {bMultithread: false, nProgressWeight: 2});
-    
-  endTime = Date.now()
+//     
+//   endTime = Date.now()
   //process.print('7 Calculation time: ' + (endTime - startTime) + ' ms')  
 };
 
