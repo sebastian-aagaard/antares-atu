@@ -29,12 +29,11 @@ const getHatchAngle = function(nLayerNr, hatch_angle_init,hatch_angle_increment)
   
   let hatchAngle = (hatch_angle_init + (nLayerNr * hatch_angle_increment)) % 360;
   
-  // if the angle falls in the 1st or 2nd quadrant, move it to the 3rd or 4th
-  //this ensures that the hatching is always against the gas flow
-  if(hatchAngle <= 90.0 || hatchAngle >= 270.0 ){ 
-    hatchAngle = (hatchAngle - 180.0 + 360) % 360;
+  //if the angle falls in the 1st or 2nd quadrant, move it to the 3rd or 4th
+  if(hatchAngle < 180){ 
+    hatchAngle = (hatchAngle + 180.0) % 360;
     }
-  
+    
   return hatchAngle;
 };
 
@@ -199,10 +198,10 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
          "fHatchDensity" : PARAM.getParamReal("downskin", "down_skin_hdens"),
          "fHatchAngle" : getHatchAngle(nLayerNr,PARAM.getParamReal('downskin', 'down_skin_hangle'),PARAM.getParamReal('downskin', 'down_skin_hangle_increment')),
          "nCycles" : 1,
-         "fCollinearBorderSnapTol" : 0.0,
-         "fBlocksortRunAheadLimit": 2.0,
+         "fBlocksortRunAheadLimit": 5.0,
          "hatchOrigin" : {x: 0.0, y: 0.0},
          "blocksortVec" : {x: 0.0, y: -1.0},
+         "nMinBlockSegmentCount" : 5,         
          "nFlags" : HATCH.nHatchFlagAlternating | 
           HATCH.nHatchFlagBlocksortEnhanced |
           HATCH.nHatchFlagFixedOrigin
@@ -245,21 +244,21 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       let fill_hatch = new HATCH.bsHatch();
       
       let bulkStripes = createStripes(partBulkIsland,nLayerNr,hatchAngle);
-      
       let hatchingArgs = {
          "fHatchDensity" : PARAM.getParamReal('exposure', '_hdens'),
          "fHatchAngle" : hatchAngle,
-         "nCycles" : 1,
-         "fCollinearBorderSnapTol" : 0.0,
-         "fBlocksortRunAheadLimit": 2.0,
          "hatchOrigin" : {x: 0.0, y: 0.0},
          "blocksortVec" : {x: 0.0, y: -1.0},
-         "nFlags" : HATCH.nHatchFlagAlternating |
-          HATCH.nHatchFlagBlocksortEnhanced |
-          HATCH.nHatchFlagFixedOrigin
+         "nMinBlockSegmentCount" : 1,
+         "nFlags" : 
+          HATCH.nHatchFlagAlternating
+          | HATCH.nHatchFlagBlocksortEnhanced
+          | HATCH.nHatchFlagFixedOrigin
         };
         
       bulkStripes.hatchExt2(fill_hatch,hatchingArgs);
+
+      fill_hatch.getHatchBlockIterator(); 
 
       fill_hatch.setAttributeInt('type',CONST.typeDesignations.part_hatch.value);
       fill_hatch.setAttributeInt('islandId',islandId);            
@@ -286,11 +285,12 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       "fHatchDensity" : PARAM.getParamReal('support','support_hdens'),
       "fHatchAngle" : getHatchAngle(nLayerNr,PARAM.getParamReal('support', 'support_hatch_angle_init'),PARAM.getParamReal('support', 'support_hatch_angle_increment')),  
       "nCycles" : 1,
-      "fCollinearBorderSnapTol" : 0.0,
-      "fBlocksortRunAheadLimit": 2.0,
+      "fBlocksortRunAheadLimit": 5.0,
       "hatchOrigin" : {x: 0.0, y: 0.0},
       "blocksortVec" : {x: 0.0, y: -1.0},
-      "nFlags" : HATCH.nHatchFlagAlternating | 
+      "nMinBlockSegmentCount" : 5,
+      "nFlags" : 
+      HATCH.nHatchFlagAlternating | 
       HATCH.nHatchFlagBlocksortEnhanced |
       HATCH.nHatchFlagFlexDensity
     };
@@ -418,17 +418,24 @@ exports.getOpenPolyLinesHatch = function(modelData,nLayerNr){
 
 function createStripes(islands,nLayerNr,stripeAngle){
 
-  let fStripeWidth = PARAM.getParamReal('strategy','fStripeWidth');
-  let fMinWidth = PARAM.getParamReal('strategy','fMinWidth');
-  let fStripeOverlap = PARAM.getParamReal('strategy','fStripeOverlap');
-  let fStripeLength = PARAM.getParamReal('strategy','fStripeLength');
   let fpatternShift = PARAM.getParamReal('strategy','fPatternShift');
-  let stripeRefPoint = new VEC2.Vec2(nLayerNr*fpatternShift,0);
+  let sortStripesFromRight = true;
+  if(stripeAngle>270) sortStripesFromRight = false;  
+  
+  process.print(stripeAngle);
+  
+  let stripeArgs = {
+    "fStripeWidth" : PARAM.getParamReal('strategy','fStripeWidth'),
+    "fMinWidth" : PARAM.getParamReal('strategy','fMinWidth'),
+    "fStripeOverlap" : PARAM.getParamReal('strategy','fStripeOverlap'),
+    "fStripeLength" : PARAM.getParamReal('strategy','fStripeLength'),
+    "fStripeAngle": stripeAngle,
+    "referencePoint" : new VEC2.Vec2(nLayerNr*fpatternShift,0),
+    "bStripeOrderLeft" : sortStripesFromRight
+    };
   
   let stripeIslands = new ISLAND.bsIsland();
-  
-  islands.createStripes(stripeIslands,fStripeWidth,fMinWidth,fStripeOverlap,
-    fStripeLength,stripeAngle,stripeRefPoint);
+  islands.createStripesExt(stripeIslands,stripeArgs);
   
   return stripeIslands
 };
