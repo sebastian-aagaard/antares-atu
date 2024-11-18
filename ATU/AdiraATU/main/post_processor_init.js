@@ -42,6 +42,7 @@ exports.storeTileLayoutInLayer_MT = function(
   layer_start_nr, 
   layer_end_nr){
   
+  let startTime = Date.now();
     
   let layerCount = layer_end_nr - layer_start_nr + 1;
   let modelCount = modelData.getModelCount();
@@ -67,5 +68,8 @@ exports.storeTileLayoutInLayer_MT = function(
     progress.step(1);
     layerIterator.next();
     
-  };   
+  };
+  
+  let endTime = Date.now()  
+  process.print('tile: Calculation time: ' + (endTime - startTime) + ' ms');
 }
