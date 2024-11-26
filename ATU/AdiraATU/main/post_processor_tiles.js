@@ -172,7 +172,6 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
     exposureArray.forEach(function(polyline, index) {
       polyline.setAttributeInt('modelIndex',polyline.getModelIndex());
       polyline.setAttributeInt('hatchBlockId',index);
-      polyline.setAttributeInt('_processing_order',1);
       
       polyline.polylineToHatch(allHatches);
       
@@ -188,12 +187,13 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
 
     //  --- TILE OPERATIONS --- //
     TP2TILE.assignHatchblocksToTiles(allHatches,modelLayer);
-    
-    allHatches = LASER.staticDistribution(modelData,allHatches,modelLayer);
-      
-    allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
+    sortByProcessingOrder(allHatches);  
 
-    LASER.assignProcessParameters(allHatches,modelData,layerNumber,modelLayer); 
+    //allHatches = LASER.staticDistribution(modelData,allHatches,modelLayer);
+      
+    //allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
+
+    //LASER.assignProcessParameters(allHatches,modelData,layerNumber,modelLayer); 
         
     modelLayer.createExposurePolylinesFromHatch(allHatches);
 
@@ -203,3 +203,30 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
   let endTime = Date.now()  
   process.print('tile: Calculation time: ' + (endTime - startTime) + ' ms');
 }
+
+function sortByProcessingOrder(allHatches){
+  
+  let hatchBlockArray = allHatches.getHatchBlockArray();
+  
+  hatchBlockArray.sort(function(a,b){
+    
+    let aProccesingOrder = a.getAttributeInt('_processing_order')
+    let bProcessingOrder = b.getAttributeInt('_processing_order')
+    
+    if(aProccesingOrder !== bProcessingOrder){
+      return aProccesingOrder - bProcessingOrder;
+    }
+    
+    let aMaxY = a.tryGetBounds2D().maxY;
+    let bMaxY = b.tryGetBounds2D().maxY;
+    
+    return bMaxY - aMaxY;
+  })
+  
+  allHatches.makeEmpty();
+  
+  hatchBlockArray.forEach(function(hatchBlock){
+    allHatches.addHatchBlock(hatchBlock);
+  })
+  
+};

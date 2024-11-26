@@ -70,37 +70,59 @@ exports.assignHatchblocksToTiles = function(allHatches,thisLayer) {
   removeEmptyHatches(allHatches,'tileID_3mf');
 
   return allHatches;
-} //assignToolpathToTiles
+} //assignHatchblocksToTiles
 
-function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId){
+
+function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId,thisLayer){
   
   if(allHatches.isEmpty()){
     return undefined;
     }
-   
-  let filteredHatch = new HATCH.bsHatch();
-    
-  let hatchBlockIterator = allHatches.getHatchBlockIterator();   
-  while(hatchBlockIterator.isValid()){
- 
-    let currentHatchBlock = hatchBlockIterator.get();
-    let bounds2D = currentHatchBlock.tryGetBounds2D();
-    
-    if(!bounds2D) process.printWarning('FilterHatchBlocks: Could not retrieve bounds2D');
-    
-    let hatchBlockCenter = bounds2D.getCenter();
-    
-    if(hatchBlockCenter.x > minX && hatchBlockCenter.x < maxX && hatchBlockCenter.y > minY && hatchBlockCenter.y < maxY){
-      anotateTileIntefaceHatchBlock(currentHatchBlock,tileId);
-      filteredHatch.addHatchBlock(currentHatchBlock);
-    }   
-    
-    hatchBlockIterator.next();
-  }
-   
-  return filteredHatch;
+      
+  let insideHatchHorizontal = new HATCH.bsHatch();
+  let insideHatchTile = new HATCH.bsHatch();
+  let outsideHatch = new HATCH.bsHatch();
   
+  let layerHeight_mm = thisLayer.getLayerZ()/1000;  
+    
+  allHatches.axisFilter(insideHatchHorizontal,outsideHatch,HATCH.nAxisY,minY,maxY,layerHeight_mm);
+  insideHatchHorizontal.axisFilter(insideHatchTile,outsideHatch,HATCH.nAxisY,minX,maxX,layerHeight_mm);
+
+  anotateTileIntefaceHatch(insideHatchTile,tileId);
+  
+  allHatches.makeEmpty();
+  allHatches.moveDataFrom(insideHatchTile);  
+  allHatches.moveDataFrom(outsideHatch);
+    
+
 } // filterHatchBlocks
+
+
+// function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId){
+//   
+//   if(allHatches.isEmpty()){
+//     return undefined;
+//     }
+//       
+//   let hatchBlockIterator = allHatches.getHatchBlockIterator();  
+//     
+//   while(hatchBlockIterator.isValid()){
+//     let currentHatchBlock = hatchBlockIterator.get();
+//     let bounds2D = currentHatchBlock.tryGetBounds2D();
+//     
+//     if(!bounds2D) process.printWarning('FilterHatchBlocks: Could not retrieve bounds2D');
+//     
+//     let hatchBlockCenter = bounds2D.getCenter();
+//     
+//     
+//     
+//     if(hatchBlockCenter.x > minX && hatchBlockCenter.x < maxX && hatchBlockCenter.y > minY && hatchBlockCenter.y < maxY){
+//       anotateTileIntefaceHatchBlock(currentHatchBlock,tileId);
+//     }   
+//     
+//     hatchBlockIterator.next();
+//   }
+// } // filterHatchBlocks
 
 
 
