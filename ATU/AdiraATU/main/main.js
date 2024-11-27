@@ -115,61 +115,31 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
 
 exports.configurePostProcessingSteps = function(postprocessing_config){
 
-  let startTime, endTime;
   // Postprocessing the toolpaths using the given function:
-  startTime = Date.now()
   
   postprocessing_config.addPostProcessingStep(POST_PROCESS_INIT.postprocess_storeScannerArray,
     {bMultithread: false, nProgressWeight: 1});
-    
-  endTime = Date.now()
-    
-  //process.print('1 Calculation time: ' + (endTime - startTime) + ' ms')  
-  startTime = Date.now()
-  
+
   postprocessing_config.addPostProcessingStep(POST_PROCESS_INIT.storeTileLayoutInLayer_MT,
     {bMultithread: true, nProgressWeight: 10});
     
-  endTime = Date.now()
-  //process.print('2 Calculation time: ' + (endTime - startTime) + ' ms')  
-  startTime = Date.now()
-
   postprocessing_config.addPostProcessingStep(POST_PROCESS_TILES.postprocessDivideHatchBlocksIntoTiles_MT,
     {bMultithread: true, nProgressWeight: 7});    
     
 //   postprocessing_config.addPostProcessingStep(POST_PROCESS_TILES.postprocessCutVectorsIntoTiles_MT,
 //     {bMultithread: true, nProgressWeight: 7});
     
-  endTime = Date.now()
-  //process.print('3 Calculation time: ' + (endTime - startTime) + ' ms')  
-  startTime = Date.now()
-    
-//   postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
-//     {bMultithread: true, nProgressWeight: 9});
-//     
-//   endTime = Date.now()
-//   //process.print('4 Calculation time: ' + (endTime - startTime) + ' ms')  
-//   startTime = Date.now()
-//     
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
+    {bMultithread: true, nProgressWeight: 9});
+
 //   postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
 //     {bMultithread: false, nProgressWeight: 5});
 // 
-//   endTime = Date.now()
-//   //process.print('5 Calculation time: ' + (endTime - startTime) + ' ms')  
-//   startTime = Date.now()
-//     
 //   postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
 //     {bMultithread: false, nProgressWeight: 2});
-// 
-//   endTime = Date.now()
-//   //process.print('6 Calculation time: ' + (endTime - startTime) + ' ms')  
-//   startTime = Date.now()
-//     
+
   if(PARAM.getParamInt('display', 'displayTileGridATU')) postprocessing_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,
     {bMultithread: false, nProgressWeight: 2});
-//     
-//   endTime = Date.now()
-  //process.print('7 Calculation time: ' + (endTime - startTime) + ' ms')  
 };
 
 
