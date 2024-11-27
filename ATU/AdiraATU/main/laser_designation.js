@@ -91,13 +91,14 @@ const getLaserDisplayColors = function(){
   
   const l_col = new Array(laser_count);
   // using the previously defined color scheme for displaying lasers
+  l_col[0] = new RGBA.bsColRGBAi(128, 128, 128, 120); // grey for undecided
   l_col[1] = new RGBA.bsColRGBAi(247,4,4,255);  // red
   l_col[2] = new RGBA.bsColRGBAi(72,215,85,255); // green
   l_col[3] = new RGBA.bsColRGBAi(10,8,167,255); // blue
   l_col[4] = new RGBA.bsColRGBAi(249,9,254,255); // purple
   l_col[5] = new RGBA.bsColRGBAi(45,234,238,255); // light blue
 
-  for(let l_laser_nr = 1;l_laser_nr<laser_count+1;l_laser_nr++)
+  for(let l_laser_nr = 0;l_laser_nr<laser_count+1;l_laser_nr++)
     {
       if (l_laser_nr > 5) {// support for auto generating colors for additional lasers
       l_col[l_laser_nr] = new RGBA.bsColRGBAi(215 - (l_rnd_gen.getNextRandom()*100),
@@ -229,6 +230,123 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
   return returnHatch;
 } //fixedLaserWorkload
 
+exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer) {
+    
+  let tileTable = thisLayer.getAttribEx('tileTable');
+  let returnHatch = new HATCH.bsHatch();
+  let laserCount = PARAM.getParamInt("scanhead", "laserCount");  
+  let layerHeight_mm = thisLayer.getLayerZ()/1000;  
+  
+  let groupedHatchByTileId = UTIL.getGroupedHatchObjectByTileId(hatchObj);
+  hatchObj.makeEmpty();
+  
+  let xDiv;
+  if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
+    xDiv = getScanheadLaserAllocationArrayX(bsModelData);  
+  }
+
+  Object.entries(groupedHatchByTileId).forEach(function (tileEntry) {
+    let tileId = +tileEntry[0];
+    let tileHatch = tileEntry[1];
+    
+    if(tileId === 0){
+      return;
+      process.printError('invalid tileId at ' + thisLayer.getLayerZ() + ', tileId: ' + tileId);
+    }
+    
+    let thisTile = tileTable.find(function (tile) {     
+     return tile.tileID == tileId;
+     });
+    
+    if(!thisTile) {
+      process.printError('cannot read thisTile.scanhead_outline at ' + thisLayer.getLayerZ() + ', recieved:' + tileId);
+      return;
+      }
+    
+    let thisTileLayout = thisTile.scanhead_outline;
+    let clip_min_y = thisTileLayout[0].m_coord[1];
+    let clip_max_y = thisTileLayout[2].m_coord[1];
+    let xTileOffset = thisTileLayout[0].m_coord[0];
+            
+    for(let laserIndex = 0; laserIndex < laserCount; laserIndex++){ // run trough all laser dedication zones
+      
+      let clip_min_x, clip_max_x;
+      
+      let assignmentMode = PARAM.getParamStr('laserAssignment', 'assignmentMode');
+      let scanner = getScanner(laserIndex+1)
+
+      
+      if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
+        
+        // set clip width, account for overlap
+        if(laserIndex === 0){ // if first laser only overlap max x
+          clip_min_x = xDiv[laserIndex];
+          clip_max_x = xDiv[laserIndex+1];
+        } else if (laserIndex === laserCount-1) { // if last laser only overlap min x
+          clip_min_x = xDiv[laserIndex];
+          clip_max_x = xDiv[laserIndex+1];
+        } else { // else overlap both min and max x
+          clip_min_x = xDiv[laserIndex];
+          clip_max_x = xDiv[laserIndex+1]; 
+        }
+        
+      } else {
+        clip_min_x = scanner.abs_x_min;
+        clip_max_x = scanner.abs_x_max;
+      }
+      
+      //check if laser allocation zone is outside the preset range
+      if(scanner.abs_x_min > clip_min_x) {
+        clip_min_x = scanner.abs_x_min;
+        process.printWarning('laser ' + (laserIndex+1) + " is trying to allocate outside min x limit")
+      }; 
+      
+      if(scanner.abs_x_max < clip_max_x) {
+        clip_max_x = scanner.abs_x_max;
+        process.printWarning('laser ' + (laserIndex+1) + " is trying to allocate outside max x limit")
+      };
+      
+      //Assign tile offset
+      clip_min_x += xTileOffset;
+      clip_max_x += xTileOffset;
+      
+      // add the corrdinates to vector pointset
+      let clipPoints = [
+       new VEC2.Vec2(clip_min_x, clip_min_y), //min,min
+       new VEC2.Vec2(clip_min_x, clip_max_y), //min,max
+       new VEC2.Vec2(clip_max_x, clip_max_y), // max,max
+       new VEC2.Vec2(clip_max_x, clip_min_y) // max,min
+      ];
+
+      let insideHatchHorizontal = new HATCH.bsHatch();
+      let tileHatchOutside = new HATCH.bsHatch();
+      let tileHatchInside = new HATCH.bsHatch();
+
+      tileHatch.axisFilter(insideHatchHorizontal,tileHatchOutside,HATCH.nAxisY,clip_min_y,clip_max_y,layerHeight_mm);
+      insideHatchHorizontal.axisFilter(tileHatchInside,tileHatchOutside,HATCH.nAxisX,clip_min_x,clip_max_x,layerHeight_mm);
+
+      anotateHatchBlocks(tileHatchInside,laserIndex+1,tileId,thisLayer,bsModelData); 
+      
+      thisTile.laserClipPoints[laserIndex] = {xmin : clip_min_x,
+                                         xmax : clip_max_x,
+                                         ymin : clip_min_y,
+                                         ymax : clip_max_y};
+
+      tileHatch.makeEmpty();
+      tileHatch.moveDataFrom(tileHatchInside);
+      tileHatch.moveDataFrom(tileHatchOutside);
+        
+     }
+        
+    thisLayer.setAttribEx('tileTable',tileTable);    
+
+    tileHatch = removeEmptyHatches(tileHatch);   
+    hatchObj.moveDataFrom(tileHatch);     
+  });
+
+  return hatchObj;
+} //staticDistributionKeepVectors
+
 const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer,modelData) {
     // add bsid attribute to hatch blocks
     let hatchIterator = tileHatch.getHatchBlockIterator();
@@ -247,13 +365,13 @@ const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer,
 
             if (prevBsid > 0) {
               
-                let overlapCount = currHatchBlock.getAttributeInt('overlapCount');
+                let overlapCount = currHatchBlock.getAttributeInt('overlapLaserCount');
                 
                 overlapCount++;
                 
                 let overlappingDesignation = 'overlappingLaser_' + overlapCount.toString();
                 currHatchBlock.setAttributeInt(overlappingDesignation, prevBsid);
-                currHatchBlock.setAttributeInt('overlapCount', overlapCount);
+                currHatchBlock.setAttributeInt('overlapLaserCount', overlapCount);
             }
             
             // Set bsid based on laserIndex and type
@@ -335,6 +453,7 @@ exports.assignProcessParameters = function(bsHatch,modelData,nLayerNr,modelLayer
     let thisHatchBlock = hatchIterator.get();
     let bsid = thisHatchBlock.getAttributeInt('bsid');
     let laserId = Math.floor(bsid/10);
+    let doesItOverlap = thisHatchBlock.getAttributeInt('overlapLaserCount') != 0;
     let type = thisHatchBlock.getAttributeInt('type');
     let tileNumber = thisHatchBlock.getAttributeInt('tileID_3mf') % 1000;
     
@@ -374,7 +493,7 @@ exports.assignProcessParameters = function(bsHatch,modelData,nLayerNr,modelLayer
     thisHatchBlock.setAttributeReal('ycoord',ycoord);
     
     const displayMode = PARAM.getParamInt('display', 'displayColors');
-    const colorToSet = getDisplayColor(type, displayMode, laserId, tileNumber,laser_color);
+    const colorToSet = getDisplayColor(type, displayMode, laserId, tileNumber,laser_color, doesItOverlap);
 
     if (colorToSet) {
         thisHatchBlock.setAttributeInt('_disp_color', colorToSet);
@@ -386,11 +505,11 @@ exports.assignProcessParameters = function(bsHatch,modelData,nLayerNr,modelLayer
 
 //-----------------------------------------------------------------------------------------//
 
-const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_color) {
+const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_color, doesItOverlap) {
     
     switch (displayMode) {
         case 0:
-            return laser_color[laserId].rgba();
+            return doesItOverlap ? laser_color[0].rgba() : laser_color[laserId].rgba();
         
         case 1:
             return UTIL.findColorFromType(type).color1.rgba();
@@ -437,3 +556,76 @@ exports.mergeShortLinesForEachBsid = function(hatch){
   
   return returnHatch;
   };
+  
+//-----------------------------------------------------------------------------------------//
+
+exports.adjustHatchBlockAssignment = function(allHatches,modelLayer){
+  
+  let hatchBlockIterator = allHatches.getHatchBlockIterator();
+  let tileTable = modelLayer.getAttribEx('tileTable');
+
+  while(hatchBlockIterator.isValid()){
+    
+    let thisHatchBlock = hatchBlockIterator.get();
+    let tileId = thisHatchBlock.getAttributeInt('tileID_3mf');
+    let overlapLaserCount = thisHatchBlock.getAttributeInt('overlapLaserCount');
+    let overLapTileCount = thisHatchBlock.getAttributeInt('overlapCount');
+    
+    let thisTile = tileTable.find(function (tile) {     
+      return tile.tileID == tileId;
+    });
+          
+    if(overLapTileCount != 0){
+      
+      let bounds = thisHatchBlock.tryGetBounds2D();
+      if (!bounds) throw new Error('could not retrieve bound2D object from hatch block');
+      
+      let tileBounds = thisTile.clipPoints;
+      
+      if(bounds.minX < tileBounds.xmin || bounds.maxX > tileBounds.xmax || bounds.minY < tileBounds.ymin || bounds.maxY > tileBounds.ymax){
+        
+        thisHatchBlock.removeAttributes('tileID_3mf');
+        updateTileDesignation(thisHatchBlock,tileTable);
+        
+      }
+    }
+    
+    hatchBlockIterator.next();
+    }
+  
+}; //adjustHatchBlockAssignment  
+
+const updateTileDesignation = function(hatchBlock,tileTable){
+  
+  let overlapCount = hatchBlock.getAttributeInt("overlapCount");
+  let hatchBlockBounds = hatchBlock.tryGetBounds2D();
+  if (!hatchBlockBounds) throw new Error('could not retrieve bound2D object from hatch block');
+
+  
+  for(let i=1; i < overlapCount+1; i++){
+    let tileId = hatchBlock.getAttributeInt('overlappingTile_' + i);
+    let thisTile = tileTable.find(function (tile) {     
+      return tile.tileID == tileId;
+    });
+    let tileBounds = thisTile.clipPoints;
+    
+    if(isBoundsInside(hatchBlockBounds,tileBounds)){
+      hatchBlock.setAttributeInt('tileID_3mf',tileId);
+      hatchBlock.removeAttributes('overlapCount');
+      hatchBlock.removeAttributes('overlappingTile_' + i);
+      return;
+    };
+  };
+  
+  process.printWarning('could not fully assign this hatchblock')
+};
+
+const isBoundsInside = function(bounds,tileBounds){
+       
+  if(bounds.minX < tileBounds.xmin || bounds.maxX > tileBounds.xmax || bounds.minY < tileBounds.ymin || bounds.maxY > tileBounds.ymax){
+    return false
+    }
+    
+  return true;
+};
+

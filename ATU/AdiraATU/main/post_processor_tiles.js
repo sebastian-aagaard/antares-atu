@@ -169,15 +169,20 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
     POLY_IT.nLayerExposure,'rw');
 
     let allHatches = new HATCH.bsHatch();
-    exposureArray.forEach(function(polyline, index) {
+    let contourHatch = new HATCH.bsHatch();
+
+    exposureArray.forEach(function(polyline) {
       polyline.setAttributeInt('modelIndex',polyline.getModelIndex());
-      polyline.setAttributeInt('hatchBlockId',index);
-      
-      polyline.polylineToHatch(allHatches);
-      
+      let typeId = polyline.getAttributeInt('type');
+      if(typeId === CONST.typeDesignations.part_contour.value || typeId === CONST.typeDesignations.downskin_contour.value || typeId === CONST.typeDesignations.support_contour.value){
+        polyline.polylineToHatch(contourHatch);
+      } else {
+        polyline.polylineToHatch(allHatches);
+      }
       polyline.deletePolyline();
       });
      
+      
     allHatches = TP2TILE.mergeShortLines(allHatches);
 
     allHatches.mergeHatchBlocks({
@@ -187,13 +192,21 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
 
     //  --- TILE OPERATIONS --- //
     TP2TILE.assignHatchblocksToTiles(allHatches,modelLayer);
-    sortByProcessingOrder(allHatches);  
+    sortByProcessingOrderAndPosition(allHatches);  
+    
+    LASER.adjustHatchBlockAssignment(allHatches,modelLayer);
 
-    //allHatches = LASER.staticDistribution(modelData,allHatches,modelLayer);
+    LASER.staticDistributionKeepVectors(modelData,allHatches,modelLayer);
       
-    //allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
+    
+//     allHatches.mergeHatchBlocks({
+//         "bConvertToHatchMode": true,
+//         "bCheckAttributes": true
+//       });    
+//       
+    allHatches = LASER.mergeShortLinesForEachBsid(allHatches);
 
-    //LASER.assignProcessParameters(allHatches,modelData,layerNumber,modelLayer); 
+    LASER.assignProcessParameters(allHatches,modelData,layerNumber,modelLayer); 
         
     modelLayer.createExposurePolylinesFromHatch(allHatches);
 
@@ -204,7 +217,7 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
   process.print('tile: Calculation time: ' + (endTime - startTime) + ' ms');
 }
 
-function sortByProcessingOrder(allHatches){
+function sortByProcessingOrderAndPosition(allHatches){
   
   let hatchBlockArray = allHatches.getHatchBlockArray();
   
