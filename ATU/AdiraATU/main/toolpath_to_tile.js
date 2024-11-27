@@ -86,7 +86,7 @@ function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId,thisLa
   let layerHeight_mm = thisLayer.getLayerZ()/1000;  
     
   allHatches.axisFilter(insideHatchHorizontal,outsideHatch,HATCH.nAxisY,minY,maxY,layerHeight_mm);
-  insideHatchHorizontal.axisFilter(insideHatchTile,outsideHatch,HATCH.nAxisY,minX,maxX,layerHeight_mm);
+  insideHatchHorizontal.axisFilter(insideHatchTile,outsideHatch,HATCH.nAxisX,minX,maxX,layerHeight_mm);
 
   anotateTileIntefaceHatch(insideHatchTile,tileId);
   
@@ -96,6 +96,8 @@ function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId,thisLa
     
 
 } // filterHatchBlocks
+
+
 
 
 // function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId){
