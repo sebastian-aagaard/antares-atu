@@ -58,7 +58,7 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterChoice('display', 'displayTileGridATU', LOCALIZER.GetMessage('param_displayTileGridATU'),
        [LOCALIZER.GetMessage('param_disableTileGrid'),
        LOCALIZER.GetMessage('param_enableTileGrid')],
-       LOCALIZER.GetMessage('param_enableTileGrid'));  
+       LOCALIZER.GetMessage('param_disableTileGrid'));  
    
  parameter.declareParameterGroup('interface', LOCALIZER.GetMessage('grp_interface'));
  

@@ -141,42 +141,56 @@ const getBuildTime_ms = function(modelData,progress,layer_start_nr,layer_end_nr)
       layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
 
   let buildTime_ms = 0;
+  
   while(layerIt.isValid() && !progress.cancelled()){
     
     const layerNr = layerIt.getLayerNr();
-    
+        
     const recoatingTime_ms = PARAM.getParamInt('buildTimeEstimation','recoatingDuration_ms');
     const powderFillingTime_ms = PARAM.getParamInt('buildTimeEstimation', 'powderfillingDuration_ms');
     const minimumLayerTime_ms = PARAM.getParamInt('buildTimeEstimation', 'minimumLayerDuration_ms');
     
     const model = UTIL.getModelsInLayer(modelData,layerNr)[0];
     
-    if (!model) {
+    if (!model || !UTIL.isLayerProcessable(model.maybeGetModelLayerByNr(layerNr))) {
       process.printWarning("Post Processor Statistics: Nothing to postprocess in layer " + layerNr + ' / ' + layerIt.getLayerZ() + ' mm');
       layerIt.next();
       progress.step(1);
       continue;
     }
     
-    let exportData = model
-      .getModelLayerByNr(layerNr)
-      .getAttribEx('exporter_3mf')
-      .metadata;
+    let exportData;
+    
+    try{
+      exportData = model
+        .getModelLayerByNr(layerNr)
+        .getAttribEx('exporter_3mf')
+        .metadata;
+    } catch (error) {
+      process.printError("No metadata found on layer " + layerNr + ". Error: " + error.message);
+    }
+
+    if (!exportData || exportData.length === 0) {
+      process.printWarning("No export data found for layer " + layerNr);
+      layerIt.next();
+      progress.step(1);
+      continue;
+    }
 
     let layerDuration_ms = exportData[0]
       .attributes
       .layerTotalDuration/1000;
-//     
+
     let transport_mm = getTransportationDistance_mm(exportData);
     let transportTime_ms = (transport_mm/PARAM.getParamReal('movementSettings', 'axis_transport_speed'))*1000;
     
-    let tempDurationContainer = 0;
+    let layerTimeAccumulator = 0;
         
-    tempDurationContainer += transportTime_ms;  
-    tempDurationContainer += (layerDuration_ms < powderFillingTime_ms) ? powderFillingTime_ms : layerDuration_ms;
-    tempDurationContainer += recoatingTime_ms; // 26
+    layerTimeAccumulator += transportTime_ms;  
+    layerTimeAccumulator += (layerDuration_ms < powderFillingTime_ms) ? powderFillingTime_ms : layerDuration_ms;
+    layerTimeAccumulator += recoatingTime_ms; 
     
-    buildTime_ms += (tempDurationContainer < minimumLayerTime_ms) ? minimumLayerTime_ms : tempDurationContainer;
+    buildTime_ms += (layerTimeAccumulator < minimumLayerTime_ms) ? minimumLayerTime_ms : layerTimeAccumulator;
         
     progress.step(1);
     layerIt.next();
@@ -194,13 +208,11 @@ const getTransportationDistance_mm = function(exportData){
 
     if(index == 0) return;
     
-    
     if (index == 1) { // if first
       //from park
       let parkPos = new VEC2.Vec2(CONST.parkingPosition.x,CONST.parkingPosition.y);
       let startPos = new VEC2.Vec2(pass.attributes.startx,pass.attributes.starty);
       transport_mm += startPos.distance(parkPos);
-      //process.print('from park ' + startPos.distance(parkPos))
       }
    
     let passTarget = new VEC2.Vec2(

@@ -15,6 +15,7 @@ const PARAM = requireBuiltin('bsParam');
 const VEC2 = requireBuiltin('vec2');
 const CONST = require('main/constants.js');
 const POLY_IT = requireBuiltin('bsPolylineIterator');
+const LAYER = requireBuiltin('bsModelLayer');
 
 
 // -------- FUNCTION TOC -------- //
@@ -31,13 +32,12 @@ exports.getModelsInLayer = function(modelData,layerNr){
   let arrayofModels = [];
   
   for (let modelIt = 0; modelIt < modelCount; modelIt++){
-    
-    if (modelData.getModelMaxLayerNr(modelIt) >= layerNr 
-      && modelData.getModelMinLayerNr(modelIt) <= layerNr)
-      arrayofModels.push(modelData.getModel(modelIt))
+    if (modelData.getModelMaxLayerNr(modelIt) >= layerNr && modelData.getModelMinLayerNr(modelIt) <= layerNr){
+      arrayofModels.push(modelData.getModel(modelIt));
+    }
   };
     
-  if(arrayofModels === undefined) return false;
+  if(arrayofModels.length === 0) return false;
     
   return arrayofModels;
 }
@@ -211,6 +211,18 @@ exports.findColorFromType = function (value) {
   return null; // Return null if value is not found
 }
 
+//-----------------------------------------------------------------------------------------//
+exports.isLayerProcessable = function(modelLayer){
+    return (
+        modelLayer.isValid() &&
+        modelLayer.tryGetBounds2D() &&
+        modelLayer.hasData(
+            LAYER.nLayerDataTypeIsland |
+            LAYER.nLayerDataTypeOpenPolyline |
+            LAYER.nLayerDataTypeExposurePolyline
+        )
+    );
+};
 //-----------------------------------------------------------------------------------------//
 function getHeight (bsBounds2D){
   return bsBounds2D.maxY-bsBounds2D.minY;

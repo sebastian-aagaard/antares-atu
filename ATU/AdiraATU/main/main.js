@@ -139,7 +139,7 @@ exports.configurePostProcessingSteps = function(postprocessing_config){
     {bMultithread: false, nProgressWeight: 2});
   postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
     {bMultithread: false, nProgressWeight: 1});
-  if(PARAM.getParamInt('display', 'displayTileGridATU')) postprocessing_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,
+   postprocessing_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,
     {bMultithread: false, nProgressWeight: 1});    
 };
 

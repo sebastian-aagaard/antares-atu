@@ -34,7 +34,7 @@ exports.postprocessMeta = function(
 const removeCustomTableScanningSchema = function(modelData,progress){
   
   const modelCount = modelData.getModelCount();
-  progress.initSteps(modelCount-1);
+  progress.initSteps(modelCount);
   
   for(let modelId = 0; modelId < modelCount; modelId++){ 
     

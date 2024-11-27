@@ -124,6 +124,7 @@ function getBoundaryData(modelData, layerNr) {
 
 
 function calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY) {
+  
     return {
         scene_size_x: (modelBoundaries.xmax - modelBoundaries.xmin) + Math.abs(maxShiftX),
         scene_size_y: (modelBoundaries.ymax - modelBoundaries.ymin) + Math.abs(maxShiftY),
@@ -228,7 +229,9 @@ exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) 
 
   // Get boundary data
   const modelBoundaries = getBoundaryData(modelData, layerNr);
-    
+
+  if(!modelBoundaries.xmax) process.printError('Could not retrieve boundary data for layer ' + layerNr);  
+  
   // Calculate scene size
   const sceneSize = calculateSceneSize(modelBoundaries, maxShiftX, maxShiftY);
 

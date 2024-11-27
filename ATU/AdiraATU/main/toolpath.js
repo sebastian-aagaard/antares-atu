@@ -19,7 +19,6 @@ const TP2TILE = require('main/toolpath_to_tile.js');
 const TP2PASS = require('main/tile_to_passnumbergroup.js')
 const LASER = require('main/laser_designation.js');
 const TILE = require('main/tileing.js');
-
 // -------- FUNCTIONS -------- //
 exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){  
 
@@ -28,7 +27,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   let modelName = thisModel.getAttrib('ModelName');  
 
   // check if this layer is valid, if not move on
-  if(!thisLayer.isValid()) return;
+  if(!thisLayer.isValid() || !UTIL.isLayerProcessable(thisLayer)) return;
 
   //CREATE CONTAINERS
   let allHatches = new HATCH.bsHatch();

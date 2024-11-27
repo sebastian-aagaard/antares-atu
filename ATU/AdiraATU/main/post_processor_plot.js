@@ -33,7 +33,9 @@ exports.drawTileArray_MT = function(
   progress, 
   layer_start_nr, 
   layer_end_nr){
-        
+  
+  if(!PARAM.getParamInt('display', 'displayTileGridATU')) return;
+    
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
      layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
   
@@ -52,6 +54,8 @@ exports.drawTileArray_MT = function(
     
     let thisModelLayer = model.maybeGetModelLayerByNr(layerNr);
        
+    if(!UTIL.isLayerProcessable(thisModelLayer)) return;
+    
     if(!thisModelLayer) {           
      throw new Error('postProcessor | drawTileArray_MT: modelLayer ' + layerNr + ' , in model ' +  model.getAttribEx('ModelName'));
     };
