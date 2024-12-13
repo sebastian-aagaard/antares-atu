@@ -40,7 +40,8 @@ exports.drawTileArray_MT = function(
   while(layerIt.isValid() && !progress.cancelled()){
     
     const layerNr = layerIt.getLayerNr();
-      
+    
+
     const model = UTIL.getModelsInLayer(modelData,layerNr)[0];
     
     if (!model) {
@@ -51,7 +52,9 @@ exports.drawTileArray_MT = function(
     }
     
     let thisModelLayer = model.maybeGetModelLayerByNr(layerNr);
-       
+    
+    if(!UTIL.isLayerProcessable(thisModelLayer)) return;
+   
     if(!thisModelLayer) {           
      throw new Error('postProcessor | drawTileArray_MT: modelLayer ' + layerNr + ' , in model ' +  model.getAttribEx('ModelName'));
     };
@@ -72,6 +75,18 @@ exports.drawTileArray_MT = function(
       });
       
       thisTile.addNewPath(pointArray);
+      thisTile.setClosed(false); 
+      let laserRange = [];
+      
+      tile.laserClipPoints.forEach(function(scanner){
+        laserRange.push(new VEC2.Vec2(scanner.xmin , scanner.ymin));
+        laserRange.push(new VEC2.Vec2(scanner.xmin , scanner.ymax));
+        laserRange.push(new VEC2.Vec2(scanner.xmax , scanner.ymax)); 
+        laserRange.push(new VEC2.Vec2(scanner.xmax , scanner.ymin));
+        laserRange.push(new VEC2.Vec2(scanner.xmin , scanner.ymin));
+      })      
+      
+      //thisTile.addNewPath(laserRange);
       thisTile.setClosed(false); 
       thisModelLayer.addPathSet(thisTile,MODEL.nSubtypeSupport);
     });  
