@@ -274,7 +274,6 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
       
       let assignmentMode = PARAM.getParamStr('laserAssignment', 'assignmentMode');
       let scanner = getScanner(laserIndex+1)
-
       
       if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
         
@@ -318,19 +317,30 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
        new VEC2.Vec2(clip_max_x, clip_min_y) // max,min
       ];
 
+     thisTile.laserClipPoints[laserIndex] = { xmin : clip_min_x,
+                                              xmax : clip_max_x,
+                                              ymin : clip_min_y,
+                                              ymax : clip_max_y};
+
+
+     let axisFilterOffsetValue = PARAM.getParamReal('strategy','fStripeWidth')/2;  
+    
+      if(laserIndex != 0){
+        clip_min_x += axisFilterOffsetValue;
+      };
+        
+      if(laserIndex != laserCount){
+         clip_max_x -= axisFilterOffsetValue;
+      };
+
       let insideHatchHorizontal = new HATCH.bsHatch();
       let tileHatchOutside = new HATCH.bsHatch();
       let tileHatchInside = new HATCH.bsHatch();
 
       tileHatch.axisFilter(insideHatchHorizontal,tileHatchOutside,HATCH.nAxisY,clip_min_y,clip_max_y,layerHeight_mm);
       insideHatchHorizontal.axisFilter(tileHatchInside,tileHatchOutside,HATCH.nAxisX,clip_min_x,clip_max_x,layerHeight_mm);
-
-      anotateHatchBlocks(tileHatchInside,laserIndex+1,tileId,thisLayer,bsModelData); 
-      
-      thisTile.laserClipPoints[laserIndex] = {xmin : clip_min_x,
-                                         xmax : clip_max_x,
-                                         ymin : clip_min_y,
-                                         ymax : clip_max_y};
+                                         
+      anotateHatchBlocks(tileHatchInside,laserIndex+1,tileId,thisLayer,bsModelData,thisTile.laserClipPoints[laserIndex]);                                          
 
       tileHatch.makeEmpty();
       tileHatch.moveDataFrom(tileHatchInside);
@@ -347,13 +357,18 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
   return hatchObj;
 } //staticDistributionKeepVectors
 
-const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer,modelData) {
+const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer,modelData,laserReach) {
     // add bsid attribute to hatch blocks
     let hatchIterator = tileHatch.getHatchBlockIterator();
 
     while (hatchIterator.isValid()) {
         let currHatchBlock = hatchIterator.get(); // Fixed typo in currHatcBlock
         
+        if(!isHatchBlockFullyWithinLaserReach(currHatchBlock,laserReach)){
+          hatchIterator.next();  
+          continue;
+        };
+      
         let tileID = currHatchBlock.getAttributeInt('tileID_3mf');
         let modelIndex = currHatchBlock.getAttributeInt('modelIndex');
         let processedByLaser = Number(modelData.getModel(modelIndex).getAttrib('processedByLaser'));
@@ -391,6 +406,15 @@ const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer,
         }
         hatchIterator.next();  // Move to the next hatch block
     }
+};
+
+
+const isHatchBlockFullyWithinLaserReach = function(currHatchBlock,laserReach){
+  
+  let bounds = currHatchBlock.tryGetBounds2D();
+  if (!bounds) process.printError('could not retrieve bound2D object from hatch block');
+  
+  return UTIL.isBoundsInside(bounds,laserReach);
 };
 
 
@@ -556,76 +580,5 @@ exports.mergeShortLinesForEachBsid = function(hatch){
   
   return returnHatch;
   };
-  
-//-----------------------------------------------------------------------------------------//
-
-exports.adjustHatchBlockAssignment = function(allHatches,modelLayer){
-  
-  let hatchBlockIterator = allHatches.getHatchBlockIterator();
-  let tileTable = modelLayer.getAttribEx('tileTable');
-
-  while(hatchBlockIterator.isValid()){
-    
-    let thisHatchBlock = hatchBlockIterator.get();
-    let tileId = thisHatchBlock.getAttributeInt('tileID_3mf');
-    let overlapLaserCount = thisHatchBlock.getAttributeInt('overlapLaserCount');
-    let overLapTileCount = thisHatchBlock.getAttributeInt('overlapCount');
-    
-    let thisTile = tileTable.find(function (tile) {     
-      return tile.tileID == tileId;
-    });
-          
-    if(overLapTileCount != 0){
-      
-      let bounds = thisHatchBlock.tryGetBounds2D();
-      if (!bounds) throw new Error('could not retrieve bound2D object from hatch block');
-      
-      let tileBounds = thisTile.clipPoints;
-      
-      if(bounds.minX < tileBounds.xmin || bounds.maxX > tileBounds.xmax || bounds.minY < tileBounds.ymin || bounds.maxY > tileBounds.ymax){
-        
-        thisHatchBlock.removeAttributes('tileID_3mf');
-        updateTileDesignation(thisHatchBlock,tileTable);
-        
-      }
-    }
-    
-    hatchBlockIterator.next();
-    }
-  
-}; //adjustHatchBlockAssignment  
-
-const updateTileDesignation = function(hatchBlock,tileTable){
-  
-  let overlapCount = hatchBlock.getAttributeInt("overlapCount");
-  let hatchBlockBounds = hatchBlock.tryGetBounds2D();
-  if (!hatchBlockBounds) throw new Error('could not retrieve bound2D object from hatch block');
-
-  
-  for(let i=1; i < overlapCount+1; i++){
-    let tileId = hatchBlock.getAttributeInt('overlappingTile_' + i);
-    let thisTile = tileTable.find(function (tile) {     
-      return tile.tileID == tileId;
-    });
-    let tileBounds = thisTile.clipPoints;
-    
-    if(isBoundsInside(hatchBlockBounds,tileBounds)){
-      hatchBlock.setAttributeInt('tileID_3mf',tileId);
-      hatchBlock.removeAttributes('overlapCount');
-      hatchBlock.removeAttributes('overlappingTile_' + i);
-      return;
-    };
-  };
-  
-  process.printWarning('could not fully assign this hatchblock')
-};
-
-const isBoundsInside = function(bounds,tileBounds){
-       
-  if(bounds.minX < tileBounds.xmin || bounds.maxX > tileBounds.xmax || bounds.minY < tileBounds.ymin || bounds.maxY > tileBounds.ymax){
-    return false
-    }
-    
-  return true;
-};
+ 
 

@@ -15,6 +15,7 @@ const PARAM = requireBuiltin('bsParam');
 const VEC2 = requireBuiltin('vec2');
 const CONST = require('main/constants.js');
 const POLY_IT = requireBuiltin('bsPolylineIterator');
+const LAYER = requireBuiltin('bsModelLayer');
 
 
 // -------- FUNCTION TOC -------- //
@@ -73,6 +74,17 @@ exports.invertAngleIfQ1orQ2 = function(angleDeg){
   
   return angleDeg;
   };
+
+//-----------------------------------------------------------------------------------------//
+
+exports.isBoundsInside = function(bounds,tileBounds){
+       
+  if(bounds.minX < tileBounds.xmin || bounds.maxX > tileBounds.xmax || bounds.minY < tileBounds.ymin || bounds.maxY > tileBounds.ymax){
+    return false
+    }
+    
+  return true;
+};
 
 //-----------------------------------------------------------------------------------------//
 
@@ -211,6 +223,18 @@ exports.findColorFromType = function (value) {
   return null; // Return null if value is not found
 }
 
+//-----------------------------------------------------------------------------------------//
+exports.isLayerProcessable = function(modelLayer){
+    return (
+        modelLayer.isValid() &&
+        modelLayer.tryGetBounds2D() &&
+        modelLayer.hasData(
+            LAYER.nLayerDataTypeIsland |
+            LAYER.nLayerDataTypeOpenPolyline |
+            LAYER.nLayerDataTypeExposurePolyline
+        )
+    );
+};
 //-----------------------------------------------------------------------------------------//
 function getHeight (bsBounds2D){
   return bsBounds2D.maxY-bsBounds2D.minY;

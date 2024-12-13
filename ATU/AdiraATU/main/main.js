@@ -63,7 +63,6 @@ exports.declareMachine = function(machineConfig){
 /** @param  parameter   bsBuildParam */
 
 exports.declareParameters = function(parameter){
-    
     PARAM_CONFIG.declareParameters(parameter)
   
 };
@@ -74,7 +73,6 @@ exports.declareParameters = function(parameter){
 /** @param  buildAttrib   bsBuildAttribute */
 
 exports.declareBuildAttributes = function(buildAttrib){
-
   ATTRIB_CONFIG.declareBuildAttributes(buildAttrib);
     
 };
@@ -88,7 +86,6 @@ exports.declareBuildAttributes = function(buildAttrib){
 */
 
 exports.prepareModelExposure = function(model){
-  
   PREP_MODEL.prepareModelExposure(model);
     
 }; //prepareModelExposure
@@ -129,8 +126,8 @@ exports.configurePostProcessingSteps = function(postprocessing_config){
 //   postprocessing_config.addPostProcessingStep(POST_PROCESS_TILES.postprocessCutVectorsIntoTiles_MT,
 //     {bMultithread: true, nProgressWeight: 7});
     
-  postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
-    {bMultithread: true, nProgressWeight: 9});
+//   postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
+//     {bMultithread: true, nProgressWeight: 9});
 
 //   postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
 //     {bMultithread: false, nProgressWeight: 5});
@@ -196,14 +193,14 @@ exports.exportToFile = function(exportFile, sFilter, modelData, progress) {
 * @param  modelData      bsModelData
 * @param  progress       bsProgress
 */
-// exports.exportToDirectory = function(
-//   exportDir, 
-//   sFilter, 
-//   modelData, 
-//   progress)
-// {
-//   throw new Error('Unsupported export filter');
-// };
+exports.exportToDirectory = function(
+  exportDir, 
+  sFilter, 
+  modelData, 
+  progress)
+{
+  throw new Error('Unsupported export filter');
+};
 
 /**
 * Define arbitrary additional properties.
