@@ -29,7 +29,7 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   let thisModelLayer = thisModel.getModelLayerByNr(nLayerNr);
   let modelName = thisModel.getAttrib('ModelName');  
 
-  if(!isLayerProcessable(thisModelLayer)) return;
+  if(!UTIL.isLayerProcessable(thisModelLayer)) return;
 
   // check if this layer is valid, if not move on
   if(!thisModelLayer.isValid()) return;
@@ -70,23 +70,11 @@ exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   // process open poly lines
   let polyLineHatch = TPGEN.getOpenPolyLinesHatch(modelData,nLayerNr);
   allHatches.moveDataFrom(polyLineHatch);
-  
+  allHatches.deleteShortLines(PARAM.getParamReal('shortVectorHandling', 'min_vector_lenght'));
   hatchResult.moveDataFrom(allHatches);
   
 }; // makeExposureLayer
 
-  
-const isLayerProcessable = function(modelLayer){
-    return (
-        modelLayer.isValid() &&
-        modelLayer.tryGetBounds2D() &&
-        modelLayer.hasData(
-            LAYER.nLayerDataTypeIsland |
-            LAYER.nLayerDataTypeOpenPolyline |
-            LAYER.nLayerDataTypeExposurePolyline
-        )
-    );
-};
 
 const checkifModelLayerisOutsideWorkArea = function(modelLayer,layerNr,modelName){
     

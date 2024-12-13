@@ -109,14 +109,16 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let  hatchingArgs = {
     "fHatchDensity" : undefined,
     "fHatchAngle" : undefined,
-    "fBlocksortRunAheadLimit": 5.0,
+    //"fBlocksortRunAheadLimit": 5.0,    
+    //"fCollinearBorderSnapTol": 0.001,
     "hatchOrigin" : {x: 0.0, y: 0.0},
-    "blocksortVec" : {x: 0.0, y: -10.0},
-    "nMinBlockSegmentCount" : 20,         
+    "blocksortVec" : {x: 0.0, y: -1.0},
+    "nMinBlockSegmentCount" : 15,         
     "nFlags" : 
     HATCH.nHatchFlagAlternating | 
     HATCH.nHatchFlagBlocksortEnhanced |
-    HATCH.nHatchFlagFixedOrigin
+    HATCH.nHatchFlagFixedOrigin |
+    HATCH.nHatchFlagJointIslands
   }; 
   
   // CREATE HATCH CONTAINERS
@@ -212,7 +214,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
         stripeIslandArrayArray.forEach(function(island,index){
           let tempHatch = new HATCH.bsHatch();
           island.hatchExt2(tempHatch,hatchingArgs);
-          tempHatch.setAttributeInt('stripeId',index);
+          tempHatch.setAttributeInt('stripeId',index+1);
           downSkin_hatch.moveDataFrom(tempHatch);
         });
 
@@ -250,7 +252,6 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       // Hatching stripes
       let fill_hatch = new HATCH.bsHatch();
       
-      
       let bulkStripes = createStripes(partBulkIsland,nLayerNr,hatchAngle);
 
       hatchingArgs.fHatchDensity = PARAM.getParamReal('exposure', '_hdens');
@@ -261,7 +262,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       stripeIslandArrayArray.forEach(function(island,index){
         let tempHatch = new HATCH.bsHatch();
         island.hatchExt2(tempHatch,hatchingArgs);
-        tempHatch.setAttributeInt('stripeId',index);
+        tempHatch.setAttributeInt('stripeId',index+1);
         fill_hatch.moveDataFrom(tempHatch);
       });  
         
@@ -297,7 +298,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     stripeIslandArrayArray.forEach(function(island,index){
       let tempHatch = new HATCH.bsHatch();
       island.hatchExt2(tempHatch,hatchingArgs);
-      tempHatch.setAttributeInt('stripeId',index);
+      tempHatch.setAttributeInt('stripeId',index+1);
       supportHatch.moveDataFrom(tempHatch);
     });  
       
