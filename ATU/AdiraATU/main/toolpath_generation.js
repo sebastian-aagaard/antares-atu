@@ -25,24 +25,81 @@ const VEC2 = requireBuiltin('vec2');
 // createGlobalStripes
 
 // -------- FUNCTIONS -------- //
-const getHatchAngle = function(nLayerNr, hatch_angle_init,hatch_angle_increment) {
+// Define globally accessible acceptable ranges
+
+
+const getHatchAngle = function (nLayerNr, hatch_angle_init, hatch_angle_increment) {
   
-  let hatchAngle = (hatch_angle_init + (nLayerNr * hatch_angle_increment)) % 360;
+  let hatchAngle = (hatch_angle_init + nLayerNr * hatch_angle_increment) % 360;
+
+  let toogleRange = nLayerNr % 2 === 0;
+
+  let shiftAcceptableRange = PARAM.getParamInt('strategy','bShiftLimitRange') === 1;
+
+  let acceptableRanges = [];
   
-  //if the angle falls in the 1st or 2nd quadrant, move it to the 3rd or 4th
-  if(hatchAngle < 180){ 
-    hatchAngle = (hatchAngle + 180.0) % 360;
-    }
+  let limit_1 = PARAM.getParamReal('strategy','fAngleLimit_1a');
+  let limit_2 = PARAM.getParamReal('strategy','fAngleLimit_1b');
+  
+  if(limit_1 > limit_2)
+    {process.printError('alpha limit 1 is larger than limit 2')}
+  
+  let limit_3 = PARAM.getParamReal('strategy','fAngleLimit_2a');
+  let limit_4 = PARAM.getParamReal('strategy','fAngleLimit_2b');
+  
+  if(limit_3 > limit_4)
+    {process.printError('beta limit 1 is larger than limit 2')}  
     
+  if(shiftAcceptableRange && toogleRange){
+    acceptableRanges.push([limit_1,limit_2]);  
+    
+  } else if (shiftAcceptableRange && !toogleRange) {
+    acceptableRanges.push([limit_3,limit_4]);
+    
+  } else if(!shiftAcceptableRange) {
+    acceptableRanges.push([limit_1,limit_2]);  
+    acceptableRanges.push([limit_3,limit_4]);   
+  }
+  
+
+// Normalize the angle to be within 0-360
+  if (hatchAngle < 0) {
+    hatchAngle += 360;
+  }
+
+  // Function to check if an angle is within the acceptable ranges
+  function isAcceptable(angle,ranges) {
+    for (let i = 0; i < ranges.length; i++) {
+      let lower = ranges[i][0];
+      let upper = ranges[i][1];
+      if (angle >= lower && angle <= upper) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  let incremententalValue = PARAM.getParamReal('strategy','fSeachIncrements');
+  
+  if(hatchAngle < 90 || hatchAngle > 270) incremententalValue *=-1;
+  let counter = 0;
+  
+  // Keep adjusting the angle until it is within an acceptable range
+  while (!isAcceptable(hatchAngle,acceptableRanges) && counter<20) {
+    counter++;
+    hatchAngle = (hatchAngle + incremententalValue) % 360; // Increment and recheck
+    if(hatchAngle<0) hatchAngle +=360;
+  }
+  
   return hatchAngle;
-};
+}
 
 // Generates offset and return the offset Island (bsIsland()) and the border (bsHatch()) 
 
 const generateOffset = function (islandObj,offset) {
   
-      var offsetIsland = new ISLAND.bsIsland(); 
-      var borderHatch = new HATCH.bsHatch();
+      let offsetIsland = new ISLAND.bsIsland(); 
+      let borderHatch = new HATCH.bsHatch();
       
       islandObj.createOffset(offsetIsland, -offset);   
       offsetIsland.borderToHatch(borderHatch);
@@ -131,6 +188,10 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   
   //find this layer hatch angle
   const hatchAngle = getHatchAngle(nLayerNr,PARAM.getParamReal("exposure", "hatch_angle_init"),PARAM.getParamReal("exposure", "hatch_angle_increment"));
+  
+  if(!hatchAngle) {
+    process.printError('hatchAngle not defined at layer ' + nLayerNr);
+    }
     
   //determine if the island is support or part  
   let is_part = MODEL.nSubtypePart == island_it.getModelSubtype();
@@ -462,6 +523,6 @@ exports.sortHatchByPriority = function(allHatches){
   allHatches.makeEmpty();
                 
   sortedHatches.forEach(function(hatchBlock) {
-  allHatches.addHatchBlock(hatchBlock)});
-
+    allHatches.addHatchBlock(hatchBlock)
+  });
 }; //sortHatchByPriority

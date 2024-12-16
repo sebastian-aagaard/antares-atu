@@ -74,8 +74,6 @@ exports.assignHatchblocksToTiles = function(allHatches,thisLayer) {
   return allHatches;
 }; //assignHatchblocksToTiles
 
-
-
 function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId,thisLayer,tileInfo){
   
   if(allHatches.isEmpty()){

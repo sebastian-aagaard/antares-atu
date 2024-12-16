@@ -37,6 +37,17 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,-0.03);
     parameter.declareParameterReal('strategy','fStripeLength',LOCALIZER.GetMessage('param_fStripeLength'),0,100.0,0);
     parameter.declareParameterReal('strategy','fPatternShift',LOCALIZER.GetMessage('param_fPatternShift'),0,10.0,1.67);
+    parameter.declareParameterReal('strategy','fAngleLimit_1a',LOCALIZER.GetMessage('param_fAngleLimit_1a'),0,360.0,210.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_1b',LOCALIZER.GetMessage('param_fAngleLimit_1b'),0,360.0,250.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_2a',LOCALIZER.GetMessage('param_fAngleLimit_2a'),0,360.0,300.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_2b',LOCALIZER.GetMessage('param_fAngleLimit_2b'),0,360.0,340.0);
+    parameter.declareParameterReal('strategy','fSeachIncrements',LOCALIZER.GetMessage('param_fSeachIncrements'),0,360.0,40.0);
+
+    parameter.declareParameterChoice('strategy','bShiftLimitRange',LOCALIZER.GetMessage('param_bShiftLimitRange'), 
+      [LOCALIZER.GetMessage('param_bShiftLimitRange_disable'),
+       LOCALIZER.GetMessage('param_bShiftLimitRange_enable')],
+       LOCALIZER.GetMessage('param_bShiftLimitRange_enable'));
+
   
  parameter.declareParameterGroup('border', LOCALIZER.GetMessage('grp_border')); 
     parameter.declareParameterReal('border', 'fBeamCompensation', LOCALIZER.GetMessage('param_beam_compensation'), 0.0, 10.0, 0.05);
@@ -106,7 +117,6 @@ exports.declareParameters = function(parameter)
 
     parameter.declareParameterReal('interface', 'distanceBewteenOpenPolyLineInterfaceVectors', LOCALIZER.GetMessage('param_distanceBewteenOpenPolyLineInterfaceVectors'), 0, 10.0, 0);  
   
-  
   parameter.declareParameterGroup('stripeOverlapAllocation', LOCALIZER.GetMessage('grp_stripeOverlapAllocation'),'shift the allocation line for stripes',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterReal('stripeOverlapAllocation', 'firstOverlapShift', LOCALIZER.GetMessage('param_firstOverlapShift'), -430.0, 430.0, 0.0);
     parameter.declareParameterReal('stripeOverlapAllocation', 'secondOverlapShift', LOCALIZER.GetMessage('param_secondOverlapShift'), -430.0, 430.0, 0.0);
@@ -117,12 +127,13 @@ exports.declareParameters = function(parameter)
  parameter.declareParameterGroup('shortVectorHandling', LOCALIZER.GetMessage('grp_shortVectorHandling'),'Options for short vectors',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterReal('shortVectorHandling', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
     parameter.declareParameterReal('shortVectorHandling', 'vector_lenght_merge_attempt', LOCALIZER.GetMessage('param_vector_lenght_merge_attempt'), 0.0, 10.0, 0.1);
-    parameter.declareParameterReal('shortVectorHandling', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.1);
+    parameter.declareParameterReal('shortVectorHandling', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.1);     
    
-   parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
+  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 50.0, 0.1);//0.1 50.0   
     parameter.declareParameterReal('exposure', 'hatch_angle_init', LOCALIZER.GetMessage('param_hatch_angle_init'), 0, 360, 45);
-    parameter.declareParameterReal('exposure', 'hatch_angle_increment', LOCALIZER.GetMessage('param_hatch_angle_increment'), -360, 360, 90.0);   
+    parameter.declareParameterReal('exposure', 'hatch_angle_increment', LOCALIZER.GetMessage('param_hatch_angle_increment'), -360, 360, 90.0);
+    
   
  parameter.declareParameterGroup('support',LOCALIZER.GetMessage('grp_support'));
     parameter.declareParameterReal('support', 'support_hdens', LOCALIZER.GetMessage('param_hatch_support_density'), 0.001, 2.0, 0.1);
