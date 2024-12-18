@@ -71,5 +71,53 @@ exports.storeTileLayoutInLayer_MT = function(
   };
   
   let endTime = Date.now()  
-  process.print('tile: Calculation time: ' + (endTime - startTime) + ' ms');
+  process.print('storeTileLayoutInLayer_MT: Calculation time: ' + (endTime - startTime) + ' ms');
+}
+
+exports.reassignIslandIdGlobally_MT = function( 
+  modelData, 
+  progress, 
+  layer_start_nr, 
+  layer_end_nr){
+    
+  let layerCount = layer_end_nr - layer_start_nr + 1;
+  progress.initSteps(layerCount);
+
+  let layerIterator = modelData.getPreferredLayerProcessingOrderIterator(
+  layer_start_nr, layer_end_nr, POLY_IT.nIslandBorderPolygons);
+    
+  while(layerIterator.isValid() && !progress.cancelled()){
+    
+    let layerNumber = layerIterator.getLayerNr();
+    let layerZ = layerIterator.getLayerZ();
+    let modelCount = modelData.getModelCount();
+    
+    let globalIslandId = 0;
+    
+    for (let modelId = 0; modelId < modelCount; modelId++){
+      let model = modelData.getModel(modelId);
+      let modelLayer = model.maybeGetModelLayerByNr(layerNumber);
+      if(!modelLayer) {
+        continue; 
+      }
+      
+      let modelPolylineArray =  modelData.getLayerPolylineArrayEx({
+       "nLayerNr" : layerNumber,
+       "nIterateOn" : POLY_IT.nLayerExposure,
+       "sAccess" : "rw",
+       "models" : [modelId]
+      })
+      
+      let previousIslandId = 0; 
+      modelPolylineArray.forEach(polylineIterator => {
+        if(previousIslandId != polylineIterator.getAttributeInt('islandId')){
+          globalIslandId++;
+        }
+        previousIslandId = polylineIterator.getAttributeInt('islandId');
+        polylineIterator.setAttributeInt('islandId',globalIslandId);
+      })
+    }
+    progress.step(1);
+    layerIterator.next(); 
+  }    
 }

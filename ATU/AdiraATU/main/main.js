@@ -119,6 +119,9 @@ exports.configurePostProcessingSteps = function(postprocessing_config){
 
   postprocessing_config.addPostProcessingStep(POST_PROCESS_INIT.storeTileLayoutInLayer_MT,
     {bMultithread: true, nProgressWeight: 10});
+
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_INIT.reassignIslandIdGlobally_MT,
+    {bMultithread: true, nProgressWeight: 2});
     
   postprocessing_config.addPostProcessingStep(POST_PROCESS_TILES.postprocessDivideHatchBlocksIntoTiles_MT,
     {bMultithread: true, nProgressWeight: 7});    
