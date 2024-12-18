@@ -163,11 +163,8 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
     let startingPos = minCoord;
   
     if(modelCenterLocation!==0){
-      
       startingPos -= modelCenterLocation;
-      
-      };
-  
+    }
 
     if (startingPos + tileReach + shift < maxCoord ) { // if model is outside workingarea
         requiredPasses++;
@@ -176,15 +173,12 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
     if (startingPos + tileReach > workareaMax) { // if outside of workarea
         startingPos = workareaMax + shift - tileReach;
     }
-    
 
     if (startingPos < workareaMin) {
-        //overlap = (startingPos - workareaMin) / (requiredPasses - 1);
-        //startingPos = workareaMin;
-        adjustedOverlap = (modelSize - tileReach + maxshift) / (requiredPasses - 1);
-        adjustedTileSize = (tileReach+adjustedOverlap)/requiredPasses;
+        adjustedOverlap = (modelSize - tileSize*requiredPasses + maxshift) / (requiredPasses - 1);
         let adjustedTileReach = tileSize*requiredPasses + adjustedOverlap * (requiredPasses - 1);
-        
+        adjustedTileSize = (adjustedTileReach+adjustedOverlap)/requiredPasses;
+
         startingPos = maxCoord-adjustedTileReach+maxshift;
     }
     
@@ -194,11 +188,11 @@ function adjustTileLayout(minCoord, maxCoord, workareaMin, workareaMax, tileSize
       let requiredAddedOverlap = lastTileStartPos-tilePosHardLimitMax;
       adjustedOverlap = requiredAddedOverlap / (requiredPasses - 1);
       adjustedOverlap *=-1;
+      
       if(requiredPasses === 1) { // if only one pass the start position needs to be moved back
         startingPos=tilePosHardLimitMax+shift;
       }
     }    
-    
 
     return {
         startingPos,
