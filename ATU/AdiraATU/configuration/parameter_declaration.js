@@ -30,6 +30,10 @@ exports.declareParameters = function(parameter)
   // later on parameters are declared within these groups
   // Parameter groups are always declared like this:
   // 'group-id', 'display string'
+  parameter.declareParameterGroup('partString',LOCALIZER.GetMessage('grp_partString'),'Add custom information to parameter set for part',BUILD.nGroupEnabled);
+    parameter.declareParameterBase64Str('partString','stringNotePart',LOCALIZER.GetMessage('param_stringNotePart'),'','Add information to part parameter set');
+  parameter.declareParameterGroup('platformString',LOCALIZER.GetMessage('grp_platformString'),'Hatch Strategy',BUILD.nGroupEnabled  | BUILD.nGroupPlatform);
+    parameter.declareParameterBase64Str('platformString','stringNotePlatform',LOCALIZER.GetMessage('param_stringNotePlatform'),'','Add information to platform parameter set');
 
   parameter.declareParameterGroup('strategy',LOCALIZER.GetMessage('grp_strategy'),'Hatch Strategy',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterReal('strategy','fStripeWidth',LOCALIZER.GetMessage('param_fStripeWidth'),0.0,100.0,10.0);
