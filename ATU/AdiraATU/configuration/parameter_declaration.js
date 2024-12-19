@@ -117,11 +117,11 @@ exports.declareParameters = function(parameter)
 
     parameter.declareParameterReal('interface', 'distanceBewteenOpenPolyLineInterfaceVectors', LOCALIZER.GetMessage('param_distanceBewteenOpenPolyLineInterfaceVectors'), 0, 10.0, 0);  
   
-  parameter.declareParameterGroup('stripeOverlapAllocation', LOCALIZER.GetMessage('grp_stripeOverlapAllocation'),'shift the allocation line for stripes',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+  parameter.declareParameterGroup('stripeOverlapAllocation', LOCALIZER.GetMessage('grp_stripeOverlapAllocation'),'shift the allocation line for stripes',BUILD.nGroupOptional | BUILD.nGroupPlatform);
     parameter.declareParameterReal('stripeOverlapAllocation', 'firstOverlapShift', LOCALIZER.GetMessage('param_firstOverlapShift'), -430.0, 430.0, 0.0);
     parameter.declareParameterReal('stripeOverlapAllocation', 'secondOverlapShift', LOCALIZER.GetMessage('param_secondOverlapShift'), -430.0, 430.0, 0.0);
 
-  parameter.declareParameterGroup('laserAllocation', LOCALIZER.GetMessage('grp_laserAllocation'));
+  parameter.declareParameterGroup('laserAllocation', LOCALIZER.GetMessage('grp_laserAllocation'),'',BUILD.nGroupOptional);
     parameter.declareParameterInt('laserAllocation', 'laserAssignedToModel', LOCALIZER.GetMessage('param_laserAssignedToModel'), 0, 5, 0);
   
  parameter.declareParameterGroup('shortVectorHandling', LOCALIZER.GetMessage('grp_shortVectorHandling'),'Options for short vectors',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
@@ -212,8 +212,7 @@ exports.declareParameters = function(parameter)
         LOCALIZER.GetMessage('param_PolygonDelayMode_Fixed')
         );
    
- 
-  parameter.declareParameterGroup('tileShift', LOCALIZER.GetMessage('grp_tileShift'),"Tile Shift",BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+  parameter.declareParameterGroup('tileShift', LOCALIZER.GetMessage('grp_tileShift'),"Tile Shift",BUILD.nGroupOptional | BUILD.nGroupPlatform);
     parameter.declareParameterReal('tileShift', 'shiftTileInX', LOCALIZER.GetMessage('param_shiftTileInX'), 0, 430, 0);
     parameter.declareParameterReal('tileShift', 'shiftTileInY', LOCALIZER.GetMessage('param_shiftTileInY'), 0, 430, 0);
    
