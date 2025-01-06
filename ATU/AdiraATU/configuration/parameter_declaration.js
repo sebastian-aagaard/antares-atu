@@ -31,9 +31,9 @@ exports.declareParameters = function(parameter)
   // Parameter groups are always declared like this:
   // 'group-id', 'display string'
   parameter.declareParameterGroup('partString',LOCALIZER.GetMessage('grp_partString'),'Add custom information to parameter set for part',BUILD.nGroupEnabled);
-    parameter.declareParameterBase64Str('partString','stringNotePart',LOCALIZER.GetMessage('param_stringNotePart'),'','Add information to part parameter set');
+    parameter.declareParameterMultiLineStr('partString','stringNotePart',LOCALIZER.GetMessage('param_stringNotePart'),'','Add information to part parameter set');
   parameter.declareParameterGroup('platformString',LOCALIZER.GetMessage('grp_platformString'),'Hatch Strategy',BUILD.nGroupEnabled  | BUILD.nGroupPlatform);
-    parameter.declareParameterBase64Str('platformString','stringNotePlatform',LOCALIZER.GetMessage('param_stringNotePlatform'),'','Add information to platform parameter set');
+    parameter.declareParameterMultiLineStr('platformString','stringNotePlatform',LOCALIZER.GetMessage('param_stringNotePlatform'),'','Add information to platform parameter set');
 
   parameter.declareParameterGroup('strategy',LOCALIZER.GetMessage('grp_strategy'),'Hatch Strategy',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterReal('strategy','fStripeWidth',LOCALIZER.GetMessage('param_fStripeWidth'),0.0,100.0,10.0);
@@ -296,7 +296,26 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', 'x_scanner_actual_allowed_reach',LOCALIZER.GetMessage('param_x_scanner_actual_allowed_reach'),0,200,200);
     parameter.declareParameterReal('scanhead', 'y_scanner_actual_allowed_reach',LOCALIZER.GetMessage('param_y_scanner_actual_allowed_reach'),0,200,200);
 
+  // -------- PROCESS HEAD EXTENDED REACH -------- //
+  parameter.declareParameterGroup('processHeadExtended',LOCALIZER.GetMessage('grp_processHeadExtended'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+                
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner1_max_mm',LOCALIZER.GetMessage('param_e_x_scanner1_max_mm'),0,100,100);
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner1_min_mm',LOCALIZER.GetMessage('param_e_x_scanner1_min_mm'),-100,0,-40);
+
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner2_max_mm',LOCALIZER.GetMessage('param_e_x_scanner2_max_mm'),0,100,100); //80
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner2_min_mm',LOCALIZER.GetMessage('param_e_x_scanner2_min_mm'),-100,0,-100); //80
+
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner3_max_mm',LOCALIZER.GetMessage('param_e_x_scanner3_max_mm'),0,100,100);
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner3_min_mm',LOCALIZER.GetMessage('param_e_x_scanner3_min_mm'),-100,0,-100);
+
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner4_max_mm',LOCALIZER.GetMessage('param_e_x_scanner4_max_mm'),0,100,100);
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner4_min_mm',LOCALIZER.GetMessage('param_e_x_scanner4_min_mm'),-100,0,-100);
+
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner5_max_mm',LOCALIZER.GetMessage('param_e_x_scanner5_max_mm'),0,100,50);
+    parameter.declareParameterReal('processHeadExtended', 'e_x_scanner5_min_mm',LOCALIZER.GetMessage('param_e_x_scanner5_min_mm'),-100,0,-100);
     
+    
+  // -------- SKYWRITING -------- //    
  parameter.declareParameterGroup('skywriting', LOCALIZER.GetMessage('grp_skywriting')); 
       parameter.declareParameterChoice('skywriting','skywritingMode',
           LOCALIZER.GetMessage('param_skywritingMode'),
@@ -313,15 +332,17 @@ exports.declareParameters = function(parameter)
       parameter.declareParameterInt('skywriting','npost', LOCALIZER.GetMessage('param_npost'),0,1000,9);
       parameter.declareParameterReal('skywriting','mode3limit', LOCALIZER.GetMessage('param_mode3limit'),-1.0,1.0,0.9);
     
-  // group material
+  // -------- MATERIAL -------- //    
   parameter.declareParameterGroup('material',LOCALIZER.GetMessage('grp_material'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
         parameter.declareParameterReal('material','density_g_cc', LOCALIZER.GetMessage('param_material_densitet'),0.0,1000.0,8.19);
-  
+        
+  // -------- BUILD TIME ESTIMATION -------- //      
   parameter.declareParameterGroup('buildTimeEstimation',LOCALIZER.GetMessage('grp_buildTimeEstimation'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterInt('buildTimeEstimation', 'recoatingDuration_ms',LOCALIZER.GetMessage('param_recoatingDuration_ms'),0,100000,26000);
     parameter.declareParameterInt('buildTimeEstimation', 'powderfillingDuration_ms',LOCALIZER.GetMessage('param_powderfillingDuration_ms'),0,100000,21000);
     parameter.declareParameterInt('buildTimeEstimation', 'minimumLayerDuration_ms',LOCALIZER.GetMessage('param_minimumLayerDuration_ms'),0,10000000,47000);
-           
+
+  // -------- LASER ASSIGNMENT -------- //               
   parameter.declareParameterGroup('laserAssignment',LOCALIZER.GetMessage('grp_laserAssignment'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterChoice('laserAssignment', 'assignmentMode', 
      LOCALIZER.GetMessage('param_assignmentMode'),
