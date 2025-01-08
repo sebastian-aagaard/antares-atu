@@ -25,11 +25,6 @@ const LOCALIZER = require('localization/localizer.js');
 
 exports.declareParameters = function(parameter)
 {
-  
-  // declare hatch parameter groups (volume/downskin)
-  // later on parameters are declared within these groups
-  // Parameter groups are always declared like this:
-  // 'group-id', 'display string'
   parameter.declareParameterGroup('partString',LOCALIZER.GetMessage('grp_partString'),'Add custom information to parameter set for part',BUILD.nGroupEnabled);
     parameter.declareParameterMultiLineStr('partString','stringNotePart',LOCALIZER.GetMessage('param_stringNotePart'),'','Add information to part parameter set');
   parameter.declareParameterGroup('platformString',LOCALIZER.GetMessage('grp_platformString'),'Hatch Strategy',BUILD.nGroupEnabled  | BUILD.nGroupPlatform);
@@ -348,7 +343,7 @@ exports.declareParameters = function(parameter)
      LOCALIZER.GetMessage('param_assignmentMode'),
       [LOCALIZER.GetMessage('static'),
       LOCALIZER.GetMessage('full')],
-     LOCALIZER.GetMessage('static'),'static: Static allocation distributes the vectors based on the center reach point between adjancent lasers' +
+     LOCALIZER.GetMessage('full'),'static: Static allocation distributes the vectors based on the center reach point between adjancent lasers' +
                                     '\nfull: Full allocation allocates all vectors to all lasers in reach'
       );           
            
