@@ -117,6 +117,7 @@ exports.reassignIslandIdGlobally_MT = function(
         polylineIterator.setAttributeInt('islandId',globalIslandId);
       })
     }
+    
     progress.step(1);
     layerIterator.next(); 
   }    

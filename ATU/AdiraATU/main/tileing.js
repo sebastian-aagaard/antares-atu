@@ -288,20 +288,18 @@ exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) 
           //cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y,tileSize_x,tileSize_y, overlap_x, overlap_y);
           cur_tile = getTilePosition(cur_tile_coord_x, cur_tile_coord_y,undefined,undefined, overlap_x, overlap_y);
 
-
-          let scanhead_outlines = [
-              new VEC2.Vec2(cur_tile.xmin, cur_tile.ymin),
-              new VEC2.Vec2(cur_tile.xmin, cur_tile.ymax),
-              new VEC2.Vec2(cur_tile.xmax, cur_tile.ymax),
-              new VEC2.Vec2(cur_tile.xmax, cur_tile.ymin),
-              new VEC2.Vec2(cur_tile.xmin, cur_tile.ymin)
-          ];
-
+          let tileOutline = {
+              'xmin' : cur_tile.xmin,
+              'ymin' : cur_tile.ymin,
+              'xmax' : cur_tile.xmax,
+              'ymax' : cur_tile.ymax
+          };    
+          
           let tile_obj = {
               passNumber: passnumber_x + 1,
               tile_number: j + 1,
               tileID: j + 1 + (passnumber_x + 1) * 1000,
-              scanhead_outline: scanhead_outlines,
+              outline: tileOutline,
               scanhead_x_coord: cur_tile_coord_x,
               scanhead_y_coord: cur_tile_coord_y,
               tile_height: cur_tile.tile_height,

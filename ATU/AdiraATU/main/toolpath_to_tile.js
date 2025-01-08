@@ -36,45 +36,29 @@ exports.assignHatchblocksToTiles = function(allHatches,thisLayer) {
     });
   }
   
+  thisLayer.setAttribEx('tileTable',tileTable);    
+
+  
   /////////////////////////////////////////////////////////////
   ///                 Index hatces to tiles                 ///
   /// (passnumber, tile_index, scanhead xcoord and ycoord)  ///
   /////////////////////////////////////////////////////////////
 
-  for(let j = 0; j<tileTable.length;j++){
-    // get the coordinates of the current tile 
-    let tile_x_min = tileTable[j].scanhead_outline[0].m_coord[0]//
-    let tile_x_max = tileTable[j].scanhead_outline[2].m_coord[0]//
-    let tile_y_min = tileTable[j].scanhead_outline[0].m_coord[1];//
-    let tile_y_max = tileTable[j].scanhead_outline[2].m_coord[1];//
-   
-    // add the corrdinates to vector pointset
-    let clipPoints = [
-      new VEC2.Vec2(tile_x_min, tile_y_min), //min,min
-      new VEC2.Vec2(tile_x_min, tile_y_max), //min,max
-      new VEC2.Vec2(tile_x_max, tile_y_max), // max,max
-      new VEC2.Vec2(tile_x_max, tile_y_min) // max,min
-    ];
-    
-    tileTable[j].clipPoints = {xmin : tile_x_min,
-                               xmax : tile_x_max,
-                               ymin : tile_y_min,
-                               ymax : tile_y_max};
-                   
-    let tileId = tileTable[j].tileID;
-
-    thisLayer.setAttribEx('tileTable',tileTable);    
-              
-    filterAndAssignHatchBlocks(allHatches,tile_x_min,tile_x_max,tile_y_min,tile_y_max,tileId,thisLayer,tileTable[j]);
+  for(let j = 0; j<tileTable.length;j++){ 
+    filterAndAssignHatchBlocks(allHatches,thisLayer,tileTable[j]);
   } //for
-
 
   removeEmptyHatches(allHatches,'tileID_3mf');
 
   return allHatches;
 }; //assignHatchblocksToTiles
 
-function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId,thisLayer,tileInfo){
+function filterAndAssignHatchBlocks(allHatches,thisLayer,tileInfo){
+  
+  let minY = tileInfo.outline.ymin;
+  let minX = tileInfo.outline.xmin;
+  let maxY = tileInfo.outline.ymax;
+  let maxX = tileInfo.outline.xmax;
   
   if(allHatches.isEmpty()){
     return undefined;
@@ -107,7 +91,7 @@ function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId,thisLa
   allHatches.axisFilter(insideHatchHorizontal,outsideHatch,HATCH.nAxisY,minY,maxY,layerHeight_mm);
   insideHatchHorizontal.axisFilter(insideHatchTile,outsideHatch,HATCH.nAxisX,minX,maxX,layerHeight_mm);
 
-  anotateTileIntefaceHatch(insideHatchTile,tileId,tileInfo);
+  anotateTileIntefaceHatch(insideHatchTile,tileInfo);
   
   allHatches.makeEmpty();
   allHatches.moveDataFrom(insideHatchTile);  
@@ -115,159 +99,6 @@ function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId,thisLa
     
 
 } // filterHatchBlocks
-
-
-// function filterAndAssignHatchBlocks(allHatches,minX,maxX,minY,maxY,tileId){
-//   
-//   if(allHatches.isEmpty()){
-//     return undefined;
-//     }
-//       
-//   let hatchBlockIterator = allHatches.getHatchBlockIterator();  
-//     
-//   while(hatchBlockIterator.isValid()){
-//     let currentHatchBlock = hatchBlockIterator.get();
-//     let bounds2D = currentHatchBlock.tryGetBounds2D();
-//     
-//     if(!bounds2D) process.printWarning('FilterHatchBlocks: Could not retrieve bounds2D');
-//     
-//     let hatchBlockCenter = bounds2D.getCenter();
-//     
-//     
-//     
-//     if(hatchBlockCenter.x > minX && hatchBlockCenter.x < maxX && hatchBlockCenter.y > minY && hatchBlockCenter.y < maxY){
-//       anotateTileIntefaceHatchBlock(currentHatchBlock,tileId);
-//     }   
-//     
-//     hatchBlockIterator.next();
-//   }
-// } // filterHatchBlocks
-
-
-// 
-// exports.assignToolpathToTiles = function(allHatches,thisLayer) {
-//   
-//   let tileTable = thisLayer.getAttribEx('tileTable');
-//   
-//   /////////////////////////////////////
-//   /// sort tilearray by tile number  ///
-//   //////////////////////////////////////
-//     
-//   if(tileTable.length > 1){
-//     tileTable.sort(function(a, b) {
-//       return a.tile_number - b.tile_number;
-//     });
-//   }
-//   
-//   ///////////////////////////////////////////////////
-//   /// generate containers for hatching and islands ///
-//   ////////////////////////////////////////////////////
-//   
-//   let assignedHatch = allHatches.clone(); 
-//   let tileIslands = {};
-// 
-//   /////////////////////////////////////////////////////////////
-//   ///                 Index hatces to tiles                 ///
-//   /// (passnumber, tile_index, scanhead xcoord and ycoord)  ///
-//   /////////////////////////////////////////////////////////////
-// 
-//   for(let j = 0; j<tileTable.length;j++)
-//     {
-//       
-//       // get the coordinates of the current tile 
-//       let tile_x_min = tileTable[j].scanhead_outline[0].m_coord[0]//
-//       let tile_x_max = tileTable[j].scanhead_outline[2].m_coord[0]//
-//       let tile_y_min = tileTable[j].scanhead_outline[0].m_coord[1];//
-//       let tile_y_max = tileTable[j].scanhead_outline[2].m_coord[1];//
-//       
-//       
-//       //if tileoverlap is greater than requested
-//       if(tileTable[j].overlapX < PARAM.getParamReal('tileing','tile_overlap_x')){
-//       
-//         let overLapCompensation = (Math.abs(tileTable[j].overlapX) + PARAM.getParamReal('tileing','tile_overlap_x'))/2;
-//            
-//         switch(tileTable[j].passNumber) {
-//           case 1:
-//             tile_x_max -= overLapCompensation-PARAM.getParamReal('stripeOverlapAllocation','firstOverlapShift');//
-//             break;
-//           case 2:
-//             tile_x_min += overLapCompensation+PARAM.getParamReal('stripeOverlapAllocation','firstOverlapShift');
-//             //if there is 3 passes
-//             if(tileTable[j].requiredPassesX>2){
-//               tile_x_max -= overLapCompensation-PARAM.getParamReal('stripeOverlapAllocation','secondOverlapShift');
-//               }           
-//             break;
-//           case 3:
-//             tile_x_min += overLapCompensation+PARAM.getParamReal('stripeOverlapAllocation','secondOverlapShift');
-//             break;
-//           };  
-//          };
-//          
-//      // CREATE CLIPPING MASK
-//      if(tileTable[j].overlapY < PARAM.getParamReal('tileing', 'tile_overlap_y')){
-//       
-//       let overLapCompensationY = (Math.abs(tileTable[j].overlapY) + PARAM.getParamReal('tileing','tile_overlap_y'))/2;
-//        
-//       if(tileTable[j].tile_number !== 1 && tileTable[j].tile_number !== tileTable[j].requiredPassesY) {
-//            
-//            tile_y_min += overLapCompensationY;
-//            tile_y_max -= overLapCompensationY;
-//            
-//            } else if(tileTable[j].tile_number === 1) {
-//            
-//            tile_y_max -= overLapCompensationY;
-//            
-//         } else if(tileTable[j].tile_number === tileTable[j].requiredPassesY) {
-//            
-//              tile_y_min += overLapCompensationY;
-//            
-//         };
-//       };   
-//           
-//       // add the corrdinates to vector pointset
-//       let clipPoints = [
-//         new VEC2.Vec2(tile_x_min, tile_y_min), //min,min
-//         new VEC2.Vec2(tile_x_min, tile_y_max), //min,max
-//         new VEC2.Vec2(tile_x_max, tile_y_max), // max,max
-//         new VEC2.Vec2(tile_x_max, tile_y_min) // max,min
-//       ];
-//       
-//       
-//       tileTable[j].clipPoints = {xmin : tile_x_min,
-//                                  xmax : tile_x_max,
-//                                  ymin : tile_y_min,
-//                                  ymax : tile_y_max};
-//                      
-//       let tileId = tileTable[j].tileID;
-//                              
-//       //storeTileIsland
-//       if(tileIslands[tileId] === undefined){
-//         tileIslands[tileId] = UTIL.generateIslandFromCoordinates(clipPoints,true);
-//         }                          
-//                                  
-//       // clip allHatches to get hatches within this tile
-//       let tileHatch = UTIL.ClipHatchByRect(allHatches,clipPoints,true);
-//       tileHatch = UTIL.ClipHatchByRect(tileHatch,clipPoints,true);
-// 
-//       let tileHatch_outside = UTIL.ClipHatchByRect(allHatches,clipPoints,false);        
-//       allHatches.makeEmpty();
-//                                  
-//       anotateTileIntefaceHatchblocks(tileHatch,tileId);
-//           
-//       allHatches.moveDataFrom(tileHatch);
-//       allHatches.moveDataFrom(tileHatch_outside);
-//         
-//     } //for
-//     
-//     thisLayer.setAttribEx('tileTable',tileTable);    
-//     
-//     removeEmptyHatches(allHatches,'tileID_3mf');
-//     
-//     return {allHatches: allHatches,
-//             tileIslands: tileIslands}
-//     
-// } //assignToolpathToTiles
-
 
 const removeEmptyHatches = function(tileHatch,nonZeroAttribute){
   
@@ -304,14 +135,14 @@ const anotateTileIntefaceHatchBlock = function(hatchBlock,tileID) {
     
 } // anotateTileIntefaceHatchBlock
 
-const anotateTileIntefaceHatch = function(hatch,tileID,thisTileInfo) {
+const anotateTileIntefaceHatch = function(hatch,tileInfo) {
   let returnHatch = new HATCH.bsHatch();
   let hatchBlockIterator = hatch.getHatchBlockIterator();
 
   while (hatchBlockIterator.isValid()) {   
     let currHatchBlock = hatchBlockIterator.get();
     
-    if(!isHatchBlockFullyWithinTile(currHatchBlock,tileID,thisTileInfo)) {
+    if(!isHatchBlockFullyWithinTile(currHatchBlock,tileInfo)) {
       hatchBlockIterator.next();
       continue;
       }
@@ -328,22 +159,20 @@ const anotateTileIntefaceHatch = function(hatch,tileID,thisTileInfo) {
       currHatchBlock.setAttributeInt('overlapCount',overlapCount);
                   
     };  
-      currHatchBlock.setAttributeInt('tileID_3mf',tileID);
+      currHatchBlock.setAttributeInt('tileID_3mf',tileInfo.tileID);
 
     hatchBlockIterator.next();
     }
   };
 
-const isHatchBlockFullyWithinTile = function(currHatchBlock,tileId,thisTileInfo){
-  
-  let tileBounds = thisTileInfo.clipPoints;
-  
-  if(tileBounds.length === 0) process.printError('No clippoints found for tile ' + tileId);
+const isHatchBlockFullyWithinTile = function(currHatchBlock,tileInfo){
+    
+  if(Object.keys(tileInfo.outline).length === 0 && tileInfo.outline.constructor === Object) process.printError('No outline found for tile ' + tileInfo.tileID);
   
   let bounds = currHatchBlock.tryGetBounds2D();
   if (!bounds) process.printError('could not retrieve bound2D object from hatch block');
   
-  return UTIL.isBoundsInside(bounds,tileBounds);
+  return UTIL.isBoundsInside(bounds,tileInfo.outline);
 };
 
 exports.mergeShortLines = function(hatch){

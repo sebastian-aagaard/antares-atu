@@ -264,9 +264,9 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
       }
     
     let thisTileLayout = thisTile.scanhead_outline;
-    let clip_min_y = thisTileLayout[0].m_coord[1];
-    let clip_max_y = thisTileLayout[2].m_coord[1];
-    let xTileOffset = thisTileLayout[0].m_coord[0];
+    let clip_min_y = thisTile.outline.ymin;
+    let clip_max_y = thisTile.outline.ymax;
+    let xTileOffset = thisTile.outline.xmin;
             
     for(let laserIndex = 0; laserIndex < laserCount; laserIndex++){ // run trough all laser dedication zones
       
@@ -323,8 +323,9 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
                                               ymax : clip_max_y};
 
 
-     let axisFilterOffsetValue = PARAM.getParamReal('strategy','fStripeWidth')/2;  
-    
+      let axisFilterOffsetValue = PARAM.getParamReal('strategy','fStripeWidth')/2;  
+                                                 
+                                              
       if(laserIndex != 0){
         clip_min_x += axisFilterOffsetValue;
       };
@@ -362,7 +363,7 @@ const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer,
     let hatchIterator = tileHatch.getHatchBlockIterator();
 
     while (hatchIterator.isValid()) {
-        let currHatchBlock = hatchIterator.get(); // Fixed typo in currHatcBlock
+        let currHatchBlock = hatchIterator.get();
         
         if(!isHatchBlockFullyWithinLaserReach(currHatchBlock,laserReach)){
           hatchIterator.next();  
@@ -582,3 +583,24 @@ exports.mergeShortLinesForEachBsid = function(hatch){
   };
  
 
+//---------------------------------------------------------------------------------//
+  
+exports.allocateContours = function(hatch){
+  
+  let hatchBlockIterator = hatch.getHatchBlockIterator();
+
+  while(hatchBlockIterator.isValid())
+  
+    //let hatchBlock = hatchBlockIterator.get();
+    
+    
+  hatchBlockIterator.next();
+  };
+  
+// exports.isContourFullyWithin(hatch){
+//   
+//   ScannerCount = 
+//   
+//   
+//   
+//   }

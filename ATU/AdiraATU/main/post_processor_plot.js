@@ -68,14 +68,17 @@ exports.drawTileArray_MT = function(
        
     tileTable.forEach(function(tile) {
       let thisTile = new PATH_SET.bsPathSet();
-      let pointArray = [];
-
-      tile.scanhead_outline.forEach (function(point){
-        pointArray.push(new VEC2.Vec2(point.m_coord[0] , point.m_coord[1]));      
-      });
+      let pointArray = [
+        new VEC2.Vec2(tile.outline.xmin, tile.outline.ymin),
+        new VEC2.Vec2(tile.outline.xmin, tile.outline.ymax),      
+        new VEC2.Vec2(tile.outline.xmax, tile.outline.ymax),    
+        new VEC2.Vec2(tile.outline.xmax, tile.outline.ymin),      
+        new VEC2.Vec2(tile.outline.xmin, tile.outline.ymin)
+      ]
       
-      thisTile.addNewPath(pointArray);
-      thisTile.setClosed(false); 
+//       thisTile.addNewPath(pointArray);
+//       thisTile.setClosed(false); 
+      
       let laserRange = [];
       
       tile.laserClipPoints.forEach(function(scanner){
@@ -86,7 +89,7 @@ exports.drawTileArray_MT = function(
         laserRange.push(new VEC2.Vec2(scanner.xmin , scanner.ymin));
       })      
       
-      //thisTile.addNewPath(laserRange);
+      thisTile.addNewPath(laserRange);
       thisTile.setClosed(false); 
       thisModelLayer.addPathSet(thisTile,MODEL.nSubtypeSupport);
     });  
