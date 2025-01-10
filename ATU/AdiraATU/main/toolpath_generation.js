@@ -371,9 +371,14 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   
   let resultHatch = new HATCH.bsHatch();
   
-  mergeHatchBlocks(allContourHatch);
-  mergeHatchBlocks(allDownSkinContourHatch);
-  mergeHatchBlocks(allSupportContourHatch);
+  //mergeHatchBlocks(allContourHatch);
+  //mergeHatchBlocks(allDownSkinContourHatch);
+  //mergeHatchBlocks(allSupportContourHatch);
+
+  mergeShortLines(allHatch);
+  mergeShortLines(allDownSkinHatch);
+  mergeShortLines(allSupportHatch);
+  
 
   resultHatch.moveDataFrom(allSupportHatch);
   resultHatch.moveDataFrom(allSupportContourHatch);
@@ -394,6 +399,15 @@ const mergeHatchBlocks = function(hatch){
     "bCheckAttributes": true
   });  
 };
+
+const mergeShortLines = function(hatch){
+  hatch.mergeShortLines(
+    hatch, PARAM.getParamReal('shortVectorHandling','vector_lenght_merge_attempt'), PARAM.getParamReal('shortVectorHandling','small_vector_merge_distance'),
+    HATCH.nMergeShortLinesFlagOnlyHatchMode
+    //| HATCH.nMergeShortLinesFlagAllowSameHatchBlock 
+    // |HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
+  );
+}
 
 
 const makeBorders = function(islandObj,islandId){
@@ -491,7 +505,7 @@ function createStripes(islands,nLayerNr,stripeAngle){
     "fStripeOverlap" : PARAM.getParamReal('strategy','fStripeOverlap'),
     "fStripeLength" : PARAM.getParamReal('strategy','fStripeLength'),
     "fStripeAngle": stripeAngle,
-    "referencePoint" : new VEC2.Vec2(nLayerNr*fpatternShift,0),
+    "referencePoint" : new VEC2.Vec2(nLayerNr*fpatternShift,nLayerNr*fpatternShift),
     "bStripeOrderLeft" : sortStripesFromRight
     };
   
