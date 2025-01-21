@@ -166,7 +166,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let  hatchingArgs = {
     "fHatchDensity" : undefined,
     "fHatchAngle" : undefined,
-    //"fBlocksortRunAheadLimit": 5.0,    
+    "fBlocksortRunAheadLimit": 5.0,    
     //"fCollinearBorderSnapTol": 0.001,
     "hatchOrigin" : {x: 0.0, y: 0.0},
     "blocksortVec" : {x: 0.0, y: -1.0},
@@ -270,21 +270,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
         hatchingArgs.fHatchDensity = PARAM.getParamReal("downskin", "down_skin_hdens");
         hatchingArgs.fHatchAngle = getHatchAngle(nLayerNr,PARAM.getParamReal('downskin', 'down_skin_hangle'),PARAM.getParamReal('downskin', 'down_skin_hangle_increment'));
         
-        let stripeIslandArrayArray = downskinBulkStripeIslands.getIslandArray();
-        
-        stripeIslandArrayArray.forEach(function(island,index){
-          let tempHatch = new HATCH.bsHatch();
-          island.hatchExt2(tempHatch,hatchingArgs);
-          tempHatch.setAttributeInt('stripeId',index+1);
-          downSkin_hatch.moveDataFrom(tempHatch);
-        });
-
-        //assign type designation
-        downSkin_hatch.setAttributeInt('type',CONST.typeDesignations.downskin_hatch.value);
-        downSkin_hatch.setAttributeInt('islandId',islandId);
-        
-       allDownSkinHatch.moveDataFrom(downSkin_hatch);  // move down skin hatch to results  
-        
+        hatchStripes(downskinBulkStripeIslands,hatchingArgs,islandId,CONST.typeDesignations.downskin_hatch.value,allDownSkinHatch);
       }
 
     // not down skin islands
@@ -318,21 +304,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
       hatchingArgs.fHatchDensity = PARAM.getParamReal('exposure', '_hdens');
       hatchingArgs.fHatchAngle = hatchAngle;
         
-      let stripeIslandArrayArray = bulkStripes.getIslandArray();
-        
-      stripeIslandArrayArray.forEach(function(island,index){
-        let tempHatch = new HATCH.bsHatch();
-        island.hatchExt2(tempHatch,hatchingArgs);
-        tempHatch.setAttributeInt('stripeId',index+1);
-        fill_hatch.moveDataFrom(tempHatch);
-      });  
-        
-      fill_hatch.getHatchBlockIterator(); 
-
-      fill_hatch.setAttributeInt('type',CONST.typeDesignations.part_hatch.value);
-      fill_hatch.setAttributeInt('islandId',islandId);            
-                    
-      allHatch.moveDataFrom(fill_hatch);
+      hatchStripes(bulkStripes,hatchingArgs,islandId,CONST.typeDesignations.part_hatch.value,allHatch);      
     }
     
   } else { // is support
@@ -354,32 +326,16 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
     hatchingArgs.fHatchDensity = PARAM.getParamReal('support','support_hdens');
     hatchingArgs.fHatchAngle = getHatchAngle(nLayerNr,PARAM.getParamReal('support', 'support_hatch_angle_init'),PARAM.getParamReal('support', 'support_hatch_angle_increment'));
 
-    let stripeIslandArrayArray = supportStripeIslands.getIslandArray();
-
-    stripeIslandArrayArray.forEach(function(island,index){
-      let tempHatch = new HATCH.bsHatch();
-      island.hatchExt2(tempHatch,hatchingArgs);
-      tempHatch.setAttributeInt('stripeId',index+1);
-      supportHatch.moveDataFrom(tempHatch);
-    });  
-      
-    supportHatch.setAttributeInt('type',CONST.typeDesignations.supportHatch.value);
-    supportHatch.setAttributeInt('islandId',islandId);
-    allSupportHatch.moveDataFrom(supportHatch);       
+    hatchStripes(supportStripeIslands,hatchingArgs,islandId,CONST.typeDesignations.supportHatch.value,allSupportHatch);
   }
   
   
   let resultHatch = new HATCH.bsHatch();
   
-  //mergeHatchBlocks(allContourHatch);
-  //mergeHatchBlocks(allDownSkinContourHatch);
-  //mergeHatchBlocks(allSupportContourHatch);
-
   mergeShortLines(allHatch);
   mergeShortLines(allDownSkinHatch);
   mergeShortLines(allSupportHatch);
   
-
   resultHatch.moveDataFrom(allSupportHatch);
   resultHatch.moveDataFrom(allSupportContourHatch);
   resultHatch.moveDataFrom(allHatch);
@@ -399,6 +355,27 @@ const mergeHatchBlocks = function(hatch){
     "bCheckAttributes": true
   });  
 };
+
+function hatchStripes(islands,hatchingArgs,islandId,typeInt,resultHatch){
+      
+      let hatchContainer = new HATCH.bsHatch();
+  
+      let stripeIslandArrayArray = islands.getIslandArray();
+          
+      stripeIslandArrayArray.forEach(function(island,index){
+        let tempHatch = new HATCH.bsHatch();
+        island.hatchExt2(tempHatch,hatchingArgs);        
+        tempHatch.setAttributeInt('stripeId',index+1);
+        hatchContainer.moveDataFrom(tempHatch);
+      });  
+
+      hatchContainer.setAttributeInt('type',typeInt);
+      hatchContainer.setAttributeInt('islandId',islandId);            
+                    
+      resultHatch.moveDataFrom(hatchContainer);
+  
+  }; 
+
 
 const mergeShortLines = function(hatch){
   hatch.mergeShortLines(
