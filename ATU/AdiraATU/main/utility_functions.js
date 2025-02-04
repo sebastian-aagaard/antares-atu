@@ -64,6 +64,27 @@ exports.generateUUID = function() { // Public Domain/MIT
 //-----------------------------------------------------------------------------------------//
 
 
+exports.removeEmptyHatches = function(tileHatch,nonZeroAttributeName){
+  
+  // getHatchBlockArray
+  let hatchBlockArray = tileHatch.getHatchBlockArray();
+  let filteredHatch = new HATCH.bsHatch();
+
+  hatchBlockArray = hatchBlockArray
+    .filter(hatchBlock => hatchBlock.getAttributeInt(nonZeroAttributeName) !== 0 && !hatchBlock.isEmpty())
+    .forEach(hatchBlock => filteredHatch.addHatchBlock(hatchBlock))
+
+  let prevCount = tileHatch.getHatchBlockCount();
+  let filteredCount = filteredHatch.getHatchBlockCount();
+  
+ if(prevCount != filteredCount){
+   process.warning('removed hatches with null value for ' + nonZeroAttributeName + ', was ' + prevCount + ', now ' + filteredCount);
+   }
+
+ return filteredHatch;
+};
+
+//-----------------------------------------------------------------------------------------//
 exports.invertAngleIfQ1orQ2 = function(angleDeg){
     
  angleDeg %= 360; 
@@ -74,15 +95,13 @@ exports.invertAngleIfQ1orQ2 = function(angleDeg){
   
   return angleDeg;
   };
-
+  
 //-----------------------------------------------------------------------------------------//
-
 exports.isBoundsInside = function(bounds,tileBounds){
-       
-  if(bounds.minX < tileBounds.xmin || bounds.maxX > tileBounds.xmax || bounds.minY < tileBounds.ymin || bounds.maxY > tileBounds.ymax){
-    return false
-    }
     
+  if(bounds.minX < tileBounds.xmin || bounds.maxX > tileBounds.xmax || bounds.minY < tileBounds.ymin || bounds.maxY > tileBounds.ymax){
+    return false;
+  }
   return true;
 };
 
@@ -112,6 +131,17 @@ exports.getValueAtIndex = function (array, index) {
 
 //-----------------------------------------------------------------------------------------//
 
+exports.get2DVecArrayFromLim = function(limits){
+    return [
+          new VEC2.Vec2(limits.xmin, limits.ymin),
+          new VEC2.Vec2(limits.xmin, limits.ymax),
+          new VEC2.Vec2(limits.xmax, limits.ymax),
+          new VEC2.Vec2(limits.xmax, limits.ymin)
+    ];
+};
+
+//-----------------------------------------------------------------------------------------//
+
 // clip hatch by rectangle
 exports.ClipHatchByRect = function (hatchObj, arr_2dVec, bKeepInside) {
   if (typeof bKeepInside === 'undefined') bKeepInside = true;
@@ -123,6 +153,8 @@ exports.ClipHatchByRect = function (hatchObj, arr_2dVec, bKeepInside) {
 	
 	return clippedHatch;
 }
+
+//-----------------------------------------------------------------------------------------//
 
 exports.generateIslandFromCoordinates = function (arr_2dVec,shouldBeClosed){
   let tiles_pathset = new PATH_SET.bsPathSet(); // generate pathset object
@@ -557,7 +589,9 @@ exports.adjustContourInterface = function(hatch,thisLayer,isLaserOperation){
     Object.keys(tileGroup).forEach(function(type){
       let typeInt = +type;
       
-      if(typeInt === CONST.typeDesignations.part_contour.value || typeInt === CONST.typeDesignations.downskin_contour.value || typeInt === CONST.typeDesignations.support_contour.value){
+      if(typeInt === CONST.typeDesignations.part_contour.value 
+        || typeInt === CONST.typeDesignations.downskin_contour.value 
+        || typeInt === CONST.typeDesignations.support_contour.value){
       
       let currentHatch = hatchGroupedByTileType[tileId][type];
 
@@ -737,7 +771,7 @@ exports.mergeInterfaceVectors = function(hatch, getGroupedHatchFunction, isLaser
     
     if (type === 1 || type === 3 || type === 5) {
       mergeHatchContainer.mergeShortLines(
-        mergeHatchContainer, 5, 0.01,
+        mergeHatchContainer, 5, 0.1,
         HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagAllowDifferentPolylineMode
       );
     } else {
@@ -1134,7 +1168,7 @@ function addToCorrectOverlapSet(pathSet, firstOverlapPathsSet, secondOverlapPath
   }
 }
 
-
+//-----------------------------------------------------------------------------------------//
 
 const divideHatchIntoUnbrokenSegments = function(hatch) {
     let dividedHatch = new HATCH.bsHatch();  // New hatch object to store separated hatch blocks
