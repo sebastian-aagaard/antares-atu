@@ -126,20 +126,20 @@ function groupAndSortExposure(exposure) {
             if (priorityA !== priorityB) {
                 return priorityA - priorityB;
             }
-
+// 
             // Sort by position
             var maxYA = a.tryGetBounds2D().maxY;
             var maxYB = b.tryGetBounds2D().maxY;
 
             // Sort by maxY (largest first)
-            if (maxYA !== maxYB) {
+            if (maxYA !== maxYB && PARAM.getParamInt('sortingMode','scanningOrder')) {
                 return maxYB - maxYA;
             }
-            
+//             
             let stripeIdA = a.getAttributeInt('stripeId');
             let stripeIdB = b.getAttributeInt('stripeId');
 
-            return stripeIdB - stripeIdA; // Sort by stripeId in decending order    
+            return stripeIdA - stripeIdB; // Sort by stripeId in decending order    
 
         });
 
