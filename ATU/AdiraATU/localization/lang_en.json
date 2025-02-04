@@ -187,6 +187,9 @@
     "param_e_x_scanner4_min_mm": "Extended Reach Scanner 4: X-limit min [mm]",
     "param_e_x_scanner5_min_mm": "Extended Reach Scanner 5: X-limit min [mm]",
     "param_e_x_scanner5_max_mm": "Extended Reach Scanner 5: X-limit max [mm]",
+    "param_useExtendedReachForBorders": "Use the extended reach for scanning borders",
+    "param_useExtendedReachForBorders_disable" : "disable",
+    "param_useExtendedReachForBorders_enable": "enable",
   "grp_skywriting": "Sky Writing",
     "param_skywritingMode": "Mode",
     "param_skywritingMode_0": "No Sky Writing",
@@ -242,7 +245,10 @@
      "param_downskin_contour_priority" : "Downskin Contour",
      "param_support_contour_priority" : "Support Contour",
      "param_support_open_polyline_priority" : "Support Open Polyline",
-     "param_openPolyline_priority" : "Open Polylines"
-
+     "param_openPolyline_priority" : "Open Polylines",
+  "grp_sortingMode": "Sorting Options",
+     "param_scanningOrder": "Sort Stripe Segments",
+     "param_TopDown": "From Top to Bottom",
+     "param_Stripe": "Complete Stripes"
 }
     

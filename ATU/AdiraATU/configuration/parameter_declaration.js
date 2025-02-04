@@ -309,6 +309,11 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('processHeadExtended', 'e_x_scanner5_max_mm',LOCALIZER.GetMessage('param_e_x_scanner5_max_mm'),0,100,50);
     parameter.declareParameterReal('processHeadExtended', 'e_x_scanner5_min_mm',LOCALIZER.GetMessage('param_e_x_scanner5_min_mm'),-100,0,-100);
     
+    parameter.declareParameterChoice('processHeadExtended', 'useExtendedReachForBorders', LOCALIZER.GetMessage('param_useExtendedReachForBorders'),
+    [LOCALIZER.GetMessage('param_useExtendedReachForBorders_disable'),
+    LOCALIZER.GetMessage('param_useExtendedReachForBorders_enable')],
+    LOCALIZER.GetMessage('param_useExtendedReachForBorders_enable'));
+    
     
   // -------- SKYWRITING -------- //    
  parameter.declareParameterGroup('skywriting', LOCALIZER.GetMessage('grp_skywriting')); 
@@ -383,9 +388,14 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('tileing','tileBufferDuration_us', LOCALIZER.GetMessage('param_tileBufferDuration_us'),0.0,5000000,0);
     parameter.declareParameterInt('tileing','firstTileInStripeAddedDuration_us', LOCALIZER.GetMessage('param_firstTileInStripeAddedDuration_us'),0.0,5000000,0);
     parameter.declareParameterInt('tileing','minimumTileTime_us', LOCALIZER.GetMessage('param_minimumTileTime_us'),0.0,5000000,0);
-
-
     
+  parameter.declareParameterGroup('sortingMode', LOCALIZER.GetMessage('grp_sortingMode'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform); 
+    parameter.declareParameterChoice('sortingMode', 'scanningOrder',
+      LOCALIZER.GetMessage('param_scanningOrder'),
+      [LOCALIZER.GetMessage('param_Stripe'),
+      LOCALIZER.GetMessage('param_TopDown')],
+      LOCALIZER.GetMessage('param_Stripe'),' '
+      );       
     
   parameter.declareParameterGroup('scanning_priority', LOCALIZER.GetMessage('grp_scanning_priority'));
     parameter.declareParameterInt('scanning_priority','part_hatch_priority', LOCALIZER.GetMessage('param_part_hatch_priority'),0,2000,100);
