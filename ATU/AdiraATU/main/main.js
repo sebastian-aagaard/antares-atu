@@ -41,11 +41,9 @@ exports.unitTesting = function(testInfo){
 /** @param  aboutInfo  bsAboutInfo */
 
 exports.about = function(aboutInfo){
-  
    aboutInfo.addCommentLine('AddCreator');
    aboutInfo.addCommentLine('Adira');
    aboutInfo.addCommentLine('Copyright 2023');
-  
 };
 
 //----------------------------------------------------------------------------//
@@ -129,14 +127,14 @@ exports.configurePostProcessingSteps = function(postprocessing_config){
 //   postprocessing_config.addPostProcessingStep(POST_PROCESS_TILES.postprocessCutVectorsIntoTiles_MT,
 //     {bMultithread: true, nProgressWeight: 7});
     
-//   postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
-//     {bMultithread: true, nProgressWeight: 9});
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_SORT.postprocessSortExposure_MT,
+    {bMultithread: true, nProgressWeight: 9});
 
-//   postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
-//     {bMultithread: false, nProgressWeight: 5});
-// 
-//   postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
-//     {bMultithread: false, nProgressWeight: 2});
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_STATS.getStatistics,
+    {bMultithread: false, nProgressWeight: 5});
+
+  postprocessing_config.addPostProcessingStep(POST_PROCESS_META.postprocessMeta,
+    {bMultithread: false, nProgressWeight: 2});
 
   if(PARAM.getParamInt('display', 'displayTileGridATU')) postprocessing_config.addPostProcessingStep(POST_PROCESS_PLOT.drawTileArray_MT,
     {bMultithread: false, nProgressWeight: 2});
