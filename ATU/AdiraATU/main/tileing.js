@@ -48,7 +48,7 @@ function getShiftX(layerNr) {
     shiftValue = 0;
   }
       
-  return shiftValue;
+  return 0;
 }
 
 ////////////////////////////////
@@ -72,7 +72,7 @@ function getShiftY(layerNr) {
   if (!shiftValue || shiftIncrement == 0) {
     shiftValue = 0;
   }
-  return shiftValue;
+  return 0;
 }
 
 ////////////////////////////////
@@ -293,7 +293,29 @@ exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) 
               'ymin' : cur_tile.ymin,
               'xmax' : cur_tile.xmax,
               'ymax' : cur_tile.ymax
-          };    
+          };
+          
+          let scanheadArray = modelData.getTrayAttribEx('scanhead_array');
+          
+          let scannerReach = {};
+          let scannerExtendedReach = {};
+          
+          scanheadArray.forEach(function(scanner){
+            scannerReach[scanner.laserIndex] = {
+              xmin: scanner.abs_x_min + cur_tile_coord_x,
+              xmax: scanner.abs_x_max + cur_tile_coord_x,
+              ymin: cur_tile_coord_y,
+              ymax: cur_tile.tile_height+cur_tile_coord_y
+            };
+            
+            scannerExtendedReach[scanner.laserIndex] = {
+              xmin: scanner.e_abs_x_min + cur_tile_coord_x,
+              xmax: scanner.e_abs_x_max + cur_tile_coord_x,
+              ymin: cur_tile_coord_y,
+              ymax: cur_tile.tile_height+cur_tile_coord_y
+            };
+            
+          });
           
           let tile_obj = {
               passNumber: passnumber_x + 1,
@@ -302,14 +324,22 @@ exports.storeTileTableAsLayerAttrib = function (modelLayer, layerNr, modelData) 
               outline: tileOutline,
               scanhead_x_coord: cur_tile_coord_x,
               scanhead_y_coord: cur_tile_coord_y,
+              processHeadOrigo: {x: cur_tile_coord_x,
+                                 y: cur_tile_coord_y},
               tile_height: cur_tile.tile_height,
               requiredPassesX: required_passes_x,
               requiredPassesY:required_passes_y,
+              requiredPasses: {x: required_passes_x,
+                               y: required_passes_y},
+              overlap: {x: overlap_x,
+                        y: overlap_y},
               overlapX: overlap_x,
               overlapY: overlap_y,
               shiftX: shiftX,
               shiftY: shiftY,
-              layer: layerNr,
+              layerNr: layerNr,
+              scannerReach: scannerReach,
+              scannerExtendedReach: scannerExtendedReach,
               laserClipPoints : [],
               clipPoints : [],
           };

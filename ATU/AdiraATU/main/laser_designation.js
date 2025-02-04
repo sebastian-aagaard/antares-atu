@@ -42,9 +42,13 @@ const getScanner = function(laserIndex){
   //let y_ref
   let rel_x_max = PARAM.getParamReal('scanhead','x_scanner' + (laserIndex) +'_max_mm'); // max
   let rel_x_min =  PARAM.getParamReal('scanhead','x_scanner'+ (laserIndex) + '_min_mm'); // min
+  let e_rel_x_max = PARAM.getParamReal('processHeadExtended','e_x_scanner' + (laserIndex) +'_max_mm'); // extended max
+  let e_rel_x_min = PARAM.getParamReal('processHeadExtended','e_x_scanner' + (laserIndex) +'_min_mm'); // extended min
   let rel_y_min = 0;
   let abs_x_min = x_ref+rel_x_min;
   let abs_x_max = x_ref+rel_x_max;
+  let e_abs_x_min = x_ref+e_rel_x_min;
+  let e_abs_x_max = x_ref+e_rel_x_max;
   let rel_y_max =  PARAM.getParamReal('tileing','tile_size');
 
   return {
@@ -55,7 +59,9 @@ const getScanner = function(laserIndex){
     'rel_y_min': rel_y_min,
     'rel_y_max' : rel_y_max,
     'abs_x_min' : abs_x_min,
-    'abs_x_max' : abs_x_max
+    'abs_x_max' : abs_x_max,
+    'e_abs_x_min' : e_abs_x_min,
+    'e_abs_x_max' : e_abs_x_max
     }
   }
 
@@ -126,7 +132,6 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
   if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
     xDiv = getScanheadLaserAllocationArrayX(bsModelData);  
   }
-  
 
   Object.entries(groupedHatchByTileId).forEach(function (tileEntry) {
     let tileId = +tileEntry[0];
@@ -146,10 +151,9 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
       process.printError('cannot read thisTile.scanhead_outline at ' + thisLayer.getLayerZ() + ', recieved:' + tileId);
       }
     
-    let thisTileLayout = thisTile.scanhead_outline;
-    let clip_min_y = thisTileLayout[0].m_coord[1];
-    let clip_max_y = thisTileLayout[2].m_coord[1];
-    let xTileOffset = thisTileLayout[0].m_coord[0];
+    let clip_min_y = thisTile.outline.ymin;
+    let clip_max_y = thisTile.outline.ymax;
+    let xTileOffset = thisTile.outline.xmin;
             
     for(let laserIndex = 0; laserIndex < laserCount; laserIndex++){ // run trough all laser dedication zones
       
@@ -158,7 +162,6 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
       let assignmentMode = PARAM.getParamStr('laserAssignment', 'assignmentMode');
       let scanner = getScanner(laserIndex+1)
 
-      
       if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
         
         // set clip width, account for overlap
@@ -205,8 +208,7 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
       let tileHatchInside = UTIL.ClipHatchByRect(tileHatch,clipPoints,true);
       let tileHatchOutside = UTIL.ClipHatchByRect(tileHatch,clipPoints,false);
 
-      anotateHatchBlocks(tileHatchInside,laserIndex+1,tileId,thisLayer,bsModelData); 
-      
+      anotateHatchBlocks(tileHatchInside,laserIndex+1,tileId,thisLayer,bsModelData,thisTile.scannerReach[laserIndex+1]); 
       
       thisTile.laserClipPoints[laserIndex] = {xmin : clip_min_x,
                                          xmax : clip_max_x,
@@ -222,11 +224,12 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
         
     thisLayer.setAttribEx('tileTable',tileTable);    
 
-    tileHatch = removeEmptyHatches(tileHatch);   
-     
+    //tileHatch = UTIL.removeEmptyHatches(tileHatch,'bsid');
+          
     returnHatch.moveDataFrom(tileHatch);     
   });
-
+  hatchObj.makeEmpty();
+  hatchObj.moveDataFrom(returnHatch);
   return returnHatch;
 } //fixedLaserWorkload
 
@@ -310,21 +313,13 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
       clip_max_x += xTileOffset;
       
       // add the corrdinates to vector pointset
-      let clipPoints = [
-       new VEC2.Vec2(clip_min_x, clip_min_y), //min,min
-       new VEC2.Vec2(clip_min_x, clip_max_y), //min,max
-       new VEC2.Vec2(clip_max_x, clip_max_y), // max,max
-       new VEC2.Vec2(clip_max_x, clip_min_y) // max,min
-      ];
 
      thisTile.laserClipPoints[laserIndex] = { xmin : clip_min_x,
                                               xmax : clip_max_x,
                                               ymin : clip_min_y,
                                               ymax : clip_max_y};
 
-
-      let axisFilterOffsetValue = PARAM.getParamReal('strategy','fStripeWidth')/2;  
-                                                 
+      let axisFilterOffsetValue = PARAM.getParamReal('strategy','fStripeWidth')/2;                               
                                               
       if(laserIndex != 0){
         clip_min_x += axisFilterOffsetValue;
@@ -351,7 +346,7 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
         
     thisLayer.setAttribEx('tileTable',tileTable);    
 
-    tileHatch = removeEmptyHatches(tileHatch);   
+    tileHatch = UTIL.removeEmptyHatches(tileHatch,'bsid');   
     hatchObj.moveDataFrom(tileHatch);     
   });
 
@@ -419,23 +414,6 @@ const isHatchBlockFullyWithinLaserReach = function(currHatchBlock,laserReach){
 };
 
 
-const removeEmptyHatches = function(tileHatch){
-  
-  // getHatchBlockArray
-  let hatchBlockArray = tileHatch.getHatchBlockArray();
-
-  // remove empty hatches
-  let nonEmptyHatches = hatchBlockArray.reduce(function(reducedArray, currentHatch) {         
-    if (!currentHatch.isEmpty() && !currentHatch.getAttributeInt('bsid')==0) {
-        reducedArray.addHatchBlock(currentHatch);           
-    }
-    return reducedArray;         
-  }, new HATCH.bsHatch());
-  
-  return nonEmptyHatches
-  
-  };
-
 const getScanheadLaserAllocationArrayX = function(bsModelData){
   
   let scanheadArray = bsModelData.getTrayAttribEx('scanhead_array'); 
@@ -452,11 +430,11 @@ const getScanheadLaserAllocationArrayX = function(bsModelData){
         
       }else if (i === scanheadArray.length) { // if arraylength is reached
         
-            xDiv[i] = scanheadArray[i-1].abs_x_max;
+        xDiv[i] = scanheadArray[i-1].abs_x_max;
         
       } else {
         
-      xDiv[i] = (scanheadArray[i-1].x_ref+scanheadArray[i-1].rel_x_max + scanheadArray[i].x_ref + scanheadArray[i].rel_x_min)/2;
+        xDiv[i] = (scanheadArray[i-1].x_ref+scanheadArray[i-1].rel_x_max + scanheadArray[i].x_ref + scanheadArray[i].rel_x_min)/2;
         
         } //if else
     } // for  
@@ -465,7 +443,6 @@ const getScanheadLaserAllocationArrayX = function(bsModelData){
 };
   
 //---------------------------------------------------------------------------------------------//
-
 
 exports.assignProcessParameters = function(bsHatch,modelData,nLayerNr,modelLayer){
 
@@ -483,9 +460,9 @@ exports.assignProcessParameters = function(bsHatch,modelData,nLayerNr,modelLayer
     let tileNumber = thisHatchBlock.getAttributeInt('tileID_3mf') % 1000;
     
     if(!bsid){
+      process.printWarning('bsid undefined | layer nr '+nLayerNr + ' | tileId: ' +thisHatchBlock.getAttributeInt('tileID_3mf') + ' | hatch type: ' + type);
       hatchIterator.next();
       continue;
-      throw new Error('bsid undefined: at layer nr '+nLayerNr + ' tileId: ' +thisHatchBlock.getAttributeInt('tileID_3mf') + '/ type: ' + type);
       };
     
     let modelIndex = thisHatchBlock.getAttributeInt('modelIndex');
@@ -531,7 +508,7 @@ exports.assignProcessParameters = function(bsHatch,modelData,nLayerNr,modelLayer
 //-----------------------------------------------------------------------------------------//
 
 const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_color, doesItOverlap) {
-    
+  
     switch (displayMode) {
         case 0:
             return doesItOverlap ? laser_color[0].rgba() : laser_color[laserId].rgba();
@@ -542,7 +519,7 @@ const getDisplayColor = function (type, displayMode, laserId, tileNumber, laser_
         case 2:
             const colorData = UTIL.findColorFromType(type);
             let color = (tileNumber % 2 === 0) ? colorData.color2 : colorData.color1;
-            color.a(255 * (laserId / PARAM.getParamInt("scanhead", "laserCount")));
+                color.a(255 * (laserId / PARAM.getParamInt("scanhead", "laserCount")));
             return color.rgba();
         
         default:
@@ -568,9 +545,12 @@ exports.mergeShortLinesForEachBsid = function(hatch){
       if(type == 1 || type == 3 || type == 5){ //hatch types  
         
         laserIdHatch.mergeShortLines(
-                  laserIdHatch,PARAM.getParamReal('shortVectorHandling','vector_lenght_merge_attempt'),PARAM.getParamReal("shortVectorHandling", "small_vector_merge_distance") ,
-                  HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
-                  );
+          laserIdHatch,
+          PARAM.getParamReal('shortVectorHandling','vector_lenght_merge_attempt'),
+          PARAM.getParamReal("shortVectorHandling", "small_vector_merge_distance"),
+          HATCH.nMergeShortLinesFlagAllowSameHatchBlock 
+          | HATCH.nMergeShortLinesFlagOnlyHatchMode
+          );
       }
       
       returnHatch.moveDataFrom(laserIdHatch);
@@ -585,22 +565,30 @@ exports.mergeShortLinesForEachBsid = function(hatch){
 
 //---------------------------------------------------------------------------------//
   
-exports.allocateContours = function(hatch){
-  
-  let hatchBlockIterator = hatch.getHatchBlockIterator();
 
-  while(hatchBlockIterator.isValid())
+exports.getLasersAbleToFullyReachContourWithinTile = function(hatchBlock,tileInfo,modelData){
+
+  let bounds = hatchBlock.tryGetBounds2D();
   
-    //let hatchBlock = hatchBlockIterator.get();
-    
-    
-  hatchBlockIterator.next();
-  };
+  let useExtendedReach = PARAM.getParamInt('processHeadExtended','useExtendedReachForBorders');
   
-// exports.isContourFullyWithin(hatch){
-//   
-//   ScannerCount = 
-//   
-//   
-//   
-//   }
+  let scannerReach = useExtendedReach ? tileInfo.scannerExtendedReach : tileInfo.scannerReach;
+  
+  let modelIndex = hatchBlock.getAttributeInt('modelIndex');
+  let processedByLaser = Number(modelData.getModel(modelIndex).getAttrib('processedByLaser'));
+  
+  let inReachOf = undefined;
+  
+  Object.entries(scannerReach).forEach(function(entry){
+    
+    let laserId = +entry[0];
+    let reach = entry[1];
+    
+    // Check if laser is assigned to the model or to the specific laserIndex
+    if(UTIL.isBoundsInside(bounds,reach) && ( processedByLaser === laserId || processedByLaser === 0)){
+      if(!inReachOf) inReachOf = [];
+      inReachOf.push(laserId);
+    }
+  });
+  return inReachOf
+};
