@@ -166,7 +166,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let  hatchingArgs = {
     "fHatchDensity" : undefined,
     "fHatchAngle" : undefined,
-    "fBlocksortRunAheadLimit": 5.0,    
+    //"fBlocksortRunAheadLimit": 5.0,    
     //"fCollinearBorderSnapTol": 0.001,
     "hatchOrigin" : {x: 0.0, y: 0.0},
     "blocksortVec" : {x: 0.0, y: -1.0},
@@ -363,9 +363,14 @@ function hatchStripes(islands,hatchingArgs,islandId,typeInt,resultHatch){
       let stripeIslandArrayArray = islands.getIslandArray();
           
       stripeIslandArrayArray.forEach(function(island,index){
+        let patternInfo = island.getPatternInfo();
+        
         let tempHatch = new HATCH.bsHatch();
         island.hatchExt2(tempHatch,hatchingArgs);        
         tempHatch.setAttributeInt('stripeId',index+1);
+        tempHatch.setAttributeInt('patternX',patternInfo.nPatternX);
+        tempHatch.setAttributeInt('patternY',patternInfo.nPatternY);
+
         hatchContainer.moveDataFrom(tempHatch);
       });  
 
