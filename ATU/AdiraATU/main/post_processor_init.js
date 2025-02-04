@@ -71,7 +71,7 @@ exports.storeTileLayoutInLayer_MT = function(
   };
   
   let endTime = Date.now()  
-  process.print('storeTileLayoutInLayer_MT: Calculation time: ' + (endTime - startTime) + ' ms');
+  //process.print('storeTileLayoutInLayer_MT: Calculation time: ' + (endTime - startTime) + ' ms');
 }
 
 exports.reassignIslandIdGlobally_MT = function( 
@@ -110,6 +110,7 @@ exports.reassignIslandIdGlobally_MT = function(
       
       let previousIslandId = 0; 
       modelPolylineArray.forEach(polylineIterator => {
+        
         if(previousIslandId != polylineIterator.getAttributeInt('islandId')){
           globalIslandId++;
         }
