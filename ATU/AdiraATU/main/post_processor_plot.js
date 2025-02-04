@@ -72,12 +72,11 @@ exports.drawTileArray_MT = function(
         new VEC2.Vec2(tile.outline.xmin, tile.outline.ymin),
         new VEC2.Vec2(tile.outline.xmin, tile.outline.ymax),      
         new VEC2.Vec2(tile.outline.xmax, tile.outline.ymax),    
-        new VEC2.Vec2(tile.outline.xmax, tile.outline.ymin),      
-        new VEC2.Vec2(tile.outline.xmin, tile.outline.ymin)
+        new VEC2.Vec2(tile.outline.xmax, tile.outline.ymin)
       ]
       
-//       thisTile.addNewPath(pointArray);
-//       thisTile.setClosed(false); 
+      thisTile.addNewPath(pointArray);
+      thisTile.setClosed(false); 
       
       let laserRange = [];
       
@@ -90,7 +89,7 @@ exports.drawTileArray_MT = function(
       })      
       
       thisTile.addNewPath(laserRange);
-      thisTile.setClosed(false); 
+      //thisTile.setClosed(false); 
       thisModelLayer.addPathSet(thisTile,MODEL.nSubtypeSupport);
     });  
 
