@@ -37,7 +37,6 @@ exports.assignHatchblocksToTiles = function(allHatches,thisLayer) {
   }
   
   thisLayer.setAttribEx('tileTable',tileTable);    
-
   
   /////////////////////////////////////////////////////////////
   ///                 Index hatces to tiles                 ///
@@ -48,8 +47,8 @@ exports.assignHatchblocksToTiles = function(allHatches,thisLayer) {
     filterAndAssignHatchBlocks(allHatches,thisLayer,tileTable[j]);
   } //for
 
-  removeEmptyHatches(allHatches,'tileID_3mf');
-
+  allHatches = UTIL.removeEmptyHatches(allHatches,'tileID_3mf');
+  
   return allHatches;
 }; //assignHatchblocksToTiles
 
@@ -68,24 +67,22 @@ function filterAndAssignHatchBlocks(allHatches,thisLayer,tileInfo){
   let insideHatchTile = new HATCH.bsHatch();
   let outsideHatch = new HATCH.bsHatch();
   
-  let layerHeight_mm = thisLayer.getLayerZ()/1000;  
-  
-  let axisFilterOffsetValue = PARAM.getParamReal('strategy','fStripeWidth')/2;  
+  let layerHeight_mm = thisLayer.getLayerZ()/1000;      
     
   if(tileInfo.tile_number != 1){
-    minY += axisFilterOffsetValue;
+    minY += Math.abs(tileInfo.overlap.y/2);
   };
   
   if(tileInfo.tile_number != tileInfo.requiredPassesY){
-     maxY -= axisFilterOffsetValue;
+     maxY -= Math.abs(tileInfo.overlap.y/2);
   };
     
   if(tileInfo.passNumber != 1){
-    minX += axisFilterOffsetValue;
+    minX += Math.abs(tileInfo.overlap.x/2);
   };
     
   if(tileInfo.passNumber != tileInfo.requiredPassesX){
-     maxX -= axisFilterOffsetValue;
+     maxX -= Math.abs(tileInfo.overlap.x/2);
   };
     
   allHatches.axisFilter(insideHatchHorizontal,outsideHatch,HATCH.nAxisY,minY,maxY,layerHeight_mm);
@@ -96,26 +93,9 @@ function filterAndAssignHatchBlocks(allHatches,thisLayer,tileInfo){
   allHatches.makeEmpty();
   allHatches.moveDataFrom(insideHatchTile);  
   allHatches.moveDataFrom(outsideHatch);
-    
-
+  
+  
 } // filterHatchBlocks
-
-const removeEmptyHatches = function(tileHatch,nonZeroAttribute){
-  
-  // getHatchBlockArray
-  let hatchBlockArray = tileHatch.getHatchBlockArray();
-
-  // remove empty hatches
-  return hatchBlockArray.reduce(function(reducedArray, currentHatch) {         
-    if (!currentHatch.isEmpty() && !currentHatch.getAttributeInt(nonZeroAttribute) == 0) {
-        reducedArray.addHatchBlock(currentHatch);           
-    } else {
-      let tep = 0;
-      };
-    return reducedArray;         
-  }, new HATCH.bsHatch());
-  
-};
 
 const anotateTileIntefaceHatchBlock = function(hatchBlock,tileID) {
   
