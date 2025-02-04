@@ -10,6 +10,7 @@
 
 exports.declareBuildAttributes = function(buildAttrib,laser_count){
   
+  buildAttrib.declareAttributeInt('test'); // buildstyle ID
   buildAttrib.declareAttributeInt('bsid'); // buildstyle ID
   buildAttrib.declareAttributeReal('power'); // beam laser power
   buildAttrib.declareAttributeReal('speed'); // scanning speed
@@ -39,8 +40,17 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('overlappingTile_4');
   buildAttrib.declareAttributeInt('overlapCount');
   buildAttrib.declareAttributeInt('overlapLaserCount');
+  buildAttrib.declareAttributeInt('overlapTileCount');
   buildAttrib.declareAttributeInt('overlappingLaser_1');
   buildAttrib.declareAttributeInt('overlappingLaser_2');
+  buildAttrib.declareAttributeInt('overlappingLaser_3');
+  buildAttrib.declareAttributeInt('overlappingLaser_4');
+  buildAttrib.declareAttributeInt('overlappingLaser_5');
   buildAttrib.declareAttributeInt('processedByLaser');
   buildAttrib.declareAttributeInt('hatchExposureTime');
+  buildAttrib.declareAttributeInt('isSingleSource');
+  buildAttrib.declareAttributeInt('patternX');
+  buildAttrib.declareAttributeInt('patternY');
+
+
 };
