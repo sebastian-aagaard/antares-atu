@@ -78,6 +78,7 @@ for (let l_laser_nr = 1; l_laser_nr <= laserCount;l_laser_nr++) {
         bsid_obj.bsid = 10 * l_laser_nr + typeObj.value;
         bsid_obj.laserIndex = l_laser_nr;
         bsid_obj.name = 'laser' + l_laser_nr + '_' + typeObj.name;
+        bsid_obj.type = i+1;
         bsid_obj.power = PARAM.getParamReal('ScanningParameters', typeObj.name + '_power');
         bsid_obj.focus = PARAM.getParamReal('ScanningParameters', typeObj.name + '_defocus');
         bsid_obj.speed = PARAM.getParamReal('ScanningParameters', typeObj.name + '_markspeed');
