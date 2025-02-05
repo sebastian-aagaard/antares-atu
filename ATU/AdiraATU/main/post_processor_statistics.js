@@ -97,14 +97,7 @@ exports.getStatistics = function(
           "attributes": {
               "created_at": new Date().toISOString(),
               "created_by": process.username
-          },
-          "nodes": [{
-              "name": "node20",
-              "attributes": {
-                  "attribute1": 5,
-                  "attributexxx": "250 something"
-              }
-          }]
+          }
       }]
   };
 
