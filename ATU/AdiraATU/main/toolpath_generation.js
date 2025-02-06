@@ -349,13 +349,6 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
           stripeAngle: stripeAngle};
 };
 
-const mergeHatchBlocks = function(hatch){
-  hatch.mergeHatchBlocks({
-    "bConvertToHatchMode": true,
-    "bCheckAttributes": true
-  });  
-};
-
 function hatchStripes(islands,hatchingArgs,islandId,typeInt,resultHatch){
       
       let hatchContainer = new HATCH.bsHatch();
