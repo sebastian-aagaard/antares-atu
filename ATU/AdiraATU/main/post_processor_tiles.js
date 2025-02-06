@@ -99,7 +99,7 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
     });
        
     sortHatchblocksalongX(allHatches);
-    assignExposureProcessingTimeAsAttribute(allHatches,modelData);
+    UTIL.assignDurationtoHatchblocks(allHatches,modelData);
     let tileGroups = preCalculateDistribution(allHatches);
     allHatches = distributeLoadHatchBlocks(tileGroups,progress); 
     
@@ -140,7 +140,7 @@ function assignMultiOpContours(contourHatch, bounds, tileTable, modelData,modelL
   });//tile  
   
   LASER.staticDistribution(modelData,returnHatch,modelLayer)
-  assignExposureProcessingTimeAsAttribute(returnHatch,modelData)
+  UTIL.assignDurationtoHatchblocks(returnHatch,modelData)
   contourHatch.makeEmpty();
   contourHatch.moveDataFrom(returnHatch);
   return returnHatch;    
@@ -575,57 +575,7 @@ function isSortedLeftToRight(tileArray){
   return true
 }
 
-function assignExposureProcessingTimeAsAttribute(allHatches,modelData){
 
-  let hatchBlockArray = allHatches.getHatchBlockArray();
-  
-  hatchBlockArray.forEach(function(hatchBlock){
-        
-    let exposureTime = new EXPOSURE.bsExposureTime();
-    const cur_type = hatchBlock.getAttributeInt('type');
-
-    const processProfile = modelData
-          .getModel(hatchBlock.getAttributeInt('modelIndex'))
-          .getAttribEx('customTable')
-          .find(function(profile) {
-            return profile.type === cur_type;
-          });
-          
-    const scanParamters = processProfile       
-          .attributes
-          .find(function(attr) {
-            return attr.schema === CONST.scanningSchema;
-          });
-          
-    const laserStartPosition = {
-      'x': hatchBlock.getPoint(0).x,
-      'y': hatchBlock.getPoint(0).y
-    }; 
-     
-    const exposureSettings = {
-      'fJumpSpeed': scanParamters.jumpSpeed,
-      'fMeltSpeed': processProfile.speed,
-      'fJumpLengthLimit': scanParamters.jumpLengthLimit,
-      'nJumpDelay': scanParamters.jumpDelay,
-      'nMinJumpDelay': scanParamters.minJumpDelay,
-      'nMarkDelay': scanParamters.markDelay,
-      'nPolygonDelay': scanParamters.polygonDelay,
-      'polygonDelayMode': scanParamters.polygonDelayMode,
-      'laserPos': laserStartPosition
-    };
-    
-    exposureTime.addHatchBlock(hatchBlock,exposureSettings);
-    
-    hatchBlock.setAttributeInt('hatchExposureTime',exposureTime.getExposureTimeMicroSeconds())
-  });
-  
-  allHatches.makeEmpty();
-  
-  hatchBlockArray.forEach(function(hatchBlock){
-    allHatches.addHatchBlock(hatchBlock);
-  });
-  
-};
   
 function sortByProcessingOrderAndPosition(allHatches){
   
@@ -652,7 +602,7 @@ function sortByProcessingOrderAndPosition(allHatches){
   allHatches.makeEmpty();
   
   hatchBlockArray.forEach(function(hatchBlock,index){
-    hatchBlock.setAttributeInt('_processing_order',index+1);
+    //hatchBlock.setAttributeInt('_processing_order',index+1);
     allHatches.addHatchBlock(hatchBlock);
   })
   
