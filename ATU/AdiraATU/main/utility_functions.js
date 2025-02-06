@@ -16,6 +16,7 @@ const VEC2 = requireBuiltin('vec2');
 const CONST = require('main/constants.js');
 const POLY_IT = requireBuiltin('bsPolylineIterator');
 const LAYER = requireBuiltin('bsModelLayer');
+const EXPOSURE = requireBuiltin('bsExposureTime');
 
 
 // -------- FUNCTION TOC -------- //
@@ -77,14 +78,15 @@ exports.removeEmptyHatches = function(tileHatch,nonZeroAttributeName){
   let prevCount = tileHatch.getHatchBlockCount();
   let filteredCount = filteredHatch.getHatchBlockCount();
   
- if(prevCount != filteredCount){
+  if(prevCount != filteredCount){
    process.warning('removed hatches with null value for ' + nonZeroAttributeName + ', was ' + prevCount + ', now ' + filteredCount);
    }
 
  return filteredHatch;
-};
+}
 
 //-----------------------------------------------------------------------------------------//
+
 exports.invertAngleIfQ1orQ2 = function(angleDeg){
     
  angleDeg %= 360; 
@@ -94,7 +96,7 @@ exports.invertAngleIfQ1orQ2 = function(angleDeg){
     };
   
   return angleDeg;
-  };
+};
   
 //-----------------------------------------------------------------------------------------//
 exports.isBoundsInside = function(bounds,tileBounds){
@@ -173,8 +175,6 @@ exports.mergeBlocks = function(unmergedHatchBlocks) {
 	let mergedblock = new HATCH.bsHatch();
 	mergeblock.moveDataFrom(unmergedHatchBlocks);
 
-
-	// merge similar hatch blocks to speed up process
 	let mergeArgs = {
 		'bConvertToHatchMode': true,
 		//'nConvertToHatchMaxPointCount': 2,
@@ -184,7 +184,6 @@ exports.mergeBlocks = function(unmergedHatchBlocks) {
 
 	mergedblock = mergeblock.mergeHatchBlocks(mergeArgs);
 
-	let blockcount = mergedblock.getHatchBlockCount();
 	return mergedblock;
 }
 
@@ -277,7 +276,6 @@ function getWidth (bsBounds2D){
 };
 
 //-----------------------------------------------------------------------------------------//
-
 const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
   
   let slightOffset = 0.001;
@@ -305,8 +303,7 @@ const intersectPathset = function (xmin,xmax,ymin,ymax,pathset){
   pathset.booleanOpIntersect(intersectPath);
 };
 
-//-----------------------------------------------------------------------------------------//
-
+//----------------------------------------------------------------------------------------//
 const getDistanceBetweenThisTypeInterfaceVectors = function (type) {
   switch (type) {
  
@@ -334,7 +331,6 @@ const getDistanceBetweenThisTypeInterfaceVectors = function (type) {
 };
 
 //-----------------------------------------------------------------------------------------//
-
 exports.getGroupedHatchObjectByTileType = function(hatch) {
   
   let hatchBlocksArray = hatch.getHatchBlockArray();
@@ -364,7 +360,6 @@ exports.getGroupedHatchObjectByTileType = function(hatch) {
 };
 
 //-----------------------------------------------------------------------------------------//
-
 exports.getGroupedHatchObjectByType = function(hatch) {
   
   let hatchBlocksArray = hatch.getHatchBlockArray();
@@ -387,7 +382,6 @@ exports.getGroupedHatchObjectByType = function(hatch) {
 };
 
 //-----------------------------------------------------------------------------------------//
-
 exports.getGroupedHatchObjectByTileId = function(hatch) {
   
   let hatchBlocksArray = hatch.getHatchBlockArray();
@@ -410,7 +404,6 @@ exports.getGroupedHatchObjectByTileId = function(hatch) {
 };
 
 //-----------------------------------------------------------------------------------------//
-
 exports.getGroupedHatchObjectByTileTypeLaserId = function(hatch) {
   
   let hatchBlocksArray = hatch.getHatchBlockArray();
@@ -443,7 +436,6 @@ exports.getGroupedHatchObjectByTileTypeLaserId = function(hatch) {
 };
 
 //-----------------------------------------------------------------------------------------//
-
 const doesTypeOverlap = function (type, isLaserOperation) {
   switch (type) {
     case 1:
@@ -468,6 +460,7 @@ const doesTypeOverlap = function (type, isLaserOperation) {
   }
 };
 
+//-----------------------------------------------------------------------------------------//
 const copyAttributes = function(originalHatchBlock, newHatchBlock) {
   // List the specific attributes that need to be copied
   let attributesToCopy = [
@@ -492,8 +485,7 @@ const copyAttributes = function(originalHatchBlock, newHatchBlock) {
   }
 }
 
-//-----------------------------------------------------------------------------------------//
-
+//----------------------------------------------------------------------------------------//
 exports.connectHatchBlocksSetAttributes = function(hatch) {
 
   let hatchArray = hatch.getHatchBlockArray();  
@@ -573,10 +565,7 @@ exports.connectHatchBlocksSetAttributes = function(hatch) {
   return returnHatch;
 };
 
-
 //-----------------------------------------------------------------------------------------//
-
-
 exports.adjustContourInterface = function(hatch,thisLayer,isLaserOperation){
   
   let tileTable = thisLayer.getAttribEx('tileTable');
@@ -636,6 +625,7 @@ exports.adjustContourInterface = function(hatch,thisLayer,isLaserOperation){
   return returnHatch;
 };
 
+//-----------------------------------------------------------------------------------------//
 exports.adjustInterfaceVectors = function(hatch,thisLayer,isLaserOperation) {
 
   let tileTable = thisLayer.getAttribEx('tileTable');
@@ -674,6 +664,7 @@ exports.adjustInterfaceVectors = function(hatch,thisLayer,isLaserOperation) {
   return resultHatch;
 };
 
+//-----------------------------------------------------------------------------------------//
 const adjustMultipleOverlappingHatchBlocks = function(hatchBlock) {
   
   if(hatchBlock.isEmpty() || hatchBlock.getPointCount()<2) return;
@@ -761,6 +752,7 @@ const adjustMultipleOverlappingHatchBlocks = function(hatchBlock) {
   return returnHatch;
 };
 
+//-----------------------------------------------------------------------------------------//
 exports.mergeInterfaceVectors = function(hatch, getGroupedHatchFunction, isLaserGrouping) {
 
   let groupedHatchblocksByTileType = getGroupedHatchFunction(hatch);
@@ -956,7 +948,6 @@ function isPointOnBoundary(point, tileBounds) {
   );
 }
 //-----------------------------------------------------------------------------------------//
-
 const preDistributeNonFullInterfaceVectors = function(currentPathSet,firstOverlapPathSet,secondOverlapPathSet,adjustInY,shouldTypeOverlap,overlapLimits){
   
    if (shouldTypeOverlap) {
@@ -976,7 +967,6 @@ const preDistributeNonFullInterfaceVectors = function(currentPathSet,firstOverla
 }
 
 //-----------------------------------------------------------------------------------------//
-
 const getClipIntersectionCoordinates = function(tileTable, firstId, secondId, adjustInY, tileId, isLaserOperation) {
 
     let firstClipPoints, secondClipPoints;  // Declare the clip points variables here to avoid scope issues
@@ -1031,7 +1021,6 @@ const getClipIntersectionCoordinates = function(tileTable, firstId, secondId, ad
 };
 
 //-----------------------------------------------------------------------------------------//
-
 const determineAdjustmentDirection = function(isLaserOperation, firstId, secondId) {
 
     // If pathWidth equals pathHeight, we need to apply custom logic
@@ -1169,7 +1158,6 @@ function addToCorrectOverlapSet(pathSet, firstOverlapPathsSet, secondOverlapPath
 }
 
 //-----------------------------------------------------------------------------------------//
-
 const divideHatchIntoUnbrokenSegments = function(hatch) {
     let dividedHatch = new HATCH.bsHatch();  // New hatch object to store separated hatch blocks
     let currentHatchBlock = null;  // Temporary variable to store the current hatch block
@@ -1261,3 +1249,61 @@ function addPathsToHatchBlock(hatchBlock, pathSet) {
         }
     }
 }
+
+//-----------------------------------------------------------------------------------------//
+exports.assignDurationtoHatchblocks = function(bsHatch,modelData){
+
+  let hatchBlockArray = bsHatch.getHatchBlockArray();
+  let fullExposureHatch = new EXPOSURE.bsExposureTime();
+  
+  hatchBlockArray.forEach(function(hatchBlock){
+        
+    let exposureTime = new EXPOSURE.bsExposureTime();
+
+    const cur_type = hatchBlock.getAttributeInt('type');
+
+    const processProfile = modelData
+          .getModel(hatchBlock.getAttributeInt('modelIndex'))
+          .getAttribEx('customTable')
+          .find(function(profile) {
+            return profile.type === cur_type;
+          });
+          
+    const scanParamters = processProfile       
+          .attributes
+          .find(function(attr) {
+            return attr.schema === CONST.scanningSchema;
+          });
+          
+    const laserStartPosition = {
+      'x': hatchBlock.getPoint(0).x,
+      'y': hatchBlock.getPoint(0).y
+    }; 
+     
+    const exposureSettings = {
+      'fJumpSpeed': scanParamters.jumpSpeed,
+      'fMeltSpeed': processProfile.speed,
+      'fJumpLengthLimit': scanParamters.jumpLengthLimit,
+      'nJumpDelay': scanParamters.jumpDelay,
+      'nMinJumpDelay': scanParamters.minJumpDelay,
+      'nMarkDelay': scanParamters.markDelay,
+      'nPolygonDelay': scanParamters.polygonDelay,
+      'polygonDelayMode': scanParamters.polygonDelayMode,
+      'laserPos': laserStartPosition
+    };
+    
+    exposureTime.addHatchBlock(hatchBlock,exposureSettings);
+    fullExposureHatch.addHatchBlock(hatchBlock,exposureSettings);
+    
+    hatchBlock.setAttributeInt('hatchExposureTime',exposureTime.getExposureTimeMicroSeconds())
+  });
+  
+  return fullExposureHatch.getExposureTimeMicroSeconds();
+  
+  //allHatches.makeEmpty();
+  
+  //hatchBlockArray.forEach(function(hatchBlock){
+  //  bsHatch.addHatchBlock(hatchBlock);
+  //});
+  
+};
