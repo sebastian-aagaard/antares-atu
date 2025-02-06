@@ -106,19 +106,26 @@ exports.getStatistics = function(
   for (let modelId = 0; modelId < modelCount; modelId++) {
       let model = modelData.getModel(modelId);
       customJSON.attachments.push({
-          "path": "/ATU/configuration_" + model.getAttribEx("ModelName") + ".json",
+          "path": "/Profiles/configuration_" + model.getAttribEx("ModelName") + ".json",
           "encoding": "string",
           "relationship": "http://test.com/configurationjson/202305",
           "data": model.getAttribEx("parameterJSON")
       });
   }
 
-  customJSON.attachments.push({
-      "path": "/ATU/toolpath.log",
+  let layerCount = layer_end_nr-layer_start_nr+1;
+  for(let layerNumber = 1; layerNumber <= layerCount; layerNumber++){
+      let durationLog = modelData.getModel(0).getAttribEx('durationLog_layer' + layerNumber);
+
+    let layerHeight = modelData.getLayerPosZ(layerNumber);
+      customJSON.attachments.push({
+      "path": "/timing/timing_Layer" + layerHeight + ".csv",
       "encoding": "string",
       "relationship": "http://test.com/configurationjson/202305",
-      "data": "log"
-  });
+      "data": durationLog
+    });   
+  }
+  
 
   modelData.setTrayAttribEx('custom', customJSON);
 

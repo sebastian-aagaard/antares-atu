@@ -12,6 +12,7 @@ const MODEL = requireBuiltin('bsModel');
 const PARAM = requireBuiltin('bsParam');
 const POLY_IT = requireBuiltin('bsPolylineIterator');
 const EXPOSURE = requireBuiltin('bsExposureTime');
+const HATCH = requireBuiltin('bsHatch')
 
 // -------- SCRIPTS INCLUDES -------- //
 const CONST = require('main/constants.js');
@@ -62,19 +63,147 @@ exports.postprocessSortExposure_MT = function(
    
       let sortedExposureArray = sortMovementDirectionOfTiles(exposureArray);
         
-      updateProcessingOrder(sortedExposureArray);
-     
-      getTileExposureDuration(sortedExposureArray,modelData);
-     
       sortedExposureArray = trimAwayEmptyLeadingAndTrailingTiles(sortedExposureArray);
+
+      combineIntoTypes(sortedExposureArray);
+
+      mergeHatchBlocks(sortedExposureArray);
+
+      getExposureDuration(sortedExposureArray,modelData);
+      
+      createDurationExportData(sortedExposureArray,modelData,layerNr);
         
-      //process.print('layerNr: ' + layerNr); 
+      getTileExposureDuration(sortedExposureArray,modelData);
+              
+      deletePolylines(sortedExposureArray);
+
+      updateProcessingOrder(sortedExposureArray,modelData,layerNr); // <- actual change the duration of the hatchblocks
+        
       EXP3MF.createExporter3mf(sortedExposureArray,layerIt,modelData,layerNr);
     
       layerIt.next();
       progress.step(1);
    };
 } // postprocessSortExposure_MT
+
+//-----------------------------------------------------------------------------------------//
+
+const createDurationExportData =  function(sortedExposureArray,modelData,layerNr){
+  
+  let laserCount = PARAM.getParamInt("scanhead", "laserCount");
+  let data = "tile, type, ";
+  
+  for(let laserNumber = 1; laserNumber <= laserCount; laserNumber++){
+    data += 'laser' + laserNumber + ', ';
+  }
+  
+  data  += 'mean, min, max, longestIdleTime, standard deviation, coefficient of variation, distribution efficiency \n'
+    
+  sortedExposureArray.forEach(function(pass){
+    pass.forEach(function(tile){
+      Object.keys(tile.exposureDurationTypes).forEach(function(typeKey){
+        data += tile.tileID + ', ' + typeKey + ', ';
+        let laser = tile.exposureDurationTypes[typeKey].laser;
+        let durationArray = [];
+        for(let laserNumber = 1; laserNumber <= laserCount; laserNumber++){
+          if(!laser[laserNumber]){
+            data += '0, ';
+            durationArray.push(0);
+          }else{
+            let duration = laser[laserNumber]
+            data += duration + ', '
+            durationArray.push(duration);
+            
+            }
+        }
+        
+          let stats = getMeanandStandardDeviation(durationArray);
+          
+          let min = Math.min( ...durationArray);
+          let max = Math.max( ...durationArray);
+          let idleTime = max-min;
+          let CV = stats.stdev/stats.mean;
+          let efficiency = 1- CV;
+        
+        data += stats.mean +', '+ min + ', '+ max + ', '+ idleTime +', ' + stats.stdev.toFixed(3) + ', ' + CV.toFixed(3) + ', ' + efficiency.toFixed(3) + '\n' 
+
+        });
+      });
+    });
+      
+  modelData.getModel(0).setAttribEx('durationLog_layer' + layerNr,data);
+    
+};
+
+function getMeanandStandardDeviation(arr) {
+  if (!arr.length) return 0;
+
+  // 1) Calculate the mean (average)
+  const mean = arr.reduce((sum, val) => sum + val, 0) / arr.length;
+
+  // 2) Calculate the variance
+  //    (average of the squared differences from the mean)
+  const variance = arr.reduce((acc, val) => {
+    const diff = val - mean;
+    return acc + diff * diff;
+  }, 0) / arr.length;
+
+  // 3) Return the square root of the variance
+  return { mean : mean,
+           stdev : Math.sqrt(variance)};
+}
+
+//-----------------------------------------------------------------------------------------//
+
+const mergeHatchBlocks = function(sortedExposureArray){
+   sortedExposureArray.forEach(function(pass) {
+    pass.forEach(function(tile) {
+      Object.values(tile.type).forEach(function(type) {
+        let t = 0;
+        Object.values(type).forEach(function(laser) {
+          Object.values(laser).forEach(function(hatch) {
+            
+            hatch.removeAttributes(['patternX','patternY', 'hatchExposureTime','stripeId']);
+            hatch.setAttributeInt('_processing_order',0);
+            process.print('b: ' + hatch.getHatchBlockCount());
+            hatch.mergeHatchBlocks({
+              "bConvertToHatchMode": true,
+              "bCheckAttributes": true
+            });
+            process.print('a: ' + hatch.getHatchBlockCount());
+          });        
+        });
+      });
+    });
+  });  
+}
+
+//-----------------------------------------------------------------------------------------//
+
+const combineIntoTypes = function (sortedExposureArray){
+  sortedExposureArray.forEach(function(pass) {
+    pass.forEach(function(tile) {
+      tile.type = {}; // Reset or initialize tile.type
+      tile.exposure.forEach(function(polyline) {
+        let typeId = polyline.getAttributeInt('type');
+        let laserId = Math.floor(polyline.getAttributeInt('bsid') / 10);
+
+        if (!tile.type[typeId]) {
+          tile.type[typeId] = {};
+        }
+        
+        if (!tile.type[typeId].laser) {
+          tile.type[typeId].laser = {};
+        }
+        
+        if (!tile.type[typeId].laser[laserId]) {
+          tile.type[typeId].laser[laserId] = new HATCH.bsHatch();
+        }
+        polyline.polylineToHatch(tile.type[typeId].laser[laserId]);
+      });
+    });
+  });  
+}; 
 
 const sortProcessingOrderWithinTile = function(exposureArray) {
   
@@ -98,6 +227,7 @@ function groupAndSortExposure(exposure) {
         }
 
         // If any polyline has islandId === 0, set the flag to merge the whole group
+        // this should only be valid for open polylines
         if (islandId === 0) {
             groups[modelIndex].hasIslandIdZero = true;
         }
@@ -120,16 +250,16 @@ function groupAndSortExposure(exposure) {
         // Sort each group by priority and position
         group.polylines.sort(function(a, b) {
             // Sort by priority (ascending order)
-            var priorityA = a.getAttributeInt('priority');
-            var priorityB = b.getAttributeInt('priority');
+            let priorityA = a.getAttributeInt('priority');
+            let priorityB = b.getAttributeInt('priority');
 
             if (priorityA !== priorityB) {
                 return priorityA - priorityB;
             }
 // 
             // Sort by position
-            var maxYA = a.tryGetBounds2D().maxY;
-            var maxYB = b.tryGetBounds2D().maxY;
+            let maxYA = a.tryGetBounds2D().maxY;
+            let maxYB = b.tryGetBounds2D().maxY;
 
             // Sort by maxY (largest first)
             if (maxYA !== maxYB && PARAM.getParamInt('sortingMode','scanningOrder')) {
@@ -138,9 +268,24 @@ function groupAndSortExposure(exposure) {
 //             
             let stripeIdA = a.getAttributeInt('stripeId');
             let stripeIdB = b.getAttributeInt('stripeId');
+            
+            if (stripeIdA !== stripeIdB){
+              return stripeIdA - stripeIdB  // Sort by stripeId in decending order    
+            }
+            
+            let laserIdA = Math.floor(a.getAttributeInt('bsid')/10);
+            let laserIdB = Math.floor(b.getAttributeInt('bsid')/10);
 
-            return stripeIdA - stripeIdB; // Sort by stripeId in decending order    
+            return laserIdA - laserIdB; 
+        });
+        
+                // Sort each group by priority and position
+        group.polylines.sort(function(a, b) {
+          
+            let laserIdA = Math.floor(a.getAttributeInt('bsid')/10);
+            let laserIdB = Math.floor(b.getAttributeInt('bsid')/10);
 
+            return laserIdA - laserIdB; 
         });
 
         return group.polylines;
@@ -176,16 +321,13 @@ const trimAwayEmptyLeadingAndTrailingTiles = function(exposureArray) {
     while (pass.length > 0 && pass[0].exposureTime === 0) {
       pass.shift();
     }
-    
     // Remove trailing zeroes
     while (pass.length > 0 && pass[pass.length - 1].exposureTime === 0) {
       pass.pop();
     }
-
     // Return true if the pass is not empty, false if it is empty (filtering out empty passes)
     return pass.length > 0;
   });
-
   return exposureArray;
 };
 
@@ -349,6 +491,37 @@ const getTileExposureDuration = function(exposureArray, modelData) {
   });
 };
 
+const getExposureDuration = function(exposureArray, modelData) {
+  
+  exposureArray.forEach(function(pass) {
+    pass.forEach(function(tile) {
+      
+      tile.exposureDurationTypes = {};
+      Object.keys(tile.type).forEach(function(typeKey) {
+        Object.keys(tile.type[typeKey].laser).forEach(function(laserId){
+          let typeId = +typeKey;
+          let hatch = tile.type[typeId].laser[laserId];
+          let bsid = laserId*10 + typeId;
+      
+          if(!tile.exposureDurationTypes[typeKey]){
+            tile.exposureDurationTypes[typeKey] = {}
+          };
+          
+          if(!tile.exposureDurationTypes[typeKey].laser){
+            tile.exposureDurationTypes[typeKey].laser = {}
+          };
+          
+          if(!tile.exposureDurationTypes[typeKey].laser[laserId]){
+            tile.exposureDurationTypes[typeKey].laser[laserId] = {}
+          };
+          let exposureDuration = UTIL.assignDurationtoHatchblocks(hatch,modelData);
+          tile.exposureDurationTypes[typeKey].laser[laserId] = exposureDuration;
+          });
+        });
+    });
+  });
+};
+
 const getSkywritingDuration = function(cur,modelData){
   
   const skyWritingParamters = modelData
@@ -468,16 +641,43 @@ const mapTileExposureData = function(modelData, layerNr, tileTable_3mf){
 }; //mapTileExposureData
 
 
-const updateProcessingOrder = function(sortedExposureArray ){
+const deletePolylines = function(sortedExposureArray){
+  sortedExposureArray.forEach(function(pass){ 
+    pass.forEach(function(tile){ 
+      tile.exposure.forEach(function(polyline){
+        polyline.deletePolyline();
+      })
+    })
+  });
+};
+
+const updateProcessingOrder = function(sortedExposureArray,modelData,layerNumber){
 
   let processingOrder = 0;
   
-  sortedExposureArray.forEach(function(innerArray){ 
-      innerArray.forEach(function(entry){ 
-          entry.exposure.forEach(function(obj){ 
-              obj.setAttributeInt('_processing_order',processingOrder++)
-          })
+  sortedExposureArray.forEach(function(pass){ 
+    pass.forEach(function(tile){ 
+      Object.values(tile.type).forEach(function(type){
+        Object.values(type).forEach(function(laser){
+          Object.values(laser).forEach(function(hatch){
+            
+            hatch.removeAttributes(['patternX','patternY', 'hatchExposureTime','stripeId']);
+            let hatchblockArray  = hatch.getHatchBlockArray();
+            hatchblockArray.forEach(function(hatchblock){
+              hatchblock.setAttributeInt('_processing_order',processingOrder++);
+              let modelId = hatchblock.getAttributeInt('modelIndex');
+              let model = modelData.getModel(modelId);
+              let modelLayer = model.getModelLayerByNr(layerNumber);
+              modelLayer.createExposurePolylinesFromHatch(hatchblock);
+              });
+                  
+
+            let t = 0;
+            
+          }) 
+        })
       })
+    })
   });
 } //updateProcessingOrder
 
@@ -485,14 +685,13 @@ const sortMovementDirectionOfTiles = function(tileExposureArray){
 
   const isFirstPassFrontToBack = PARAM.getParamInt('movementSettings','isFirstPassFrontToBack'); 
   const isPassDirectionAlternating = PARAM.getParamInt('movementSettings','isPassDirectionAlternating'); 
-    
+  
+  // filter out false values  
   const filteredExposureArray =  tileExposureArray.filter(function(entry){
     return entry;
   });
     
-  
   filteredExposureArray.forEach(function(entry, index){
-    
     let bFromFront = true;
     
     if ((index % 2 === 0 || !isPassDirectionAlternating) === !isFirstPassFrontToBack) {
@@ -501,9 +700,6 @@ const sortMovementDirectionOfTiles = function(tileExposureArray){
     };
     
     entry.forEach(function(obj){obj.ProcessHeadFromFront = bFromFront});        
-    
   });
-  
   return filteredExposureArray;
-  
 }; // sortMovementDirectionOfTiles
