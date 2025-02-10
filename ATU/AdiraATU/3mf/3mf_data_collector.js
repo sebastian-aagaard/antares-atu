@@ -204,8 +204,6 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
         };
         }
       });
-      
-      
   });
 
   let layerData =  {

@@ -406,4 +406,6 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('scanning_priority','support_contour_priority', LOCALIZER.GetMessage('param_support_contour_priority'),0,2000,600);
     parameter.declareParameterInt('scanning_priority','support_open_polyline_priority', LOCALIZER.GetMessage('param_support_open_polyline_priority'),0,2000,700);
     parameter.declareParameterInt('scanning_priority','open_polyline_priority', LOCALIZER.GetMessage('param_openPolyline_priority'),0,2000,800);
+    
+    
 }

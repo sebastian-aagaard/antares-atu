@@ -348,8 +348,8 @@ function distributeLoadHatchBlocks(tileGroups,progress){
         let largestOpenGroupKey = [];
         // get the group with most unassigned scanning duratio
         matchingEntries.forEach(function(openGroupKey){
-          largestOpenGroupKey = returnExposureTimeSumOfHatchBlocksInArray(tileTypeObj.openHatchBlocks[openGroupKey]) 
-          > returnExposureTimeSumOfHatchBlocksInArray(tileTypeObj.openHatchBlocks[largestOpenGroupKey]) ? openGroupKey : largestOpenGroupKey;
+          largestOpenGroupKey = getExposureTimeSumOfHatchBlocksInArray(tileTypeObj.openHatchBlocks[openGroupKey]) 
+          > getExposureTimeSumOfHatchBlocksInArray(tileTypeObj.openHatchBlocks[largestOpenGroupKey]) ? openGroupKey : largestOpenGroupKey;
         });  
             
         if(!largestOpenGroupKey){
@@ -397,37 +397,7 @@ function distributeLoadHatchBlocks(tileGroups,progress){
   return flattenIntoHatchBlock(tileGroups);
 };
 
-// function getExposureTimeOfHatch(hatch){
-//   
-//   bsid = hatch.getAttributeInt('bsid');
-//   
-//   
-//   
-//   var a_settings = {
-//   "fJumpSpeed": 800.0,
-//   "fMeltSpeed": 125.0,
-//   "fJumpLengthLimit": 1.0,
-//   "nJumpDelay": 500,
-//   "nMinJumpDelay": 50,
-//   "nMarkDelay": 75,
-//   "nPolygonDelay": 100,
-//   "polygonDelayMode": "variable",
-//   "laserPos": {"x":10, "y":20}
-// }; 
-// 
-//   
-//   if (!array) return 0;
-//   
-//   let sum =  array.reduce( function (accumulator, currentValue){
-//     
-//     return accumulator + currentValue.getAttributeInt('hatchExposureTime'); 
-//     
-//     },0)
-//   
-//   return sum
-// };
-
-function returnExposureTimeSumOfHatchBlocksInArray(array){
+function getExposureTimeSumOfHatchBlocksInArray(array){
   
   if (!array) return 0;
   
@@ -442,7 +412,7 @@ function returnExposureTimeSumOfHatchBlocksInArray(array){
 
 function getExposureTimeHatch(hatch){
   if(!hatch || hatch.isEmpty()) return 0;
-  return returnExposureTimeSumOfHatchBlocksInArray(hatch.getHatchBlockArray());
+  return getExposureTimeSumOfHatchBlocksInArray(hatch.getHatchBlockArray());
 };
 
 function reassignAttributesHatch(hatch,laserId){

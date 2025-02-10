@@ -77,7 +77,7 @@ exports.postprocessSortExposure_MT = function(
               
       deletePolylines(sortedExposureArray);
 
-      updateProcessingOrder(sortedExposureArray,modelData,layerNr); // <- actual change the duration of the hatchblocks
+      updateProcessingOrder(sortedExposureArray,modelData,layerNr);
         
       EXP3MF.createExporter3mf(sortedExposureArray,layerIt,modelData,layerNr);
     
@@ -165,12 +165,12 @@ const mergeHatchBlocks = function(sortedExposureArray){
             
             hatch.removeAttributes(['patternX','patternY', 'hatchExposureTime','stripeId']);
             hatch.setAttributeInt('_processing_order',0);
-            process.print('b: ' + hatch.getHatchBlockCount());
+            //process.print('b: ' + hatch.getHatchBlockCount());
             hatch.mergeHatchBlocks({
               "bConvertToHatchMode": true,
               "bCheckAttributes": true
             });
-            process.print('a: ' + hatch.getHatchBlockCount());
+            //process.print('a: ' + hatch.getHatchBlockCount());
           });        
         });
       });
@@ -279,15 +279,6 @@ function groupAndSortExposure(exposure) {
             return laserIdA - laserIdB; 
         });
         
-                // Sort each group by priority and position
-        group.polylines.sort(function(a, b) {
-          
-            let laserIdA = Math.floor(a.getAttributeInt('bsid')/10);
-            let laserIdB = Math.floor(b.getAttributeInt('bsid')/10);
-
-            return laserIdA - laserIdB; 
-        });
-
         return group.polylines;
     });
 
@@ -303,7 +294,9 @@ function groupAndSortExposure(exposure) {
         }));
 
         // Sort the groups by the largest maxY in the group (largest first)
-        return maxYB - maxYA;
+ 
+          return maxYB - maxYA;
+
     });
 
     // Step 4: Flatten the sorted groups back into a single array
@@ -661,7 +654,7 @@ const updateProcessingOrder = function(sortedExposureArray,modelData,layerNumber
         Object.values(type).forEach(function(laser){
           Object.values(laser).forEach(function(hatch){
             
-            hatch.removeAttributes(['patternX','patternY', 'hatchExposureTime','stripeId']);
+            //hatch.removeAttributes(['patternX','patternY', 'hatchExposureTime','stripeId']);
             let hatchblockArray  = hatch.getHatchBlockArray();
             hatchblockArray.forEach(function(hatchblock){
               hatchblock.setAttributeInt('_processing_order',processingOrder++);
