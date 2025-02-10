@@ -79,7 +79,7 @@ exports.removeEmptyHatches = function(tileHatch,nonZeroAttributeName){
   let filteredCount = filteredHatch.getHatchBlockCount();
   
   if(prevCount != filteredCount){
-   process.warning('removed hatches with null value for ' + nonZeroAttributeName + ', was ' + prevCount + ', now ' + filteredCount);
+   process.printWarning('removed hatches with null value for ' + nonZeroAttributeName + ', was ' + prevCount + ', now ' + filteredCount);
    }
 
  return filteredHatch;
