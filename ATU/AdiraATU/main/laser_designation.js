@@ -293,18 +293,20 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
         }
         
       } else {
-        clip_min_x = scanner.abs_x_min;
-        clip_max_x = scanner.abs_x_max;
+        
+        let useExtendedReachForInfill = false;
+        clip_min_x = useExtendedReachForInfill ? scanner.e_abs_x_min : scanner.abs_x_min;
+        clip_max_x = useExtendedReachForInfill ? scanner.e_abs_x_max : scanner.abs_x_max;
       }
       
       //check if laser allocation zone is outside the preset range
       if(scanner.abs_x_min > clip_min_x) {
-        clip_min_x = scanner.abs_x_min;
+        //clip_min_x = scanner.abs_x_min;
         process.printWarning('laser ' + (laserIndex+1) + " is trying to allocate outside min x limit")
       }; 
       
       if(scanner.abs_x_max < clip_max_x) {
-        clip_max_x = scanner.abs_x_max;
+        //clip_max_x = scanner.abs_x_max;
         process.printWarning('laser ' + (laserIndex+1) + " is trying to allocate outside max x limit")
       };
       
