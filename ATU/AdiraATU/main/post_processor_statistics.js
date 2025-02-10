@@ -114,7 +114,7 @@ exports.getStatistics = function(
   }
 
   let layerCount = layer_end_nr-layer_start_nr+1;
-  for(let layerNumber = 1; layerNumber <= layerCount; layerNumber++){
+  for(let layerNumber = layer_start_nr; layerNumber <= layer_end_nr; layerNumber++){
       let durationLog = modelData.getModel(0).getAttribEx('durationLog_layer' + layerNumber);
 
     let layerHeight = modelData.getLayerPosZ(layerNumber);
