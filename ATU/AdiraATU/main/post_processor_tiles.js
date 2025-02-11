@@ -118,12 +118,17 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
 
 function infillHatchOperations(hatches,modelLayer,modelData,progress){
   TP2TILE.assignHatchblocksToTiles(hatches,modelLayer);
-  LASER.staticDistributionKeepVectors(modelData,hatches,modelLayer);
+  
+  if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
+    LASER.staticDistribution(modelData,hatches,modelLayer);   
+  } else {
+    LASER.staticDistributionKeepVectors(modelData,hatches,modelLayer);  
+  }
 } 
 
 function assignMultiOpContours(contourHatch, bounds, tileTable, modelData,modelLayer){  
   
-  let returnHatch = new HATCH.bsHatch();
+  let resultingHatch = new HATCH.bsHatch();
   
   tileTable.forEach(function(tile){ // iterate through all tiles
 
@@ -136,14 +141,17 @@ function assignMultiOpContours(contourHatch, bounds, tileTable, modelData,modelL
    
     let clippedHatch = UTIL.ClipHatchByRect(hatch,UTIL.get2DVecArrayFromLim(offsetTileLimits));
     clippedHatch.setAttributeInt('tileID_3mf',tile.tileID);
-    returnHatch.moveDataFrom(clippedHatch);
+    //clippedHatch = UTIL.adjustContourInterface(clippedHatch,modelLayer,false);
+
+    resultingHatch.moveDataFrom(clippedHatch);
   });//tile  
   
-  LASER.staticDistribution(modelData,returnHatch,modelLayer)
-  UTIL.assignDurationtoHatchblocks(returnHatch,modelData)
+  LASER.staticDistribution(modelData,resultingHatch,modelLayer)
+  //UTIL.adjustContourInterface(allHatches,thisLayer,true)
+  UTIL.assignDurationtoHatchblocks(resultingHatch,modelData)
   contourHatch.makeEmpty();
-  contourHatch.moveDataFrom(returnHatch);
-  return returnHatch;    
+  contourHatch.moveDataFrom(resultingHatch);
+  return resultingHatch;    
 };
 
 function getMidwayInterfaceTileLimits(tile){
