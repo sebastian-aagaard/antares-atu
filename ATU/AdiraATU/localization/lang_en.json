@@ -215,7 +215,7 @@
   "grp_laserAssignment": "Laser Distribution Strategy",    
      "param_assignmentMode": "Laser Distribution",
      "static": "static",
-     "full": "Fully Assign All Vectors Within Reach of Laser",    
+     "full": "Smart Load Distribution (Greedy)",    
   "grp_tileing": "Tile Strategy",
      "param_ScanningMode": "Scanning Mode",
      "param_ScanningMode_MoveAndShoot": "Move and Shoot",
