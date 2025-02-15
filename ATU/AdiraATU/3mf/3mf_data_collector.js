@@ -10,6 +10,9 @@ const PARAM = requireBuiltin('bsParam');
 const ISLAND = requireBuiltin('bsIsland');
 const UTIL = require('main/utility_functions.js');
 const CONST = require('main/constants.js');
+const KIN = require('main/kinematicsCalculator.js');
+const VEC2 = requireBuiltin('vec2');
+
 
 exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr){
   
@@ -87,9 +90,6 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
             "sequencetransferspeed": PARAM.getParamReal('movementSettings', 'axis_transport_speed').toFixed(3),
             "processHeadOffsetX" : processHeadOffsetX.toFixed(3),
             "processHeadOffsetY" : processHeadOffsetY.toFixed(3),
-            //"processHeadRampOffsetY" : (PARAM.getParamReal('tileing','processheadRampOffset') * (pass[0].ProcessHeadFromFront ? -1 : 1)).toFixed(3),
-            //"requiredPasses": exposureArray.length,
-            //"tilesInPass": pass.length,
             "layerScanningDuration_us": null,
             "layerTotalDuration_us": null
           },
@@ -131,7 +131,8 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
     }
     
     let previousTargetPosition = passStartPos;
-    
+    let prevSpeedY = 0;
+    let prevExposureDuration = 0;
     pass.forEach(function(tile, tileIndex){
       // Determine next y-coordinate
       let nextTileYCoord, nextTileXCoord;
@@ -164,19 +165,76 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
       // Add time to tile if it is below least procesing time for tile
 
       if(tile.exposureTime<PARAM.getParamInt('tileing','minimumTileTime_us')){
-      tile.ExposureTime = PARAM.getParamInt('tileing','minimumTileTime_us');  
+        tile.exposureTime = PARAM.getParamInt('tileing','minimumTileTime_us');  
       }      
 
-      
-      let speedY;
-      if (PARAM.getParamInt('tileing', 'ScanningMode')) { // onthefly
-        speedY = tile.exposureTime > 0 ? travel / (tile.exposureTime / (1000 * 1000)) : PARAM.getParamReal('movementSettings', 'axis_max_speed');
-        speedY = speedY > PARAM.getParamReal('movementSettings', 'axis_max_speed') ? PARAM.getParamReal('movementSettings', 'axis_max_speed') : speedY;
+      let speedY, tileTime_us,tileMovementDuration;
+      const acceleration = PARAM.getParamInt('movementSettings', 'acceleration');
+
+      if (PARAM.getParamInt('tileing', 'ScanningMode')) {// onthefly
+
+        tileTime_us = tile.exposureTime;
+        
+        // least time needed to travel the distance at max velocity
+        let minTime_us = (travel/PARAM.getParamReal('movementSettings', 'axis_max_speed')) * 1e6;
+        
+        if(tileTime_us < minTime_us){
+           tileTime_us = minTime_us;
+        }
+        
+        if(acceleration > 0){
+
+          speedY = KIN.calculateTileFinalVelocity(prevSpeedY,travel,tileTime_us,prevExposureDuration,acceleration);
+          if(speedY > PARAM.getParamReal('movementSettings', 'axis_max_speed')) speedY = PARAM.getParamReal('movementSettings', 'axis_max_speed');
+
+          const tileTime_s = tileTime_us * 1e-6;
+          const accelerationDuration_s = Math.abs((speedY - prevSpeedY)/acceleration);
+          const accelerationDistance =  Math.abs(speedY * speedY - prevSpeedY * prevSpeedY) / (2 * acceleration);
+          const coastingDistance = travel - accelerationDistance;
+          const coastingDuration = coastingDistance / speedY;
+          const calculatedTotalDuration = coastingDuration + accelerationDuration_s;
+          tileMovementDuration = calculatedTotalDuration * 1e6;
+          
+          const calculatedTotalDistance = accelerationDistance + coastingDistance;
+          if(calculatedTotalDistance.toFixed(3) !== travel.toFixed(3)){
+            process.printError("error in acceleration / coasting calculation | tileID: " + tile.tileID + " | layer: " + layerNr);
+          }
+
+        } else {
+          speedY =  travel / (tileTime_us / (1000 * 1000));  
+          if(speedY > PARAM.getParamReal('movementSettings', 'axis_max_speed')) speedY = PARAM.getParamReal('movementSettings', 'axis_max_speed');
+          tileMovementDuration = (travel / speedY) * 1000 * 1000;
+        };
+                
       } else { // move and shoot
+        
+        tileMovementDuration = tile.exposureTime
         speedY = PARAM.getParamReal('movementSettings', 'axis_transport_speed');
+        const accelerationDuration_s = Math.abs((speedY)/acceleration);
+        
+        if(tileIndex != 0){
+          
+          let fromPoint = new VEC2.Vec2(pass[tileIndex-1].xcoord, pass[tileIndex-1].ycoord); 
+          let toPoint = new VEC2.Vec2(pass[tileIndex].xcoord, pass[tileIndex].ycoord); 
+          let distance = fromPoint.distance(toPoint);
+          
+          const velocity = PARAM.getParamReal('movementSettings', 'axis_transport_speed')
+          
+          const accelerationDuration_s = (acceleration > 0) ? velocity/acceleration : 0;
+          const accelerationDistance = (acceleration > 0) ?  Math.abs(velocity * velocity) / (2 * acceleration) : 0;
+          const coastingDistance = distance - accelerationDistance;
+          const coastingDuration_s = coastingDistance / velocity;
+          const calculatedTotalDuration = coastingDuration_s + accelerationDuration_s;
+          const calculatedTotalDistance = accelerationDistance + coastingDistance;
+          if(calculatedTotalDistance.toFixed(3) !== distance.toFixed(3)){
+            process.printError("moveandshoot: error in acceleration / coasting calculation | tileID: " + tile.tileID + " | layer: " + layerNr);
+          }
+          tileMovementDuration += (calculatedTotalDuration * 1e6)
+        }
       }
 
-      const tileMovementDuration = (travel / speedY) * 1000 * 1000;      
+      prevSpeedY = speedY;
+      prevExposureDuration=tileTime_us;
       
       if(PARAM.getParamInt('tileing','ScanningMode')) { // onthefly
       // Create node object
@@ -191,15 +249,16 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
             "tileTotalTime_us": tileMovementDuration.toFixed(0)
           }
         };
-    } else { // moveandshoot
-     // Create node object
+      } else { // moveandshoot
+      // Create node object
         exporter_3mf.metadata[passIndex].nodes[tileIndex] = {
           "name": "movement",
           "attributes": {
             "tileid": tile.tileID,
             "startx": tile.xcoord.toFixed(3),
             "starty": tile.ycoord.toFixed(3),
-            "tileExposureTime_us": tile.exposureTime.toFixed(0)
+            "tileExposureTime_us": tile.exposureTime.toFixed(0),
+            "tileTotalTime_us": tileMovementDuration.toFixed(0)
           }
         };
         }

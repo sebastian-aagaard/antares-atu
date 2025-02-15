@@ -144,6 +144,7 @@
   "grp_movementSettings": "Scanner Head and Recoater Movement",
     "param_axis_transport_speed": "Process Head Transport Speed [mm/s]",
     "param_axis_max_speed" : "Axis Max Speed [mm/s]",
+    "param_acceleration" : "Axis Acceleration [mm/s^2]",
     "param_recoating_speed_mms" : "Recoating Velocity [mm/s]",
     "param_head_startpos_x": "Scanner Head Starting Position - X coord [mm]",
     "param_head_startpos_y": "Scanner Head Starting Position - Y coord [mm]",

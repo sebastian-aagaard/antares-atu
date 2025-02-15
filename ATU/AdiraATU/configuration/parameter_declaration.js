@@ -33,13 +33,13 @@ exports.declareParameters = function(parameter)
   parameter.declareParameterGroup('strategy',LOCALIZER.GetMessage('grp_strategy'),'Hatch Strategy',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterReal('strategy','fStripeWidth',LOCALIZER.GetMessage('param_fStripeWidth'),0.0,100.0,10.0);
     parameter.declareParameterReal('strategy','fMinWidth',LOCALIZER.GetMessage('param_fMinWidth'),0.0,100.0,2.0);
-    parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,-0.03);
+    parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,0.0);
     parameter.declareParameterReal('strategy','fStripeLength',LOCALIZER.GetMessage('param_fStripeLength'),0,100.0,0);
     parameter.declareParameterReal('strategy','fPatternShift',LOCALIZER.GetMessage('param_fPatternShift'),0,10.0,1.67);
-    parameter.declareParameterReal('strategy','fAngleLimit_1a',LOCALIZER.GetMessage('param_fAngleLimit_1a'),0,360.0,210.0);
-    parameter.declareParameterReal('strategy','fAngleLimit_1b',LOCALIZER.GetMessage('param_fAngleLimit_1b'),0,360.0,250.0);
-    parameter.declareParameterReal('strategy','fAngleLimit_2a',LOCALIZER.GetMessage('param_fAngleLimit_2a'),0,360.0,300.0);
-    parameter.declareParameterReal('strategy','fAngleLimit_2b',LOCALIZER.GetMessage('param_fAngleLimit_2b'),0,360.0,340.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_1a',LOCALIZER.GetMessage('param_fAngleLimit_1a'),0,360.0,215.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_1b',LOCALIZER.GetMessage('param_fAngleLimit_1b'),0,360.0,255.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_2a',LOCALIZER.GetMessage('param_fAngleLimit_2a'),0,360.0,285.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_2b',LOCALIZER.GetMessage('param_fAngleLimit_2b'),0,360.0,325.0);
     parameter.declareParameterReal('strategy','fSeachIncrements',LOCALIZER.GetMessage('param_fSeachIncrements'),0,360.0,40.0);
 
     parameter.declareParameterChoice('strategy','bShiftLimitRange',LOCALIZER.GetMessage('param_bShiftLimitRange'), 
@@ -125,7 +125,7 @@ exports.declareParameters = function(parameter)
   
  parameter.declareParameterGroup('shortVectorHandling', LOCALIZER.GetMessage('grp_shortVectorHandling'),'Options for short vectors',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterReal('shortVectorHandling', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
-    parameter.declareParameterReal('shortVectorHandling', 'vector_lenght_merge_attempt', LOCALIZER.GetMessage('param_vector_lenght_merge_attempt'), 0.0, 10.0, 0.1);
+    parameter.declareParameterReal('shortVectorHandling', 'vector_lenght_merge_attempt', LOCALIZER.GetMessage('param_vector_lenght_merge_attempt'), 0.0, 10.0, 1);
     parameter.declareParameterReal('shortVectorHandling', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.1);     
    
   parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
@@ -226,9 +226,9 @@ exports.declareParameters = function(parameter)
   // -------- WORK AREA -------- //
   parameter.declareParameterGroup('workarea',LOCALIZER.GetMessage('grp_workarea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterInt('workarea', 'x_workarea_min_mm',LOCALIZER.GetMessage('param_x_workarea_min_mm'),0,1015,0);
-    parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,1015,1000);
+    parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,1015,1010);
     parameter.declareParameterInt('workarea', 'y_workarea_min_mm',LOCALIZER.GetMessage('param_y_workarea_min_mm'),-508,1015,0);
-    parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),-258,1015,1000);
+    parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),-258,1015,1010);
     
    // -------- WORK AREA -------- //
   parameter.declareParameterGroup('calibrationArea',LOCALIZER.GetMessage('grp_calibrationArea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
@@ -242,6 +242,8 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('movementSettings','axis_max_speed', LOCALIZER.GetMessage('param_axis_max_speed'),0.0,100.0,80.0);
     parameter.declareParameterReal('movementSettings','axis_transport_speed', LOCALIZER.GetMessage('param_axis_transport_speed'),0.0,100.0,80.0);
     parameter.declareParameterInt('movementSettings', 'recoating_speed_mms',LOCALIZER.GetMessage('param_recoating_speed_mms'),0,1000,120);
+    parameter.declareParameterInt('movementSettings', 'acceleration',LOCALIZER.GetMessage('param_acceleration'),0,50000,1000);
+
     parameter.declareParameterReal('movementSettings', 'head_startpos_x',LOCALIZER.GetMessage('param_head_startpos_x'),0.0,1000.0,0.0);
     parameter.declareParameterReal('movementSettings', 'head_startpos_y',LOCALIZER.GetMessage('param_head_startpos_y'),-500.0,1000.0,0.0);
     parameter.declareParameterChoice('movementSettings', 'isFirstPassFrontToBack', 
@@ -377,14 +379,14 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('tileing', 'processheadRampOffset',LOCALIZER.GetMessage('param_processheadRampOffset'),0,50,0.5);
     parameter.declareParameterReal('tileing', 'tileTravelForBreachingYLimit',LOCALIZER.GetMessage('param_tileTravelForBreachingYLimit'),0.001,5,0.5);
  
-    parameter.declareParameterReal('tileing', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-0.1); //-5
-    parameter.declareParameterReal('tileing', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-0.1); //-5
+    parameter.declareParameterReal('tileing', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-12); //-5
+    parameter.declareParameterReal('tileing', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-12); //-5
  
     parameter.declareParameterReal('tileing','step_x', LOCALIZER.GetMessage('param_step_x'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,7);
     parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,7); 
-    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,150.0,33.0);
+    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,150.0,60.0);
     parameter.declareParameterInt('tileing','tileBufferDuration_us', LOCALIZER.GetMessage('param_tileBufferDuration_us'),0.0,5000000,0);
     parameter.declareParameterInt('tileing','firstTileInStripeAddedDuration_us', LOCALIZER.GetMessage('param_firstTileInStripeAddedDuration_us'),0.0,5000000,0);
     parameter.declareParameterInt('tileing','minimumTileTime_us', LOCALIZER.GetMessage('param_minimumTileTime_us'),0.0,5000000,0);
