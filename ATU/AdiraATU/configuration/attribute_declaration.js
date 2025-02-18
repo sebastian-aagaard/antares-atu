@@ -46,11 +46,14 @@ exports.declareBuildAttributes = function(buildAttrib,laser_count){
   buildAttrib.declareAttributeInt('overlappingLaser_3');
   buildAttrib.declareAttributeInt('overlappingLaser_4');
   buildAttrib.declareAttributeInt('overlappingLaser_5');
+  buildAttrib.declareAttributeInt('overlappingLaser_6');
+  buildAttrib.declareAttributeInt('overlappingLaser_7');
   buildAttrib.declareAttributeInt('processedByLaser');
   buildAttrib.declareAttributeInt('hatchExposureTime');
   buildAttrib.declareAttributeInt('isSingleSource');
   buildAttrib.declareAttributeInt('patternX');
   buildAttrib.declareAttributeInt('patternY');
+  buildAttrib.declareAttributeInt('build style id');
 
 
 };
