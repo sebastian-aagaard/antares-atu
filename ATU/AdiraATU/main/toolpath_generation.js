@@ -166,7 +166,7 @@ exports.processIslands = function(thisModel,island_it,nLayerNr,islandId){
   let  hatchingArgs = {
     "fHatchDensity" : undefined,
     "fHatchAngle" : undefined,
-    //"fBlocksortRunAheadLimit": 5.0,    
+    "fBlocksortRunAheadLimit": 5.0,    
     //"fCollinearBorderSnapTol": 0.001,
     "hatchOrigin" : {x: 0.0, y: 0.0},
     "blocksortVec" : {x: 0.0, y: -1.0},
@@ -361,9 +361,6 @@ function hatchStripes(islands,hatchingArgs,islandId,typeInt,resultHatch){
         let tempHatch = new HATCH.bsHatch();
         island.hatchExt2(tempHatch,hatchingArgs);        
         tempHatch.setAttributeInt('stripeId',index+1);
-        tempHatch.setAttributeInt('patternX',patternInfo.nPatternX);
-        tempHatch.setAttributeInt('patternY',patternInfo.nPatternY);
-
         hatchContainer.moveDataFrom(tempHatch);
       });  
 
@@ -394,7 +391,7 @@ const makeBorders = function(islandObj,islandId){
   let island = islandObj.clone();
   
   for (let borderIndex = 1; borderIndex < numberOfBorders+1 ; borderIndex++){
-    
+        
     let tempBorderHatch = new HATCH.bsHatch();
         
     island.borderToHatch(tempBorderHatch);
@@ -415,7 +412,7 @@ const makeBorders = function(islandObj,islandId){
     if(island.isEmpty()) break;
       
   }
-                      
+                        
 return {'allBorderHatch' : allBorderHatch,
         'bulkIsland' : island}
 }
