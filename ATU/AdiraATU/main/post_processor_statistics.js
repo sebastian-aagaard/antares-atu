@@ -151,17 +151,30 @@ const getBuildTime_ms = function(modelData,progress,layer_start_nr,layer_end_nr)
     
     const model = UTIL.getModelsInLayer(modelData,layerNr)[0];
     
-    if (!model) {
+    if (!model || !UTIL.isLayerProcessable(model.maybeGetModelLayerByNr(layerNr))) {
       process.printWarning("Post Processor Statistics: Nothing to postprocess in layer " + layerNr + ' / ' + layerIt.getLayerZ() + ' mm');
       layerIt.next();
       progress.step(1);
       continue;
     }
     
-    let exportData = model
-      .getModelLayerByNr(layerNr)
-      .getAttribEx('exporter_3mf')
-      .metadata;
+    let exportData;
+    
+    try{
+      exportData = model
+        .getModelLayerByNr(layerNr)
+        .getAttribEx('exporter_3mf')
+        .metadata;
+    } catch (error) {
+      process.printError("No metadata found on layer " + layerNr + ". Error: " + error.message);
+    }
+    
+    if (!exportData || exportData.length === 0) {
+      process.printWarning("No export data found for layer " + layerNr);
+      layerIt.next();
+      progress.step(1);
+      continue;
+    }
 
     let layerDuration_ms = exportData[0]
       .attributes
