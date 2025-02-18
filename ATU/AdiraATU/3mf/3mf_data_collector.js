@@ -197,7 +197,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
           
           const calculatedTotalDistance = accelerationDistance + coastingDistance;
           if(calculatedTotalDistance.toFixed(3) !== travel.toFixed(3)){
-            process.printError("error in acceleration / coasting calculation | tileID: " + tile.tileID + " | layer: " + layerNr);
+            process.printError("error in acceleration / coasting calculation: otf | tileID: " + tile.tileID + " | layer: " + layerNr);
           }
 
         } else {
@@ -227,7 +227,7 @@ exports.createExporter3mf = function(exposureArray, layerIt, modelData, layerNr)
           const calculatedTotalDuration = coastingDuration_s + accelerationDuration_s;
           const calculatedTotalDistance = accelerationDistance + coastingDistance;
           if(calculatedTotalDistance.toFixed(3) !== distance.toFixed(3)){
-            process.printError("moveandshoot: error in acceleration / coasting calculation | tileID: " + tile.tileID + " | layer: " + layerNr);
+            process.printError("moveandshoot: error in acceleration / coasting calculation: mas | tileID: " + tile.tileID + " | layer: " + layerNr);
           }
           tileMovementDuration += (calculatedTotalDuration * 1e6)
         }
