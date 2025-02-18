@@ -26,18 +26,6 @@ exports.assignHatchblocksToTiles = function(allHatches,thisLayer) {
   
   let tileTable = thisLayer.getAttribEx('tileTable');
   
-  /////////////////////////////////////
-  /// sort tilearray by tile number  ///
-  //////////////////////////////////////
-    
-  if(tileTable.length > 1){
-    tileTable.sort(function(a, b) {
-      return a.tile_number - b.tile_number;
-    });
-  }
-  
-  thisLayer.setAttribEx('tileTable',tileTable);    
-  
   /////////////////////////////////////////////////////////////
   ///                 Index hatces to tiles                 ///
   /// (passnumber, tile_index, scanhead xcoord and ycoord)  ///
@@ -60,9 +48,9 @@ function filterAndAssignHatchBlocks(allHatches,thisLayer,tileInfo){
   let maxX = tileInfo.outline.xmax;
   
   if(allHatches.isEmpty()){
-    return undefined;
-    }
-      
+    return;
+  };
+
   let insideHatchHorizontal = new HATCH.bsHatch();
   let insideHatchTile = new HATCH.bsHatch();
   let outsideHatch = new HATCH.bsHatch();
@@ -88,13 +76,15 @@ function filterAndAssignHatchBlocks(allHatches,thisLayer,tileInfo){
   allHatches.axisFilter(insideHatchHorizontal,outsideHatch,HATCH.nAxisY,minY,maxY,layerHeight_mm);
   insideHatchHorizontal.axisFilter(insideHatchTile,outsideHatch,HATCH.nAxisX,minX,maxX,layerHeight_mm);
 
+  if(insideHatchTile.isEmpty()){
+    return;
+  };
+    
   anotateTileIntefaceHatch(insideHatchTile,tileInfo);
   
   allHatches.makeEmpty();
-  allHatches.moveDataFrom(insideHatchTile);  
+  allHatches.moveDataFrom(insideHatchTile);
   allHatches.moveDataFrom(outsideHatch);
-  
-  
 } // filterHatchBlocks
 
 const anotateTileIntefaceHatchBlock = function(hatchBlock,tileID) {
