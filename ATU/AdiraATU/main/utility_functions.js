@@ -99,9 +99,9 @@ exports.invertAngleIfQ1orQ2 = function(angleDeg){
 };
   
 //-----------------------------------------------------------------------------------------//
-exports.isBoundsInside = function(bounds,tileBounds){
+exports.isBoundsInside = function(bounds2D,tileBounds){
     
-  if(bounds.minX < tileBounds.xmin || bounds.maxX > tileBounds.xmax || bounds.minY < tileBounds.ymin || bounds.maxY > tileBounds.ymax){
+  if(bounds2D.minX < tileBounds.xmin || bounds2D.maxX > tileBounds.xmax || bounds2D.minY < tileBounds.ymin || bounds2D.maxY > tileBounds.ymax){
     return false;
   }
   return true;
