@@ -21,9 +21,6 @@ exports.parkingPosition = { x: 465 , y: - 560 };
 exports.tilePositionHardLimit = {xmin:-40 , ymin: -60, xmax: 645, ymax: 995};
 exports.maxTargetY = 995;
 
-// exports.dt = function(){
-//   return PARAM.getParamReal("exposure", "min_vector_lenght")};
-
 // -------- TYPE DESIGNATION -------- //
 exports.typeDesignations = {
   part_hatch: {
