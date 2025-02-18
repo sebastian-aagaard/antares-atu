@@ -81,7 +81,6 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
         if(!isAssigned){
           assignMultiOpContours(polylineHatch, bounds, tileTable, modelData, modelLayer);
         }
-                  
       } else if (typeId === CONST.typeDesignations.part_hatch.value 
         || typeId === CONST.typeDesignations.downskin_hatch.value 
         || typeId === CONST.typeDesignations.support_hatch.value)
@@ -103,9 +102,8 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
     let tileGroups = preCalculateDistribution(allHatches);
     allHatches = distributeLoadHatchBlocks(tileGroups,progress); 
     
-    allHatches = UTIL.removeEmptyHatches(allHatches,'tileID_3mf');
     LASER.assignProcessParameters(allHatches,modelData,layerNumber,modelLayer); 
-    
+    allHatches = UTIL.removeEmptyHatches(allHatches,'tileID_3mf');
     sortByProcessingOrderAndPosition(allHatches);  
     modelLayer.createExposurePolylinesFromHatch(allHatches);
     
@@ -118,9 +116,10 @@ exports.postprocessDivideHatchBlocksIntoTiles_MT = function(
 
 function infillHatchOperations(hatches,modelLayer,modelData,progress){
   TP2TILE.assignHatchblocksToTiles(hatches,modelLayer);
-  
   if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
-    LASER.staticDistribution(modelData,hatches,modelLayer);   
+    LASER.staticDistribution(modelData,hatches,modelLayer);
+    hatches=UTIL.adjustInterfaceVectors(hatches,modelLayer,false);
+
   } else {
     LASER.staticDistributionKeepVectors(modelData,hatches,modelLayer);  
   }
@@ -242,7 +241,7 @@ function getShift(layerNumber,axis) {
 };
 
 function assignSingleOpContours(hatch, bounds, tileTable, modelData){
-  let assignedSingle = 0;
+  let assignedSingle = false;
   
   tileTable.forEach(function(tile){ // iterate through all tiles
   
@@ -262,7 +261,7 @@ function assignSingleOpContours(hatch, bounds, tileTable, modelData){
          
       singleScanOptions.forEach(function(laserId){
         hatchBlock.setAttributeInt('isSingleSource',1);
-        assignedSingle = 1;
+        assignedSingle = true;
         addBsidToHatchBlock(hatchBlock,laserId,tile.tileID);
       });
       hatchBlockIterator.next();
@@ -283,17 +282,20 @@ function addTileIdToHatchBlock(hatchBlock,thisTileId){
   };
 };
 
-function getBsid(type,laserID) {
-  return (type + laserID*10)};
+function getBsid(type,laserIndex) {
+  return (laserIndex*10 + type);
+};
 
 function addBsidToHatchBlock(hatchBlock,laserId,tileId){
+  
   let bsid = getBsid(hatchBlock.getAttributeInt('type'),laserId);
   
   if(hatchBlock.getAttributeInt('bsid') !== 0){ // already preallocated
     let overlapCount = hatchBlock.getAttributeInt('overlapLaserCount');
+    
     overlapCount++;
-    let storageVariable = tileId*100+bsid;
-    hatchBlock.setAttributeInt('overlappingLaser_' + overlapCount,tileId*100 + bsid);
+
+    hatchBlock.setAttributeInt('overlappingLaser_' + overlapCount.toString(),bsid);
     hatchBlock.setAttributeInt('overlapLaserCount',overlapCount);
   } else {
     hatchBlock.setAttributeInt('bsid',bsid);   
