@@ -33,7 +33,9 @@ exports.drawTileArray_MT = function(
   progress, 
   layer_start_nr, 
   layer_end_nr){
-        
+  
+  if(!PARAM.getParamInt('display', 'displayTileGridATU')) return
+    
   let layerIt = modelData.getPreferredLayerProcessingOrderIterator(
      layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
   
@@ -72,7 +74,9 @@ exports.drawTileArray_MT = function(
         new VEC2.Vec2(tile.outline.xmin, tile.outline.ymin),
         new VEC2.Vec2(tile.outline.xmin, tile.outline.ymax),      
         new VEC2.Vec2(tile.outline.xmax, tile.outline.ymax),    
-        new VEC2.Vec2(tile.outline.xmax, tile.outline.ymin)
+        new VEC2.Vec2(tile.outline.xmax, tile.outline.ymin),
+        new VEC2.Vec2(tile.outline.xmin, tile.outline.ymin)
+
       ]
       
       thisTile.addNewPath(pointArray);
@@ -88,8 +92,8 @@ exports.drawTileArray_MT = function(
         laserRange.push(new VEC2.Vec2(scanner.xmin , scanner.ymin));
       })      
       
-      thisTile.addNewPath(laserRange);
-      //thisTile.setClosed(false); 
+      //thisTile.addNewPath(laserRange);
+      thisTile.setClosed(false); 
       thisModelLayer.addPathSet(thisTile,MODEL.nSubtypeSupport);
     });  
 
