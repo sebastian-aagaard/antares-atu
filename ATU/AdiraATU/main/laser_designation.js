@@ -128,11 +128,8 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
   let laserCount = PARAM.getParamInt("scanhead", "laserCount");  
   
   let groupedHatchByTileId = UTIL.getGroupedHatchObjectByTileId(hatchObj);
-  let xDiv;
-  if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
-    xDiv = getScanheadLaserAllocationArrayX(bsModelData);  
-  }
-
+  let xDiv = getScanheadLaserAllocationArrayX(bsModelData);  
+  
   Object.entries(groupedHatchByTileId).forEach(function (tileEntry) {
     let tileId = +tileEntry[0];
     let tileHatch = tileEntry[1];
@@ -154,7 +151,9 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
     let clip_min_y = thisTile.outline.ymin;
     let clip_max_y = thisTile.outline.ymax;
     let xTileOffset = thisTile.outline.xmin;
-            
+           
+    let halfVectorOverlap = 2;//PARAM.getParamReal('interface', 'interfaceOverlap')/2;
+      
     for(let laserIndex = 0; laserIndex < laserCount; laserIndex++){ // run trough all laser dedication zones
       
       let clip_min_x, clip_max_x;
@@ -162,23 +161,16 @@ exports.staticDistribution = function(bsModelData,hatchObj,thisLayer) {
       let assignmentMode = PARAM.getParamStr('laserAssignment', 'assignmentMode');
       let scanner = getScanner(laserIndex+1)
 
-      if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
-        
-        // set clip width, account for overlap
-        if(laserIndex === 0){ // if first laser only overlap max x
-          clip_min_x = xDiv[laserIndex];
-          clip_max_x = xDiv[laserIndex+1];
-        } else if (laserIndex === laserCount-1) { // if last laser only overlap min x
-          clip_min_x = xDiv[laserIndex];
-          clip_max_x = xDiv[laserIndex+1];
-        } else { // else overlap both min and max x
-          clip_min_x = xDiv[laserIndex];
-          clip_max_x = xDiv[laserIndex+1]; 
-        }
-        
-      } else {
-        clip_min_x = scanner.abs_x_min;
-        clip_max_x = scanner.abs_x_max;
+
+      if(laserIndex === 0){ // if first laser only overlap max x
+        clip_min_x = xDiv[laserIndex];
+        clip_max_x = xDiv[laserIndex+1]+halfVectorOverlap;
+      } else if (laserIndex === laserCount-1) { // if last laser only overlap min x
+        clip_min_x = xDiv[laserIndex]-halfVectorOverlap;
+        clip_max_x = xDiv[laserIndex+1];
+      } else { // else overlap both min and max x
+        clip_min_x = xDiv[laserIndex]-halfVectorOverlap;
+        clip_max_x = xDiv[laserIndex+1]+halfVectorOverlap; 
       }
       
       //check if laser allocation zone is outside the preset range
@@ -241,12 +233,7 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
   let layerHeight_mm = thisLayer.getLayerZ()/1000;  
   
   let groupedHatchByTileId = UTIL.getGroupedHatchObjectByTileId(hatchObj);
-  hatchObj.makeEmpty();
-  
-  let xDiv;
-  if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
-    xDiv = getScanheadLaserAllocationArrayX(bsModelData);  
-  }
+  hatchObj.makeEmpty(); 
 
   Object.entries(groupedHatchByTileId).forEach(function (tileEntry) {
     let tileId = +tileEntry[0];
@@ -278,27 +265,14 @@ exports.staticDistributionKeepVectors = function(bsModelData,hatchObj,thisLayer)
       let assignmentMode = PARAM.getParamStr('laserAssignment', 'assignmentMode');
       let scanner = getScanner(laserIndex+1)
       
-      if(PARAM.getParamStr('laserAssignment', 'assignmentMode') === 'static'){
-        
-        // set clip width, account for overlap
-        if(laserIndex === 0){ // if first laser only overlap max x
-          clip_min_x = xDiv[laserIndex];
-          clip_max_x = xDiv[laserIndex+1];
-        } else if (laserIndex === laserCount-1) { // if last laser only overlap min x
-          clip_min_x = xDiv[laserIndex];
-          clip_max_x = xDiv[laserIndex+1];
-        } else { // else overlap both min and max x
-          clip_min_x = xDiv[laserIndex];
-          clip_max_x = xDiv[laserIndex+1]; 
-        }
-        
-      } else {
-        
-        let useExtendedReachForInfill = false;
-        clip_min_x = useExtendedReachForInfill ? scanner.e_abs_x_min : scanner.abs_x_min;
-        clip_max_x = useExtendedReachForInfill ? scanner.e_abs_x_max : scanner.abs_x_max;
+      if(!scanner){
+        process.printError('laser ' + (laserIndex+1) + " cannot be retrieved");
       }
       
+      let useExtendedReachForInfill = false;
+      clip_min_x = useExtendedReachForInfill ? scanner.e_abs_x_min : scanner.abs_x_min;
+      clip_max_x = useExtendedReachForInfill ? scanner.e_abs_x_max : scanner.abs_x_max;
+    
       //check if laser allocation zone is outside the preset range
       if(scanner.abs_x_min > clip_min_x) {
         //clip_min_x = scanner.abs_x_min;
@@ -377,7 +351,6 @@ const anotateHatchBlocks = function(tileHatch, laserIndex, curTileId, thisLayer,
             let prevBsid = currHatchBlock.getAttributeInt('bsid');
 
             if (prevBsid > 0) {
-              
                 let overlapCount = currHatchBlock.getAttributeInt('overlapLaserCount');
                 
                 overlapCount++;
