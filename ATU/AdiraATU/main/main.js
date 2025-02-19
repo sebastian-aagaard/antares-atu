@@ -34,16 +34,14 @@ exports.unitTesting = function(testInfo){
   // testname, additional info, test passed
   TEST.unitTesting(testInfo)
 }
-
 //----------------------------------------------------------------------------//
 
 // -------- GENERAL INFORMATION -------- //
 /** @param  aboutInfo  bsAboutInfo */
-
 exports.about = function(aboutInfo){
-   aboutInfo.addCommentLine('AddCreator');
-   aboutInfo.addCommentLine('Adira');
-   aboutInfo.addCommentLine('Copyright 2023');
+  aboutInfo.addCommentLine('AddCreator');
+  aboutInfo.addCommentLine('Adira');
+  aboutInfo.addCommentLine('Copyright 2023');
 };
 
 //----------------------------------------------------------------------------//
@@ -61,8 +59,7 @@ exports.declareMachine = function(machineConfig){
 /** @param  parameter   bsBuildParam */
 
 exports.declareParameters = function(parameter){
-    PARAM_CONFIG.declareParameters(parameter)
-  
+  PARAM_CONFIG.declareParameters(parameter)
 };
 
 //----------------------------------------------------------------------------//
@@ -72,7 +69,6 @@ exports.declareParameters = function(parameter){
 
 exports.declareBuildAttributes = function(buildAttrib){
   ATTRIB_CONFIG.declareBuildAttributes(buildAttrib);
-    
 };
 
 //----------------------------------------------------------------------------//
@@ -85,7 +81,6 @@ exports.declareBuildAttributes = function(buildAttrib){
 
 exports.prepareModelExposure = function(model){
   PREP_MODEL.prepareModelExposure(model);
-    
 }; //prepareModelExposure
 
 /**
@@ -94,15 +89,9 @@ exports.prepareModelExposure = function(model){
 * @param  hatchResult  bsHatch
 * @param  nLayerNr      int*/
 
-exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){ 
-
+exports.makeExposureLayer = function(modelData, hatchResult, nLayerNr){
   TOOLPATH.makeExposureLayer(modelData, hatchResult, nLayerNr);
-  
 }; // makeExposureLayer
-
-
- // do something …
-
 
   
 // -------- CONFIGURE POST PROCESSING -------- //
@@ -158,13 +147,13 @@ exports.declareExportFilter = function(exportFilter){
   });  
 };
 
-// /**
-// * Export exposure data to file
-// * @param  exportFile     bsFile
-// * @param  sFilter        string
-// * @param  modelData      bsModelData
-// * @param  progress       bsProgress
-// */
+/**
+* Export exposure data to file
+* @param  exportFile     bsFile
+* @param  sFilter        string
+* @param  modelData      bsModelData
+* @param  progress       bsProgress
+*/
 exports.exportToFile = function(exportFile, sFilter, modelData, progress) {
   if('CLI-C108C8EC-70C4-40AE-94D2-75B778311531' != sFilter){
     throw new Error('Unsupported export filter');
