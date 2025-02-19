@@ -1,9 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Root>
+  <LastOpened>
+    <File TabIndex="0" TabGroupIndex="0">3mf/3mf_data_collector.js</File>
+    <File TabIndex="0" TabGroupIndex="1">configuration/parameter_declaration.js</File>
+    <File TabIndex="1" TabGroupIndex="1">localization/lang_en.json</File>
+    <File TabIndex="1" TabGroupIndex="0">localization/localizer.js</File>
+    <File TabIndex="8" TabGroupIndex="0">main/export_cli.js</File>
+    <File TabIndex="3" TabGroupIndex="1">main/kinematicsCalculator.js</File>
+    <File TabIndex="3" TabGroupIndex="0">main/laser_designation.js</File>
+    <File TabIndex="6" TabGroupIndex="0">main/main.js</File>
+    <File TabIndex="7" TabGroupIndex="0">main/post_processor_meta.js</File>
+    <File TabIndex="2" TabGroupIndex="1">main/post_processor_sort_exposure.js</File>
+    <File TabIndex="4" TabGroupIndex="0">main/post_processor_statistics.js</File>
+    <File TabIndex="4" TabGroupIndex="1">main/tileing.js</File>
+    <File TabIndex="9" TabGroupIndex="0">main/toolpath.js</File>
+    <File TabIndex="2" TabGroupIndex="0">main/toolpath_to_tile.js</File>
+    <File TabIndex="5" TabGroupIndex="0">main/utility_functions.js</File>
+    <Active>configuration/parameter_declaration.js</Active>
+  </LastOpened>
   <LastBreakpoints>
     <Breakpoint>
-      <Line>513</Line>
-      <Filepath>C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/atu/atu_nikon_slm_2/first-rep/ATU/AdiraATU/main/toolpath_to_tile.js</Filepath>
+      <Line>74</Line>
+      <Filepath>C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/atu/20250219_movetopostTest/first-rep/ATU/AdiraATU/main/toolpath.js</Filepath>
+    </Breakpoint>
+    <Breakpoint>
+      <Line>155</Line>
+      <Filepath>C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/atu/20250219_movetopostTest/first-rep/ATU/AdiraATU/main/laser_designation.js</Filepath>
+    </Breakpoint>
+    <Breakpoint>
+      <Line>201</Line>
+      <Filepath>C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/atu/20250219_movetopostTest/first-rep/ATU/AdiraATU/main/tileing.js</Filepath>
     </Breakpoint>
   </LastBreakpoints>
   <LastBookmarks>

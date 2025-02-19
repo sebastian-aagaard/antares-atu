@@ -27,6 +27,7 @@ exports.getStatistics = function(
   progress, 
   layer_start_nr, 
   layer_end_nr){
+
   
   const partMassKg = getPartMassKg(modelData,progress,layer_start_nr,layer_end_nr);
   const buildTime_ms = getBuildTime_ms(modelData,progress,layer_start_nr,layer_end_nr);
@@ -96,14 +97,7 @@ exports.getStatistics = function(
           "attributes": {
               "created_at": new Date().toISOString(),
               "created_by": process.username
-          },
-          "nodes": [{
-              "name": "node20",
-              "attributes": {
-                  "attribute1": 5,
-                  "attributexxx": "250 something"
-              }
-          }]
+          }
       }]
   };
 
@@ -112,19 +106,26 @@ exports.getStatistics = function(
   for (let modelId = 0; modelId < modelCount; modelId++) {
       let model = modelData.getModel(modelId);
       customJSON.attachments.push({
-          "path": "/ATU/configuration_" + model.getAttribEx("ModelName") + ".json",
+          "path": "/Profiles/configuration_" + model.getAttribEx("ModelName") + ".json",
           "encoding": "string",
           "relationship": "http://test.com/configurationjson/202305",
           "data": model.getAttribEx("parameterJSON")
       });
   }
 
-  customJSON.attachments.push({
-      "path": "/ATU/toolpath.log",
-      "encoding": "string",
-      "relationship": "http://test.com/configurationjson/202305",
-      "data": "log"
-  });
+//   let layerCount = layer_end_nr-layer_start_nr+1;
+//   for(let layerNumber = layer_start_nr; layerNumber <= layer_end_nr; layerNumber++){
+//       let durationLog = modelData.getModel(0).getAttribEx('durationLog_layer' + layerNumber);
+// 
+//     let layerHeight = modelData.getLayerPosZ(layerNumber);
+//       customJSON.attachments.push({
+//       "path": "/timing/timing_Layer" + layerHeight + ".csv",
+//       "encoding": "string",
+//       "relationship": "http://test.com/configurationjson/202305",
+//       "data": durationLog
+//     });   
+//   }
+  
 
   modelData.setTrayAttribEx('custom', customJSON);
 
@@ -140,42 +141,45 @@ const getBuildTime_ms = function(modelData,progress,layer_start_nr,layer_end_nr)
       layer_start_nr, layer_end_nr, POLY_IT.nLayerExposure);
 
   let buildTime_ms = 0;
-  while(layerIt.isValid() && !progress.cancelled())
-  {
-    let layerNr = layerIt.getLayerNr();
+  while(layerIt.isValid() && !progress.cancelled()){
     
-    if(layerNr === 1 && PARAM.getParamInt('exportInfo', 'exportWithATU')){
-       progress.step(1);
-       layerIt.next();
-       continue;
-      } // correct for off by one exporter error
-
+    const layerNr = layerIt.getLayerNr();
     
     const recoatingTime_ms = PARAM.getParamInt('buildTimeEstimation','recoatingDuration_ms');
     const powderFillingTime_ms = PARAM.getParamInt('buildTimeEstimation', 'powderfillingDuration_ms');
     const minimumLayerTime_ms = PARAM.getParamInt('buildTimeEstimation', 'minimumLayerDuration_ms');
-    let exportData,layerDuration_ms;
-      
-    if(PARAM.getParamInt('exportInfo', 'exportWithATU')) layerNr--;
-      
-    try{
-    exportData = UTIL.getModelsInLayer(modelData,layerNr)[0]
-      .getModelLayerByNr(layerNr)
-      .getAttribEx('exporter_3mf')
-      .metadata;
     
-    if(exportData === undefined) throw new Error('Meta data for layer was not retrieved') ;  
+    const model = UTIL.getModelsInLayer(modelData,layerNr)[0];
+    
+    if (!model || !UTIL.isLayerProcessable(model.maybeGetModelLayerByNr(layerNr))) {
+      process.printWarning("Post Processor Statistics: Nothing to postprocess in layer " + layerNr + ' / ' + layerIt.getLayerZ() + ' mm');
+      layerIt.next();
+      progress.step(1);
+      continue;
+    }
+    
+    let exportData;
+    
+    try{
+      exportData = model
+        .getModelLayerByNr(layerNr)
+        .getAttribEx('exporter_3mf')
+        .metadata;
+    } catch (error) {
+      process.printError("No metadata found on layer " + layerNr + ". Error: " + error.message);
+    }
+    
+    if (!exportData || exportData.length === 0) {
+      process.printWarning("No export data found for layer " + layerNr);
+      layerIt.next();
+      progress.step(1);
+      continue;
+    }
 
-    layerDuration_ms = exportData[0]
+    let layerDuration_ms = exportData[0]
       .attributes
       .layerTotalDuration/1000;
-    
-    if(layerDuration_ms === undefined) throw new Error ('Failed to get Layer Duration')
-    
-    }catch(error){
-      process.printError('An error occurred post processing statistics in layer ' + layerNr + " " + error.message);
-      } 
-      
+//     
     let transport_mm = getTransportationDistance_mm(exportData);
     let transportTime_ms = (transport_mm/PARAM.getParamReal('movementSettings', 'axis_transport_speed'))*1000;
     
@@ -195,11 +199,12 @@ const getBuildTime_ms = function(modelData,progress,layer_start_nr,layer_end_nr)
 } 
 
 const getTransportationDistance_mm = function(exportData){
-    
+  
   let transport_mm = 0;
     
   exportData.forEach(function(pass, index){
-    
+    if(pass.length === 0) return;
+
     if(index == 0) return;
     
     
@@ -250,13 +255,6 @@ const getPartMassKg = function(modelData,progress,layer_start_nr,layer_end_nr){
   while(layerIt.isValid() && !progress.cancelled())
   {
     let layerNr = layerIt.getLayerNr();
-    
-    if(layerNr === 1 && PARAM.getParamInt('exportInfo', 'exportWithATU')){
-       progress.step(1);
-       layerIt.next();
-       continue;
-      } // correct for off by one exporter error
-      
     let islandIt = modelData.getFirstIsland(layerNr);  
     
     while(islandIt.isValid() && !progress.cancelled())

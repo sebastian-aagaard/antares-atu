@@ -25,18 +25,28 @@ const LOCALIZER = require('localization/localizer.js');
 
 exports.declareParameters = function(parameter)
 {
-  
-  // declare hatch parameter groups (volume/downskin)
-  // later on parameters are declared within these groups
-  // Parameter groups are always declared like this:
-  // 'group-id', 'display string'
+  parameter.declareParameterGroup('partString',LOCALIZER.GetMessage('grp_partString'),'Add custom information to parameter set for part',BUILD.nGroupEnabled);
+    parameter.declareParameterMultiLineStr('partString','stringNotePart',LOCALIZER.GetMessage('param_stringNotePart'),'','Add information to part parameter set');
+  parameter.declareParameterGroup('platformString',LOCALIZER.GetMessage('grp_platformString'),'Hatch Strategy',BUILD.nGroupEnabled  | BUILD.nGroupPlatform);
+    parameter.declareParameterMultiLineStr('platformString','stringNotePlatform',LOCALIZER.GetMessage('param_stringNotePlatform'),'','Add information to platform parameter set');
 
-  parameter.declareParameterGroup('strategy',LOCALIZER.GetMessage('grp_strategy'));
+  parameter.declareParameterGroup('strategy',LOCALIZER.GetMessage('grp_strategy'),'Hatch Strategy',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterReal('strategy','fStripeWidth',LOCALIZER.GetMessage('param_fStripeWidth'),0.0,100.0,10.0);
     parameter.declareParameterReal('strategy','fMinWidth',LOCALIZER.GetMessage('param_fMinWidth'),0.0,100.0,2.0);
-    parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,-0.03);
+    parameter.declareParameterReal('strategy','fStripeOverlap',LOCALIZER.GetMessage('param_fStripeOverlap'),-10.0,10.0,0.0);
     parameter.declareParameterReal('strategy','fStripeLength',LOCALIZER.GetMessage('param_fStripeLength'),0,100.0,0);
     parameter.declareParameterReal('strategy','fPatternShift',LOCALIZER.GetMessage('param_fPatternShift'),0,10.0,1.67);
+    parameter.declareParameterReal('strategy','fAngleLimit_1a',LOCALIZER.GetMessage('param_fAngleLimit_1a'),0,360.0,215.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_1b',LOCALIZER.GetMessage('param_fAngleLimit_1b'),0,360.0,255.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_2a',LOCALIZER.GetMessage('param_fAngleLimit_2a'),0,360.0,285.0);
+    parameter.declareParameterReal('strategy','fAngleLimit_2b',LOCALIZER.GetMessage('param_fAngleLimit_2b'),0,360.0,325.0);
+    parameter.declareParameterReal('strategy','fSeachIncrements',LOCALIZER.GetMessage('param_fSeachIncrements'),0,360.0,40.0);
+
+    parameter.declareParameterChoice('strategy','bShiftLimitRange',LOCALIZER.GetMessage('param_bShiftLimitRange'), 
+      [LOCALIZER.GetMessage('param_bShiftLimitRange_disable'),
+       LOCALIZER.GetMessage('param_bShiftLimitRange_enable')],
+       LOCALIZER.GetMessage('param_bShiftLimitRange_enable'));
+
   
  parameter.declareParameterGroup('border', LOCALIZER.GetMessage('grp_border')); 
     parameter.declareParameterReal('border', 'fBeamCompensation', LOCALIZER.GetMessage('param_beam_compensation'), 0.0, 10.0, 0.05);
@@ -49,7 +59,7 @@ exports.declareParameters = function(parameter)
        LOCALIZER.GetMessage('param_border_order_outside_in_enable')],
        LOCALIZER.GetMessage('param_border_order_outside_in_enable'));
    
- parameter.declareParameterGroup('display', LOCALIZER.GetMessage('grp_display'));
+ parameter.declareParameterGroup('display', LOCALIZER.GetMessage('grp_display'),"Decide what color scheme is used to preview the vectors",BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
       parameter.declareParameterChoice('display', 'displayColors', LOCALIZER.GetMessage('param_displayColors'),
        [LOCALIZER.GetMessage('param_displayColors_lasers'),
        LOCALIZER.GetMessage('param_displayColors_types'),
@@ -62,7 +72,7 @@ exports.declareParameters = function(parameter)
    
  parameter.declareParameterGroup('interface', LOCALIZER.GetMessage('grp_interface'));
  
-    parameter.declareParameterReal('interface', 'interfaceOverlap', LOCALIZER.GetMessage('param_interfaceOverlap'), -10.0, 200.0, 0.1);
+    parameter.declareParameterReal('interface', 'interfaceOverlap', LOCALIZER.GetMessage('param_interfaceOverlap'), -10.0, 10.0, 0.1);
 
     parameter.declareParameterChoice('interface', 'tileInterfaceHatch', LOCALIZER.GetMessage('param_tileInterfaceHatch'),
      [LOCALIZER.GetMessage('param_tileIntefrace_overlap'),
@@ -106,22 +116,23 @@ exports.declareParameters = function(parameter)
 
     parameter.declareParameterReal('interface', 'distanceBewteenOpenPolyLineInterfaceVectors', LOCALIZER.GetMessage('param_distanceBewteenOpenPolyLineInterfaceVectors'), 0, 10.0, 0);  
   
-  
-  parameter.declareParameterGroup('stripeOverlapAllocation', LOCALIZER.GetMessage('grp_stripeOverlapAllocation'));
+  parameter.declareParameterGroup('stripeOverlapAllocation', LOCALIZER.GetMessage('grp_stripeOverlapAllocation'),'shift the allocation line for stripes',BUILD.nGroupOptional | BUILD.nGroupPlatform);
     parameter.declareParameterReal('stripeOverlapAllocation', 'firstOverlapShift', LOCALIZER.GetMessage('param_firstOverlapShift'), -430.0, 430.0, 0.0);
     parameter.declareParameterReal('stripeOverlapAllocation', 'secondOverlapShift', LOCALIZER.GetMessage('param_secondOverlapShift'), -430.0, 430.0, 0.0);
 
-  parameter.declareParameterGroup('laserAllocation', LOCALIZER.GetMessage('grp_laserAllocation'));
+  parameter.declareParameterGroup('laserAllocation', LOCALIZER.GetMessage('grp_laserAllocation'),'',BUILD.nGroupOptional);
     parameter.declareParameterInt('laserAllocation', 'laserAssignedToModel', LOCALIZER.GetMessage('param_laserAssignedToModel'), 0, 5, 0);
   
- parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
-    parameter.declareParameterReal('exposure', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
-    parameter.declareParameterReal('exposure', 'vector_lenght_merge_attempt', LOCALIZER.GetMessage('param_vector_lenght_merge_attempt'), 0.0, 10.0, 0.1);
-    parameter.declareParameterReal('exposure', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.1);
-
+ parameter.declareParameterGroup('shortVectorHandling', LOCALIZER.GetMessage('grp_shortVectorHandling'),'Options for short vectors',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+    parameter.declareParameterReal('shortVectorHandling', 'min_vector_lenght', LOCALIZER.GetMessage('param_min_vector_length'), 0.0, 10.0, 0.1);
+    parameter.declareParameterReal('shortVectorHandling', 'vector_lenght_merge_attempt', LOCALIZER.GetMessage('param_vector_lenght_merge_attempt'), 0.0, 10.0, 1);
+    parameter.declareParameterReal('shortVectorHandling', 'small_vector_merge_distance', LOCALIZER.GetMessage('param_small_vector_merge_distance'), 0.0, 10.0, 0.1);     
+   
+  parameter.declareParameterGroup('exposure', LOCALIZER.GetMessage('grp_exposure'));
     parameter.declareParameterReal('exposure', '_hdens', LOCALIZER.GetMessage('param_hatch_density'), 0.001, 50.0, 0.1);//0.1 50.0   
     parameter.declareParameterReal('exposure', 'hatch_angle_init', LOCALIZER.GetMessage('param_hatch_angle_init'), 0, 360, 45);
-    parameter.declareParameterReal('exposure', 'hatch_angle_increment', LOCALIZER.GetMessage('param_hatch_angle_increment'), -360, 360, 90.0);   
+    parameter.declareParameterReal('exposure', 'hatch_angle_increment', LOCALIZER.GetMessage('param_hatch_angle_increment'), -360, 360, 90.0);
+    
   
  parameter.declareParameterGroup('support',LOCALIZER.GetMessage('grp_support'));
     parameter.declareParameterReal('support', 'support_hdens', LOCALIZER.GetMessage('param_hatch_support_density'), 0.001, 2.0, 0.1);
@@ -184,7 +195,7 @@ exports.declareParameters = function(parameter)
     
   // -------- PROCESS DURATION SIMULATION SETTINGS -------- //  
   parameter.declareParameterGroup('durationSim', LOCALIZER.GetMessage('grp_durationSim'));
-    parameter.declareParameterReal('durationSim', 'JumpSpeed', LOCALIZER.GetMessage('param_JumpSpeed'), 0.001, 2000, 1000);
+    parameter.declareParameterReal('durationSim', 'JumpSpeed', LOCALIZER.GetMessage('param_JumpSpeed'), 0.001, 20000, 1000);
     parameter.declareParameterInt('durationSim', 'laserOnDelay', LOCALIZER.GetMessage('param_laserOnDelay'), 0, 2000, 2);
     parameter.declareParameterInt('durationSim', 'laserOffDelay', LOCALIZER.GetMessage('param_laserOffDelay'), 0, 2000, 10);
     parameter.declareParameterReal('durationSim', 'JumpLengthLimit', LOCALIZER.GetMessage('param_JumpLengthLimit'), 0.000, 1000, 0);//0.1
@@ -200,8 +211,7 @@ exports.declareParameters = function(parameter)
         LOCALIZER.GetMessage('param_PolygonDelayMode_Fixed')
         );
    
- 
-  parameter.declareParameterGroup('tileShift', LOCALIZER.GetMessage('grp_tileShift'),"Tile Shift",BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+  parameter.declareParameterGroup('tileShift', LOCALIZER.GetMessage('grp_tileShift'),"Tile Shift",BUILD.nGroupOptional | BUILD.nGroupPlatform);
     parameter.declareParameterReal('tileShift', 'shiftTileInX', LOCALIZER.GetMessage('param_shiftTileInX'), 0, 430, 0);
     parameter.declareParameterReal('tileShift', 'shiftTileInY', LOCALIZER.GetMessage('param_shiftTileInY'), 0, 430, 0);
    
@@ -215,23 +225,25 @@ exports.declareParameters = function(parameter)
    
   // -------- WORK AREA -------- //
   parameter.declareParameterGroup('workarea',LOCALIZER.GetMessage('grp_workarea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterInt('workarea', 'x_workarea_min_mm',LOCALIZER.GetMessage('param_x_workarea_min_mm'),0,1015,0);
-    parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,1300,1300);
-    parameter.declareParameterInt('workarea', 'y_workarea_min_mm',LOCALIZER.GetMessage('param_y_workarea_min_mm'),-508,1015,0);
-    parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),-258,1300,1300);
+    parameter.declareParameterInt('workarea', 'x_workarea_min_mm',LOCALIZER.GetMessage('param_x_workarea_min_mm'),0,2000,0);
+    parameter.declareParameterInt('workarea', 'x_workarea_max_mm',LOCALIZER.GetMessage('param_x_workarea_max_mm'),0,2000,1010);
+    parameter.declareParameterInt('workarea', 'y_workarea_min_mm',LOCALIZER.GetMessage('param_y_workarea_min_mm'),-508,2000,0);
+    parameter.declareParameterInt('workarea', 'y_workarea_max_mm',LOCALIZER.GetMessage('param_y_workarea_max_mm'),-258,2000,1010);
     
    // -------- WORK AREA -------- //
   parameter.declareParameterGroup('calibrationArea',LOCALIZER.GetMessage('grp_calibrationArea'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterInt('calibrationArea', 'x_calibrationArea_min_mm',LOCALIZER.GetMessage('param_x_calibrationArea_min_mm'),-50,0,0);
-    parameter.declareParameterInt('calibrationArea', 'x_calibrationArea_max_mm',LOCALIZER.GetMessage('param_x_calibrationArea_max_mm'),0,1015,1010);
-    parameter.declareParameterInt('calibrationArea', 'y_calibrationArea_min_mm',LOCALIZER.GetMessage('param_y_calibrationArea_min_mm'),-508,0,-508);
-    parameter.declareParameterInt('calibrationArea', 'y_calibrationArea_max_mm',LOCALIZER.GetMessage('param_y_calibrationArea_max_mm'),-258,0,-258);   
+    parameter.declareParameterInt('calibrationArea', 'x_calibrationArea_max_mm',LOCALIZER.GetMessage('param_x_calibrationArea_max_mm'),0,2000,1010);
+    parameter.declareParameterInt('calibrationArea', 'y_calibrationArea_min_mm',LOCALIZER.GetMessage('param_y_calibrationArea_min_mm'),-508,2000,-508);
+    parameter.declareParameterInt('calibrationArea', 'y_calibrationArea_max_mm',LOCALIZER.GetMessage('param_y_calibrationArea_max_mm'),-258,2000,-258);   
     
   // -------- MOVEMENT SETTINGS -------- //  
   parameter.declareParameterGroup('movementSettings',LOCALIZER.GetMessage('grp_movementSettings'),'Movement Settings',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-    parameter.declareParameterReal('movementSettings','axis_max_speed', LOCALIZER.GetMessage('param_axis_max_speed'),0.0,100.0,80.0);
-    parameter.declareParameterReal('movementSettings','axis_transport_speed', LOCALIZER.GetMessage('param_axis_transport_speed'),0.0,100.0,80.0);
-    parameter.declareParameterInt('movementSettings', 'recoating_speed_mms',LOCALIZER.GetMessage('param_recoating_speed_mms'),0,1000,120);
+    parameter.declareParameterReal('movementSettings','axis_max_speed', LOCALIZER.GetMessage('param_axis_max_speed'),0.0,5000.0,80.0);
+    parameter.declareParameterReal('movementSettings','axis_transport_speed', LOCALIZER.GetMessage('param_axis_transport_speed'),0.0,5000.0,80.0);
+    parameter.declareParameterInt('movementSettings', 'recoating_speed_mms',LOCALIZER.GetMessage('param_recoating_speed_mms'),0,50000,120);
+    parameter.declareParameterInt('movementSettings', 'acceleration',LOCALIZER.GetMessage('param_acceleration'),0,50000,1000);
+
     parameter.declareParameterReal('movementSettings', 'head_startpos_x',LOCALIZER.GetMessage('param_head_startpos_x'),0.0,1000.0,0.0);
     parameter.declareParameterReal('movementSettings', 'head_startpos_y',LOCALIZER.GetMessage('param_head_startpos_y'),-500.0,1000.0,0.0);
     parameter.declareParameterChoice('movementSettings', 'isFirstPassFrontToBack', 
@@ -253,8 +265,8 @@ exports.declareParameters = function(parameter)
     
     parameter.declareParameterInt('scanhead', 'laserCount',LOCALIZER.GetMessage('param_laserCount'),0,12,12);
         
-    parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,1300,1300); //430
-    parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,200,110);//110;
+    parameter.declareParameterReal('scanhead', 'x_scanfield_size_mm',LOCALIZER.GetMessage('param_x_scanfield_size_mm'),0,2000,430); //430
+    parameter.declareParameterReal('scanhead', 'y_scanfield_size_mm',LOCALIZER.GetMessage('param_y_scanfield_size_mm'),0,2000,110);//110;
     
     parameter.declareParameterReal('scanhead', 'y_scanfield_ref_mm',LOCALIZER.GetMessage('param_y_scanfield_ref_mm'),0,110,60);//110;
     
@@ -273,11 +285,9 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('scanhead', scannerRefLabel,  scannerRefLabel, 0,1300,laserRefPos);
     parameter.declareParameterReal('scanhead', scannerMinLabel,  scannerMinLabel, -302.5,0,-reach);
     parameter.declareParameterReal('scanhead', scannerMaxLabel,  scannerMaxLabel, 0,390,reach);
-      
     }
 
-
-    
+  // -------- SKYWRITING -------- //    
  parameter.declareParameterGroup('skywriting', LOCALIZER.GetMessage('grp_skywriting')); 
       parameter.declareParameterChoice('skywriting','skywritingMode',
           LOCALIZER.GetMessage('param_skywritingMode'),
@@ -294,21 +304,23 @@ exports.declareParameters = function(parameter)
       parameter.declareParameterInt('skywriting','npost', LOCALIZER.GetMessage('param_npost'),0,1000,9);
       parameter.declareParameterReal('skywriting','mode3limit', LOCALIZER.GetMessage('param_mode3limit'),-1.0,1.0,0.9);
     
-  // group material
+  // -------- MATERIAL -------- //    
   parameter.declareParameterGroup('material',LOCALIZER.GetMessage('grp_material'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
         parameter.declareParameterReal('material','density_g_cc', LOCALIZER.GetMessage('param_material_densitet'),0.0,1000.0,8.19);
-  
+        
+  // -------- BUILD TIME ESTIMATION -------- //      
   parameter.declareParameterGroup('buildTimeEstimation',LOCALIZER.GetMessage('grp_buildTimeEstimation'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterInt('buildTimeEstimation', 'recoatingDuration_ms',LOCALIZER.GetMessage('param_recoatingDuration_ms'),0,100000,26000);
     parameter.declareParameterInt('buildTimeEstimation', 'powderfillingDuration_ms',LOCALIZER.GetMessage('param_powderfillingDuration_ms'),0,100000,21000);
     parameter.declareParameterInt('buildTimeEstimation', 'minimumLayerDuration_ms',LOCALIZER.GetMessage('param_minimumLayerDuration_ms'),0,10000000,47000);
-           
+
+  // -------- LASER ASSIGNMENT -------- //               
   parameter.declareParameterGroup('laserAssignment',LOCALIZER.GetMessage('grp_laserAssignment'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
     parameter.declareParameterChoice('laserAssignment', 'assignmentMode', 
      LOCALIZER.GetMessage('param_assignmentMode'),
       [LOCALIZER.GetMessage('static'),
       LOCALIZER.GetMessage('full')],
-     LOCALIZER.GetMessage('static'),'static: Static allocation distributes the vectors based on the center reach point between adjancent lasers' +
+     LOCALIZER.GetMessage('full'),'static: Static allocation distributes the vectors based on the center reach point between adjancent lasers' +
                                     '\nfull: Full allocation allocates all vectors to all lasers in reach'
       );           
            
@@ -337,15 +349,25 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterReal('tileing', 'processheadRampOffset',LOCALIZER.GetMessage('param_processheadRampOffset'),0,50,0.5);
     parameter.declareParameterReal('tileing', 'tileTravelForBreachingYLimit',LOCALIZER.GetMessage('param_tileTravelForBreachingYLimit'),0.001,5,0.5);
  
-    parameter.declareParameterReal('tileing', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-0.1); //-5
-    parameter.declareParameterReal('tileing', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-0.1); //-5
+    parameter.declareParameterReal('tileing', 'tile_overlap_x',LOCALIZER.GetMessage('param_tile_overlap_x'),-100,100,-12); //-5
+    parameter.declareParameterReal('tileing', 'tile_overlap_y',LOCALIZER.GetMessage('param_tile_overlap_y'),-100,100,-12); //-5
  
     parameter.declareParameterReal('tileing','step_x', LOCALIZER.GetMessage('param_step_x'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_x', LOCALIZER.GetMessage('param_number_x'),0,10,7);
     parameter.declareParameterReal('tileing','step_y', LOCALIZER.GetMessage('param_step_y'),0.0,10.0,0.4);
     parameter.declareParameterInt('tileing','number_y', LOCALIZER.GetMessage('param_number_y'),0,10,7); 
-    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,300.0,100.0);
+    parameter.declareParameterReal('tileing','tile_size', LOCALIZER.GetMessage('param_tile_size'),0.0,300.0,60.0);
     parameter.declareParameterInt('tileing','tileBufferDuration_us', LOCALIZER.GetMessage('param_tileBufferDuration_us'),0.0,5000000,0);
+    parameter.declareParameterInt('tileing','firstTileInStripeAddedDuration_us', LOCALIZER.GetMessage('param_firstTileInStripeAddedDuration_us'),0.0,5000000,0);
+    parameter.declareParameterInt('tileing','minimumTileTime_us', LOCALIZER.GetMessage('param_minimumTileTime_us'),0.0,5000000,0);
+    
+  parameter.declareParameterGroup('sortingMode', LOCALIZER.GetMessage('grp_sortingMode'),'',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform); 
+    parameter.declareParameterChoice('sortingMode', 'scanningOrder',
+      LOCALIZER.GetMessage('param_scanningOrder'),
+      [LOCALIZER.GetMessage('param_Stripe'),
+      LOCALIZER.GetMessage('param_TopDown')],
+      LOCALIZER.GetMessage('param_Stripe'),' '
+      );       
     
   parameter.declareParameterGroup('scanning_priority', LOCALIZER.GetMessage('grp_scanning_priority'));
     parameter.declareParameterInt('scanning_priority','part_hatch_priority', LOCALIZER.GetMessage('param_part_hatch_priority'),0,2000,100);
@@ -357,12 +379,11 @@ exports.declareParameters = function(parameter)
     parameter.declareParameterInt('scanning_priority','support_open_polyline_priority', LOCALIZER.GetMessage('param_support_open_polyline_priority'),0,2000,700);
     parameter.declareParameterInt('scanning_priority','open_polyline_priority', LOCALIZER.GetMessage('param_openPolyline_priority'),0,2000,800);
     
-parameter.declareParameterGroup('exportInfo', LOCALIZER.GetMessage('grp_exportInfo'),'extra information to export',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
-  parameter.declareParameterChoice('exportInfo', 'exportWithATU',
-     LOCALIZER.GetMessage('param_exportWith'),
-      [LOCALIZER.GetMessage('netfabb'),
-      LOCALIZER.GetMessage('atu')],
-      LOCALIZER.GetMessage('atu'),
-      "Select the correct export option, either Netfabb using an ebpa or with ATU");   
- 
+  parameter.declareParameterGroup('exportInfo', LOCALIZER.GetMessage('grp_exportInfo'),'extra information to export',BUILD.nGroupDefaultFlags | BUILD.nGroupPlatform);
+    parameter.declareParameterChoice('exportInfo', 'exportWithATU',
+       LOCALIZER.GetMessage('param_exportWith'),
+        [LOCALIZER.GetMessage('netfabb'),
+        LOCALIZER.GetMessage('atu')],
+        LOCALIZER.GetMessage('atu'),
+        "Select the correct export option, either Netfabb using an ebpa or with ATU");       
 }

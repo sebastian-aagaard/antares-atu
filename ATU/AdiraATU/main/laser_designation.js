@@ -424,7 +424,7 @@ exports.mergeShortLinesForEachBsid = function(hatch){
       if(type == 1 || type == 3 || type == 5){ //hatch types  
         
         laserIdHatch.mergeShortLines(
-                  laserIdHatch,PARAM.getParamReal('exposure','vector_lenght_merge_attempt'),PARAM.getParamReal("exposure", "small_vector_merge_distance") ,
+                  laserIdHatch,PARAM.getParamReal('shortVectorHandling','vector_lenght_merge_attempt'),PARAM.getParamReal("shortVectorHandling", "small_vector_merge_distance") ,
                   HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode
                   );
       }

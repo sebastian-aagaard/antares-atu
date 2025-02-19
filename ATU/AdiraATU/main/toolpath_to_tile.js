@@ -183,8 +183,8 @@ const anotateTileIntefaceHatchblocks = function(hatch,tileID) {
 
 exports.mergeShortLines = function(hatch){
 
-  const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
-  const maxMergeDistance = PARAM.getParamReal("exposure", "small_vector_merge_distance");
+  const minVectorLenght = PARAM.getParamReal("shortVectorHandling", "min_vector_lenght");
+  const maxMergeDistance = PARAM.getParamReal("shortVectorHandling", "small_vector_merge_distance");
   
   hatch.mergeShortLines(hatch,minVectorLenght,maxMergeDistance,
     HATCH.nMergeShortLinesFlagAllowSameHatchBlock | HATCH.nMergeShortLinesFlagOnlyHatchMode);
@@ -195,7 +195,7 @@ exports.mergeShortLines = function(hatch){
 
 exports.deleteShortHatchLines = function (hatch) {
   
-  const minVectorLenght = PARAM.getParamReal("exposure", "min_vector_lenght");
+  const minVectorLenght = PARAM.getParamReal("shortVectorHandling", "min_vector_lenght");
   
   let resultHatch = new HATCH.bsHatch();
   let hatchBlockIterator = hatch.getHatchBlockIterator();

@@ -54,6 +54,7 @@
     </Filter>
     <Filter Name="3mf">
       <File Path="3mf/3mf_data_collector.js"/>
+      <File Path="main/kinematicsCalculator.js"/>
     </Filter>
   </Filters>
 </Project>
