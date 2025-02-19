@@ -93,6 +93,7 @@ exports.reassignIslandIdGlobally_MT = function(
     let modelCount = modelData.getModelCount();
     
     let globalIslandId = 0;
+    let globalStripeId = 0;
     
     for (let modelId = 0; modelId < modelCount; modelId++){
       let model = modelData.getModel(modelId);
@@ -108,18 +109,27 @@ exports.reassignIslandIdGlobally_MT = function(
        "models" : [modelId]
       })
       
-      let previousIslandId = 0; 
+      let previousIslandId = 0;
+      let previousStripeId = 0;
       modelPolylineArray.forEach(polylineIterator => {
         
         if(previousIslandId != polylineIterator.getAttributeInt('islandId')){
           globalIslandId++;
         }
+        
         previousIslandId = polylineIterator.getAttributeInt('islandId');
-        polylineIterator.setAttributeInt('islandId',globalIslandId);
+        polylineIterator.setAttributeInt('islandId',globalIslandId)
+   
+        if(previousStripeId != polylineIterator.getAttributeInt('stripeId')){
+          globalStripeId++;
+        }
+        previousStripeId = polylineIterator.getAttributeInt('stripeId');
+        polylineIterator.setAttributeInt('stripeId',globalStripeId);
+        
       })
-    }
     
     progress.step(1);
     layerIterator.next(); 
-  }    
+    }   
+  }
 }
