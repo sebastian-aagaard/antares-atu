@@ -355,9 +355,7 @@ function hatchStripes(islands,hatchingArgs,islandId,typeInt,resultHatch){
   
       let stripeIslandArrayArray = islands.getIslandArray();
           
-      stripeIslandArrayArray.forEach(function(island,index){
-        let patternInfo = island.getPatternInfo();
-        
+      stripeIslandArrayArray.forEach(function(island,index){        
         let tempHatch = new HATCH.bsHatch();
         island.hatchExt2(tempHatch,hatchingArgs);        
         tempHatch.setAttributeInt('stripeId',index+1);
