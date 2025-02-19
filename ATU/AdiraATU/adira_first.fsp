@@ -9,6 +9,8 @@
       <File Path="main/post_processor_sort_exposure.js"/>
       <File Path="main/post_processor_plot.js"/>
       <File Path="main/post_processor_statistics.js"/>
+      <File Path="main/post_processor_tiles.js"/>
+      <File Path="main/post_processor_init.js"/>
     </Filter>
     <Filter Name="prepare model exposure">
       <File Path="main/prepare_model_exposure.js"/>
@@ -49,10 +51,8 @@
       <File Path="main/toolpath_generation.js"/>
       <File Path="main/toolpath_to_tile.js"/>
     </Filter>
-    <Filter Name="preprocessor">
-      <File Path="main/preprocessor.js"/>
-    </Filter>
     <Filter Name="3mf">
+      <File Path="main/kinematicsCalculator.js"/>
       <File Path="3mf/3mf_data_collector.js"/>
     </Filter>
   </Filters>

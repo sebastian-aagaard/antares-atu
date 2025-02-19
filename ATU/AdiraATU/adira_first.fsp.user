@@ -1,15 +1,2 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Root>
-  <LastBreakpoints>
-    <Breakpoint>
-      <Line>513</Line>
-      <Filepath>C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/atu/atu_nikon_slm_2/first-rep/ATU/AdiraATU/main/toolpath_to_tile.js</Filepath>
-    </Breakpoint>
-  </LastBreakpoints>
-  <LastBookmarks>
-    <Bookmark>
-      <Line>735</Line>
-      <Filepath>C:/Users/sebas/OneDrive - Aagaard AM/Projects/Nikon SLM/atu/atu_nikon_slm_2/first-rep/ATU/AdiraATU/main/toolpath_to_tile.js</Filepath>
-    </Bookmark>
-  </LastBookmarks>
-</Root>
+<Root/>
